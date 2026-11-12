@@ -76,6 +76,32 @@ struct PendingAsk {
     sender: Sender<Value>,
 }
 
+/// Топик, под которым шина сообщает об отказе, иначе оставшемся бы незамеченным.
+///
+/// Слушает его журнал интерфейса. Модули этот топик не публикуют.
+pub const ERROR_TOPIC: &str = "core:error";
+
+/// Отказ шины для журнала: короткая строка без подробностей (ADR 0008).
+///
+/// Подробности — причина паники, текст ошибки сериализации — остаются
+/// в файловом логе: в журнале они не нужны в обычной работе.
+#[derive(Clone, Debug, Serialize)]
+pub struct BusError {
+    /// Топик сообщения, при обработке которого случился отказ.
+    pub source: String,
+    /// Что именно не удалось.
+    pub text: String,
+}
+
+impl BusError {
+    pub fn new(source: impl Into<String>, text: impl Into<String>) -> Self {
+        Self {
+            source: source.into(),
+            text: text.into(),
+        }
+    }
+}
+
 /// Общее состояние шины. Спрятано в `Arc`, чтобы `MessageBus` дёшево клонировался
 /// (например, для передачи в замыкание обработчика).
 struct Inner {
@@ -93,6 +119,22 @@ struct Inner {
     pending: Mutex<HashMap<String, PendingAsk>>,
     /// Запись учебной цепочки. Пуста в обычной работе.
     recorder: Recorder,
+}
+
+/// Сообщает об отказе, который иначе остался бы незамеченным.
+///
+/// Пишет причину в файловый лог и отправляет короткую строку в журнал
+/// событием [`ERROR_TOPIC`]. Событие уходит напрямую в приёмник, минуя
+/// очередь: если отказала сама шина, отправлять через неё бессмысленно.
+fn report_fault(inner: &Inner, source: &str, text: impl Into<String>) {
+    let text = text.into();
+    log::error!("{text}");
+    let Some(sink) = inner.sink.read().expect("sink lock").clone() else {
+        return;
+    };
+    if let Ok(payload) = serde_json::to_value(BusError::new(source, text)) {
+        sink.emit(ERROR_TOPIC, payload);
+    }
 }
 
 /// Шина сообщений. Клонируется дёшево: внутри — один `Arc`.
@@ -163,13 +205,32 @@ impl MessageBus {
     where
         E: Event + DeserializeOwned + Serialize,
     {
+        // Слабая ссылка, а не клон шины: маршрут хранится внутри шины,
+        // и сильная ссылка замкнула бы владение само на себя.
+        let weak = Arc::downgrade(&self.inner);
         let route: EventRoute = Arc::new(move |value: Value| {
             let event: E = serde_json::from_value(value)
                 .map_err(|e| format!("Некорректное событие '{}': {e}", E::TOPIC))?;
+            // Сериализация нужна только мосту в интерфейс: локальные
+            // подписчики получают типизированное сообщение. Поэтому потеря
+            // данных здесь не отменяет доставку, но обязана оставить след.
+            let payload = match serde_json::to_value(&event) {
+                Ok(payload) => payload,
+                Err(error) => {
+                    if let Some(inner) = weak.upgrade() {
+                        report_fault(
+                            &inner,
+                            E::TOPIC,
+                            format!("событие '{}' не сериализовано: {error}", E::TOPIC),
+                        );
+                    }
+                    Value::Null
+                }
+            };
             Ok(QueuedEvent {
                 type_id: TypeId::of::<E>(),
                 topic: E::TOPIC,
-                payload: serde_json::to_value(&event).unwrap_or(Value::Null),
+                payload,
                 message: Box::new(event),
                 queued_at: Instant::now(),
             })
@@ -186,7 +247,17 @@ impl MessageBus {
     where
         E: Event + Serialize + Send + 'static,
     {
-        let payload = serde_json::to_value(&event).unwrap_or(Value::Null);
+        let payload = match serde_json::to_value(&event) {
+            Ok(payload) => payload,
+            Err(error) => {
+                report_fault(
+                    &self.inner,
+                    E::TOPIC,
+                    format!("событие '{}' не сериализовано: {error}", E::TOPIC),
+                );
+                Value::Null
+            }
+        };
         // Публикация внутри обработчика продолжает ту же цепочку: если запись
         // взведена на этот correlation_id, этап попадёт в неё.
         self.inner
@@ -228,6 +299,7 @@ impl MessageBus {
                         Some("неизвестный топик".to_owned()),
                     );
                 }
+                log::warn!("Неизвестное событие: '{topic}'");
                 return Err(format!("Неизвестное событие: '{topic}'"));
             }
         };
@@ -343,6 +415,10 @@ impl MessageBus {
         let result = rx.recv_timeout(timeout);
         self.inner.pending.lock().expect("pending lock").remove(&correlation_id);
 
+        if result.is_err() {
+            log::warn!("Таймаут ожидания ответа на '{topic}'");
+        }
+
         if traced {
             let (outcome, detail) = match &result {
                 Ok(_) => ("ok", None),
@@ -376,8 +452,14 @@ impl MessageBus {
         };
         let sink = self.inner.sink.read().expect("sink lock").clone();
         if let Some(sink) = sink {
-            let payload = serde_json::to_value(&chain).unwrap_or(Value::Null);
-            sink.emit(trace::TRACE_TOPIC, payload);
+            match serde_json::to_value(&chain) {
+                Ok(payload) => sink.emit(trace::TRACE_TOPIC, payload),
+                Err(error) => report_fault(
+                    &self.inner,
+                    trace::TRACE_TOPIC,
+                    format!("цепочка не сериализована: {error}"),
+                ),
+            }
         }
     }
 
@@ -453,8 +535,12 @@ impl MessageBus {
             .read()
             .expect("command routes lock")
             .get(topic)
-            .cloned()
-            .ok_or_else(|| format!("Неизвестная команда: '{topic}'"))?;
+            .cloned();
+
+        let Some(route) = route else {
+            log::warn!("Неизвестная команда: '{topic}'");
+            return Err(format!("Неизвестная команда: '{topic}'"));
+        };
         route(payload, &self.inner.deps)
     }
 
@@ -503,8 +589,14 @@ impl MessageBus {
                 self.inner
                     .recorder
                     .stage_of(&queued.payload, "queue.enqueue", queued.topic, None);
+                // Топик нужен после перемещения сообщения в канал.
+                let topic = queued.topic;
                 if tx.send(queued).is_err() {
-                    log::error!("Не удалось поставить событие в очередь: диспетчер остановлен");
+                    report_fault(
+                        &self.inner,
+                        topic,
+                        format!("событие '{topic}' не встало в очередь: диспетчер остановлен"),
+                    );
                 }
             }
             None => {
@@ -558,7 +650,11 @@ fn dispatch(inner: &Inner, queued: QueuedEvent) {
             handler(queued.message.as_ref(), &inner.deps);
         }));
         if result.is_err() {
-            log::error!("Обработчик события '{}' завершился паникой", queued.topic);
+            report_fault(
+                inner,
+                queued.topic,
+                format!("обработчик события '{}' завершился паникой", queued.topic),
+            );
         }
     }
 
@@ -758,6 +854,80 @@ mod tests {
 
         assert_eq!(topic, TestReply::TOPIC);
         assert_eq!(payload["result"], 7);
+    }
+
+    /// Паника обработчика превращается в `core:error` для журнала (ADR 0008).
+    #[test]
+    fn handler_panic_reports_bus_error() {
+        let bus = MessageBus::new(Deps::new());
+        bus.register_event_route::<TestRequest>();
+        bus.subscribe_event::<TestRequest>(|_request, _deps| panic!("нарочно"));
+
+        let (tx, rx) = mpsc::channel();
+        bus.set_sink(Arc::new(TestSink {
+            tx: StdMutex::new(tx),
+        }));
+
+        bus.start();
+        bus.dispatch_event(TestRequest::TOPIC, serde_json::json!({ "value": 1 }))
+            .expect("событие принято в очередь");
+
+        let report = wait_for_bus_error(&rx);
+        bus.stop();
+
+        assert_eq!(report["source"], TestRequest::TOPIC);
+        assert!(
+            report["text"].as_str().unwrap_or_default().contains("паникой"),
+            "в отчёте должна быть причина: {report}"
+        );
+    }
+
+    /// Событие, которое не сериализуется, тоже оставляет след в журнале.
+    #[test]
+    fn serialization_loss_reports_bus_error() {
+        let bus = MessageBus::new(Deps::new());
+        let (tx, rx) = mpsc::channel();
+        bus.set_sink(Arc::new(TestSink {
+            tx: StdMutex::new(tx),
+        }));
+
+        // Диспетчер не запущен: событие обрабатывается синхронно.
+        bus.publish_event(BadEvent);
+
+        let report = wait_for_bus_error(&rx);
+        assert_eq!(report["source"], BadEvent::TOPIC);
+        assert!(
+            report["text"].as_str().unwrap_or_default().contains("не сериализовано"),
+            "в отчёте должна быть причина: {report}"
+        );
+    }
+
+    /// Событие, сериализация которого заведомо не удаётся.
+    struct BadEvent;
+
+    impl Message for BadEvent {
+        const TOPIC: &'static str = "test:bad";
+    }
+
+    impl Event for BadEvent {}
+
+    impl Serialize for BadEvent {
+        fn serialize<S: serde::Serializer>(&self, _serializer: S) -> Result<S::Ok, S::Error> {
+            Err(serde::ser::Error::custom("сериализация запрещена"))
+        }
+    }
+
+    /// Ждёт в приёмнике отчёт `core:error`, пропуская остальные события.
+    fn wait_for_bus_error(rx: &mpsc::Receiver<(String, Value)>) -> Value {
+        let deadline = Instant::now() + Duration::from_secs(2);
+        while Instant::now() < deadline {
+            if let Ok((topic, payload)) = rx.recv_timeout(Duration::from_millis(100)) {
+                if topic == ERROR_TOPIC {
+                    return payload;
+                }
+            }
+        }
+        panic!("отчёт '{}' не пришёл в приёмник", ERROR_TOPIC);
     }
 
     /// Учебная запись собирает одну цепочку и отдаёт её в приёмник.

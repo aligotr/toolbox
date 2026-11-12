@@ -8,6 +8,7 @@
 
 import { onMounted, onUnmounted, ref } from "vue";
 import type { UnlistenFn } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import { ask, invokeCommand, subscribeEvent } from "../../core/bus";
 import { journal, write } from "../../core/journal";
 
@@ -17,10 +18,27 @@ interface Pong {
   correlation_id: string | null;
 }
 
+/** Ответ Rust о запуске: путь к логу и действующий уровень. */
+interface StartupStatus {
+  blocked: boolean;
+  root: string;
+  reason: string | null;
+  log_path: string;
+  log_level: string;
+}
+
+/** Уровни ровно те, что понимает ядро: `trace` нет по решению (ADR 0004). */
+const LEVELS = ["error", "warn", "info", "debug"] as const;
+
 const echo = ref("привет, ядро");
 const busy = ref(false);
 const lastPong = ref<Pong | null>(null);
 const error = ref("");
+
+const startup = ref<StartupStatus | null>(null);
+const logLevel = ref<string>("info");
+/** Действующий уровень: к нему возвращаемся, если сохранить не удалось. */
+let savedLevel = "info";
 
 let unlisten: UnlistenFn | null = null;
 
@@ -73,7 +91,28 @@ async function quit() {
   }
 }
 
+/** Меняет уровень лога на лету и сохраняет его в `settings.json`. */
+async function applyLevel() {
+  try {
+    await invoke("set_log_level", { level: logLevel.value });
+    savedLevel = logLevel.value;
+    write("ядро", "info", `уровень лога: ${logLevel.value}`);
+  } catch (e) {
+    write("ядро", "error", `уровень лога не изменён: ${String(e)}`);
+    logLevel.value = savedLevel;
+  }
+}
+
 onMounted(async () => {
+  // Путь к логу и действующий уровень нужны для подписи внизу экрана.
+  try {
+    startup.value = await invoke<StartupStatus>("startup_status");
+    logLevel.value = startup.value.log_level;
+    savedLevel = startup.value.log_level;
+  } catch {
+    // Вне Tauri статуса нет: подпись просто останется пустой.
+  }
+
   // Параллельная подписка на то же событие-ответ демонстрирует,
   // что у события может быть много независимых наблюдателей.
   unlisten = await subscribeEvent<Pong>("core:pong", (payload) => {
@@ -165,6 +204,23 @@ onUnmounted(() => {
         <p v-else class="muted">Пока пусто.</p>
       </article>
     </div>
+
+    <section class="diagnostics">
+      <div class="diagnostics__info">
+        <h3>Файл лога</h3>
+        <p class="muted">
+          Сюда попадают только отказы приложения и его механизмов. Работа
+          модулей остаётся в журнале.
+        </p>
+        <code class="diagnostics__path">{{ startup?.log_path || "лог не запущен" }}</code>
+      </div>
+      <label class="field field--inline">
+        <span>Уровень лога</span>
+        <select v-model="logLevel" @change="applyLevel">
+          <option v-for="level in LEVELS" :key="level" :value="level">{{ level }}</option>
+        </select>
+      </label>
+    </section>
 
     <footer class="module__footer">
       <div>
@@ -267,6 +323,14 @@ onUnmounted(() => {
   color: var(--text-muted);
 }
 
+/* Горизонтальное поле: подпись слева от списка, без вертикальных отступов. */
+.field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
 button.btn {
   margin-top: 4px;
 }
@@ -361,6 +425,31 @@ button.btn {
   margin-top: 16px;
   color: #ff9b9b;
   font-size: 14px;
+}
+
+/* Лог и журнал рядом, но не вместе: подпись к файлу отвечает на вопрос
+   «куда смотреть после поломки», а не показывает содержимое. */
+.diagnostics {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 20px 24px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.diagnostics h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.diagnostics__path {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
 }
 
 /* Блок завершения идёт сразу за карточками в общем потоке.
