@@ -26,6 +26,11 @@ log = { version = "0.4", features = ["std"] }
 # Дата и время в имени файла лога — локальные, а не UTC: имя должно совпадать
 # с сутками пользователя. Остальные возможности `chrono` не нужны.
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
+# DNS: только протокол и разбор ответов. Транспорт — свой, синхронный:
+# клиентские обёртки hickory тянут tokio, а приложению он не нужен (ADR 0016).
+hickory-proto = "0.26.3"
+# Системные резолверы Windows: без вызова ipconfig.exe и разбора его вывода.
+ipconfig = "0.3"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

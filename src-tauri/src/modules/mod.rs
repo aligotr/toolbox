@@ -6,6 +6,7 @@
 
 mod app;
 mod core_ping;
+mod dnslookup;
 
 use crate::core::bus::MessageBus;
 use crate::core::module::Module;
@@ -17,6 +18,7 @@ use crate::core::module::Module;
 /// `bus.start()`.
 pub fn register_all(bus: &MessageBus) {
     let modules: Vec<Box<dyn Module>> = vec![
+        Box::new(dnslookup::DnsLookupModule::new()),
         Box::new(core_ping::CorePingModule),
         Box::new(app::AppModule),
     ];

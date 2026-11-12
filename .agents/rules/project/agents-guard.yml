@@ -1,0 +1,61 @@
+# agents-guard configuration (проектный)
+# Запрещено выполнять любую команду из этого списка без явного согласия
+# пользователя. Агент не запускает их «по умолчанию», даже если они
+# синтаксически допустимы.
+
+project: tauri-toolbox
+
+commands:
+  allowed:
+    - "npm run build"
+    - "npm run tauri dev"
+    - "cargo check"
+    - "cargo test --lib"
+  denied:
+    patterns:
+      - "rm -rf"
+      - "Remove-Item -Recurse -Force"
+      - "cargo clean"
+      - "git reset --hard"
+      - "git checkout --"
+      - "git restore ."
+  requires_explicit_request:
+    - "npm install"
+    - "npm uninstall"
+    - "cargo add"
+    - "cargo remove"
+    - "npm run tauri build"
+    - "git push"
+    - "git tag"
+    - "git branch -D"
+
+git:
+  protected_branches: [main, master]
+  block_force_push: true
+  require_stash_before_revert: true
+  commit_language: ru
+
+quality:
+  typecheck:
+    required_before: [commit]
+    command: "npm run build"
+    must_exit_zero: true
+  rust_check:
+    required_before: [commit]
+    command: "cargo check"
+    must_exit_zero: true
+  tests:
+    required_before: [commit]
+    command: "cargo test --lib"
+    must_exit_zero: true
+  no_skip_strict: true
+
+runtime:
+  port: 1420
+  note: "Перед запуском проверить, что порт свободен; осиротевший процесс остановить"
+
+data:
+  portable_only: true
+  allow_system_dirs: false
+  atomic_writes: true
+  delete_via_trash: "local/trash"

@@ -1,26 +1,26 @@
-/* Глобальные стили оболочки и общие элементы управления.
-   Тёмная тема выбрана как основная: утилиты часто держат открытыми
-   на весь день, а тёмный фон меньше утомляет.
+/* Базовые стили документа (ADR 0009, ADR 0012).
+   Оформление компонентов живёт в пресете PrimeVue и в стилях компонентов;
+   здесь только то, что относится к самому документу.
 
-   Шкала отступов — 8 / 16 / 24 / 32, база текста — 16px.
-   Модули переиспользуют эти значения, чтобы экраны не разъезжались. */
+   Токены `--ag-*` — именные токены проекта. Их используют собственные стили
+   оболочки и сетки; значения совпадают с пресетом `src/ui/theme.ts`. */
 
 :root {
-  --bg: #111318;
-  --surface: #181b22;
-  --surface-2: #1e222b;
-  --border: #2a2f3a;
-  --text: #e7eaf0;
-  --text-muted: #9aa3b2;
-  --accent: #5b8cff;
-  --accent-hover: #7aa1ff;
-  --danger: #e05d5d;
-  --font-ui: "Inter", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "Cascadia Code", "Consolas", monospace;
+  --ag-bg: #111318;
+  --ag-surface: #181b22;
+  --ag-surface-2: #1e222b;
+  --ag-border: #2a2f3a;
+  --ag-text: #e7eaf0;
+  --ag-text-muted: #9aa3b2;
+  --ag-accent: #5b8cff;
+  --ag-accent-hover: #7aa1ff;
+  --ag-danger: #e05d5d;
+  --ag-font-ui: "Inter", "Segoe UI", system-ui, sans-serif;
+  --ag-font-mono: "Cascadia Code", "Consolas", monospace;
 
-  color: var(--text);
-  background: var(--bg);
-  font-family: var(--font-ui);
+  color: var(--ag-text);
+  background: var(--ag-bg);
+  font-family: var(--ag-font-ui);
   font-size: 16px;
   line-height: 1.5;
   font-synthesis: none;
@@ -44,253 +44,16 @@ body {
 }
 
 code {
-  font-family: var(--font-mono);
+  font-family: var(--ag-font-mono);
   font-size: 0.9em;
   padding: 1px 5px;
   border-radius: 5px;
-  background: var(--surface-2);
+  background: var(--ag-surface-2);
   color: #c7d3f5;
 }
 
-/* ───────────────────────────── Оболочка ───────────────────────────── */
-
-.shell {
-  display: flex;
-  height: 100%;
-}
-
-.sidebar {
-  width: 240px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 24px 16px;
-  gap: 24px;
-  background: #0d0f13;
-  border-right: 1px solid var(--border);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 4px;
-}
-
-.brand__mark {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent), #8b5bff);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.5px;
-}
-
-.brand strong {
-  display: block;
-  font-size: 16px;
-}
-
-.brand small {
-  color: var(--text-muted);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-
-.nav {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.nav__item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 15px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.nav__item:hover {
-  background: var(--surface);
-  color: var(--text);
-}
-
-.nav__item--active {
-  background: var(--surface-2);
-  border-color: var(--border);
-  color: var(--text);
-}
-
-.nav__icon {
-  width: 18px;
-  text-align: center;
-}
-
-/* Подвал прижат к низу именно здесь — это единственное место,
-   где `margin-top: auto` нужен: статус ядра всегда внизу меню. */
-.sidebar__footer {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 12px 0;
-  border-top: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #62d38b;
-  box-shadow: 0 0 8px rgba(98, 211, 139, 0.7);
-}
-
-.content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.content__bar {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 16px 32px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(24, 27, 34, 0.6);
-}
-
-.content__title {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-}
-
-.content__hint {
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.content__body {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding: 32px;
-}
-
-.empty {
-  color: var(--text-muted);
-}
-
-/* ─────────────────────────── Элементы управления ─────────────────────────── */
-
-.btn {
-  padding: 10px 18px;
-  border-radius: 9px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  font-size: 15px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
-}
-
-.btn:hover:not(:disabled) {
-  border-color: var(--accent);
-}
-
-.btn:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.btn--primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #0b1020;
-  font-weight: 600;
-}
-
-.btn--primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
-
-.btn--danger {
-  background: transparent;
-  border-color: rgba(224, 93, 93, 0.5);
-  color: #ff9b9b;
-}
-
-.btn--danger:hover:not(:disabled) {
-  background: rgba(224, 93, 93, 0.12);
-  border-color: var(--danger);
-}
-
-/* Второстепенное действие: не спорит с основной кнопкой за внимание. */
-.btn--ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--text-muted);
-  padding: 10px 12px;
-}
-
-.btn--ghost:hover:not(:disabled) {
-  background: var(--surface-2);
-  color: var(--text);
-}
-
-input[type="text"] {
-  padding: 10px 12px;
-  border-radius: 9px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font: inherit;
-  font-size: 15px;
-  outline: none;
-}
-
-input[type="text"]:focus {
-  border-color: var(--accent);
-}
-
-select {
-  padding: 10px 12px;
-  border-radius: 9px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font: inherit;
-  font-size: 15px;
-  outline: none;
-  cursor: pointer;
-}
-
-select:focus {
-  border-color: var(--accent);
-}
-
 ::selection {
-  background: rgba(91, 140, 255, 0.35);
+  background: rgb(91 140 255 / 35%);
 }
 
 ::-webkit-scrollbar {

@@ -1,0 +1,29 @@
+# agents-guard configuration (глобальный)
+# Запрещено выполнять любую команду из этого списка без явного согласия
+# пользователя. Агент не запускает их «по умолчанию», даже если они
+# синтаксически допустимы.
+
+commands:
+  allowed: []
+  denied:
+    patterns:
+      - "git push --force"
+      - "git push -f"
+      - "git reset --hard"
+      - "git checkout --"
+      - "git restore ."
+  requires_explicit_request:
+    - "git stash drop"
+    - "git tag -d"
+    - "git branch -D"
+    - "git push --no-verify"
+    - "git commit --no-verify"
+
+git:
+  protected_branches: [master, main]
+  block_force_push: true
+  require_stash_before_revert: true
+
+quality:
+  no_skip_strict: true
+  # Конкретная команда typecheck/lint определяется в rules/project/agents-guard.yml

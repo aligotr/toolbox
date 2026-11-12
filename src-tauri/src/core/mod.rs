@@ -4,19 +4,27 @@
 //! шина сообщений, контейнер зависимостей и приёмник событий.
 //!
 //! Отдельно лежат **сервисы ядра** — инфраструктура, без которой приложение
-//! не работает: [`storage`], [`settings`], [`logging`]. Своего пункта в меню
-//! они не имеют и удалены быть не могут (ADR 0005).
+//! не работает: [`files`], [`names`], [`storage`], [`settings`], [`profiles`],
+//! [`templates`], [`workspace`], [`data`], [`logging`], [`window`]. Своего
+//! пункта в меню они не имеют и удалены быть не могут (ADR 0005).
 //!
 //! Идея заимствована из образца (CQRS + loosely coupled):
 //! подсистемы не вызывают друг друга напрямую, а обмениваются
 //! **командами** (Command) и **событиями** (Event) через шину.
 
 pub mod bus;
+pub mod data;
 pub mod deps;
+pub mod files;
 pub mod logging;
 pub mod message;
 pub mod module;
+pub mod names;
+pub mod profiles;
 pub mod settings;
 pub mod sink;
 pub mod storage;
+pub mod templates;
 pub mod trace;
+pub mod window;
+pub mod workspace;

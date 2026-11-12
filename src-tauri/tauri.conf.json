@@ -12,12 +12,14 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "ToolBox",
-        "width": 960,
-        "height": 720,
-        "minWidth": 860,
-        "minHeight": 620,
-        "center": true
+        "width": 1280,
+        "height": 800,
+        "minWidth": 960,
+        "minHeight": 640,
+        "center": true,
+        "visible": false
       }
     ],
     "security": {

@@ -152,10 +152,7 @@ impl Logger {
                 // Папку проверяли при старте, но диск мог отвалиться позже.
                 Err(_) => return,
             };
-            *guard = Some(OpenFile {
-                date: today,
-                file,
-            });
+            *guard = Some(OpenFile { date: today, file });
         }
 
         let Some(open) = guard.as_mut() else {
@@ -174,9 +171,13 @@ impl Logger {
 /// Папку создаёт хранилище; здесь она проверяется ещё раз, потому что
 /// логгер обязан работать без оглядки на порядок вызовов.
 pub fn init(dir: PathBuf, level: LogLevel) -> Result<Arc<Logger>, String> {
-    fs::create_dir_all(&dir)
-        .map_err(|error| format!("Не удалось создать папку логов '{}': {error}", dir.display()))?;
-    prune(&dir);
+    fs::create_dir_all(&dir).map_err(|error| {
+        format!(
+            "Не удалось создать папку логов '{}': {error}",
+            dir.display()
+        )
+    })?;
+    prune_older(&dir);
 
     let logger = Arc::new(Logger {
         dir,
@@ -244,24 +245,29 @@ fn file_name(date: &str) -> String {
     format!("{FILE_PREFIX}{date}.log")
 }
 
-/// Удаляет файлы лога старше [`KEEP_DAYS`] дней.
+/// Удаляет файлы лога старше [`KEEP_DAYS`] дней и возвращает их число.
 ///
-/// Чужие файлы в папке не трогаются: разбор имени строгий.
-fn prune(dir: &Path) {
+/// Чужие файлы в папке не трогаются: разбор имени строгий. Счётчик нужен
+/// кнопке «Очистить логи старше 14 дней»: без него нажатие выглядело бы
+/// несработавшим, если старых файлов не было.
+pub fn prune_older(dir: &Path) -> usize {
     let Ok(entries) = fs::read_dir(dir) else {
-        return;
+        return 0;
     };
     let today = Local::now().date_naive();
+    let mut removed = 0;
 
     for entry in entries.flatten() {
         let name = entry.file_name();
         let Some(date) = parse_date(&name.to_string_lossy()) else {
             continue;
         };
-        if (today - date).num_days() > KEEP_DAYS {
-            let _ = fs::remove_file(entry.path());
+        if (today - date).num_days() > KEEP_DAYS && fs::remove_file(entry.path()).is_ok() {
+            removed += 1;
         }
     }
+
+    removed
 }
 
 /// Достаёт дату из имени `toolbox-ГГГГ-ММ-ДД.log`.
@@ -292,10 +298,58 @@ mod tests {
     }
 
     #[test]
+    fn logger_writes_into_the_directory_it_was_given() {
+        // Логгер получает папку снаружи, поэтому проверяется именно она:
+        // с переездом в `local/logs` файл не должен оказаться в корне.
+        let dir = std::env::temp_dir().join(format!("toolbox-logging-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("временная папка");
+
+        let logger = Logger {
+            dir: dir.clone(),
+            level: AtomicU8::new(LogLevel::Info.rank()),
+            current: Mutex::new(None),
+        };
+
+        logger.write_line("INFO", "test", "проверка записи");
+
+        let path = logger.path();
+        assert_eq!(path.parent(), Some(dir.as_path()), "файл должен лежать в заданной папке");
+        let text = fs::read_to_string(&path).expect("файл лога создан");
+        assert!(text.contains("проверка записи"));
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn only_own_files_are_recognised_for_rotation() {
         assert!(parse_date("toolbox-2026-11-12.log").is_some());
         assert!(parse_date("toolbox-2026-11-12.log.old").is_none());
         assert!(parse_date("чужой-2026-11-12.log").is_none());
         assert!(parse_date("toolbox-не-дата.log").is_none());
+    }
+
+    #[test]
+    fn pruning_removes_only_old_own_files() {
+        let dir = std::env::temp_dir().join(format!("toolbox-prune-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("временная папка");
+
+        let today = Local::now().date_naive();
+        let old = today - chrono::Duration::days(KEEP_DAYS + 1);
+        let old_name = file_name(&old.format("%Y-%m-%d").to_string());
+        let today_name = file_name(&today.format("%Y-%m-%d").to_string());
+        for name in [&old_name, &today_name, "заметка.txt"] {
+            fs::write(dir.join(name), "строка").expect("файл");
+        }
+
+        let removed = prune_older(&dir);
+
+        assert_eq!(removed, 1);
+        assert!(!dir.join(&old_name).exists(), "старый лог удалён");
+        assert!(dir.join(&today_name).exists(), "сегодняшний не тронут");
+        assert!(dir.join("заметка.txt").exists(), "чужой файл не тронут");
+
+        let _ = fs::remove_dir_all(&dir);
     }
 }
