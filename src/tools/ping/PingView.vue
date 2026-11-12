@@ -2,9 +2,8 @@
 // Панель инструмента Ping.
 //
 // Смысл прежнего экрана «Как работает шина» сохранён: кнопка отправляет
-// настоящий `ask`, ядро записывает этапы цепочки, интерфейс показывает их
-// по одному с пояснениями. Данные настоящие, темп показа искусственный —
-// иначе девять этапов мелькнули бы за доли миллисекунды и ничего не объяснили.
+// настоящий `ask`, ядро записывает этапы цепочки, интерфейс показывает весь
+// путь сразу, а пояснение к этапу раскрывается по клику.
 //
 // Мост, подписки и состояния операций живут в `api.ts` и `usePing.ts`;
 // здесь только разметка и тексты.
@@ -50,7 +49,7 @@ const EXPLANATIONS: Record<string, string> = {
     "Ожидающий проснулся и вернул значение в интерфейс. Поток команды снова работает — с тем же значением, которое принесло событие-ответ.",
 };
 
-type BadgeTone = "muted" | "ok" | "danger";
+type BadgeTone = "muted" | "ok";
 
 const {
   echo,
@@ -58,13 +57,11 @@ const {
   reply,
   elapsedMs,
   chain,
-  visibleRows,
+  rows,
   selectedStage,
-  complete,
   checkBus,
   showPath,
   toggle,
-  showAll,
   start,
   stop,
 } = usePing();
@@ -73,7 +70,7 @@ const {
 const badge = computed<{ text: string; tone: BadgeTone }>(() => {
   if (status.ping.loading) return { text: "идёт запрос", tone: "muted" };
   if (status.trace.loading) return { text: "идёт прогон", tone: "muted" };
-  if (complete.value) return { text: "путь записан", tone: "ok" };
+  if (chain.value) return { text: "путь записан", tone: "ok" };
   if (reply.value) return { text: "ответ получен", tone: "ok" };
   return { text: "готов", tone: "muted" };
 });
@@ -227,19 +224,11 @@ onUnmounted(() => {
           <span class="route__outcome" :class="`route__outcome--${outcomeTone}`">
             {{ outcomeText }}
           </span>
-          <Button
-            v-if="!complete"
-            label="Показать всё"
-            icon="pi pi-angle-double-down"
-            text
-            size="small"
-            @click="showAll"
-          />
         </div>
       </header>
 
       <ol class="route__list">
-        <template v-for="row in visibleRows" :key="`${row.kind}-${row.at}`">
+        <template v-for="row in rows" :key="`${row.kind}-${row.at}`">
           <li v-if="row.kind === 'divider'" class="route__divider">{{ row.title }}</li>
 
           <li v-else-if="row.kind === 'wait'" class="route__wait">
@@ -333,10 +322,6 @@ onUnmounted(() => {
 
 .ping__badge-dot--ok {
   background: var(--ag-ok);
-}
-
-.ping__badge-dot--danger {
-  background: var(--ag-danger);
 }
 
 .ping__lead code,

@@ -4,6 +4,9 @@
 // этапов. Поэтому и состояния два — `status.ping` и `status.trace`, а не один
 // общий `loading` (правила Vue). Компонент только показывает то, что здесь
 // уже разложено; транспорт целиком в `api.ts`.
+//
+// Цепочка показывается целиком: настоящий путь длится доли миллисекунды,
+// поэтому его разбор идёт не темпом, а пояснениями по клику.
 
 import { computed, reactive, ref } from "vue";
 import type { UnlistenFn } from "@tauri-apps/api/event";
@@ -16,14 +19,10 @@ const DEFAULT_ECHO = "привет, ядро";
 /** Показательная задержка ответа: настоящая, выполняется в отдельном потоке ядра. */
 const TRACE_DELAY_MS = 120;
 
-/** Пауза перед показом первого этапа и между этапами. */
-const REVEAL_START_MS = 250;
-const REVEAL_STEP_MS = 600;
-
 /** Строка маршрута: этап, граница сообщения или настоящее ожидание. */
 interface RouteRow {
   kind: "stage" | "divider" | "wait";
-  /** Сколько этапов должно быть показано, чтобы строка появилась. */
+  /** Порядковый номер строки: ключ для разметки. */
   at: number;
   index?: number;
   stage?: TraceStage;
@@ -49,19 +48,10 @@ export function usePing() {
   const elapsedMs = ref<number | null>(null);
 
   const chain = ref<TraceChain | null>(null);
-  const shown = ref(0);
   const selected = ref<number | null>(null);
 
-  let timer: ReturnType<typeof setTimeout> | null = null;
   let unlistenPong: UnlistenFn | null = null;
   let unlistenTrace: UnlistenFn | null = null;
-
-  function stopTimer(): void {
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-  }
 
   /**
    * Подписки живут вместе с открытой панелью.
@@ -83,7 +73,6 @@ export function usePing() {
   }
 
   function stop(): void {
-    stopTimer();
     unlistenPong?.();
     unlistenTrace?.();
     unlistenPong = null;
@@ -123,9 +112,7 @@ export function usePing() {
     status.trace.loading = true;
     status.trace.error = null;
     chain.value = null;
-    shown.value = 0;
     selected.value = null;
-    stopTimer();
     write("ping", "info", `учебный прогон: core:ping с задержкой ${TRACE_DELAY_MS} мс`);
 
     try {
@@ -138,12 +125,10 @@ export function usePing() {
     }
   }
 
-  /** Цепочка пришла: сохраняем и показываем этапы по одному. */
+  /** Цепочка пришла: показываем весь путь сразу, без пояснений до клика. */
   function handleTrace(next: TraceChain): void {
     chain.value = next;
-    shown.value = 0;
     selected.value = null;
-    stopTimer();
 
     if (next.outcome === "ok") {
       write(
@@ -154,33 +139,11 @@ export function usePing() {
     } else {
       write("ping", "error", `прогон не завершился (${next.outcome})`);
     }
-
-    timer = setTimeout(revealNext, REVEAL_START_MS);
-  }
-
-  function revealNext(): void {
-    timer = null;
-    const total = chain.value?.stages.length ?? 0;
-    if (shown.value >= total) return;
-
-    shown.value += 1;
-    selected.value = shown.value - 1;
-
-    if (shown.value < total) {
-      timer = setTimeout(revealNext, REVEAL_STEP_MS);
-    }
   }
 
   /** Клик по этапу: раскрывает пояснение, повторный клик сворачивает его. */
   function toggle(index: number): void {
-    stopTimer();
     selected.value = selected.value === index ? null : index;
-  }
-
-  function showAll(): void {
-    stopTimer();
-    shown.value = chain.value?.stages.length ?? 0;
-    selected.value = null;
   }
 
   /** Границы сообщений и настоящее ожидание — по записанным временам. */
@@ -210,16 +173,10 @@ export function usePing() {
     return result;
   });
 
-  const visibleRows = computed(() => rows.value.filter((row) => row.at <= shown.value));
-
   const selectedStage = computed<TraceStage | null>(() => {
     if (!chain.value || selected.value === null) return null;
     return chain.value.stages[selected.value] ?? null;
   });
-
-  const complete = computed(
-    () => !!chain.value && shown.value >= chain.value.stages.length,
-  );
 
   return {
     echo,
@@ -227,13 +184,11 @@ export function usePing() {
     reply,
     elapsedMs,
     chain,
-    visibleRows,
+    rows,
     selectedStage,
-    complete,
     checkBus,
     showPath,
     toggle,
-    showAll,
     start,
     stop,
   };
