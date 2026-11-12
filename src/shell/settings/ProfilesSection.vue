@@ -273,9 +273,9 @@ onMounted(() => {
   gap: 16px;
   flex-wrap: wrap;
   padding: 16px;
-  border: 1px solid var(--p-surface-700);
+  border: 1px solid var(--ag-border);
   border-radius: 8px;
-  background: var(--p-surface-900);
+  background: var(--ag-surface);
 }
 
 .profile-row--active {
@@ -303,8 +303,8 @@ onMounted(() => {
 .profile-row__badge {
   padding: 2px 8px;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--p-primary-color) 16%, transparent);
-  color: var(--p-primary-color);
+  background: var(--p-primary-50);
+  color: var(--p-primary-700);
   font-size: 13px;
 }
 
@@ -332,7 +332,7 @@ onMounted(() => {
 .profiles__error {
   flex-basis: 100%;
   margin: 0;
-  color: var(--p-red-300);
+  color: var(--ag-danger);
   font-size: 13px;
   line-height: 1.45;
 }

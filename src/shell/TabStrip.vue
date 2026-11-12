@@ -456,8 +456,8 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
   gap: 8px;
   height: 48px;
   padding: 8px;
-  background: var(--p-surface-950);
-  border-bottom: 1px solid var(--p-surface-700);
+  background: var(--ag-bg);
+  border-bottom: 1px solid var(--ag-border);
 }
 
 .tabs__list {
@@ -489,12 +489,12 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
 }
 
 .tab:hover {
-  background: var(--p-surface-900);
+  background: var(--ag-hover);
   color: var(--p-text-color);
 }
 
 .tab--active {
-  background: var(--p-surface-800);
+  background: var(--ag-surface);
   color: var(--p-text-color);
 }
 
@@ -547,7 +547,7 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
 
 .tab__menu:hover,
 .tab__close:hover {
-  background: var(--p-surface-600);
+  background: var(--ag-hover);
 }
 
 .tab__menu:focus-visible,

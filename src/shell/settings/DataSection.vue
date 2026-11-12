@@ -160,9 +160,9 @@ onMounted(() => {
   justify-content: space-between;
   gap: 16px;
   padding: 16px;
-  border: 1px solid var(--p-surface-700);
+  border: 1px solid var(--ag-border);
   border-radius: 8px;
-  background: var(--p-surface-900);
+  background: var(--ag-surface);
 }
 
 .data__summary-row dt {
@@ -202,9 +202,9 @@ onMounted(() => {
   gap: 16px;
   flex-wrap: wrap;
   padding: 16px;
-  border: 1px solid var(--p-surface-700);
+  border: 1px solid var(--ag-border);
   border-radius: 8px;
-  background: var(--p-surface-900);
+  background: var(--ag-surface);
 }
 
 .data-row__main {
@@ -246,7 +246,7 @@ onMounted(() => {
 }
 
 .data__error {
-  color: var(--p-red-300);
+  color: var(--ag-danger);
   font-size: 13px;
   line-height: 1.45;
 }

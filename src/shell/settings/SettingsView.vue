@@ -127,13 +127,12 @@ onMounted(() => {
 }
 
 .settings__nav-item:hover {
-  background: var(--p-surface-800);
+  background: var(--ag-surface-2);
   color: var(--p-text-color);
 }
 
 .settings__nav-item--active {
-  border-color: var(--p-surface-700);
-  background: var(--p-surface-800);
+  background: var(--p-surface-100);
   color: var(--p-text-color);
 }
 

@@ -130,9 +130,9 @@ onUnmounted(() => {
   gap: 16px;
   max-width: 640px;
   padding: 32px;
-  border: 1px solid var(--p-surface-700);
+  border: 1px solid var(--ag-border);
   border-radius: 16px;
-  background: var(--p-surface-900);
+  background: var(--ag-surface);
 }
 
 .blocked__mark {
@@ -141,8 +141,8 @@ onUnmounted(() => {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--p-red-500) 16%, transparent);
-  color: var(--p-red-300);
+  background: color-mix(in srgb, var(--ag-danger) 12%, transparent);
+  color: var(--ag-danger);
   font-size: 20px;
   font-weight: 700;
 }
@@ -167,7 +167,7 @@ onUnmounted(() => {
   margin: 0;
   padding: 16px;
   border-radius: 8px;
-  background: var(--p-surface-950);
+  background: var(--ag-surface-2);
 }
 
 .blocked__facts div {

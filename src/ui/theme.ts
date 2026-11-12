@@ -1,13 +1,14 @@
-// Тема приложения (ADR 0009).
+// Тема приложения (ADR 0019).
 //
-// Всё визуальное — цвета, отступы, радиусы — задаётся одним пресетом
-// PrimeVue. Экраны не переопределяют токены точечно: иначе тема расползлась
-// бы по файлам и перестала быть единой.
+// Один светлый пресет: схема не переключается, поэтому тёмных значений здесь
+// нет. Всё визуальное — цвета, отступы, радиусы — задаётся этим файлом;
+// экраны не переопределяют токены точечно, иначе тема расползлась бы
+// по файлам и перестала быть единой.
 //
-// Приложение тёмное. Светлая схема Aura остаётся нетронутой: тёмные значения
-// живут в `colorScheme.dark` и включаются классом `.dark` на `html`.
-// База текста — 16 px; в PrimeVue 4 размеры шрифта компонентов заданы в их
-// собственных стилях, поэтому шкала 28/18/15/14/13 применяется в разметке
+// Вид — рабочий инструмент, а не витрина: тёплая бумажная подложка, белые
+// панели, тонкие линии, почти монохромная типографика. Акцент тёмно-зелёный
+// и появляется только там, где нужно действие или выбор; красный оставлен
+// ошибкам. База текста — 16 px; шкала 28/18/15/14/13 применяется в разметке
 // экранов, а пресет отвечает за цвета, отступы, радиусы и состояния.
 
 import { definePreset } from "@primeuix/themes";
@@ -20,9 +21,9 @@ export const FONT_MONO = '"Cascadia Code", "Consolas", monospace';
 /**
  * Пресет ToolBox.
  *
- * Шкала `surface` подобрана под тёмную схему: `surface.900` — фон рабочей
- * области, `800` — поверхность панели, `600` — граница, `950` — фон полей.
- * Светлые ступени (0–400) достаются тексту и вторичным подписям.
+ * `surface.0` — панели, `50` — подложка блоков, `100` — наведение,
+ * `200` — линии, `300` — усиленная линия поля, `400–600` — вторичный текст,
+ * `800` — основной текст. Тёмные ступени нужны только редким акцентам.
  */
 export const toolboxPreset = definePreset(Aura, {
   primitive: {
@@ -31,13 +32,13 @@ export const toolboxPreset = definePreset(Aura, {
       xs: "4px",
       sm: "6px",
       md: "8px",
-      lg: "12px",
-      xl: "16px",
+      lg: "10px",
+      xl: "14px",
     },
   },
   semantic: {
-    transitionDuration: "0.15s",
-    disabledOpacity: "0.55",
+    transitionDuration: "0.12s",
+    disabledOpacity: "0.5",
     focusRing: {
       width: "2px",
       style: "solid",
@@ -45,18 +46,19 @@ export const toolboxPreset = definePreset(Aura, {
       offset: "2px",
       shadow: "none",
     },
+    // Тёмно-зелёный акцент: тот же тон, что у знака ToolBox, без второго цвета.
     primary: {
-      50: "#eef3ff",
-      100: "#dbe5ff",
-      200: "#bed1ff",
-      300: "#96b4ff",
-      400: "#6f97ff",
-      500: "#5b8cff",
-      600: "#4a79e6",
-      700: "#3a63c4",
-      800: "#2e4f9e",
-      900: "#263f7c",
-      950: "#16224a",
+      50: "#edf5f0",
+      100: "#d6e9dd",
+      200: "#aed3bc",
+      300: "#7fb797",
+      400: "#4f9772",
+      500: "#265a41",
+      600: "#1e4834",
+      700: "#183a2a",
+      800: "#122c20",
+      900: "#0a1a13",
+      950: "#06120c",
     },
     // Отступы полей кратны 8: от них наследуются кнопки и списки.
     formField: {
@@ -74,32 +76,123 @@ export const toolboxPreset = definePreset(Aura, {
       },
     },
     colorScheme: {
-      dark: {
+      light: {
         surface: {
-          0: "#f7f9fc",
-          50: "#eef1f6",
-          100: "#e2e6ee",
-          200: "#cdd3df",
-          300: "#aeb6c6",
-          400: "#8791a5",
-          500: "#3a4150",
-          600: "#2a2f3a",
-          700: "#1e222b",
-          800: "#181b22",
-          900: "#111318",
-          950: "#0d0f13",
-        },
-        primary: {
-          color: "#5b8cff",
-          contrastColor: "#0b1020",
-          hoverColor: "#7aa1ff",
-          activeColor: "#4a79e6",
+          0: "#ffffff",
+          50: "#fafaf8",
+          100: "#f4f4f1",
+          200: "#e7e5e2",
+          300: "#d6d3cf",
+          400: "#a8a29e",
+          500: "#6b6560",
+          600: "#57534e",
+          700: "#44403c",
+          800: "#292524",
+          900: "#1c1917",
+          950: "#0c0a09",
         },
         text: {
-          color: "#e7eaf0",
-          hoverColor: "#f2f5fa",
-          mutedColor: "#9aa3b2",
-          hoverMutedColor: "#b4bccb",
+          color: "{surface.800}",
+          hoverColor: "{surface.900}",
+          mutedColor: "{surface.500}",
+          hoverMutedColor: "{surface.600}",
+        },
+        content: {
+          background: "{surface.0}",
+          hoverBackground: "{surface.100}",
+          borderColor: "{surface.200}",
+          color: "{text.color}",
+          hoverColor: "{text.hover.color}",
+        },
+        highlight: {
+          background: "{primary.50}",
+          focusBackground: "{primary.100}",
+          color: "{primary.700}",
+          focusColor: "{primary.800}",
+        },
+        formField: {
+          background: "{surface.0}",
+          disabledBackground: "{surface.100}",
+          filledBackground: "{surface.50}",
+          filledHoverBackground: "{surface.100}",
+          filledFocusBackground: "{surface.0}",
+          borderColor: "{surface.300}",
+          hoverBorderColor: "{surface.400}",
+          focusBorderColor: "{primary.color}",
+          invalidBorderColor: "{red.700}",
+          color: "{surface.800}",
+          disabledColor: "{surface.400}",
+          placeholderColor: "{surface.500}",
+          invalidPlaceholderColor: "{red.700}",
+          floatLabelColor: "{surface.500}",
+          floatLabelFocusColor: "{primary.600}",
+          floatLabelActiveColor: "{surface.500}",
+          floatLabelInvalidColor: "{red.700}",
+          iconColor: "{surface.500}",
+          shadow: "none",
+        },
+        overlay: {
+          select: {
+            background: "{surface.0}",
+            borderColor: "{surface.200}",
+            color: "{text.color}",
+          },
+          popover: {
+            background: "{surface.0}",
+            borderColor: "{surface.200}",
+            color: "{text.color}",
+          },
+          modal: {
+            background: "{surface.0}",
+            borderColor: "{surface.200}",
+            color: "{text.color}",
+          },
+        },
+        list: {
+          option: {
+            focusBackground: "{surface.100}",
+            selectedBackground: "{primary.50}",
+            selectedFocusBackground: "{primary.100}",
+            color: "{text.color}",
+            focusColor: "{text.hover.color}",
+            selectedColor: "{primary.700}",
+            selectedFocusColor: "{primary.800}",
+            icon: {
+              color: "{surface.400}",
+              focusColor: "{surface.500}",
+            },
+          },
+          optionGroup: {
+            background: "transparent",
+            color: "{text.muted.color}",
+          },
+        },
+        navigation: {
+          item: {
+            focusBackground: "{surface.100}",
+            activeBackground: "{surface.100}",
+            color: "{text.color}",
+            focusColor: "{text.hover.color}",
+            activeColor: "{text.hover.color}",
+            icon: {
+              color: "{surface.400}",
+              focusColor: "{surface.500}",
+              activeColor: "{surface.500}",
+            },
+          },
+          submenuLabel: {
+            background: "transparent",
+            color: "{text.muted.color}",
+          },
+          submenuIcon: {
+            color: "{surface.400}",
+            focusColor: "{surface.500}",
+            activeColor: "{surface.500}",
+          },
+        },
+        mask: {
+          background: "rgba(28, 25, 23, 0.32)",
+          color: "{surface.200}",
         },
       },
     },

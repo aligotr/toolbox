@@ -341,7 +341,7 @@ watch(
 <style scoped>
 .dns-table {
   min-width: 0;
-  border: 1px solid var(--p-surface-700);
+  border: 1px solid var(--ag-border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -401,7 +401,7 @@ watch(
 }
 
 .dns-table__verdict--diff {
-  color: var(--p-orange-400);
+  color: var(--ag-warn);
 }
 
 .dns-table__type {
@@ -447,28 +447,23 @@ watch(
 }
 
 .cell__status {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
 }
 
 .cell__status--ok {
-  color: var(--p-green-400);
+  color: var(--ag-ok);
 }
 
 .cell__status--nodata,
 .cell__status--nxdomain,
-.cell__status--cancelled {
+.cell__status--cancelled,
+.cell__status--pending {
   color: var(--p-text-muted-color);
 }
 
-.cell__status--pending {
-  color: var(--p-primary-color);
-}
-
 .cell__status--timeout {
-  color: var(--p-orange-400);
+  color: var(--ag-warn);
 }
 
 .cell__status--servfail,
@@ -477,7 +472,7 @@ watch(
 .cell__status--notimp,
 .cell__status--offline,
 .cell__status--bad_response {
-  color: var(--p-red-400);
+  color: var(--ag-danger);
 }
 
 .cell__value {
@@ -529,10 +524,8 @@ watch(
 }
 
 .details__status {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
 }
 
 .details__answers {
@@ -576,11 +569,11 @@ watch(
 }
 
 .dns-table :deep(.dns-row--diff > td) {
-  background: color-mix(in srgb, var(--p-surface-950) 70%, var(--p-orange-400) 30%);
+  background: color-mix(in srgb, var(--ag-warn) 7%, transparent);
 }
 
 .dns-table :deep(.dns-row--diff > td:first-child) {
-  box-shadow: inset 3px 0 0 var(--p-orange-400);
+  box-shadow: inset 3px 0 0 var(--ag-warn);
 }
 
 .dns-table :deep(.dns-row--highlight > td) {
@@ -589,7 +582,7 @@ watch(
 
 @keyframes dns-row-flash {
   from {
-    background: color-mix(in srgb, var(--p-surface-800) 40%, var(--p-primary-color) 60%);
+    background: color-mix(in srgb, var(--p-primary-color) 10%, transparent);
   }
   to {
     background: transparent;

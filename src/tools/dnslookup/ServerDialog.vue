@@ -192,7 +192,7 @@ function remove(serverId: string): void {
   align-items: center;
   gap: 12px;
   padding: 8px 8px 8px 16px;
-  border: 1px solid var(--p-surface-700);
+  border: 1px solid var(--ag-border);
   border-radius: 6px;
 }
 
@@ -240,7 +240,7 @@ function remove(serverId: string): void {
   align-items: flex-start;
   gap: 8px;
   margin: 0;
-  color: var(--p-red-400);
+  color: var(--ag-danger);
   font-size: 13px;
 }
 </style>

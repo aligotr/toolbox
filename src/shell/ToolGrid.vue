@@ -69,7 +69,7 @@ function cellKey(columnIndex: number, toolIndex: number): string {
 }
 
 .grid__column + .grid__column {
-  border-left: 1px solid var(--p-surface-700);
+  border-left: 1px solid var(--ag-border);
 }
 
 .grid__cell {
@@ -80,7 +80,7 @@ function cellKey(columnIndex: number, toolIndex: number): string {
 }
 
 .grid__cell + .grid__cell {
-  border-top: 1px solid var(--p-surface-700);
+  border-top: 1px solid var(--ag-border);
 }
 
 .grid__unknown {

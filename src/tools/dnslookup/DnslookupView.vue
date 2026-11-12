@@ -15,7 +15,6 @@ import InputText from "primevue/inputtext";
 import MultiSelect from "primevue/multiselect";
 import Popover from "primevue/popover";
 import Select from "primevue/select";
-import Tag from "primevue/tag";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, ref, watch } from "vue";
 import type { ToolCellProps } from "../../contracts/tools";
@@ -31,7 +30,7 @@ import {
 import type { RecordType } from "./types";
 import { useDnslookup } from "./useDnslookup";
 
-type TagSeverity = "secondary" | "success" | "info" | "warn" | "danger";
+type BadgeTone = "muted" | "ok" | "danger";
 
 const props = defineProps<ToolCellProps>();
 const confirm = useConfirm();
@@ -89,11 +88,11 @@ function plural(count: number, one: string, few: string, many: string): string {
   return many;
 }
 
-const badge = computed<{ text: string; severity: TagSeverity }>(() => {
-  if (session.status.run.loading) return { text: "идёт проверка", severity: "info" };
-  if (session.status.run.error) return { text: "ошибка", severity: "danger" };
-  if (session.rows.length > 0) return { text: "готов", severity: "secondary" };
-  return { text: "пусто", severity: "secondary" };
+const badge = computed<{ text: string; tone: BadgeTone }>(() => {
+  if (session.status.run.loading) return { text: "идёт проверка", tone: "muted" };
+  if (session.status.run.error) return { text: "ошибка", tone: "danger" };
+  if (session.rows.length > 0) return { text: "готов", tone: "ok" };
+  return { text: "пусто", tone: "muted" };
 });
 
 const placeholder = computed(() =>
@@ -233,7 +232,10 @@ async function exportCsv(): Promise<void> {
           резолвером, расхождения видны сразу.
         </p>
       </div>
-      <Tag :value="badge.text" :severity="badge.severity" />
+      <span class="dns__badge">
+        <i class="dns__badge-dot" :class="`dns__badge-dot--${badge.tone}`" />
+        {{ badge.text }}
+      </span>
     </header>
 
     <div class="dns__toolbar">
@@ -484,6 +486,31 @@ async function exportCsv(): Promise<void> {
   font-size: 15px;
 }
 
+.dns__badge {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  color: var(--p-text-muted-color);
+  font-size: 13px;
+}
+
+.dns__badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.dns__badge-dot--ok {
+  background: var(--ag-ok);
+}
+
+.dns__badge-dot--danger {
+  background: var(--ag-danger);
+}
+
 .dns__toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -567,7 +594,7 @@ async function exportCsv(): Promise<void> {
 }
 
 .dns__error {
-  color: var(--p-red-400);
+  color: var(--ag-danger);
 }
 
 .dns__hint {

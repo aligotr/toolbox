@@ -114,9 +114,9 @@ onMounted(() => {
   flex-direction: column;
   gap: 4px;
   padding: 16px;
-  border: 1px solid var(--p-surface-700);
+  border: 1px solid var(--ag-border);
   border-radius: 8px;
-  background: var(--p-surface-900);
+  background: var(--ag-surface);
 }
 
 .app__fact dt {
@@ -145,7 +145,7 @@ onMounted(() => {
 
 .app__error {
   margin: 0;
-  color: var(--p-red-300);
+  color: var(--ag-danger);
   font-size: 13px;
   line-height: 1.45;
 }

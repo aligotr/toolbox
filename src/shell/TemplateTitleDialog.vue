@@ -111,7 +111,7 @@ function close(): void {
 
 .title-dialog__error {
   margin: 0;
-  color: var(--p-red-300);
+  color: var(--ag-danger);
   font-size: 13px;
   line-height: 1.45;
 }

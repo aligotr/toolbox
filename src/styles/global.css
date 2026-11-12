@@ -1,23 +1,27 @@
-/* Базовые стили документа (ADR 0009, ADR 0012).
+/* Базовые стили документа (ADR 0009, ADR 0012, ADR 0019).
    Оформление компонентов живёт в пресете PrimeVue и в стилях компонентов;
    здесь только то, что относится к самому документу.
 
    Токены `--ag-*` — именные токены проекта. Их используют собственные стили
-   оболочки и сетки; значения совпадают с пресетом `src/ui/theme.ts`. */
+   оболочки и служебные элементы; значения совпадают с пресетом
+   `src/ui/theme.ts`. Схема одна — светлая, переключения нет. */
 
 :root {
-  --ag-bg: #111318;
-  --ag-surface: #181b22;
-  --ag-surface-2: #1e222b;
-  --ag-border: #2a2f3a;
-  --ag-text: #e7eaf0;
-  --ag-text-muted: #9aa3b2;
-  --ag-accent: #5b8cff;
-  --ag-accent-hover: #7aa1ff;
-  --ag-danger: #e05d5d;
+  --ag-bg: #f4f4f1;
+  --ag-surface: #ffffff;
+  --ag-surface-2: #fafaf8;
+  --ag-border: #e7e5e2;
+  --ag-border-strong: #d6d3cf;
+  --ag-hover: #ecebe7;
+  --ag-text: #292524;
+  --ag-text-muted: #6b6560;
+  --ag-ok: #15803d;
+  --ag-warn: #b45309;
+  --ag-danger: #b91c1c;
   --ag-font-ui: "Inter", "Segoe UI", system-ui, sans-serif;
   --ag-font-mono: "Cascadia Code", "Consolas", monospace;
 
+  color-scheme: light;
   color: var(--ag-text);
   background: var(--ag-bg);
   font-family: var(--ag-font-ui);
@@ -46,14 +50,11 @@ body {
 code {
   font-family: var(--ag-font-mono);
   font-size: 0.9em;
-  padding: 1px 5px;
-  border-radius: 5px;
-  background: var(--ag-surface-2);
-  color: #c7d3f5;
+  color: var(--ag-text);
 }
 
 ::selection {
-  background: rgb(91 140 255 / 35%);
+  background: rgb(38 90 65 / 18%);
 }
 
 ::-webkit-scrollbar {
@@ -62,13 +63,13 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a2f3a;
+  background: var(--ag-border-strong);
   border-radius: 6px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a4150;
+  background: var(--ag-text-muted);
   background-clip: content-box;
 }

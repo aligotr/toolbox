@@ -29,10 +29,9 @@ window.addEventListener("unhandledrejection", (event) => {
   reportToLog(`необработанный reject: ${reason}`);
 });
 
-// Тёмная схема включается классом, а не системной настройкой: приложение
-// всегда тёмное, и `prefers-color-scheme` не должен менять его вид.
-document.documentElement.classList.add("dark");
-
+// Схема одна — светлая (ADR 0019). Системная настройка и класс на `html`
+// не должны менять вид: `darkModeSelector: false` отключает тёмные значения
+// пресета целиком.
 const app = createApp(App);
 
 app.use(PrimeVue, {
@@ -40,7 +39,7 @@ app.use(PrimeVue, {
   theme: {
     preset: toolboxPreset,
     options: {
-      darkModeSelector: ".dark",
+      darkModeSelector: false,
       cssLayer: false,
     },
   },

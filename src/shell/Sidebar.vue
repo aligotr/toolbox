@@ -191,8 +191,8 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
   width: var(--ag-sidebar-width);
   padding: 8px;
   overflow: hidden;
-  background: var(--p-surface-950);
-  border-right: 1px solid var(--p-surface-700);
+  background: var(--ag-bg);
+  border-right: 1px solid var(--ag-border);
 }
 
 .sidebar--rail {
@@ -230,7 +230,6 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
   color: var(--p-primary-contrast-color);
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.5px;
 }
 
 .brand__name {
@@ -256,7 +255,7 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 }
 
 .sidebar__toggle:hover {
-  background: var(--p-surface-800);
+  background: var(--ag-hover);
   color: var(--p-text-color);
 }
 
@@ -268,11 +267,9 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 }
 
 .nav__label {
-  padding: 8px 8px 0;
+  padding: 16px 8px 0;
   color: var(--p-text-muted-color);
   font-size: 13px;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
 }
 
 .nav__item {
@@ -293,12 +290,12 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 }
 
 .nav__item:hover {
-  background: var(--p-surface-800);
+  background: var(--ag-hover);
   color: var(--p-text-color);
 }
 
 .nav__item--active {
-  background: var(--p-surface-800);
+  background: var(--ag-surface);
   color: var(--p-text-color);
 }
 
@@ -340,7 +337,7 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
   min-width: 0;
   margin-top: auto;
   padding-top: 8px;
-  border-top: 1px solid var(--p-surface-700);
+  border-top: 1px solid var(--ag-border);
 }
 
 .sidebar--rail .sidebar__profile {
@@ -365,7 +362,7 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 }
 
 .profile-button:hover {
-  background: var(--p-surface-800);
+  background: var(--ag-hover);
   color: var(--p-text-color);
 }
 

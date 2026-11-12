@@ -88,7 +88,7 @@ onUnmounted(() => {
   display: flex;
   height: 100%;
   min-height: 0;
-  background: var(--p-surface-900);
+  background: var(--ag-bg);
   color: var(--p-text-color);
 }
 

@@ -40,6 +40,6 @@ const activeTab = computed(
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  background: var(--p-surface-900);
+  background: var(--ag-surface);
 }
 </style>

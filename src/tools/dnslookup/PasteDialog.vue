@@ -140,7 +140,7 @@ function submit(run: boolean): void {
   align-items: flex-start;
   gap: 8px;
   margin: 0;
-  color: var(--p-red-400);
+  color: var(--ag-danger);
   font-size: 13px;
 }
 </style>

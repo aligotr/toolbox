@@ -167,9 +167,9 @@ function useTemplate(template: Template): void {
   flex-direction: column;
   gap: 8px;
   padding: 8px;
-  border: 1px solid var(--p-surface-700);
+  border: 1px solid var(--ag-border);
   border-radius: 8px;
-  background: var(--p-surface-900);
+  background: var(--ag-surface);
   color: var(--p-text-color);
   font: inherit;
   text-align: left;
@@ -177,7 +177,7 @@ function useTemplate(template: Template): void {
 }
 
 .template-card:hover {
-  border-color: var(--p-primary-color);
+  border-color: var(--ag-border-strong);
 }
 
 .template-card:focus-visible {
@@ -192,7 +192,7 @@ function useTemplate(template: Template): void {
   height: 48px;
   padding: 8px;
   border-radius: 6px;
-  background: var(--p-surface-950);
+  background: var(--ag-surface-2);
 }
 
 .template-card__column {
@@ -207,7 +207,7 @@ function useTemplate(template: Template): void {
   flex: 1 1 0;
   min-height: 4px;
   border-radius: 2px;
-  background: var(--p-surface-600);
+  background: var(--p-surface-300);
 }
 
 .template-card__text {
@@ -242,9 +242,9 @@ function useTemplate(template: Template): void {
   align-items: flex-start;
   gap: 16px;
   padding: 16px;
-  border: 1px solid var(--p-surface-700);
+  border: 1px solid var(--ag-border);
   border-radius: 8px;
-  background: var(--p-surface-900);
+  background: var(--ag-surface);
   color: var(--p-text-color);
   font: inherit;
   text-align: left;
@@ -252,7 +252,7 @@ function useTemplate(template: Template): void {
 }
 
 .tool-card:hover {
-  border-color: var(--p-primary-color);
+  border-color: var(--ag-border-strong);
 }
 
 .tool-card:focus-visible {
@@ -292,7 +292,7 @@ function useTemplate(template: Template): void {
 }
 
 .empty__note--error {
-  color: var(--p-red-300);
+  color: var(--ag-danger);
 }
 
 .empty__status {
@@ -302,7 +302,7 @@ function useTemplate(template: Template): void {
   min-width: 0;
   margin-top: auto;
   padding-top: 16px;
-  border-top: 1px solid var(--p-surface-700);
+  border-top: 1px solid var(--ag-border);
   color: var(--p-text-muted-color);
   font-size: 13px;
 }
@@ -312,11 +312,11 @@ function useTemplate(template: Template): void {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--p-green-400);
+  background: var(--ag-ok);
 }
 
 .status__dot--off {
-  background: var(--p-surface-500);
+  background: var(--p-surface-400);
 }
 
 .status__path {

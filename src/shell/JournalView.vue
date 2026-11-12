@@ -11,7 +11,6 @@
 import Button from "primevue/button";
 import DataView from "primevue/dataview";
 import SelectButton from "primevue/selectbutton";
-import Tag from "primevue/tag";
 import { computed, ref } from "vue";
 import { clearJournal, journal, type JournalKind } from "../core/journal";
 
@@ -28,18 +27,18 @@ const KIND_OPTIONS: KindOption[] = [
   { label: "Ошибка", value: "error" },
 ];
 
-/** Вид записи в цвете метки PrimeVue. */
-const KIND_SEVERITY: Record<JournalKind, "secondary" | "success" | "danger"> = {
-  info: "secondary",
-  result: "success",
-  error: "danger",
-};
-
 /** Вид записи человеческим словом. */
 const KIND_LABELS: Record<JournalKind, string> = {
   info: "факт",
   result: "ответ",
   error: "ошибка",
+};
+
+/** Вид записи — только цвет точки: ошибка красная, ответ зелёный, факт серый. */
+const KIND_TONE: Record<JournalKind, "muted" | "ok" | "danger"> = {
+  info: "muted",
+  result: "ok",
+  error: "danger",
 };
 
 const selectedKinds = ref<JournalKind[]>(KIND_OPTIONS.map((option) => option.value));
@@ -90,11 +89,10 @@ function time(at: number): string {
         <ul class="journal__list">
           <li v-for="entry in visibleEntries" :key="entry.id" class="journal__row">
             <time class="journal__time">{{ time(entry.at) }}</time>
-            <Tag
-              class="journal__kind"
-              :value="KIND_LABELS[entry.kind]"
-              :severity="KIND_SEVERITY[entry.kind]"
-            />
+            <span class="journal__kind">
+              <i class="journal__dot" :class="`journal__dot--${KIND_TONE[entry.kind]}`" />
+              {{ KIND_LABELS[entry.kind] }}
+            </span>
             <span class="journal__source">{{ entry.source }}</span>
             <span class="journal__text">{{ entry.text }}</span>
           </li>
@@ -178,7 +176,7 @@ function time(at: number): string {
   align-items: baseline;
   gap: 16px;
   padding: 8px 0;
-  border-bottom: 1px solid var(--p-surface-800);
+  border-bottom: 1px solid var(--ag-border);
   font-size: 14px;
 }
 
@@ -191,10 +189,29 @@ function time(at: number): string {
 }
 
 .journal__kind {
+  display: flex;
   flex-shrink: 0;
-  justify-content: center;
-  width: 72px;
+  align-items: center;
+  gap: 8px;
+  width: 88px;
+  color: var(--p-text-muted-color);
   font-size: 13px;
+}
+
+.journal__dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--p-surface-400);
+}
+
+.journal__dot--ok {
+  background: var(--ag-ok);
+}
+
+.journal__dot--danger {
+  background: var(--ag-danger);
 }
 
 .journal__source {

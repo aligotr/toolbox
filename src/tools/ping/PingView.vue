@@ -11,21 +11,20 @@
 
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
-import Tag from "primevue/tag";
 import { computed, onMounted, onUnmounted } from "vue";
 import { usePing } from "./usePing";
 
-/** Кто действует на этапе: подпись и ключ оформления. */
-const ACTORS: Record<string, { key: string; label: string }> = {
-  "ask.start": { key: "ui", label: "интерфейс" },
-  "route.decode": { key: "bus", label: "шина" },
-  "queue.enqueue": { key: "bus", label: "шина" },
-  "dispatch.begin": { key: "dispatcher", label: "диспетчер" },
-  "handler.invoke": { key: "module", label: "модуль" },
-  "publish(reply)": { key: "module", label: "модуль" },
-  "correlation.match": { key: "dispatcher", label: "диспетчер" },
-  "sink.emit": { key: "bridge", label: "мост" },
-  "ask.reply": { key: "ui", label: "интерфейс" },
+/** Кто действует на этапе: подпись этапа. */
+const ACTORS: Record<string, string> = {
+  "ask.start": "интерфейс",
+  "route.decode": "шина",
+  "queue.enqueue": "шина",
+  "dispatch.begin": "диспетчер",
+  "handler.invoke": "модуль",
+  "publish(reply)": "модуль",
+  "correlation.match": "диспетчер",
+  "sink.emit": "мост",
+  "ask.reply": "интерфейс",
 };
 
 /** Пояснение к этапу — то, ради чего прогон вообще показывается. */
@@ -50,7 +49,7 @@ const EXPLANATIONS: Record<string, string> = {
     "Ожидающий проснулся и вернул значение в интерфейс. Поток команды снова работает — с тем же значением, которое принесло событие-ответ.",
 };
 
-type TagSeverity = "secondary" | "success" | "info" | "warn" | "danger" | "contrast";
+type BadgeTone = "muted" | "ok" | "danger";
 
 const {
   echo,
@@ -70,12 +69,12 @@ const {
 } = usePing();
 
 /** Короткое состояние для метки в шапке. */
-const badge = computed<{ text: string; severity: TagSeverity }>(() => {
-  if (status.ping.loading) return { text: "идёт запрос", severity: "info" };
-  if (status.trace.loading) return { text: "идёт прогон", severity: "info" };
-  if (complete.value) return { text: "путь записан", severity: "success" };
-  if (reply.value) return { text: "ответ получен", severity: "success" };
-  return { text: "готов", severity: "secondary" };
+const badge = computed<{ text: string; tone: BadgeTone }>(() => {
+  if (status.ping.loading) return { text: "идёт запрос", tone: "muted" };
+  if (status.trace.loading) return { text: "идёт прогон", tone: "muted" };
+  if (complete.value) return { text: "путь записан", tone: "ok" };
+  if (reply.value) return { text: "ответ получен", tone: "ok" };
+  return { text: "готов", tone: "muted" };
 });
 
 const outcomeText = computed(() => {
@@ -91,10 +90,10 @@ const outcomeText = computed(() => {
   }
 });
 
-const outcomeSeverity = computed<TagSeverity>(() => {
+const outcomeTone = computed<string>(() => {
   switch (chain.value?.outcome) {
     case "ok":
-      return "success";
+      return "ok";
     case "timeout":
       return "warn";
     default:
@@ -102,8 +101,8 @@ const outcomeSeverity = computed<TagSeverity>(() => {
   }
 });
 
-function actorOf(name: string): { key: string; label: string } {
-  return ACTORS[name] ?? { key: "bus", label: "ядро" };
+function actorOf(name: string): string {
+  return ACTORS[name] ?? "ядро";
 }
 
 function explanationOf(name: string): string {
@@ -133,7 +132,10 @@ onUnmounted(() => {
           <code>core:pong</code>.
         </p>
       </div>
-      <Tag :value="badge.text" :severity="badge.severity" />
+      <span class="ping__badge">
+        <i class="ping__badge-dot" :class="`ping__badge-dot--${badge.tone}`" />
+        {{ badge.text }}
+      </span>
     </header>
 
     <div class="ping__form">
@@ -205,7 +207,9 @@ onUnmounted(() => {
         <div class="route__meta">
           <span>{{ chain.stages.length }} этапов</span>
           <span>{{ chain.elapsed_ms.toFixed(1) }} мс</span>
-          <Tag :value="outcomeText" :severity="outcomeSeverity" />
+          <span class="route__outcome" :class="`route__outcome--${outcomeTone}`">
+            {{ outcomeText }}
+          </span>
         </div>
       </header>
 
@@ -224,11 +228,8 @@ onUnmounted(() => {
               type="button"
               @click="select(row.index ?? 0)"
             >
-              <span
-                class="route__actor"
-                :class="`route__actor--${actorOf(row.stage?.name ?? '').key}`"
-              >
-                {{ actorOf(row.stage?.name ?? "").label }}
+              <span class="route__actor">
+                {{ actorOf(row.stage?.name ?? "") }}
               </span>
               <code class="route__name">{{ row.stage?.name }}</code>
               <span class="route__time">{{ (row.stage?.at_ms ?? 0).toFixed(2) }} мс</span>
@@ -281,6 +282,31 @@ onUnmounted(() => {
   font-size: 15px;
 }
 
+.ping__badge {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  color: var(--p-text-muted-color);
+  font-size: 13px;
+}
+
+.ping__badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ping__badge-dot--ok {
+  background: var(--ag-ok);
+}
+
+.ping__badge-dot--danger {
+  background: var(--ag-danger);
+}
+
 .ping__lead code,
 .ping__note code {
   font-family: var(--ag-font-mono);
@@ -303,7 +329,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   margin: 0;
-  color: var(--p-red-400);
+  color: var(--ag-danger);
   font-size: 14px;
 }
 
@@ -338,9 +364,9 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 4px;
   padding: 16px;
-  border: 1px solid var(--p-surface-700);
+  border: 1px solid var(--ag-border);
   border-radius: 8px;
-  background: var(--p-surface-950);
+  background: var(--ag-surface-2);
 }
 
 .reply__fact dt {
@@ -394,8 +420,6 @@ onUnmounted(() => {
   padding: 8px 0;
   color: var(--p-text-muted-color);
   font-size: 13px;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
 }
 
 .route__wait {
@@ -422,12 +446,12 @@ onUnmounted(() => {
 }
 
 .route__stage:hover {
-  background: var(--p-surface-800);
+  background: var(--ag-surface-2);
 }
 
 .route__stage--active {
-  border-color: var(--p-surface-600);
-  background: var(--p-surface-800);
+  border-color: var(--ag-border);
+  background: var(--p-surface-100);
 }
 
 .route__stage:focus-visible {
@@ -442,20 +466,21 @@ onUnmounted(() => {
   font-size: 13px;
 }
 
-.route__actor--ui {
-  color: var(--p-primary-color);
+.route__outcome {
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.route__actor--dispatcher {
-  color: var(--p-orange-400);
+.route__outcome--ok {
+  color: var(--ag-ok);
 }
 
-.route__actor--module {
-  color: var(--p-green-400);
+.route__outcome--warn {
+  color: var(--ag-warn);
 }
 
-.route__actor--bridge {
-  color: var(--p-purple-400);
+.route__outcome--danger {
+  color: var(--ag-danger);
 }
 
 .route__name {
@@ -481,9 +506,9 @@ onUnmounted(() => {
 
 .route__explain {
   padding: 16px;
-  border: 1px solid var(--p-surface-700);
+  border: 1px solid var(--ag-border);
   border-radius: 8px;
-  background: var(--p-surface-950);
+  background: var(--ag-surface-2);
 }
 
 .route__explain-title {
