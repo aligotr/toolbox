@@ -214,7 +214,9 @@ async function exportCsv(): Promise<void> {
     exportNote.value =
       result.method === "clipboard"
         ? `Скачивание недоступно: CSV скопирован в буфер (${result.rows} строк)`
-        : `Экспортировано строк: ${result.rows} (копия в буфере)`;
+        : result.copied
+          ? `Экспортировано строк: ${result.rows} (копия в буфере)`
+          : `Экспортировано строк: ${result.rows}`;
   } catch (error) {
     exportNote.value = `Не удалось выгрузить CSV: ${String(error)}`;
   }

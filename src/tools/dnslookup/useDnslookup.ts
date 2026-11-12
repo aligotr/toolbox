@@ -681,8 +681,10 @@ function buildCsv(
   return `\uFEFF${csv}`;
 }
 
-/** Отдаёт CSV файлом; копия в буфер делается всегда как запасной путь. */
-async function saveCsv(csv: string): Promise<"download" | "clipboard"> {
+/** Отдаёт CSV файлом; копия в буфер — запасной путь, её успех важен. */
+async function saveCsv(
+  csv: string,
+): Promise<{ method: "download" | "clipboard"; copied: boolean }> {
   let downloaded = false;
   try {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -701,17 +703,19 @@ async function saveCsv(csv: string): Promise<"download" | "clipboard"> {
 
   // Блокировка скачивания в окне приложения не всегда даёт исключение,
   // поэтому копия в буфер — не запасной обработчик, а постоянный шаг.
+  let copied = false;
   try {
     await navigator.clipboard.writeText(csv);
-  } catch (error) {
-    if (!downloaded) {
-      throw new Error(
-        `Не удалось сохранить CSV и скопировать его в буфер: ${String(error)}`,
-      );
-    }
+    copied = true;
+  } catch {
+    copied = false;
   }
 
-  return downloaded ? "download" : "clipboard";
+  if (!downloaded && !copied) {
+    throw new Error("Не удалось сохранить CSV и скопировать его в буфер");
+  }
+
+  return { method: downloaded ? "download" : "clipboard", copied };
 }
 
 /** Сравнивает статус и множество значений; TTL, регистр и точка не важны. */
@@ -894,6 +898,7 @@ export function useDnslookup(props: ToolCellProps) {
       removeCustomServer(session, serverId),
     exportCsv: async (): Promise<{
       method: "download" | "clipboard";
+      copied: boolean;
       rows: number;
     }> => {
       const csv = buildCsv(
@@ -902,14 +907,18 @@ export function useDnslookup(props: ToolCellProps) {
         columnServers.value,
         verdicts.value,
       );
-      const method = await saveCsv(csv);
+      const saved = await saveCsv(csv);
       write(
         JOURNAL_SOURCE,
         "result",
         `CSV выгружен: ${visibleRows.value.length} строк, ` +
-          (method === "download" ? "файл" : "буфер обмена"),
+          (saved.method === "download" ? "файл" : "буфер обмена"),
       );
-      return { method, rows: visibleRows.value.length };
+      return {
+        method: saved.method,
+        copied: saved.copied,
+        rows: visibleRows.value.length,
+      };
     },
     runAll: (): void => {
       void runRows(
