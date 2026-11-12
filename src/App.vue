@@ -16,20 +16,12 @@ import type { UnlistenFn } from "@tauri-apps/api/event";
 import { subscribeEvent } from "./core/bus";
 import { write } from "./core/journal";
 import { sortedModules } from "./core/modules";
+import { loadStartupStatus, type StartupStatus } from "./core/startup";
 import { uiModules } from "./modules";
 
 const modules = sortedModules(uiModules);
 const activeId = ref(modules[0]?.id ?? "");
 const activeModule = computed(() => modules.find((item) => item.id === activeId.value));
-
-/** Ответ Rust о том, можно ли работать и где искать лог. */
-interface StartupStatus {
-  blocked: boolean;
-  root: string;
-  reason: string | null;
-  log_path: string;
-  log_level: string;
-}
 
 /**
  * Отказ шины, о котором иначе не узнать: паника обработчика, потеря данных
@@ -57,14 +49,8 @@ async function exitApp() {
 
 onMounted(async () => {
   // Проверка записи в папку программы выполняется до старта шины.
-  // Статуса нет только вне Tauri — тогда считаем запуск удавшимся.
-  try {
-    startup.value = await invoke<StartupStatus>("startup_status");
-  } catch {
-    startup.value = null;
-  } finally {
-    ready.value = true;
-  }
+  startup.value = await loadStartupStatus();
+  ready.value = true;
 
   if (startup.value?.blocked) return;
 
@@ -82,7 +68,7 @@ onUnmounted(() => {
   <div v-if="startup?.blocked" class="blocked">
     <section class="blocked__card">
       <span class="blocked__mark">!</span>
-      <h1>Не могу писать в папку программы</h1>
+      <h1>{{ startup.title ?? "Не могу начать работу" }}</h1>
       <p class="blocked__lead">
         ToolBox хранит настройки и лог рядом с исполняемым файлом — в этом смысл
         переносимости. Без записи приложение не работает правильно, поэтому

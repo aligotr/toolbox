@@ -76,8 +76,9 @@ impl LogLevel {
         match rank {
             1 => Self::Error,
             2 => Self::Warn,
-            3 => Self::Info,
-            _ => Self::Debug,
+            4 => Self::Debug,
+            // Неизвестное значение атомарного поля — не повод прятать отказы.
+            _ => Self::Info,
         }
     }
 }

@@ -39,7 +39,6 @@ impl Module for AppModule {
             // Обработчик не создаёт её сам, а получает из контейнера —
             // это и есть инъекция зависимостей.
             let app = deps.require::<AppHandle>();
-            log::info!("Команда app.quit: завершение приложения");
             app.exit(0);
         })
         .expect("не удалось зарегистрировать команду app.quit");

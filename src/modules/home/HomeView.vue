@@ -10,21 +10,13 @@ import { onMounted, onUnmounted, ref } from "vue";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { ask, invokeCommand, subscribeEvent } from "../../core/bus";
-import { journal, write } from "../../core/journal";
+import { journal, write, writeOnce } from "../../core/journal";
+import { loadStartupStatus, type StartupStatus } from "../../core/startup";
 
 interface Pong {
   echo: string | null;
   at: number;
   correlation_id: string | null;
-}
-
-/** Ответ Rust о запуске: путь к логу и действующий уровень. */
-interface StartupStatus {
-  blocked: boolean;
-  root: string;
-  reason: string | null;
-  log_path: string;
-  log_level: string;
 }
 
 /** Уровни ровно те, что понимает ядро: `trace` нет по решению (ADR 0004). */
@@ -41,12 +33,6 @@ const logLevel = ref<string>("info");
 let savedLevel = "info";
 
 let unlisten: UnlistenFn | null = null;
-
-// Подписка создаётся при каждом открытии экрана и снимается при уходе —
-// иначе обработчик пережил бы компонент. Но сам факт «подписка активна»
-// относится к запуску приложения, а не к посещению экрана: писать его
-// в журнал каждый раз — значит забивать историю одной и той же строкой.
-let announced = false;
 
 async function ping() {
   busy.value = true;
@@ -105,12 +91,10 @@ async function applyLevel() {
 
 onMounted(async () => {
   // Путь к логу и действующий уровень нужны для подписи внизу экрана.
-  try {
-    startup.value = await invoke<StartupStatus>("startup_status");
+  startup.value = await loadStartupStatus();
+  if (startup.value) {
     logLevel.value = startup.value.log_level;
     savedLevel = startup.value.log_level;
-  } catch {
-    // Вне Tauri статуса нет: подпись просто останется пустой.
   }
 
   // Параллельная подписка на то же событие-ответ демонстрирует,
@@ -118,10 +102,9 @@ onMounted(async () => {
   unlisten = await subscribeEvent<Pong>("core:pong", (payload) => {
     write("мост", "info", `перехвачено событие core:pong: at=${payload.at}`);
   });
-  if (!announced) {
-    announced = true;
-    write("мост", "info", "подписка на core:pong активна");
-  }
+  // Подписка создаётся при каждом открытии экрана, но факт «она активна»
+  // относится к запуску приложения: пишем его один раз за сессию.
+  writeOnce("core-pong-subscription", "мост", "info", "подписка на core:pong активна");
 });
 
 onUnmounted(() => {

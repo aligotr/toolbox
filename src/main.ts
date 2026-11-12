@@ -9,7 +9,7 @@ import "./styles/global.css";
 // а пользователь видит только «ничего не произошло» (ADR 0004).
 // Ошибку самой отправки не повторяем — иначе получилась бы рекурсия.
 function reportToLog(message: string): void {
-  void invoke("log_frontend", { level: "error", message }).catch(() => {});
+  void invoke("log_frontend", { message }).catch(() => {});
 }
 
 window.addEventListener("error", (event) => {

@@ -1,4 +1,4 @@
-//! Настройки приложения (ADR 0005).
+﻿//! Настройки приложения (ADR 0005).
 //!
 //! Пока в файле одно поле — `log_level`. Полноценный сервис настроек появится,
 //! когда полей станет больше одного: схема, спроектированная под один ключ,
@@ -34,7 +34,7 @@ impl Default for Settings {
 /// Замечания возвращаются отдельно, а не пишутся сразу: на этом шаге лог ещё
 /// не запущен — неизвестно, куда писать. Их записывает `lib.rs` после
 /// инициализации логгера, уже уровнем `warn`.
-pub struct Loaded {
+pub struct LoadedSettings {
     pub settings: Settings,
     pub warnings: Vec<String>,
 }
@@ -43,13 +43,13 @@ pub struct Loaded {
 ///
 /// Битое поле не роняет приложение: берётся значение по умолчанию, а причина
 /// попадает в список замечаний.
-pub fn load(path: &Path) -> Loaded {
+pub fn load(path: &Path) -> LoadedSettings {
     let mut warnings = Vec::new();
 
     let raw = match fs::read_to_string(path) {
         Ok(raw) => raw,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            return Loaded {
+            return LoadedSettings {
                 settings: Settings::default(),
                 warnings,
             };
@@ -59,7 +59,7 @@ pub fn load(path: &Path) -> Loaded {
                 "не удалось прочитать '{}': {error}; взяты значения по умолчанию",
                 path.display()
             ));
-            return Loaded {
+            return LoadedSettings {
                 settings: Settings::default(),
                 warnings,
             };
@@ -73,7 +73,7 @@ pub fn load(path: &Path) -> Loaded {
                 "'{}' не разобран как JSON: {error}; взяты значения по умолчанию",
                 path.display()
             ));
-            return Loaded {
+            return LoadedSettings {
                 settings: Settings::default(),
                 warnings,
             };
@@ -105,7 +105,7 @@ pub fn load(path: &Path) -> Loaded {
         }
     };
 
-    Loaded {
+    LoadedSettings {
         settings: Settings { log_level },
         warnings,
     }

@@ -123,16 +123,21 @@ struct Inner {
 
 /// Сообщает об отказе, который иначе остался бы незамеченным.
 ///
-/// Пишет причину в файловый лог и отправляет короткую строку в журнал
-/// событием [`ERROR_TOPIC`]. Событие уходит напрямую в приёмник, минуя
-/// очередь: если отказала сама шина, отправлять через неё бессмысленно.
-fn report_fault(inner: &Inner, source: &str, text: impl Into<String>) {
-    let text = text.into();
-    log::error!("{text}");
+/// Подробность пишется в файловый лог, короткая строка — в журнал событием
+/// [`ERROR_TOPIC`] (ADR 0008: в журнале нет места для причины). Событие уходит
+/// напрямую в приёмник, минуя очередь: если отказала сама шина, отправлять
+/// через неё бессмысленно.
+fn report_fault(
+    inner: &Inner,
+    source: &str,
+    short: impl Into<String>,
+    detail: impl Into<String>,
+) {
+    log::error!("{}", detail.into());
     let Some(sink) = inner.sink.read().expect("sink lock").clone() else {
         return;
     };
-    if let Ok(payload) = serde_json::to_value(BusError::new(source, text)) {
+    if let Ok(payload) = serde_json::to_value(BusError::new(source, short)) {
         sink.emit(ERROR_TOPIC, payload);
     }
 }
@@ -221,6 +226,7 @@ impl MessageBus {
                         report_fault(
                             &inner,
                             E::TOPIC,
+                            "событие не удалось сериализовать",
                             format!("событие '{}' не сериализовано: {error}", E::TOPIC),
                         );
                     }
@@ -253,6 +259,7 @@ impl MessageBus {
                 report_fault(
                     &self.inner,
                     E::TOPIC,
+                    "событие не удалось сериализовать",
                     format!("событие '{}' не сериализовано: {error}", E::TOPIC),
                 );
                 Value::Null
@@ -452,14 +459,11 @@ impl MessageBus {
         };
         let sink = self.inner.sink.read().expect("sink lock").clone();
         if let Some(sink) = sink {
-            match serde_json::to_value(&chain) {
-                Ok(payload) => sink.emit(trace::TRACE_TOPIC, payload),
-                Err(error) => report_fault(
-                    &self.inner,
-                    trace::TRACE_TOPIC,
-                    format!("цепочка не сериализована: {error}"),
-                ),
-            }
+            // Трасса — учебные данные, в файловый лог они не пишутся (ADR 0004).
+            // Потеря сериализации здесь теоретична, поэтому прежнего поведения
+            // с пустой нагрузкой достаточно.
+            let payload = serde_json::to_value(&chain).unwrap_or(Value::Null);
+            sink.emit(trace::TRACE_TOPIC, payload);
         }
     }
 
@@ -595,7 +599,8 @@ impl MessageBus {
                     report_fault(
                         &self.inner,
                         topic,
-                        format!("событие '{topic}' не встало в очередь: диспетчер остановлен"),
+                        "потеряно: приёмник недоступен",
+                        format!("событие '{topic}' не встало в очередь: диспетчер завершился"),
                     );
                 }
             }
@@ -653,6 +658,7 @@ fn dispatch(inner: &Inner, queued: QueuedEvent) {
             report_fault(
                 inner,
                 queued.topic,
+                "обработчик упал",
                 format!("обработчик события '{}' завершился паникой", queued.topic),
             );
         }
@@ -676,6 +682,22 @@ fn dispatch(inner: &Inner, queued: QueuedEvent) {
             Some(reply_topic) if !is_reply => format!("промах: ждём '{reply_topic}'"),
             Some(_) => "совпало".to_owned(),
         };
+
+        // Обе строки — `debug`: на штатной работе промах бывает у каждого
+        // запроса (ждём ответ, а не запрос), а ответ после таймаута — редкость,
+        // но не отказ приложения (ADR 0008).
+        match waiting_topic.as_deref() {
+            None => log::debug!(
+                "событие '{}' с correlation_id {id} никто не ждёт: ответ после таймаута?",
+                queued.topic
+            ),
+            Some(reply_topic) if !is_reply => log::debug!(
+                "промах корреляции: для {id} ждём '{reply_topic}', пришло '{}'",
+                queued.topic
+            ),
+            Some(_) => {}
+        }
+
         inner
             .recorder
             .stage_of(&queued.payload, "correlation.match", queued.topic, Some(detail));
@@ -876,10 +898,8 @@ mod tests {
         bus.stop();
 
         assert_eq!(report["source"], TestRequest::TOPIC);
-        assert!(
-            report["text"].as_str().unwrap_or_default().contains("паникой"),
-            "в отчёте должна быть причина: {report}"
-        );
+        // В журнал идёт короткая строка: подробности остаются в файловом логе.
+        assert_eq!(report["text"], "обработчик упал");
     }
 
     /// Событие, которое не сериализуется, тоже оставляет след в журнале.
@@ -896,10 +916,7 @@ mod tests {
 
         let report = wait_for_bus_error(&rx);
         assert_eq!(report["source"], BadEvent::TOPIC);
-        assert!(
-            report["text"].as_str().unwrap_or_default().contains("не сериализовано"),
-            "в отчёте должна быть причина: {report}"
-        );
+        assert_eq!(report["text"], "событие не удалось сериализовать");
     }
 
     /// Событие, сериализация которого заведомо не удаётся.

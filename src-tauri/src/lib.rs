@@ -49,10 +49,22 @@ impl EventSink for TauriSink {
     }
 }
 
+/// Почему приложение не может начать работу.
+///
+/// Заголовок у каждого отказа свой: «не могу писать в папку» и «лог не
+/// запустился» требуют разных действий, а общий заголовок заставил бы
+/// пользователя выискивать различие в тексте причины.
+struct StartupError {
+    /// Заголовок блокирующего экрана.
+    title: &'static str,
+    /// Что именно не удалось — с путями и текстом ошибки.
+    reason: String,
+}
+
 /// Состояние, которое читают команды интерфейса после запуска.
 struct Runtime {
-    /// `Some` — писать некуда: модули не запущены, нужен блокирующий экран.
-    blocked: Option<String>,
+    /// `Some` — работать нельзя: модули не запущены, нужен блокирующий экран.
+    blocked: Option<StartupError>,
     /// Папка программы.
     root: String,
     /// `None`, если лог не запустился.
@@ -68,6 +80,8 @@ struct Runtime {
 #[derive(Serialize)]
 struct StartupStatus {
     blocked: bool,
+    /// Заголовок блокирующего экрана; `None`, если запуск удался.
+    title: Option<&'static str>,
     root: String,
     reason: Option<String>,
     log_path: String,
@@ -82,13 +96,15 @@ fn boot(app: &AppHandle) -> Runtime {
     // 1. Портативный корень — папка программы. Отката в системные каталоги нет.
     let storage = match Storage::detect() {
         Ok(storage) => storage,
-        Err(reason) => return blocked(app, "неизвестна", reason),
+        Err(reason) => {
+            return blocked(app, "неизвестна", "Не удалось определить папку программы", reason)
+        }
     };
     let root = storage.root().display().to_string();
 
     // Проверка записи делом — до всего остального.
     if let Err(reason) = storage.probe() {
-        return blocked(app, &root, reason);
+        return blocked(app, &root, "Не могу писать в папку программы", reason);
     }
     let storage = Arc::new(storage);
 
@@ -98,7 +114,9 @@ fn boot(app: &AppHandle) -> Runtime {
     // 3. Логирование: с этого момента отказы оставляют след.
     let logger = match logging::init(storage.logs_dir(), loaded.settings.log_level) {
         Ok(logger) => logger,
-        Err(reason) => return blocked(app, &root, reason),
+        Err(reason) => {
+            return blocked(app, &root, "Не удалось запустить файловый лог", reason)
+        }
     };
     logging::install_panic_hook(logger.clone());
 
@@ -114,9 +132,11 @@ fn boot(app: &AppHandle) -> Runtime {
     }
 
     // Файл настроек создаём сразу: иначе непонятно, что и где править.
+    // Отказ записи — провал приложения, а не замечание: настройки больше
+    // негде взять, и пользователь должен найти причину в логе.
     if !storage.settings_path().exists() {
         if let Err(error) = settings::save(&storage.settings_path(), &loaded.settings) {
-            log::warn!("{error}");
+            log::error!("{error}");
         }
     }
 
@@ -149,10 +169,10 @@ fn boot(app: &AppHandle) -> Runtime {
 ///
 /// Шина всё равно публикуется — пустая и незапущенная. Иначе команды моста
 /// падали бы на отсутствующем состоянии вместо внятного отказа.
-fn blocked(app: &AppHandle, root: &str, reason: String) -> Runtime {
+fn blocked(app: &AppHandle, root: &str, title: &'static str, reason: String) -> Runtime {
     app.manage(MessageBus::new(Deps::new()));
     Runtime {
-        blocked: Some(reason),
+        blocked: Some(StartupError { title, reason }),
         root: root.to_owned(),
         logger: None,
         storage: None,
@@ -213,8 +233,12 @@ fn startup_status(runtime: State<'_, Runtime>) -> StartupStatus {
     let settings = runtime.settings.lock().expect("settings lock");
     StartupStatus {
         blocked: runtime.blocked.is_some(),
+        title: runtime.blocked.as_ref().map(|error| error.title),
         root: runtime.root.clone(),
-        reason: runtime.blocked.clone(),
+        reason: runtime
+            .blocked
+            .as_ref()
+            .map(|error| error.reason.clone()),
         log_path: runtime
             .logger
             .as_ref()
@@ -245,26 +269,25 @@ fn set_log_level(runtime: State<'_, Runtime>, level: String) -> Result<(), Strin
     // не должны разойтись с файлом.
     if let Err(error) = settings::save(&storage.settings_path(), &settings) {
         settings.log_level = previous;
+        log::error!("{error}");
         return Err(error);
     }
     drop(settings);
 
     logger.set_level(level);
-    log::info!("Уровень лога изменён на '{level}'");
+    log::debug!("Уровень лога изменён на '{level}'");
     Ok(())
 }
 
 /// Запись в лог из интерфейса. Нужна для ошибок JS и необработанных отказов:
 /// иначе они не оставляют следа вообще (ADR 0004).
+///
+/// Уровень не принимается параметром: перечень того, что пишет интерфейс,
+/// закрыт и состоит только из ошибок. Лишний параметр рано или поздно
+/// превратился бы в информационные сообщения из UI.
 #[tauri::command]
-fn log_frontend(level: String, message: String) -> Result<(), String> {
-    match level.as_str() {
-        "error" => log::error!("интерфейс: {message}"),
-        "warn" => log::warn!("интерфейс: {message}"),
-        "info" => log::info!("интерфейс: {message}"),
-        "debug" => log::debug!("интерфейс: {message}"),
-        other => return Err(format!("Неизвестный уровень лога: '{other}'")),
-    }
+fn log_frontend(message: String) -> Result<(), String> {
+    log::error!("интерфейс: {message}");
     Ok(())
 }
 
