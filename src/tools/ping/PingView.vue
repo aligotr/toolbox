@@ -63,7 +63,7 @@ const {
   complete,
   checkBus,
   showPath,
-  select,
+  toggle,
   showAll,
   start,
   stop,
@@ -120,8 +120,9 @@ function keepExplain(el: Element | ComponentPublicInstance | null, index: number
 
 /** Клик по этапу: пояснение раскрывается под ним и не остаётся за краем. */
 async function choose(index: number): Promise<void> {
-  select(index);
+  toggle(index);
   await nextTick();
+  if (!selectedStage.value) return;
   explainBoxes.get(index)?.scrollIntoView({ block: "nearest" });
 }
 

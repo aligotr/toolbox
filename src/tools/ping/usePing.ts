@@ -171,16 +171,16 @@ export function usePing() {
     }
   }
 
-  /** Выбор этапа вручную останавливает показ: пользователь читает сам. */
-  function select(index: number): void {
+  /** Клик по этапу: раскрывает пояснение, повторный клик сворачивает его. */
+  function toggle(index: number): void {
     stopTimer();
-    selected.value = index;
+    selected.value = selected.value === index ? null : index;
   }
 
   function showAll(): void {
     stopTimer();
     shown.value = chain.value?.stages.length ?? 0;
-    selected.value = (chain.value?.stages.length ?? 0) - 1;
+    selected.value = null;
   }
 
   /** Границы сообщений и настоящее ожидание — по записанным временам. */
@@ -232,7 +232,7 @@ export function usePing() {
     complete,
     checkBus,
     showPath,
-    select,
+    toggle,
     showAll,
     start,
     stop,
