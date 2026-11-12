@@ -1,0 +1,17 @@
+# Зависимости и сборка интерфейса
+node_modules/
+dist/
+
+# Артефакты Rust
+src-tauri/target/
+
+# Рабочие файлы приложения: лог живёт рядом с исполняемым файлом,
+# то есть в dev-сборке — внутри target. Настройки туда же.
+logs/
+src-tauri/gen/schemas/
+
+# Местные файлы редакторов и ОС
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
