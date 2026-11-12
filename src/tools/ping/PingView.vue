@@ -11,7 +11,8 @@
 
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
-import { computed, onMounted, onUnmounted } from "vue";
+import { computed, nextTick, onMounted, onUnmounted } from "vue";
+import type { ComponentPublicInstance } from "vue";
 import { usePing } from "./usePing";
 
 /** Кто действует на этапе: подпись этапа. */
@@ -107,6 +108,21 @@ function actorOf(name: string): string {
 
 function explanationOf(name: string): string {
   return EXPLANATIONS[name] ?? "";
+}
+
+/** Раскрытые карточки по номеру этапа: `ref` внутри `v-for` собирается в массив. */
+const explainBoxes = new Map<number, HTMLElement>();
+
+function keepExplain(el: Element | ComponentPublicInstance | null, index: number): void {
+  if (el instanceof HTMLElement) explainBoxes.set(index, el);
+  else explainBoxes.delete(index);
+}
+
+/** Клик по этапу: пояснение раскрывается под ним и не остаётся за краем. */
+async function choose(index: number): Promise<void> {
+  select(index);
+  await nextTick();
+  explainBoxes.get(index)?.scrollIntoView({ block: "nearest" });
 }
 
 function formatTime(at: number): string {
@@ -210,6 +226,14 @@ onUnmounted(() => {
           <span class="route__outcome" :class="`route__outcome--${outcomeTone}`">
             {{ outcomeText }}
           </span>
+          <Button
+            v-if="!complete"
+            label="Показать всё"
+            icon="pi pi-angle-double-down"
+            text
+            size="small"
+            @click="showAll"
+          />
         </div>
       </header>
 
@@ -221,31 +245,38 @@ onUnmounted(() => {
             ожидание ответа {{ (row.ms ?? 0).toFixed(1) }} мс · диспетчер свободен
           </li>
 
-          <li v-else>
+          <li v-else class="route__item">
             <button
               class="route__stage"
               :class="{ 'route__stage--active': selectedStage === row.stage }"
               type="button"
-              @click="select(row.index ?? 0)"
+              :aria-expanded="selectedStage === row.stage"
+              @click="choose(row.index ?? 0)"
             >
               <span class="route__actor">
                 {{ actorOf(row.stage?.name ?? "") }}
               </span>
               <code class="route__name">{{ row.stage?.name }}</code>
               <span class="route__time">{{ (row.stage?.at_ms ?? 0).toFixed(2) }} мс</span>
+              <i
+                class="pi route__chevron"
+                :class="selectedStage === row.stage ? 'pi-angle-up' : 'pi-angle-down'"
+                aria-hidden="true"
+              />
             </button>
+
+            <article
+              v-if="selectedStage === row.stage"
+              :ref="(el) => keepExplain(el, row.index ?? 0)"
+              class="route__explain"
+            >
+              <p class="route__explain-text">
+                {{ explanationOf(row.stage?.name ?? "") }}
+              </p>
+            </article>
           </li>
         </template>
       </ol>
-
-      <div v-if="!complete" class="route__actions">
-        <Button label="Показать всё" text size="small" @click="showAll" />
-      </div>
-
-      <article v-if="selectedStage" class="route__explain">
-        <h3 class="route__explain-title">{{ selectedStage.name }}</h3>
-        <p class="route__explain-text">{{ explanationOf(selectedStage.name) }}</p>
-      </article>
     </section>
   </section>
 </template>
@@ -429,6 +460,11 @@ onUnmounted(() => {
   text-align: center;
 }
 
+.route__item {
+  display: flex;
+  flex-direction: column;
+}
+
 .route__stage {
   display: flex;
   align-items: center;
@@ -449,9 +485,12 @@ onUnmounted(() => {
   background: var(--ag-surface-2);
 }
 
-.route__stage--active {
+.route__stage--active,
+.route__stage--active:hover {
   border-color: var(--ag-border);
-  background: var(--p-surface-100);
+  border-bottom-color: transparent;
+  border-radius: 8px 8px 0 0;
+  background: var(--ag-surface);
 }
 
 .route__stage:focus-visible {
@@ -500,28 +539,24 @@ onUnmounted(() => {
   font-size: 13px;
 }
 
-.route__actions {
-  display: flex;
+.route__chevron {
+  flex-shrink: 0;
+  color: var(--p-text-muted-color);
+  font-size: 12px;
 }
 
 .route__explain {
   padding: 16px;
   border: 1px solid var(--ag-border);
-  border-radius: 8px;
-  background: var(--ag-surface-2);
-}
-
-.route__explain-title {
-  margin: 0 0 8px;
-  font-family: var(--ag-font-mono);
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: 0 0 8px 8px;
+  background: var(--ag-surface);
+  scroll-margin-block: 16px;
 }
 
 .route__explain-text {
   margin: 0;
-  color: var(--p-text-muted-color);
+  color: var(--p-text-color);
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.6;
 }
 </style>
