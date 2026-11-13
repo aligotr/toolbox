@@ -28,7 +28,7 @@ export const QUERY_LIMIT = 500;
 export const SERVER_LIMIT = 8;
 export const ATTEMPT_SECONDS = 3;
 
-/** Сколько выбранных серверов показывается в поле списка: остальные — счётчиком. */
+/** Сколько выбранных серверов показывается в поле списка: остальные — многоточием. */
 export const SERVER_LABEL_LIMIT = 2;
 
 /** Ключ сеанса, если оболочка не передала `cellKey` (одиночный запуск). */
@@ -60,6 +60,7 @@ export const JOURNAL_SOURCE = "dnslookup";
 /** Преднастроенные серверы: в профиль не пишутся. */
 export const PRESET_SERVERS: ServerOption[] = [
   { id: SYSTEM_SERVER_ID, label: "Системный", address: null, kind: "system" },
+  { id: "yandex", label: "YandexDNS", address: "77.88.8.8", kind: "preset" },
   { id: "google", label: "Google", address: "8.8.8.8", kind: "preset" },
   { id: "cloudflare", label: "Cloudflare", address: "1.1.1.1", kind: "preset" },
   { id: "quad9", label: "Quad9", address: "9.9.9.9", kind: "preset" },
@@ -67,11 +68,7 @@ export const PRESET_SERVERS: ServerOption[] = [
 ];
 
 /** Серверы нового сеанса. */
-export const DEFAULT_SERVER_IDS: string[] = [
-  SYSTEM_SERVER_ID,
-  "google",
-  "cloudflare",
-];
+export const DEFAULT_SERVER_IDS: string[] = [SYSTEM_SERVER_ID, "yandex"];
 
 /** Подписи статусов: проводное значение → текст в таблице. */
 export const STATUS_LABELS: Record<CellStatus, string> = {

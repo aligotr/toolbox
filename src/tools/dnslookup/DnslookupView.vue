@@ -10,6 +10,7 @@
 
 import Button from "primevue/button";
 import Checkbox from "primevue/checkbox";
+import Chip from "primevue/chip";
 import InputGroup from "primevue/inputgroup";
 import InputText from "primevue/inputtext";
 import MultiSelect from "primevue/multiselect";
@@ -97,6 +98,25 @@ const systemHint = computed<string>(() => {
 const compareHint = computed(() =>
   hasSystem.value ? "нужен ещё сервер" : "нужен системный сервер",
 );
+
+/** Первые выбранные серверы в поле: остальные скрыты за многоточием. */
+const shownServerIds = computed(() => session.servers.slice(0, SERVER_LABEL_LIMIT));
+
+/** Сколько выбранных серверов не поместилось в поле. */
+const overflowServerCount = computed(() =>
+  Math.max(session.servers.length - SERVER_LABEL_LIMIT, 0),
+);
+
+/** Подпись сервера по идентификатору: своего сервера может уже не быть. */
+function serverLabel(serverId: string): string {
+  return availableServers.value.find((server) => server.id === serverId)?.label ?? serverId;
+}
+
+/** Крестик чипа снимает выбор и не открывает список. */
+function unselectServer(serverId: string, event: Event): void {
+  event.stopPropagation();
+  session.servers = session.servers.filter((id) => id !== serverId);
+}
 
 function focusInput(): void {
   addBox.value?.querySelector<HTMLInputElement>("input")?.focus();
@@ -235,12 +255,30 @@ async function exportCsv(): Promise<void> {
           option-label="label"
           option-value="id"
           display="chip"
-          :max-selected-labels="SERVER_LABEL_LIMIT"
-          selected-items-label="Выбрано: {0}"
           :selection-limit="SERVER_LIMIT"
           placeholder="Выберите серверы"
           aria-label="DNS-серверы"
-        />
+        >
+          <template #value="{ placeholder }">
+            <template v-if="session.servers.length > 0">
+              <Chip
+                v-for="serverId in shownServerIds"
+                :key="serverId"
+                :label="serverLabel(serverId)"
+                removable
+                @remove="unselectServer(serverId, $event)"
+              />
+              <span
+                v-if="overflowServerCount > 0"
+                class="dns__servers-more"
+                :aria-label="`и ещё ${overflowServerCount}`"
+              >
+                …
+              </span>
+            </template>
+            <template v-else>{{ placeholder }}</template>
+          </template>
+        </MultiSelect>
         <Button
           v-tooltip.top="'Свои DNS-серверы'"
           icon="pi pi-pencil"
@@ -251,6 +289,15 @@ async function exportCsv(): Promise<void> {
           @click="openServers"
         />
       </InputGroup>
+
+      <Button
+        :label="running ? 'Остановить' : 'Проверить'"
+        :icon="running ? 'pi pi-stop' : 'pi pi-play'"
+        :severity="running ? 'secondary' : undefined"
+        size="small"
+        :disabled="!running && !canRun"
+        @click="toggleRun"
+      />
     </div>
 
     <p v-if="session.status.servers.error" class="dns__error" role="alert">
@@ -363,17 +410,6 @@ async function exportCsv(): Promise<void> {
       @delete="removeRow"
     />
 
-    <footer class="dns__footer">
-      <Button
-        :label="running ? 'Остановить' : 'Проверить'"
-        :icon="running ? 'pi pi-stop' : 'pi pi-play'"
-        :severity="running ? 'secondary' : undefined"
-        size="small"
-        :disabled="!running && !canRun"
-        @click="toggleRun"
-      />
-    </footer>
-
     <p v-if="exportNote" class="dns__hint" aria-live="polite">
       <i class="pi pi-file" aria-hidden="true" />
       {{ exportNote }}
@@ -474,6 +510,11 @@ async function exportCsv(): Promise<void> {
   padding: 0 var(--ag-space-xs);
 }
 
+/* Многоточие вместо скрытых серверов: поле не растягивается на весь список. */
+.dns__servers-more {
+  color: var(--p-text-muted-color);
+}
+
 .dns__filters {
   display: flex;
   flex-wrap: wrap;
@@ -520,14 +561,6 @@ async function exportCsv(): Promise<void> {
 
 .dns__hint {
   color: var(--p-text-muted-color);
-}
-
-.dns__footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--ag-space-lg);
 }
 
 .columns {

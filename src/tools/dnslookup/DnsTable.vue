@@ -213,7 +213,7 @@ watch(
       >
         <template #header>
           <span class="dns-table__domains">
-            Домены
+            <span>Домены</span>
             <sup v-if="totalRows > 0" class="dns-table__count">{{ totalRows }}</sup>
           </span>
         </template>
@@ -501,7 +501,6 @@ watch(
 }
 
 .dns-table__count {
-  margin-left: 2px;
   color: var(--p-text-muted-color);
   font-size: 0.75em;
   font-weight: 600;
