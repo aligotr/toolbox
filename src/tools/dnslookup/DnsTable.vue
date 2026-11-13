@@ -14,7 +14,7 @@
 import Button from "primevue/button";
 import Column from "primevue/column";
 import DataTable from "primevue/datatable";
-import { nextTick, ref, watch } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
 import PlainSelect from "../../ui/PlainSelect.vue";
 import { useRowDrag } from "../../ui/useRowDrag";
 import {
@@ -71,6 +71,44 @@ useRowDrag(root, {
   grab: ".dns-table__domain",
   count: () => props.rows.length,
   reorder: (from, to) => emit("reorder", from, to),
+});
+
+/** Ширина закреплённых «Доменов»: от неё стоит отступ закреплённой «Тип». */
+const domainWidth = ref("0px");
+
+// Отступ закреплённой колонки PrimeVue считает один раз, при появлении
+// ячеек, и при изменении ширины окна оставляет прежним: «Тип» уезжает на
+// старую ширину «Доменов», оставляет зазор после них и накрывает первую
+// серверную колонку. Ширина передаётся в стили при каждом изменении
+// размера таблицы, поэтому отступ всегда равен текущей ширине «Доменов».
+let resizeFrame = 0;
+
+/** Пересчёт ширины «Доменов» по шапке таблицы. */
+function syncFrozenOffset(): void {
+  const header = root.value?.querySelector<HTMLElement>(
+    "thead th.p-datatable-frozen-column",
+  );
+  const width = header ? `${header.getBoundingClientRect().width}px` : "0px";
+  if (width !== domainWidth.value) domainWidth.value = width;
+}
+
+const resizeObserver = new ResizeObserver(() => {
+  cancelAnimationFrame(resizeFrame);
+  resizeFrame = requestAnimationFrame(syncFrozenOffset);
+});
+
+onMounted(() => {
+  if (root.value) resizeObserver.observe(root.value);
+  void nextTick(syncFrozenOffset);
+});
+
+// Ширина колонок меняется и без ресайза: смена набора серверов или строк
+// переставляет их. После каждой такой перерисовки отступ сверяется заново.
+onUpdated(syncFrozenOffset);
+
+onBeforeUnmount(() => {
+  resizeObserver.disconnect();
+  cancelAnimationFrame(resizeFrame);
 });
 
 /** Результат ячейки по паре «строка × сервер». */
@@ -204,7 +242,12 @@ watch(
 </script>
 
 <template>
-  <div ref="root" class="dns-table" :class="{ 'dns-table--empty': rows.length === 0 }">
+  <div
+    ref="root"
+    class="dns-table"
+    :class="{ 'dns-table--empty': rows.length === 0 }"
+    :style="{ '--dns-domain-width': domainWidth }"
+  >
     <DataTable
       v-model:expanded-rows="expandedRows"
       :value="rows"
@@ -418,6 +461,12 @@ watch(
 .dns-table :deep(.p-datatable-table-container) {
   flex: 1 1 auto;
   min-height: 0;
+}
+
+/* Закреплённая «Тип» стоит вплотную к «Доменам»: отступ равен их текущей
+   ширине (см. `syncFrozenOffset`), а не той, что была при появлении ячеек. */
+.dns-table :deep(.p-datatable-frozen-column + .p-datatable-frozen-column) {
+  inset-inline-start: var(--dns-domain-width, 0px) !important;
 }
 
 /* Пустое состояние занимает всю таблицу: сообщение стоит по центру.
