@@ -517,6 +517,37 @@ function removeRow(session: DnsSession, rowId: string): void {
   if (session.highlightRowId === rowId) session.highlightRowId = null;
 }
 
+/**
+ * Переставляет строку в видимом списке.
+ *
+ * Строки, скрытые фильтром, остаются на своих местах: меняются только места
+ * видимых, поэтому фильтр не перетасовывает то, чего пользователь не видит.
+ */
+function moveRow(
+  session: DnsSession,
+  visible: DnsRow[],
+  from: number,
+  to: number,
+): void {
+  if (from === to) return;
+  const ordered = [...visible];
+  const moved = ordered.splice(from, 1)[0];
+  if (!moved) return;
+  ordered.splice(to, 0, moved);
+
+  const visibleIds = new Set(ordered.map((row) => row.id));
+  const slots: number[] = [];
+  session.rows.forEach((row, index) => {
+    if (visibleIds.has(row.id)) slots.push(index);
+  });
+
+  const rows = [...session.rows];
+  ordered.forEach((row, index) => {
+    rows[slots[index]] = row;
+  });
+  session.rows = rows;
+}
+
 /** Подсвечивает строку-дубликат на короткое время. */
 function highlightRow(session: DnsSession, rowId: string): void {
   // Сброс нужен, если та же строка подсвечивается повторно: иначе значение
@@ -873,6 +904,8 @@ export function useDnslookup(props: ToolCellProps) {
       void runRows(session, [rowId]);
     },
     removeRow: (rowId: string): void => removeRow(session, rowId),
+    moveRow: (from: number, to: number): void =>
+      moveRow(session, visibleRows.value, from, to),
     refreshServers: (): void => {
       void refreshServers(session);
     },

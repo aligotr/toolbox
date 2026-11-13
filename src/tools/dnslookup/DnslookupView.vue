@@ -57,6 +57,7 @@ const {
   clear,
   changeType,
   removeRow,
+  moveRow,
   refreshServers,
 } = useDnslookup(props);
 
@@ -408,6 +409,7 @@ async function exportCsv(): Promise<void> {
       @type-changed="changeType"
       @repeat="runRow"
       @delete="removeRow"
+      @reorder="moveRow"
     />
 
     <p v-if="exportNote" class="dns__hint" aria-live="polite">
