@@ -156,7 +156,7 @@ watch(
 </script>
 
 <template>
-  <div ref="root" class="dns-table">
+  <div ref="root" class="dns-table" :class="{ 'dns-table--empty': rows.length === 0 }">
     <DataTable
       v-model:expanded-row-keys="expandedKeys"
       :value="rows"
@@ -339,19 +339,49 @@ watch(
 </template>
 
 <style scoped>
+/* Таблица растягивается на высоту, отданную панелью: шапка на месте,
+   прокручивается только тело. */
 .dns-table {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
   border: 1px solid var(--ag-border);
   border-radius: 8px;
   overflow: hidden;
 }
 
+.dns-table :deep(.p-datatable) {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dns-table :deep(.p-datatable-table-container) {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* Пустое состояние занимает всю таблицу: сообщение стоит по центру.
+   Строки с данными высоту не тянут — плотность не зависит от их числа. */
+.dns-table--empty :deep(.p-datatable-table) {
+  height: 100%;
+}
+
+.dns-table :deep(.p-datatable-empty-message > td) {
+  padding: 0;
+}
+
 .dns-table__empty {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
   gap: 8px;
+  height: 100%;
   padding: 32px 16px;
+  box-sizing: border-box;
   color: var(--p-text-muted-color);
   font-size: 14px;
 }

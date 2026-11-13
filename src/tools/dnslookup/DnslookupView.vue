@@ -73,6 +73,11 @@ const serverError = ref<string | null>(null);
 const exportNote = ref<string | null>(null);
 const columnMenu = ref<InstanceType<typeof Popover> | null>(null);
 
+/** Правка домена снимает прошлую ошибку добавления: сообщение не висит зря. */
+watch(draft, () => {
+  addError.value = null;
+});
+
 // Тип в поле добавления — значение по умолчанию для новых строк,
 // а не фильтр таблицы.
 watch(draftType, (value) => {
@@ -243,6 +248,7 @@ async function exportCsv(): Promise<void> {
         <InputGroup>
           <InputText
             v-model="draft"
+            size="small"
             :placeholder="placeholder"
             aria-label="Домен или IP-адрес"
             :disabled="running"
@@ -250,6 +256,7 @@ async function exportCsv(): Promise<void> {
           />
           <Select
             v-model="draftType"
+            size="small"
             :options="RECORD_TYPES"
             aria-label="Тип записи по умолчанию"
             :disabled="running"
@@ -257,6 +264,7 @@ async function exportCsv(): Promise<void> {
           <Button
             label="Добавить"
             icon="pi pi-plus"
+            size="small"
             :disabled="running"
             @click="submitRow"
           />
@@ -268,6 +276,7 @@ async function exportCsv(): Promise<void> {
         icon="pi pi-clipboard"
         severity="secondary"
         outlined
+        size="small"
         :disabled="running"
         @click="pasteOpen = true"
       />
@@ -281,6 +290,7 @@ async function exportCsv(): Promise<void> {
       <div class="dns__servers-row">
         <MultiSelect
           v-model="session.servers"
+          size="small"
           :options="availableServers"
           option-label="label"
           option-value="id"
@@ -295,6 +305,7 @@ async function exportCsv(): Promise<void> {
           icon="pi pi-server"
           severity="secondary"
           outlined
+          size="small"
           @click="openServers"
         />
       </div>
@@ -324,6 +335,7 @@ async function exportCsv(): Promise<void> {
       <InputText
         v-model="session.filters.search"
         class="dns__search"
+        size="small"
         placeholder="Поиск по домену"
         aria-label="Поиск по домену"
       />
@@ -333,6 +345,7 @@ async function exportCsv(): Promise<void> {
         option-label="label"
         option-value="value"
         class="dns__status"
+        size="small"
         aria-label="Фильтр по статусу"
       />
       <label class="dns__check">
@@ -352,6 +365,7 @@ async function exportCsv(): Promise<void> {
         icon="pi pi-table"
         severity="secondary"
         text
+        size="small"
         :disabled="selectedServers.length === 0"
         @click="toggleColumns"
       />
@@ -376,6 +390,7 @@ async function exportCsv(): Promise<void> {
     </div>
 
     <DnsTable
+      class="dns__table"
       :rows="visibleRows"
       :total-rows="session.rows.length"
       :servers="columnServers"
@@ -456,8 +471,15 @@ async function exportCsv(): Promise<void> {
 .dns {
   display: flex;
   flex-direction: column;
-  gap: 16px;
   min-width: 0;
+  min-height: 100%;
+  gap: 16px;
+}
+
+/* Таблица — главный блок: занимает всё свободное место, шапка не уезжает. */
+.dns__table {
+  flex: 1 1 0;
+  min-height: 200px;
 }
 
 .dns__head {
@@ -469,7 +491,9 @@ async function exportCsv(): Promise<void> {
 
 .dns__heading {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-width: 0;
   gap: 8px;
 }
 
@@ -481,7 +505,6 @@ async function exportCsv(): Promise<void> {
 
 .dns__lead {
   margin: 0;
-  max-width: 720px;
   color: var(--p-text-muted-color);
   font-size: 15px;
 }
@@ -519,7 +542,7 @@ async function exportCsv(): Promise<void> {
 }
 
 .dns__add {
-  flex: 1 1 360px;
+  flex: 0 1 520px;
   min-width: 0;
 }
 
@@ -529,7 +552,8 @@ async function exportCsv(): Promise<void> {
 }
 
 .dns__add :deep(.p-select) {
-  min-width: 104px;
+  flex: 0 0 84px;
+  min-width: 84px;
 }
 
 .dns__servers {
@@ -547,7 +571,7 @@ async function exportCsv(): Promise<void> {
 }
 
 .dns__servers-row :deep(.p-multiselect) {
-  flex: 1 1 360px;
+  flex: 0 1 520px;
   min-width: 0;
 }
 

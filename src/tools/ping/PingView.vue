@@ -156,6 +156,7 @@ onUnmounted(() => {
       <InputText
         v-model="echo"
         class="ping__input"
+        size="small"
         aria-label="Текст сообщения"
         placeholder="Текст для echo"
         :disabled="status.ping.loading || status.trace.loading"
@@ -164,6 +165,7 @@ onUnmounted(() => {
       <Button
         label="Проверить шину"
         icon="pi pi-bolt"
+        size="small"
         :loading="status.ping.loading"
         @click="checkBus"
       />
@@ -172,6 +174,7 @@ onUnmounted(() => {
         icon="pi pi-share-alt"
         severity="secondary"
         outlined
+        size="small"
         :loading="status.trace.loading"
         @click="showPath"
       />
@@ -287,7 +290,9 @@ onUnmounted(() => {
 
 .ping__heading {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-width: 0;
   gap: 8px;
 }
 
@@ -338,7 +343,7 @@ onUnmounted(() => {
 }
 
 .ping__input {
-  width: 240px;
+  width: 200px;
 }
 
 .ping__error {
