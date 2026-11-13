@@ -292,9 +292,10 @@ async function exportCsv(): Promise<void> {
       </InputGroup>
 
       <Button
+        class="dns__run"
         :label="running ? 'Остановить' : 'Проверить'"
         :icon="running ? 'pi pi-stop' : 'pi pi-play'"
-        :severity="running ? 'secondary' : undefined"
+        :severity="running ? 'contrast' : undefined"
         size="small"
         :disabled="!running && !canRun"
         @click="toggleRun"
@@ -501,20 +502,28 @@ async function exportCsv(): Promise<void> {
 }
 
 /* Кнопка своих серверов прижата к списку: вместе они читаются как один
-   контрол, как поле, тип и «Добавить» в строке ввода. Ширина — по
-   содержимому: чипы не обрезают крестик, но минимум поля сохраняется. */
+   контрол, как поле, тип и «Добавить» в строке ввода. Поле серверов —
+   гибкое место строки: оно забирает остаток ширины и уступает её кнопке
+   запуска, поэтому смена подписи не переносит строку целиком. */
 .dns__servers {
-  flex: 0 1 auto;
+  flex: 1 1 var(--ag-field-width);
+  width: auto;
   min-width: 0;
   max-width: 100%;
-  width: auto;
 }
 
 .dns__servers :deep(.p-multiselect) {
-  flex: 0 1 auto;
-  width: max-content;
-  min-width: var(--ag-field-width);
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
   max-width: 100%;
+}
+
+/* Кнопка запуска держит свою ширину: подпись не сжимается и не
+   переносится, когда поле серверов отдаёт или забирает место. */
+.dns__run {
+  flex: none;
+  white-space: nowrap;
 }
 
 /* Чипы компактнее: выбранные серверы влезают в общую ширину поля. */
