@@ -26,11 +26,10 @@ import {
   SERVER_LIMIT,
   STATUS_FILTERS,
   SYSTEM_SERVER_ID,
+  TOOL_HEADING,
 } from "./constants";
 import type { RecordType } from "./types";
 import { useDnslookup } from "./useDnslookup";
-
-type BadgeTone = "muted" | "ok" | "danger";
 
 const props = defineProps<ToolCellProps>();
 const confirm = useConfirm();
@@ -81,13 +80,6 @@ watch(draft, () => {
 // а не фильтр таблицы.
 watch(draftType, (value) => {
   session.defaultType = value;
-});
-
-const badge = computed<{ text: string; tone: BadgeTone }>(() => {
-  if (session.status.run.loading) return { text: "идёт проверка", tone: "muted" };
-  if (session.status.run.error) return { text: "ошибка", tone: "danger" };
-  if (session.rows.length > 0) return { text: "готов", tone: "ok" };
-  return { text: "пусто", tone: "muted" };
 });
 
 const placeholder = computed(() =>
@@ -215,19 +207,7 @@ async function exportCsv(): Promise<void> {
 
 <template>
   <section class="dns">
-    <header class="dns__head">
-      <div class="dns__heading">
-        <h1 class="dns__title">DNS</h1>
-        <p class="dns__lead">
-          Строки — домены, колонки — серверы. Ответы сравниваются с системным
-          резолвером, расхождения видны сразу.
-        </p>
-      </div>
-      <span class="dns__badge">
-        <i class="dns__badge-dot" :class="`dns__badge-dot--${badge.tone}`" />
-        {{ badge.text }}
-      </span>
-    </header>
+    <h1 class="dns__title">{{ TOOL_HEADING }}</h1>
 
     <div class="dns__toolbar">
       <div ref="addBox" class="dns__add">
@@ -275,26 +255,28 @@ async function exportCsv(): Promise<void> {
     </div>
 
     <div class="dns__servers-row">
-      <MultiSelect
-        v-model="session.servers"
-        size="small"
-        :options="availableServers"
-        option-label="label"
-        option-value="id"
-        display="chip"
-        :max-selected-labels="SERVER_LIMIT"
-        :selection-limit="SERVER_LIMIT"
-        placeholder="Выберите серверы"
-        aria-label="DNS-серверы"
-      />
-      <Button
-        label="Свой"
-        icon="pi pi-server"
-        severity="secondary"
-        outlined
-        size="small"
-        @click="openServers"
-      />
+      <InputGroup class="dns__servers-group">
+        <MultiSelect
+          v-model="session.servers"
+          size="small"
+          :options="availableServers"
+          option-label="label"
+          option-value="id"
+          display="chip"
+          :max-selected-labels="SERVER_LIMIT"
+          :selection-limit="SERVER_LIMIT"
+          placeholder="Выберите серверы"
+          aria-label="DNS-серверы"
+        />
+        <Button
+          label="Свой"
+          icon="pi pi-server"
+          severity="secondary"
+          outlined
+          size="small"
+          @click="openServers"
+        />
+      </InputGroup>
       <i
         v-if="systemHint"
         v-tooltip.top="systemHint"
@@ -473,63 +455,18 @@ async function exportCsv(): Promise<void> {
   flex: 0 1 auto;
 }
 
-.dns__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.dns__heading {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-  gap: 8px;
-}
-
+/* Заголовок обслуживает данные и не занимает больше строки. */
 .dns__title {
   margin: 0;
   font-size: 28px;
   line-height: 1.25;
 }
 
-.dns__lead {
-  margin: 0;
-  color: var(--p-text-muted-color);
-  font-size: 15px;
-}
-
-.dns__badge {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 8px;
-  padding-top: 8px;
-  color: var(--p-text-muted-color);
-  font-size: 13px;
-}
-
-.dns__badge-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.dns__badge-dot--ok {
-  background: var(--ag-ok);
-}
-
-.dns__badge-dot--danger {
-  background: var(--ag-danger);
-}
-
 .dns__toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 16px 24px;
+  gap: 8px;
 }
 
 .dns__add {
@@ -559,15 +496,22 @@ async function exportCsv(): Promise<void> {
   gap: 8px;
 }
 
+/* «Свой» прижат к списку серверов: вместе они читаются как один контрол,
+   как поле, тип и «Добавить» в строке ввода. */
+.dns__servers-group {
+  flex: 0 0 auto;
+  width: auto;
+}
+
 .dns__servers-row :deep(.p-multiselect) {
-  flex: 0 1 var(--ag-field-width);
+  flex: 0 0 var(--ag-field-width);
   min-width: 0;
 }
 
 /* Чипы компактнее: выбранные серверы влезают в общую ширину поля. */
 .dns__servers-row :deep(.p-chip) {
   padding: 0 4px;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 /* Адреса системных резолверов — во всплывающей подсказке: строка не нужна. */
@@ -671,6 +615,6 @@ async function exportCsv(): Promise<void> {
 .columns__address {
   color: var(--p-text-muted-color);
   font-family: var(--ag-font-mono);
-  font-size: 12px;
+  font-size: 13px;
 }
 </style>

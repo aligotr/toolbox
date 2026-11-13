@@ -12,8 +12,8 @@
 import Button from "primevue/button";
 import Column from "primevue/column";
 import DataTable from "primevue/datatable";
-import Select from "primevue/select";
 import { nextTick, ref, watch } from "vue";
+import PlainSelect from "../../ui/PlainSelect.vue";
 import {
   DOMAIN_COLUMN_MIN_WIDTH,
   RECORD_TYPES,
@@ -262,7 +262,7 @@ watch(
         :style="{ minWidth: TYPE_COLUMN_MIN_WIDTH }"
       >
         <template #body="{ data }">
-          <Select
+          <PlainSelect
             :model-value="data.type"
             :options="RECORD_TYPES"
             size="small"
@@ -452,7 +452,7 @@ watch(
 }
 
 .dns-table__expand :deep(.p-button-icon) {
-  font-size: 12px;
+  font-size: 13px;
   transition: transform 120ms ease;
 }
 
@@ -465,7 +465,7 @@ watch(
   padding-left: 24px;
   color: var(--p-text-muted-color);
   font-family: var(--ag-font-mono);
-  font-size: 12px;
+  font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -480,8 +480,13 @@ watch(
   color: var(--ag-danger);
 }
 
+/* Шапка таблицы — ступень 14, как имя в строке: 16 px тяжелее данных. */
+.dns-table :deep(.p-datatable-header-cell) {
+  font-size: 14px;
+}
+
 .dns-table__type {
-  width: 88px;
+  width: 76px;
 }
 
 /* Шапка колонки — одна строка: имя резолвера и его адрес рядом. */
@@ -503,7 +508,7 @@ watch(
   overflow: hidden;
   color: var(--p-text-muted-color);
   font-family: var(--ag-font-mono);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
   text-overflow: ellipsis;
 }
@@ -529,7 +534,7 @@ watch(
 }
 
 .cell__status {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -582,7 +587,7 @@ watch(
 .cell__more {
   flex-shrink: 0;
   color: var(--p-text-muted-color);
-  font-size: 12px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -625,11 +630,11 @@ watch(
 .details__address {
   color: var(--p-text-muted-color);
   font-family: var(--ag-font-mono);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .details__status {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -637,7 +642,7 @@ watch(
 .details__time {
   margin-left: auto;
   color: var(--p-text-muted-color);
-  font-size: 12px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -668,7 +673,7 @@ watch(
 .details__ttl {
   flex-shrink: 0;
   color: var(--p-text-muted-color);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .details__note {

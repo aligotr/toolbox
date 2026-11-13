@@ -5,10 +5,11 @@
 
 import type { ToolDescriptor } from "../../contracts/tools";
 import DnslookupView from "./DnslookupView.vue";
+import { TOOL_TITLE } from "./constants";
 
 export const dnslookupTool: ToolDescriptor = {
   id: "dnslookup",
-  title: "DNS",
+  title: TOOL_TITLE,
   description: "Проверка и сравнение ответов DNS-серверов",
   icon: "pi pi-globe",
   order: 20,
