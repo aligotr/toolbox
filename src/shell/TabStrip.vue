@@ -453,9 +453,9 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   height: 48px;
-  padding: 8px;
+  padding: var(--ag-space-sm);
   background: var(--ag-bg);
   border-bottom: 1px solid var(--ag-border);
 }
@@ -463,7 +463,7 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
 .tabs__list {
   display: flex;
   flex: 0 1 auto;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
@@ -477,13 +477,13 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   height: 32px;
   max-width: 240px;
-  padding: 0 8px;
-  border-radius: 8px;
+  padding: 0 var(--ag-space-sm);
+  border-radius: var(--ag-radius-md);
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   cursor: pointer;
   user-select: none;
 }
@@ -538,7 +538,7 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
   height: 24px;
   padding: 0;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--ag-radius-sm);
   background: transparent;
   color: inherit;
   font-size: 11px;

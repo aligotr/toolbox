@@ -151,40 +151,40 @@ onMounted(() => {
 .log {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 .log__head {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--ag-space-sm);
 }
 
 .log__title {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--ag-text-lg);
   font-weight: 600;
 }
 
 .log__lead {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   line-height: 1.5;
 }
 
 .log__field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 16px;
+  gap: var(--ag-space-sm);
+  padding: var(--ag-space-lg);
   border: 1px solid var(--ag-border);
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   background: var(--ag-surface);
 }
 
 .log__label {
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   font-weight: 600;
 }
 
@@ -196,34 +196,34 @@ onMounted(() => {
 .log__hint {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .log__facts {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--ag-space-lg);
   margin: 0;
 }
 
 .log__fact {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 16px;
+  gap: var(--ag-space-xs);
+  padding: var(--ag-space-lg);
   border: 1px solid var(--ag-border);
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   background: var(--ag-surface);
 }
 
 .log__fact dt {
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .log__fact dd {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   overflow-wrap: anywhere;
 }
 
@@ -234,25 +234,25 @@ onMounted(() => {
 .log__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   flex-wrap: wrap;
 }
 
 .log__result {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 
 .log__error {
   margin: 0;
   color: var(--ag-danger);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   line-height: 1.45;
 }
 
 .mono {
   font-family: var(--ag-font-mono);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 </style>

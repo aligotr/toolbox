@@ -22,6 +22,7 @@ import DnsTable from "./DnsTable.vue";
 import ServerDialog from "./ServerDialog.vue";
 import {
   RECORD_TYPES,
+  SERVER_LABEL_LIMIT,
   SERVER_LIMIT,
   STATUS_FILTERS,
   SYSTEM_SERVER_ID,
@@ -96,9 +97,6 @@ const systemHint = computed<string>(() => {
 const compareHint = computed(() =>
   hasSystem.value ? "нужен ещё сервер" : "нужен системный сервер",
 );
-
-/** Под таблицей — только число строк: остальное читается по самой таблице. */
-const summary = computed(() => `Доменов: ${session.rows.length}`);
 
 function focusInput(): void {
   addBox.value?.querySelector<HTMLInputElement>("input")?.focus();
@@ -237,17 +235,19 @@ async function exportCsv(): Promise<void> {
           option-label="label"
           option-value="id"
           display="chip"
-          :max-selected-labels="SERVER_LIMIT"
+          :max-selected-labels="SERVER_LABEL_LIMIT"
+          selected-items-label="Выбрано: {0}"
           :selection-limit="SERVER_LIMIT"
           placeholder="Выберите серверы"
           aria-label="DNS-серверы"
         />
         <Button
-          label="Свой"
-          icon="pi pi-server"
+          v-tooltip.top="'Свои DNS-серверы'"
+          icon="pi pi-pencil"
           severity="secondary"
           outlined
           size="small"
+          aria-label="Свои DNS-серверы"
           @click="openServers"
         />
       </InputGroup>
@@ -294,13 +294,13 @@ async function exportCsv(): Promise<void> {
 
       <div class="dns__table-actions">
         <Button
-          v-tooltip.top="'Колонки'"
+          v-tooltip.top="'Отображаемые колонки'"
           icon="pi pi-table"
           severity="secondary"
           text
           rounded
           size="small"
-          aria-label="Колонки"
+          aria-label="Отображаемые колонки"
           :disabled="selectedServers.length === 0"
           @click="toggleColumns"
         />
@@ -364,7 +364,6 @@ async function exportCsv(): Promise<void> {
     />
 
     <footer class="dns__footer">
-      <p class="dns__summary" aria-live="polite">{{ summary }}</p>
       <Button
         :label="running ? 'Остановить' : 'Проверить'"
         :icon="running ? 'pi pi-stop' : 'pi pi-play'"
@@ -403,7 +402,7 @@ async function exportCsv(): Promise<void> {
   min-width: 0;
   min-height: 0;
   height: 100%;
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 /* Сжимается только таблица: остальные блоки панели держат свою высоту. */
@@ -420,7 +419,7 @@ async function exportCsv(): Promise<void> {
 /* Заголовок обслуживает данные и не занимает больше строки. */
 .dns__title {
   margin: 0;
-  font-size: 24px;
+  font-size: var(--ag-text-xl);
   line-height: 1.25;
 }
 
@@ -430,7 +429,7 @@ async function exportCsv(): Promise<void> {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
 }
 
 .dns__add {
@@ -453,9 +452,9 @@ async function exportCsv(): Promise<void> {
   color: var(--ag-danger);
 }
 
-/* «Свой» прижат к списку серверов: вместе они читаются как один контрол,
-   как поле, тип и «Добавить» в строке ввода. Ширина — по содержимому:
-   чипы не обрезают крестик, но минимум поля сохраняется. */
+/* Кнопка своих серверов прижата к списку: вместе они читаются как один
+   контрол, как поле, тип и «Добавить» в строке ввода. Ширина — по
+   содержимому: чипы не обрезают крестик, но минимум поля сохраняется. */
 .dns__servers {
   flex: 0 1 auto;
   min-width: 0;
@@ -472,15 +471,14 @@ async function exportCsv(): Promise<void> {
 
 /* Чипы компактнее: выбранные серверы влезают в общую ширину поля. */
 .dns__servers :deep(.p-chip) {
-  padding: 0 4px;
-  font-size: 13px;
+  padding: 0 var(--ag-space-xs);
 }
 
 .dns__filters {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 16px;
+  gap: var(--ag-space-sm) var(--ag-space-lg);
 }
 
 .dns__search {
@@ -495,25 +493,25 @@ async function exportCsv(): Promise<void> {
 /* Экспорт и очистка — у правого края над таблицей. */
 .dns__table-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   margin-left: auto;
 }
 
 .dns__check {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 
 .dns__error,
 .dns__hint {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   margin: 0;
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 
 .dns__error {
@@ -528,22 +526,16 @@ async function exportCsv(): Promise<void> {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.dns__summary {
-  margin: 0;
-  color: var(--p-text-muted-color);
-  font-size: 13px;
+  justify-content: flex-end;
+  gap: var(--ag-space-lg);
 }
 
 .columns {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   margin: 0;
-  padding: 8px;
+  padding: var(--ag-space-sm);
   min-width: 200px;
   list-style: none;
 }
@@ -551,20 +543,20 @@ async function exportCsv(): Promise<void> {
 .columns__item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
 }
 
 .columns__label {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  font-size: 14px;
+  gap: var(--ag-space-xs);
+  font-size: var(--ag-text-sm);
   cursor: pointer;
 }
 
 .columns__address {
   color: var(--p-text-muted-color);
   font-family: var(--ag-font-mono);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 </style>

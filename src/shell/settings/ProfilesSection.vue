@@ -222,26 +222,26 @@ onMounted(() => {
 .profiles {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 .profiles__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 .profiles__title {
-  margin: 0 0 8px;
-  font-size: 18px;
+  margin: 0 0 var(--ag-space-sm);
+  font-size: var(--ag-text-lg);
   font-weight: 600;
 }
 
 .profiles__lead {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   line-height: 1.5;
 }
 
@@ -249,7 +249,7 @@ onMounted(() => {
 .profile-row__form {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   flex-wrap: wrap;
 }
 
@@ -261,7 +261,7 @@ onMounted(() => {
 .profiles__list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -270,11 +270,11 @@ onMounted(() => {
 .profile-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--ag-space-lg);
   flex-wrap: wrap;
-  padding: 16px;
+  padding: var(--ag-space-lg);
   border: 1px solid var(--ag-border);
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   background: var(--ag-surface);
 }
 
@@ -285,7 +285,7 @@ onMounted(() => {
 .profile-row__main {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--ag-space-xs);
   min-width: 200px;
   margin-right: auto;
 }
@@ -293,19 +293,19 @@ onMounted(() => {
 .profile-row__title-line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
 }
 
 .profile-row__name {
-  font-size: 15px;
+  font-size: var(--ag-text-md);
 }
 
 .profile-row__badge {
-  padding: 2px 8px;
-  border-radius: 8px;
+  padding: var(--ag-space-xs) var(--ag-space-sm);
+  border-radius: var(--ag-radius-md);
   background: var(--p-primary-50);
   color: var(--p-primary-700);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .profile-row__id {
@@ -315,16 +315,16 @@ onMounted(() => {
 .profile-row__meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   flex-wrap: wrap;
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .profile-row__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   flex-wrap: wrap;
 }
 
@@ -333,18 +333,18 @@ onMounted(() => {
   flex-basis: 100%;
   margin: 0;
   color: var(--ag-danger);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   line-height: 1.45;
 }
 
 .profiles__note {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 
 .mono {
   font-family: var(--ag-font-mono);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 </style>

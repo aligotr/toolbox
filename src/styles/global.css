@@ -21,6 +21,30 @@
   --ag-font-ui: "Inter", "Segoe UI", system-ui, sans-serif;
   --ag-font-mono: "Cascadia Code", "Consolas", monospace;
 
+  /* Шкала отступов: одна сетка на всё приложение. Зазоры, поля и внутренние
+     отступы блоков берутся отсюда, а не пишутся числом на месте.
+     Значения совпадают с `formField` и радиусом пресета `src/ui/theme.ts`. */
+  --ag-space-xs: 4px;
+  --ag-space-sm: 8px;
+  --ag-space-md: 12px;
+  --ag-space-lg: 16px;
+  --ag-space-xl: 24px;
+  --ag-space-2xl: 32px;
+
+  /* Радиусы: sm — вложенные элементы, md — панели и контролы,
+     lg — крупные карточки, round — круглые знаки. */
+  --ag-radius-sm: 6px;
+  --ag-radius-md: 8px;
+  --ag-radius-lg: 16px;
+  --ag-radius-round: 50%;
+
+  /* Шкала текста (ADR 0021): заголовок, раздел, пояснение, текст, подпись. */
+  --ag-text-xl: 24px;
+  --ag-text-lg: 18px;
+  --ag-text-md: 15px;
+  --ag-text-sm: 14px;
+  --ag-text-xs: 13px;
+
   /* Ширина полей ввода и выбора инструментов: одна на всё приложение,
      чтобы поля не растягивались каждое по-своему. */
   --ag-field-width: 320px;

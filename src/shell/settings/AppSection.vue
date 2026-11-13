@@ -80,78 +80,78 @@ onMounted(() => {
 .app {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 .app__head {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--ag-space-sm);
 }
 
 .app__title {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--ag-text-lg);
   font-weight: 600;
 }
 
 .app__lead {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   line-height: 1.5;
 }
 
 .app__facts {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--ag-space-lg);
   margin: 0;
 }
 
 .app__fact {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 16px;
+  gap: var(--ag-space-xs);
+  padding: var(--ag-space-lg);
   border: 1px solid var(--ag-border);
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   background: var(--ag-surface);
 }
 
 .app__fact dt {
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .app__fact dd {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   overflow-wrap: anywhere;
 }
 
 .app__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   flex-wrap: wrap;
 }
 
 .app__note {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 
 .app__error {
   margin: 0;
   color: var(--ag-danger);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   line-height: 1.45;
 }
 
 .mono {
   font-family: var(--ag-font-mono);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 </style>

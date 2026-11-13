@@ -117,58 +117,58 @@ function useTemplate(template: Template): void {
 .empty {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: var(--ag-space-2xl);
   height: 100%;
   max-width: 960px;
   margin: 0 auto;
-  padding: 32px;
+  padding: var(--ag-space-2xl);
   overflow: auto;
 }
 
 .empty__head {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--ag-space-sm);
 }
 
 .empty__title {
   margin: 0;
-  font-size: 24px;
+  font-size: var(--ag-text-xl);
   line-height: 1.25;
 }
 
 .empty__lead {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 15px;
+  font-size: var(--ag-text-md);
   line-height: 1.55;
 }
 
 .empty__section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 .empty__section-title {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--ag-text-lg);
   font-weight: 600;
 }
 
 .empty__templates {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 .template-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px;
+  gap: var(--ag-space-sm);
+  padding: var(--ag-space-sm);
   border: 1px solid var(--ag-border);
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   background: var(--ag-surface);
   color: var(--p-text-color);
   font: inherit;
@@ -188,10 +188,10 @@ function useTemplate(template: Template): void {
 /* Миниатюра раскладки: колонки и ячейки в тех же пропорциях, что на вкладке. */
 .template-card__preview {
   display: flex;
-  gap: 4px;
+  gap: var(--ag-space-xs);
   height: 48px;
-  padding: 8px;
-  border-radius: 6px;
+  padding: var(--ag-space-sm);
+  border-radius: var(--ag-radius-sm);
   background: var(--ag-surface-2);
 }
 
@@ -199,7 +199,7 @@ function useTemplate(template: Template): void {
   display: flex;
   flex: 1 1 0;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--ag-space-xs);
   min-width: 0;
 }
 
@@ -213,14 +213,14 @@ function useTemplate(template: Template): void {
 .template-card__text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--ag-space-xs);
   min-width: 0;
-  padding: 0 8px 8px;
+  padding: 0 var(--ag-space-sm) var(--ag-space-sm);
 }
 
 .template-card__title {
   overflow: hidden;
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -228,22 +228,22 @@ function useTemplate(template: Template): void {
 
 .template-card__note {
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .empty__tools {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 .tool-card {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  padding: 16px;
+  gap: var(--ag-space-lg);
+  padding: var(--ag-space-lg);
   border: 1px solid var(--ag-border);
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   background: var(--ag-surface);
   color: var(--p-text-color);
   font: inherit;
@@ -270,25 +270,25 @@ function useTemplate(template: Template): void {
 .tool-card__text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--ag-space-xs);
   min-width: 0;
 }
 
 .tool-card__title {
-  font-size: 15px;
+  font-size: var(--ag-text-md);
   font-weight: 600;
 }
 
 .tool-card__note {
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   line-height: 1.45;
 }
 
 .empty__note {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 
 .empty__note--error {
@@ -298,20 +298,20 @@ function useTemplate(template: Template): void {
 .empty__status {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   min-width: 0;
   margin-top: auto;
-  padding-top: 16px;
+  padding-top: var(--ag-space-lg);
   border-top: 1px solid var(--ag-border);
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .status__dot {
   flex-shrink: 0;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--ag-radius-round);
   background: var(--ag-ok);
 }
 

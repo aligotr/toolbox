@@ -188,33 +188,33 @@ onMounted(() => {
 .templates {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 .templates__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 .templates__title {
-  margin: 0 0 8px;
-  font-size: 18px;
+  margin: 0 0 var(--ag-space-sm);
+  font-size: var(--ag-text-lg);
   font-weight: 600;
 }
 
 .templates__lead {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   line-height: 1.5;
 }
 
 .templates__list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -223,32 +223,32 @@ onMounted(() => {
 .template-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--ag-space-lg);
   flex-wrap: wrap;
-  padding: 16px;
+  padding: var(--ag-space-lg);
   border: 1px solid var(--ag-border);
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   background: var(--ag-surface);
 }
 
 .template-row__main {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--ag-space-xs);
   min-width: 200px;
   margin-right: auto;
 }
 
 .template-row__name {
-  font-size: 15px;
+  font-size: var(--ag-text-md);
 }
 
 .template-row__meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .template-row__id {
@@ -262,7 +262,7 @@ onMounted(() => {
 .template-row__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   flex-wrap: wrap;
 }
 
@@ -275,18 +275,18 @@ onMounted(() => {
   flex-basis: 100%;
   margin: 0;
   color: var(--ag-danger);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   line-height: 1.45;
 }
 
 .templates__note {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 
 .mono {
   font-family: var(--ag-font-mono);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 </style>

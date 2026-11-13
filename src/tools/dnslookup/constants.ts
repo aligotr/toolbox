@@ -28,6 +28,9 @@ export const QUERY_LIMIT = 500;
 export const SERVER_LIMIT = 8;
 export const ATTEMPT_SECONDS = 3;
 
+/** Сколько выбранных серверов показывается в поле списка: остальные — счётчиком. */
+export const SERVER_LABEL_LIMIT = 2;
+
 /** Ключ сеанса, если оболочка не передала `cellKey` (одиночный запуск). */
 export const STANDALONE_CELL_KEY = "dnslookup:standalone";
 

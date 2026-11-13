@@ -75,7 +75,7 @@ function cellKey(columnIndex: number, toolIndex: number): string {
 .grid__cell {
   flex: 1 1 0;
   min-height: 0;
-  padding: 16px;
+  padding: var(--ag-space-lg);
   overflow: auto;
 }
 
@@ -86,13 +86,13 @@ function cellKey(columnIndex: number, toolIndex: number): string {
 .grid__unknown {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 
 .grid__unknown code {
   font-family: var(--ag-font-mono);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 </style>

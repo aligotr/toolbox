@@ -112,9 +112,9 @@ function time(at: number): string {
 .journal {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--ag-space-lg);
   height: 100%;
-  padding: 32px;
+  padding: var(--ag-space-2xl);
 }
 
 .journal__head {
@@ -122,31 +122,31 @@ function time(at: number): string {
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 .journal__heading {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--ag-space-sm);
 }
 
 .journal__title {
   margin: 0;
-  font-size: 24px;
+  font-size: var(--ag-text-xl);
   line-height: 1.25;
 }
 
 .journal__lead {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 15px;
+  font-size: var(--ag-text-md);
 }
 
 .journal__actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 .journal__view {
@@ -174,10 +174,10 @@ function time(at: number): string {
 .journal__row {
   display: flex;
   align-items: baseline;
-  gap: 16px;
-  padding: 8px 0;
+  gap: var(--ag-space-lg);
+  padding: var(--ag-space-sm) 0;
   border-bottom: 1px solid var(--ag-border);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 
 .journal__time {
@@ -185,24 +185,24 @@ function time(at: number): string {
   width: 80px;
   color: var(--p-text-muted-color);
   font-family: var(--ag-font-mono);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .journal__kind {
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   width: 88px;
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .journal__dot {
   flex-shrink: 0;
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: var(--ag-radius-round);
   background: var(--p-surface-400);
 }
 
@@ -219,7 +219,7 @@ function time(at: number): string {
   width: 120px;
   overflow: hidden;
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -232,6 +232,6 @@ function time(at: number): string {
 .journal__empty {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 </style>

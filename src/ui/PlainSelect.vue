@@ -38,7 +38,7 @@ import Select from "primevue/select";
 
 /* Внутренние отступы поля тут лишние: текст стоит по краю ячейки. */
 .plain-select :deep(.p-select-label) {
-  padding-inline: 4px;
+  padding-inline: var(--ag-space-xs);
 }
 
 .plain-select :deep(.p-select-dropdown) {

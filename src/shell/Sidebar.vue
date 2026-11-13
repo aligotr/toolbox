@@ -187,9 +187,9 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   width: var(--ag-sidebar-width);
-  padding: 8px;
+  padding: var(--ag-space-sm);
   overflow: hidden;
   background: var(--ag-bg);
   border-right: 1px solid var(--ag-border);
@@ -203,7 +203,7 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   min-height: 40px;
 }
 
@@ -214,9 +214,9 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   min-width: 0;
-  padding-left: 4px;
+  padding-left: var(--ag-space-xs);
 }
 
 .brand__mark {
@@ -225,16 +225,16 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   background: var(--p-primary-color);
   color: var(--p-primary-contrast-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   font-weight: 700;
 }
 
 .brand__name {
   overflow: hidden;
-  font-size: 15px;
+  font-size: var(--ag-text-md);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -247,10 +247,10 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
   height: 32px;
   padding: 0;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   background: transparent;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   cursor: pointer;
 }
 
@@ -262,32 +262,32 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   min-width: 0;
 }
 
-/* Подпись группы отделяется от прошлой строки тем же шагом 8 px:
-   ритм навигации один и тот же сверху вниз. */
+/* Подпись группы — такая же строка, как пункт: те же 8 px внутреннего
+   отступа. Поэтому расстояние между текстами всех строк одинаково. */
 .nav__label {
-  margin-top: 8px;
-  padding: 8px 8px 0;
+  margin: 0;
+  padding: var(--ag-space-sm);
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .nav__item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   width: 100%;
   min-width: 0;
-  padding: 8px;
+  padding: var(--ag-space-sm);
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   background: transparent;
   color: var(--p-text-muted-color);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--ag-text-md);
   text-align: left;
   cursor: pointer;
 }
@@ -310,7 +310,7 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 
 .sidebar--rail .nav__item {
   justify-content: center;
-  padding: 8px 0;
+  padding: var(--ag-space-sm) 0;
 }
 
 .nav__icon {
@@ -328,9 +328,9 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 
 .nav__empty {
   margin: 0;
-  padding: 4px 8px;
+  padding: var(--ag-space-xs) var(--ag-space-sm);
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   line-height: 1.4;
 }
 
@@ -339,7 +339,7 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
   align-items: center;
   min-width: 0;
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: var(--ag-space-sm);
   border-top: 1px solid var(--ag-border);
 }
 
@@ -350,16 +350,16 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 .profile-button {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   width: 100%;
   min-width: 0;
-  padding: 8px;
+  padding: var(--ag-space-sm);
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   background: transparent;
   color: var(--p-text-muted-color);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   text-align: left;
   cursor: pointer;
 }
@@ -376,7 +376,7 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 
 .sidebar--rail .profile-button {
   justify-content: center;
-  padding: 8px 0;
+  padding: var(--ag-space-sm) 0;
 }
 
 .profile-button__chevron {

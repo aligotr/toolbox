@@ -163,25 +163,25 @@ function remove(serverId: string): void {
 .servers {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--ag-space-xl);
 }
 
 .servers__title {
-  margin: 0 0 8px;
-  font-size: 15px;
+  margin: 0 0 var(--ag-space-sm);
+  font-size: var(--ag-text-md);
   font-weight: 600;
 }
 
 .servers__empty {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 
 .servers__items {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -190,16 +190,16 @@ function remove(serverId: string): void {
 .servers__item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 8px 8px 16px;
+  gap: var(--ag-space-md);
+  padding: var(--ag-space-sm) var(--ag-space-sm) var(--ag-space-sm) var(--ag-space-lg);
   border: 1px solid var(--ag-border);
-  border-radius: 6px;
+  border-radius: var(--ag-radius-sm);
 }
 
 .servers__address {
   flex-shrink: 0;
   font-family: var(--ag-font-mono);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .servers__label {
@@ -207,7 +207,7 @@ function remove(serverId: string): void {
   min-width: 0;
   overflow: hidden;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -215,32 +215,32 @@ function remove(serverId: string): void {
 .servers__form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--ag-space-md);
 }
 
 .servers__field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--ag-space-xs);
 }
 
 .servers__field-label {
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .servers__hint {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .servers__error {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   margin: 0;
   color: var(--ag-danger);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 </style>

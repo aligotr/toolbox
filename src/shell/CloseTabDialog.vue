@@ -98,20 +98,20 @@ function cancel(): void {
 .close-tab {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--ag-space-lg);
 }
 
 .close-tab__message {
   margin: 0;
   color: var(--p-text-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   line-height: 1.5;
 }
 
 .close-tab__error {
   margin: 0;
   color: var(--ag-danger);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   line-height: 1.45;
 }
 
@@ -119,6 +119,6 @@ function cancel(): void {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--ag-space-sm);
 }
 </style>

@@ -207,11 +207,16 @@ watch(
 
       <Column
         field="name"
-        header="Домен"
         frozen
         align-frozen="left"
         :style="{ minWidth: DOMAIN_COLUMN_MIN_WIDTH }"
       >
+        <template #header>
+          <span class="dns-table__domains">
+            Домены
+            <sup v-if="totalRows > 0" class="dns-table__count">{{ totalRows }}</sup>
+          </span>
+        </template>
         <template #body="{ data }">
           <div class="dns-table__domain">
             <div class="dns-table__domain-main">
@@ -378,7 +383,7 @@ watch(
   min-width: 0;
   min-height: 0;
   border: 1px solid var(--ag-border);
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   overflow: hidden;
 }
 
@@ -414,12 +419,12 @@ watch(
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   height: 100%;
-  padding: 32px 16px;
+  padding: var(--ag-space-2xl) var(--ag-space-lg);
   box-sizing: border-box;
   color: var(--p-text-muted-color);
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 
 .dns-table__empty i {
@@ -433,21 +438,21 @@ watch(
 .dns-table__domain {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--ag-space-xs);
   min-width: 0;
 }
 
 .dns-table__domain-main {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--ag-space-xs);
   min-width: 0;
 }
 
 .dns-table__name {
   flex: 1;
   overflow: hidden;
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -471,10 +476,10 @@ watch(
 
 .dns-table__normalized {
   overflow: hidden;
-  padding-left: 24px;
+  padding-left: var(--ag-space-xl);
   color: var(--p-text-muted-color);
   font-family: var(--ag-font-mono);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -489,9 +494,18 @@ watch(
   color: var(--ag-danger);
 }
 
-/* Шапка таблицы — ступень 14, как имя в строке: 16 px тяжелее данных. */
-.dns-table :deep(.p-datatable-header-cell) {
-  font-size: 14px;
+/* Счётчик доменов — знак степени у заголовка: он подсказывает объём,
+   но не спорит с заголовком по весу. */
+.dns-table__domains {
+  white-space: nowrap;
+}
+
+.dns-table__count {
+  margin-left: 2px;
+  color: var(--p-text-muted-color);
+  font-size: 0.75em;
+  font-weight: 600;
+  line-height: 0;
 }
 
 .dns-table__type {
@@ -502,13 +516,13 @@ watch(
 .dns-table__server {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--ag-space-sm);
   min-width: 0;
   white-space: nowrap;
 }
 
 .dns-table__server-name {
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
   font-weight: 600;
 }
 
@@ -529,7 +543,7 @@ watch(
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: var(--ag-space-xs);
   width: 100%;
   padding: 0;
   border: 0;
@@ -546,7 +560,7 @@ watch(
 }
 
 .cell__status {
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   font-weight: 600;
 }
 
@@ -577,7 +591,7 @@ watch(
 .cell__line {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: var(--ag-space-xs);
   max-width: 100%;
   min-width: 0;
 }
@@ -586,7 +600,7 @@ watch(
   overflow: hidden;
   min-width: 0;
   font-family: var(--ag-font-mono);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -599,32 +613,32 @@ watch(
 .cell__more {
   flex-shrink: 0;
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   font-variant-numeric: tabular-nums;
 }
 
 .details {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 8px 16px 16px;
+  gap: var(--ag-space-md);
+  padding: var(--ag-space-sm) var(--ag-space-lg) var(--ag-space-lg);
 }
 
 /* Подробности — карточками: серверы стоят рядом, пока хватает ширины. */
 .details__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 12px;
+  gap: var(--ag-space-md);
 }
 
 .details__card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--ag-space-sm);
   min-width: 0;
-  padding: 8px 12px;
+  padding: var(--ag-space-sm) var(--ag-space-md);
   border: 1px solid var(--ag-border);
-  border-radius: 8px;
+  border-radius: var(--ag-radius-md);
   background: var(--ag-surface-2);
 }
 
@@ -632,21 +646,21 @@ watch(
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 8px;
+  gap: var(--ag-space-xs) var(--ag-space-sm);
 }
 
 .details__name {
-  font-size: 14px;
+  font-size: var(--ag-text-sm);
 }
 
 .details__address {
   color: var(--p-text-muted-color);
   font-family: var(--ag-font-mono);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .details__status {
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   font-weight: 600;
 }
 
@@ -654,14 +668,14 @@ watch(
 .details__time {
   margin-left: auto;
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
   font-variant-numeric: tabular-nums;
 }
 
 .details__answers {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--ag-space-xs);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -671,7 +685,7 @@ watch(
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--ag-space-sm);
   min-width: 0;
 }
 
@@ -679,19 +693,19 @@ watch(
   min-width: 0;
   overflow-wrap: anywhere;
   font-family: var(--ag-font-mono);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .details__ttl {
   flex-shrink: 0;
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .details__note {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 13px;
+  font-size: var(--ag-text-xs);
 }
 
 .dns-table :deep(.dns-row--diff > td) {
