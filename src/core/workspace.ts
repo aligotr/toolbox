@@ -168,6 +168,42 @@ export function closeTab(id: string): void {
   templateBindings.prune(new Set(workspace.tabs.map((tab) => tab.id)));
 }
 
+/**
+ * Переоткрывает вкладку: инструменты возвращаются к состоянию нового окна.
+ *
+ * Вкладка заменяется копией под новым идентификатором в той же позиции:
+ * место в сетке задаёт ключ сеанса инструмента (ADR 0017), поэтому прежние
+ * сеансы остаются без вкладки и следующий показ заводит их заново.
+ * Раскладка, заголовок, иконка и привязка к шаблону сохраняются.
+ */
+export function reopenTab(id: string): void {
+  const index = workspace.tabs.findIndex((tab) => tab.id === id);
+  if (index < 0) return;
+
+  const tab = workspace.tabs[index];
+  if (tab.kind !== "workspace") return;
+
+  // Связка принадлежит вкладке, а не её идентификатору: переносим её,
+  // иначе переоткрытие молча открепило бы шаблон.
+  const binding = templateBindings.of(id);
+  const next: WorkspaceTab = {
+    id: crypto.randomUUID(),
+    kind: tab.kind,
+    title: tab.title,
+    icon: tab.icon,
+    columns: copyColumns(tab.columns),
+  };
+
+  const wasActive = workspace.activeId === id;
+  workspace.tabs.splice(index, 1, next);
+  if (wasActive) workspace.activeId = next.id;
+
+  templateBindings.drop(id);
+  if (binding) templateBindings.store(next.id, binding);
+
+  write(JOURNAL_CORE_SOURCE, "info", `вкладка «${next.title}» переоткрыта`);
+}
+
 /** Гарантирует хотя бы одну вкладку — при первом показе оболочки. */
 export function ensureWorkspace(): void {
   if (workspace.tabs.length === 0) {

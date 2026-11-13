@@ -2,9 +2,9 @@
 // Диалог пресетов настроек DNS.
 //
 // Здесь пресетами управляют: загрузить, переименовать, дублировать, удалить,
-// сохранить текущие настройки, отменить правки и выгрузить пресет. Загрузка
-// и удаление спрашивают подтверждение: первое заменяет таблицу, второе уносит
-// файл в корзину.
+// сохранить текущие настройки и отменить правки. Загрузка и удаление
+// спрашивают подтверждение: первое заменяет таблицу, второе уносит файл
+// в корзину.
 //
 // Диалог не держит настройки сам: снимок и применение живут в `presets.ts`.
 // Здесь только разметка и короткие обработчики, как и в остальных диалогах
@@ -33,7 +33,6 @@ import {
   releaseDeletedPreset,
   revertPresetChanges,
   savePresetToCurrent,
-  unloadPreset,
   type PresetApplyResult,
   type PresetRevertResult,
 } from "./presets";
@@ -180,13 +179,6 @@ async function revertChanges(): Promise<void> {
   emit("applied");
 }
 
-/** Выгрузка снимает привязку: файл и таблица остаются как есть. */
-function unloadCurrent(): void {
-  note.value = null;
-  unloadPreset(props.session);
-  note.value = "Пресет выгружен: настройки остались в таблице.";
-}
-
 /** Создаёт новый пресет из текущих настроек. */
 async function createNew(): Promise<void> {
   const title = newTitle.value.trim();
@@ -314,15 +306,6 @@ async function remove(preset: Preset): Promise<void> {
             :loading="dnsPresets.status.update.loading"
             :disabled="!changed"
             @click="saveCurrent"
-          />
-          <Button
-            v-tooltip.top="'Отвязать настройки от пресета'"
-            label="Выгрузить"
-            icon="pi pi-sign-out"
-            severity="secondary"
-            outlined
-            size="small"
-            @click="unloadCurrent"
           />
         </div>
       </section>

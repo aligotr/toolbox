@@ -30,7 +30,7 @@ import {
   updateTemplateLayout,
 } from "../core/templates";
 import * as templateBindings from "../core/templates/bindings";
-import { activateTab, closeTab, openEmptyTab, workspace } from "../core/workspace";
+import { activateTab, closeTab, openEmptyTab, reopenTab, workspace } from "../core/workspace";
 import CloseTabDialog from "./CloseTabDialog.vue";
 import TemplateTitleDialog from "./TemplateTitleDialog.vue";
 import {
@@ -40,6 +40,10 @@ import {
   RENAME_TEMPLATE_HEADER,
   RENAME_TEMPLATE_LABEL,
   RENAME_TEMPLATE_NOTE,
+  REOPEN_TAB_ACCEPT,
+  REOPEN_TAB_HEADER,
+  REOPEN_TAB_LABEL,
+  REOPEN_TAB_REJECT,
   SAVE_NEW_TEMPLATE_LABEL,
   SAVE_TEMPLATE_EMPTY_HINT,
   SAVE_TEMPLATE_HEADER,
@@ -136,6 +140,15 @@ const menuItems = computed<MenuItem[]>(() => {
     });
   }
 
+  // Переоткрытие стоит последним: оно разрушительное и не относится
+  // к шаблону, поэтому отделено чертой.
+  items.push({ separator: true });
+  items.push({
+    label: REOPEN_TAB_LABEL,
+    icon: "pi pi-refresh",
+    command: () => requestReopen(tab),
+  });
+
   return items;
 });
 
@@ -202,6 +215,26 @@ function applyUpdate(tab: WorkspaceTab, template: Template): void {
   }
 
   templateBindings.apply(tab, template);
+}
+
+/**
+ * Возвращает инструменты вкладки к состоянию новой.
+ *
+ * Действие разрушительное: несохранённые строки, результаты и настройки
+ * инструментов пропадут, поэтому спрашиваем подтверждение. Сама вкладка
+ * остаётся на месте: раскладка и привязка к шаблону переходят к новой копии.
+ */
+function requestReopen(tab: WorkspaceTab): void {
+  confirm.require({
+    header: REOPEN_TAB_HEADER,
+    message:
+      `Инструменты вкладки «${tab.title}» вернутся к состоянию новой: ` +
+      "строки, результаты и настройки будут потеряны. Раскладка и привязка " +
+      "к шаблону сохранятся.",
+    acceptLabel: REOPEN_TAB_ACCEPT,
+    rejectLabel: REOPEN_TAB_REJECT,
+    accept: () => reopenTab(tab.id),
+  });
 }
 
 // ─────────────────────────────── Название шаблона ────────────────────────────

@@ -377,23 +377,6 @@ export async function revertPresetChanges(
   return { error: null, restarted: true };
 }
 
-/**
- * Отвязывает сеанс от пресета, не трогая файл и таблицу.
- *
- * Пользователь «выгружает» пресет, когда настройки перестали быть с ним
- * связаны: строки, результаты и файл остаются как есть.
- */
-export function unloadPreset(session: DnsSession): void {
-  if (session.presetId === null) return;
-
-  const title = session.presetTitle;
-  session.presetId = null;
-  session.presetTitle = null;
-  session.presetSnapshot = null;
-
-  write(JOURNAL_SOURCE, "info", `пресет «${title}» выгружен`);
-}
-
 /** Сохраняет текущие настройки в пресет, к которому привязан сеанс. */
 export async function savePresetToCurrent(
   session: DnsSession,

@@ -105,10 +105,23 @@ function pruneSessions(): void {
   const openTabs = new Set(workspace.tabs.map((tab) => tab.id));
   if (openTabs.size === 0) return;
 
-  for (const key of [...sessions.keys()]) {
+  for (const [key, session] of [...sessions]) {
     const parts = key.split(":");
     // Ключ без трёх частей — не место в сетке (например, одиночный запуск).
     if (parts.length < 3 || openTabs.has(parts[0])) continue;
+
+    // Переоткрытая или закрытая вкладка бросает сеанс: его проверке уже
+    // некому ответить, поэтому досчитывать запросы впустую не нужно.
+    if (session.runId !== null) {
+      void cancelDns(session.runId).catch((error: unknown) => {
+        write(
+          JOURNAL_SOURCE,
+          "error",
+          `проверка покинутой вкладки не остановлена: ${String(error)}`,
+        );
+      });
+    }
+
     sessions.delete(key);
   }
 }
