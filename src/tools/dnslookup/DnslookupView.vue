@@ -292,17 +292,18 @@ async function exportCsv(): Promise<void> {
         </span>
       </label>
 
-      <Button
-        label="Колонки"
-        icon="pi pi-table"
-        severity="secondary"
-        text
-        size="small"
-        :disabled="selectedServers.length === 0"
-        @click="toggleColumns"
-      />
-
       <div class="dns__table-actions">
+        <Button
+          v-tooltip.top="'Колонки'"
+          icon="pi pi-table"
+          severity="secondary"
+          text
+          rounded
+          size="small"
+          aria-label="Колонки"
+          :disabled="selectedServers.length === 0"
+          @click="toggleColumns"
+        />
         <Button
           v-tooltip.top="'Экспорт CSV'"
           icon="pi pi-download"
@@ -453,15 +454,20 @@ async function exportCsv(): Promise<void> {
 }
 
 /* «Свой» прижат к списку серверов: вместе они читаются как один контрол,
-   как поле, тип и «Добавить» в строке ввода. */
+   как поле, тип и «Добавить» в строке ввода. Ширина — по содержимому:
+   чипы не обрезают крестик, но минимум поля сохраняется. */
 .dns__servers {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
   width: auto;
 }
 
 .dns__servers :deep(.p-multiselect) {
-  flex: 0 0 var(--ag-field-width);
-  min-width: 0;
+  flex: 0 1 auto;
+  width: max-content;
+  min-width: var(--ag-field-width);
+  max-width: 100%;
 }
 
 /* Чипы компактнее: выбранные серверы влезают в общую ширину поля. */

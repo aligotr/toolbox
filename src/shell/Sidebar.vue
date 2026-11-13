@@ -262,12 +262,15 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   min-width: 0;
 }
 
+/* Подпись группы отделяется от прошлой строки тем же шагом 8 px:
+   ритм навигации один и тот же сверху вниз. */
 .nav__label {
-  padding: 16px 8px 0;
+  margin-top: 8px;
+  padding: 8px 8px 0;
   color: var(--p-text-muted-color);
   font-size: 13px;
 }

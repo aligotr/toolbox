@@ -463,7 +463,7 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
 .tabs__list {
   display: flex;
   flex: 0 1 auto;
-  gap: 4px;
+  gap: 8px;
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
