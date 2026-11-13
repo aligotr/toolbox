@@ -130,6 +130,17 @@ function capturePresetPayload(session: DnsSession): DnsPresetPayload {
   };
 }
 
+/** Настройки нового сеанса: пустая таблица и умолчания инструмента. */
+function emptyPayload(): DnsPresetPayload {
+  return {
+    rows: [],
+    servers: [...DEFAULT_SERVER_IDS],
+    defaultType: DEFAULT_RECORD_TYPE,
+    hiddenServers: [],
+    filters: { search: "", status: "all", diffOnly: false },
+  };
+}
+
 /** Строка снимка для сравнения: порядок полей задан сборкой снимка. */
 function snapshotOfPayload(payload: DnsPresetPayload): string {
   return JSON.stringify(payload);
@@ -160,6 +171,35 @@ function adoptPreset(
   session.presetId = preset.id;
   session.presetTitle = preset.title;
   session.presetSnapshot = snapshot;
+}
+
+/**
+ * Переносит настройки пресета в сеанс.
+ *
+ * Таблица заменяется, результаты сбрасываются: ответы относились к прежним
+ * строкам. `servers` уже проверены и ограничены вызывающим.
+ */
+function applyPayload(
+  session: DnsSession,
+  payload: DnsPresetPayload,
+  servers: string[],
+): void {
+  session.rows = payload.rows.map((row) => ({ ...row }));
+  session.cells.clear();
+  session.servers = servers.length > 0 ? servers : [...DEFAULT_SERVER_IDS];
+  session.hiddenServers = payload.hiddenServers.filter((id) =>
+    session.servers.includes(id),
+  );
+  session.defaultType = payload.defaultType;
+  session.filters.search = payload.filters.search;
+  session.filters.status = payload.filters.status;
+  // Расхождения считаются только от системного сервера: без него фильтр
+  // молча не показал бы ничего.
+  session.filters.diffOnly =
+    payload.filters.diffOnly && session.servers.includes(SYSTEM_SERVER_ID);
+  session.highlightRowId = null;
+  session.status.run.error = null;
+  session.progress = { total: 0, done: 0 };
 }
 
 /**
@@ -216,22 +256,7 @@ export async function applyPreset(
     warnings.push("в пресете не было серверов: взят набор по умолчанию");
   }
 
-  session.rows = payload.rows.map((row) => ({ ...row }));
-  session.cells.clear();
-  session.servers = servers.length > 0 ? servers : [...DEFAULT_SERVER_IDS];
-  session.hiddenServers = payload.hiddenServers.filter((id) =>
-    session.servers.includes(id),
-  );
-  session.defaultType = payload.defaultType;
-  session.filters.search = payload.filters.search;
-  session.filters.status = payload.filters.status;
-  // Расхождения считаются только от системного сервера: без него фильтр
-  // молча не показал бы ничего.
-  session.filters.diffOnly =
-    payload.filters.diffOnly && session.servers.includes(SYSTEM_SERVER_ID);
-  session.highlightRowId = null;
-  session.status.run.error = null;
-  session.progress = { total: 0, done: 0 };
+  applyPayload(session, payload, servers);
 
   adoptPreset(session, preset, snapshotOf(session));
 
@@ -245,6 +270,29 @@ export async function applyPreset(
   if (session.rows.length > 0) runAllRows(session);
 
   return { error: null, warnings };
+}
+
+/**
+ * Очищает открытый пресет и текущий сеанс до состояния нового инструмента.
+ *
+ * Файл и таблица меняются вместе: иначе сеанс сразу показывал бы «изменён»,
+ * хотя пользователь ничего не настраивал.
+ */
+export async function clearPreset(
+  session: DnsSession,
+): Promise<Preset | null> {
+  if (session.presetId === null) return null;
+
+  await abortSessionRun(session);
+  const payload = emptyPayload();
+  const saved = await dnsPresets.update(session.presetId, payload);
+  if (!saved) return null;
+
+  applyPayload(session, payload, payload.servers);
+  adoptPreset(session, saved, snapshotOfPayload(payload));
+
+  write(JOURNAL_SOURCE, "result", `пресет «${saved.title}» очищен`);
+  return saved;
 }
 
 /** Сохраняет текущие настройки в пресет, к которому привязан сеанс. */

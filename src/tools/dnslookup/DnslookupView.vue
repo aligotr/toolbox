@@ -13,6 +13,8 @@ import Checkbox from "primevue/checkbox";
 import Chip from "primevue/chip";
 import InputGroup from "primevue/inputgroup";
 import InputText from "primevue/inputtext";
+import Menu from "primevue/menu";
+import type { MenuItem } from "primevue/menuitem";
 import MultiSelect from "primevue/multiselect";
 import Popover from "primevue/popover";
 import Select from "primevue/select";
@@ -30,7 +32,7 @@ import {
   SYSTEM_SERVER_ID,
   TOOL_HEADING,
 } from "./constants";
-import { dnsPresetChanged } from "./presets";
+import { dnsPresetChanged, dnsPresets, savePresetToCurrent } from "./presets";
 import { useDnslookup } from "./useDnslookup";
 
 const props = defineProps<ToolCellProps>();
@@ -67,6 +69,10 @@ const addError = ref<string | null>(null);
 const addBox = ref<HTMLElement | null>(null);
 const serversOpen = ref(false);
 const presetsOpen = ref(false);
+/** Диалог открыт из быстрого меню: курсор сразу в поле названия. */
+const presetsFocusCreate = ref(false);
+const presetMenu = ref<InstanceType<typeof Menu> | null>(null);
+const presetNote = ref<string | null>(null);
 const serverError = ref<string | null>(null);
 const exportNote = ref<string | null>(null);
 const columnMenu = ref<InstanceType<typeof Popover> | null>(null);
@@ -82,6 +88,38 @@ watch(draft, () => {
 
 /** Настройки разошлись с сохранённым пресетом: подпись у кнопки. */
 const presetChanged = computed(() => dnsPresetChanged(session));
+
+/** Быстрое сохранение изменений в открытый пресет. */
+async function savePresetChanges(): Promise<void> {
+  presetNote.value = null;
+  const saved = await savePresetToCurrent(session);
+  if (!saved) {
+    presetNote.value =
+      dnsPresets.status.update.error ?? "Пресет не сохранён.";
+  }
+}
+
+/** Открывает диалог пресетов сразу на форме нового пресета. */
+function openPresetsForCreate(): void {
+  presetsFocusCreate.value = true;
+  presetsOpen.value = true;
+}
+
+/** Действия у подписи пресета: заменить настройки или завести новый. */
+const presetActions = computed<MenuItem[]>(() => [
+  {
+    label: `Заменить в пресете «${session.presetTitle}»`,
+    icon: "pi pi-save",
+    command: () => {
+      void savePresetChanges();
+    },
+  },
+  {
+    label: "Сохранить как новый пресет…",
+    icon: "pi pi-plus",
+    command: openPresetsForCreate,
+  },
+]);
 
 const placeholder = computed(() =>
   session.defaultType === "PTR" ? "IP-адрес или reverse-имя" : "Введите домен",
@@ -412,11 +450,39 @@ async function exportCsv(): Promise<void> {
       <span v-if="session.presetTitle" class="dns__preset">
         <i class="pi pi-bookmark" aria-hidden="true" />
         {{ session.presetTitle }}
-        <small v-if="presetChanged" class="dns__preset-changed">
-          изменён
-        </small>
+        <template v-if="presetChanged">
+          <small class="dns__preset-changed">изменён</small>
+          <Button
+            v-tooltip.top="'Сохранить в пресет'"
+            icon="pi pi-save"
+            severity="secondary"
+            text
+            rounded
+            size="small"
+            aria-label="Сохранить изменения в пресет"
+            :loading="dnsPresets.status.update.loading"
+            @click="savePresetChanges"
+          />
+          <Button
+            v-tooltip.top="'Другие действия'"
+            icon="pi pi-ellipsis-v"
+            severity="secondary"
+            text
+            rounded
+            size="small"
+            aria-label="Другие действия с пресетом"
+            aria-haspopup="true"
+            @click="presetMenu?.toggle($event)"
+          />
+        </template>
       </span>
+      <Menu ref="presetMenu" :model="presetActions" popup />
     </div>
+
+    <p v-if="presetNote" class="dns__error" aria-live="polite">
+      <i class="pi pi-exclamation-circle" aria-hidden="true" />
+      {{ presetNote }}
+    </p>
 
     <DnsTable
       class="dns__table"
@@ -455,7 +521,11 @@ async function exportCsv(): Promise<void> {
       @remove="deleteServer"
     />
 
-    <PresetsDialog v-model:visible="presetsOpen" :session="session" />
+    <PresetsDialog
+      v-model:visible="presetsOpen"
+      v-model:focus-create="presetsFocusCreate"
+      :session="session"
+    />
   </section>
 </template>
 

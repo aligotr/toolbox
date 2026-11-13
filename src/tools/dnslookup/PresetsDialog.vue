@@ -26,6 +26,7 @@ import {
 import {
   adoptPresetTitle,
   applyPreset,
+  clearPreset,
   createPresetFromSession,
   dnsPresetChanged,
   dnsPresets,
@@ -38,10 +39,13 @@ import type { DnsSession } from "./types";
 const props = defineProps<{
   visible: boolean;
   session: DnsSession;
+  /** Открыт для создания пресета: курсор сразу в поле названия. */
+  focusCreate?: boolean;
 }>();
 
 const emit = defineEmits<{
   "update:visible": [value: boolean];
+  "update:focusCreate": [value: boolean];
   applied: [];
 }>();
 
@@ -145,6 +149,36 @@ async function saveCurrent(): Promise<void> {
     : (dnsPresets.status.update.error ?? "Пресет не сохранён.");
 }
 
+/** Очистка задевает и файл, и таблицу: сначала спрашиваем. */
+function requestClearPreset(): void {
+  const parts = [
+    `Пресет «${props.session.presetTitle}» станет пустым: строки, фильтры и серверы вернутся к значениям нового сеанса.`,
+    "Текущая таблица очистится.",
+  ];
+  if (props.session.status.run.loading) {
+    parts.push("Идущая проверка будет остановлена.");
+  }
+
+  confirm.require({
+    header: "Очистить пресет",
+    message: parts.join(" "),
+    icon: "pi pi-exclamation-triangle",
+    acceptLabel: "Очистить",
+    rejectLabel: "Отмена",
+    accept: () => {
+      void clearCurrent();
+    },
+  });
+}
+
+async function clearCurrent(): Promise<void> {
+  note.value = null;
+  const cleared = await clearPreset(props.session);
+  note.value = cleared
+    ? `Пресет «${cleared.title}» очищен.`
+    : (dnsPresets.status.update.error ?? "Пресет не очищен.");
+}
+
 /** Создаёт новый пресет из текущих настроек. */
 async function createNew(): Promise<void> {
   const title = newTitle.value.trim();
@@ -231,6 +265,7 @@ async function remove(preset: Preset): Promise<void> {
     modal
     :draggable="false"
     :style="{ width: DIALOG_WIDTH, maxWidth: DIALOG_MAX_WIDTH }"
+    @hide="emit('update:focusCreate', false)"
     @update:visible="emit('update:visible', $event)"
   >
     <div class="presets">
@@ -239,10 +274,10 @@ async function remove(preset: Preset): Promise<void> {
           <template v-if="bound">
             <span class="presets__current-title">{{ session.presetTitle }}</span>
             <small
-              class="presets__current-state"
-              :class="{ 'presets__current-state--changed': changed }"
+              v-if="changed"
+              class="presets__current-state presets__current-state--changed"
             >
-              {{ changed ? "настройки изменены" : "совпадает с пресетом" }}
+              настройки изменены
             </small>
           </template>
           <template v-else>
@@ -252,15 +287,25 @@ async function remove(preset: Preset): Promise<void> {
             </small>
           </template>
         </div>
-        <Button
-          v-if="bound"
-          label="Сохранить"
-          icon="pi pi-save"
-          size="small"
-          :loading="dnsPresets.status.update.loading"
-          :disabled="!changed"
-          @click="saveCurrent"
-        />
+        <div v-if="bound" class="presets__current-actions">
+          <Button
+            label="Очистить пресет"
+            icon="pi pi-eraser"
+            severity="secondary"
+            text
+            size="small"
+            :loading="dnsPresets.status.update.loading"
+            @click="requestClearPreset"
+          />
+          <Button
+            label="Сохранить"
+            icon="pi pi-save"
+            size="small"
+            :loading="dnsPresets.status.update.loading"
+            :disabled="!changed"
+            @click="saveCurrent"
+          />
+        </div>
       </section>
 
       <p v-if="dnsPresets.status.list.loading" class="presets__note">
@@ -371,6 +416,7 @@ async function remove(preset: Preset): Promise<void> {
           v-model="newTitle"
           class="presets__create-input"
           size="small"
+          :autofocus="focusCreate"
           :maxlength="PRESET_TITLE_MAX_LENGTH"
           placeholder="Название нового пресета"
           aria-label="Название нового пресета"
@@ -420,6 +466,13 @@ async function remove(preset: Preset): Promise<void> {
   flex-direction: column;
   gap: var(--ag-space-xs);
   min-width: 0;
+}
+
+.presets__current-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--ag-space-xs);
 }
 
 .presets__current-title {
