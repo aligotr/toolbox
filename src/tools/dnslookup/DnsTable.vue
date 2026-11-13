@@ -264,11 +264,15 @@ watch(
         </div>
       </template>
 
+      <!-- Ширина колонки — по содержимому: `width: 1%` не даёт таблице
+           отдать домену лишнюю ширину. Кнопки стоят у правого края
+           колонки, а пустота за текстом остаётся только у коротких имён.
+           Нижнюю границу держит `minWidth`. -->
       <Column
         field="name"
         frozen
         align-frozen="left"
-        :style="{ minWidth: DOMAIN_COLUMN_MIN_WIDTH }"
+        :style="{ minWidth: DOMAIN_COLUMN_MIN_WIDTH, width: '1%' }"
       >
         <template #header>
           <span class="dns-table__domains">
