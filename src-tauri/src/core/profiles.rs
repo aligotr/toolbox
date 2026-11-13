@@ -35,6 +35,10 @@ pub const DEFAULT_TITLE: &str = "Работа";
 /// Предел длины названия: длиннее в подписи сайдбара всё равно не влезет.
 const MAX_TITLE_LEN: usize = 60;
 
+/// Раздел указателей на пресеты по умолчанию:
+/// `defaults: { "<tool>": "<presetId>" }`.
+const DEFAULTS_KEY: &str = "defaults";
+
 /// Профиль для интерфейса.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Profile {
@@ -257,21 +261,123 @@ fn read_title(dir: &Path) -> Option<String> {
 /// Испорченный файл перезаписывается: название сохранить нужно в любом
 /// случае, а исправлять документ вручную пользователь не обязан.
 fn write_profile(dir: &Path, title: &str) -> Result<(), String> {
-    let path = dir.join(PROFILE_FILE);
-    let mut document = match read(&path)? {
-        Some(raw) => match serde_json::from_str(strip_bom(&raw)) {
-            Ok(Value::Object(map)) => map,
-            _ => Map::new(),
-        },
-        None => Map::new(),
-    };
-
+    let mut document = read_document(dir)?;
     document.insert("version".to_owned(), Value::from(VERSION));
     document.insert("title".to_owned(), Value::from(title));
+    write_document(dir, &document)
+}
 
-    let text = serde_json::to_string_pretty(&Value::Object(document))
+/// Читает `profile.json` как объект.
+///
+/// Отсутствующий файл — профиль без названия. Испорченный JSON — пустой
+/// документ: название и умолчания неизвестны, но профиль остаётся видимым.
+/// Ошибка чтения возвращается вызывающему: иначе запись стёрла бы файл,
+/// который всего лишь не удалось прочитать.
+fn read_document(dir: &Path) -> Result<Map<String, Value>, String> {
+    let path = dir.join(PROFILE_FILE);
+    let Some(raw) = read(&path)? else {
+        return Ok(Map::new());
+    };
+    Ok(match serde_json::from_str(strip_bom(&raw)) {
+        Ok(Value::Object(map)) => map,
+        _ => Map::new(),
+    })
+}
+
+/// Причина, по которой `profile.json` не разобран; `None` — файл цел.
+///
+/// Проверка отдельная: `default_preset` обязан отдать пустое значение, а
+/// пользователь — узнать, почему умолчание пропало.
+pub fn document_warning(dir: &Path) -> Result<Option<String>, String> {
+    let path = dir.join(PROFILE_FILE);
+    let Some(raw) = read(&path)? else {
+        return Ok(None);
+    };
+    match serde_json::from_str::<Value>(strip_bom(&raw)) {
+        Ok(_) => Ok(None),
+        Err(error) => Ok(Some(format!(
+            "файл профиля '{}' не разобран: {error}; умолчания скрыты",
+            path.display()
+        ))),
+    }
+}
+
+/// Перезаписывает `profile.json` атомарно: папка может лежать на сетевой шаре.
+fn write_document(dir: &Path, document: &Map<String, Value>) -> Result<(), String> {
+    let path = dir.join(PROFILE_FILE);
+    let text = serde_json::to_string_pretty(&Value::Object(document.clone()))
         .map_err(|error| format!("Профиль не сериализован: {error}"))?;
     write_atomic(&path, &format!("{text}\n"))
+}
+
+/// Пресет по умолчанию для инструмента.
+///
+/// `None` — указатель не задан или файл профиля испорчен: вкладка открывается
+/// пустой, как и без настройки. Ошибка — только недопустимый идентификатор.
+pub fn default_preset(dir: &Path, tool: &str) -> Result<Option<String>, String> {
+    validate_tool(tool)?;
+    let document = read_document(dir)?;
+    let id = document
+        .get(DEFAULTS_KEY)
+        .and_then(Value::as_object)
+        .and_then(|defaults| defaults.get(tool))
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|id| !id.is_empty());
+    Ok(id.map(str::to_owned))
+}
+
+/// Записывает или снимает указатель на пресет по умолчанию.
+///
+/// Указатель живёт в `profile.json`: пресет принадлежит профилю, поэтому при
+/// переключении профиля умолчание меняется вместе с ним. Пустой раздел
+/// удаляется, чтобы файл не копил незавершённые настройки.
+pub fn set_default_preset(dir: &Path, tool: &str, preset_id: Option<&str>) -> Result<(), String> {
+    validate_tool(tool)?;
+    let mut document = read_document(dir)?;
+    let mut defaults = match document.get(DEFAULTS_KEY) {
+        Some(Value::Object(map)) => map.clone(),
+        _ => Map::new(),
+    };
+
+    match preset_id {
+        Some(id) => {
+            let id = id.trim();
+            if !names::is_safe_id(id) {
+                return Err("Недопустимый идентификатор пресета".to_owned());
+            }
+            defaults.insert(tool.to_owned(), Value::from(id));
+        }
+        None => {
+            defaults.remove(tool);
+        }
+    }
+
+    if defaults.is_empty() {
+        document.remove(DEFAULTS_KEY);
+    } else {
+        document.insert(DEFAULTS_KEY.to_owned(), Value::Object(defaults));
+    }
+    write_document(dir, &document)
+}
+
+/// Снимает указатель, если он ведёт на удаляемый пресет.
+///
+/// Указатель на удалённый файл открывал бы вкладку с предупреждением на
+/// каждом запуске, поэтому чистится вместе с пресетом.
+pub fn clear_default_if(dir: &Path, tool: &str, preset_id: &str) -> Result<(), String> {
+    if default_preset(dir, tool)?.as_deref() == Some(preset_id) {
+        set_default_preset(dir, tool, None)?;
+    }
+    Ok(())
+}
+
+/// Проверяет идентификатор инструмента: он становится ключом в `defaults`.
+fn validate_tool(tool: &str) -> Result<(), String> {
+    if !names::is_safe_id(tool) {
+        return Err("Недопустимый идентификатор инструмента".to_owned());
+    }
+    Ok(())
 }
 
 /// Проверяет и обрезает название.
@@ -441,6 +547,118 @@ mod tests {
 
         assert!(error.contains("пустым"), "причина: {error}");
         assert!(list(&dir).expect("список").is_empty(), "папка не создана");
+    }
+
+    #[test]
+    fn default_preset_roundtrip_keeps_profile_title() {
+        let dir = temp_dir("default-preset");
+        let profile = create(&dir, "Работа").expect("профиль");
+        let path = dir.join(&profile.id);
+
+        set_default_preset(&path, "dnslookup", Some("testovyy")).expect("указатель");
+
+        assert_eq!(
+            default_preset(&path, "dnslookup")
+                .expect("чтение")
+                .as_deref(),
+            Some("testovyy")
+        );
+        let document = fs::read_to_string(path.join(PROFILE_FILE)).expect("файл");
+        assert!(document.contains("\"title\": \"Работа\""), "файл: {document}");
+    }
+
+    #[test]
+    fn default_presets_of_tools_are_independent() {
+        let dir = temp_dir("default-preset-tools");
+        let profile = create(&dir, "Работа").expect("профиль");
+        let path = dir.join(&profile.id);
+
+        set_default_preset(&path, "dnslookup", Some("dns")).expect("dns");
+        set_default_preset(&path, "ping", Some("net")).expect("ping");
+        set_default_preset(&path, "dnslookup", None).expect("снятие");
+
+        assert_eq!(default_preset(&path, "dnslookup").expect("чтение"), None);
+        assert_eq!(
+            default_preset(&path, "ping").expect("чтение").as_deref(),
+            Some("net")
+        );
+    }
+
+    #[test]
+    fn empty_defaults_section_is_removed() {
+        // Пустой раздел в файле выглядит как незавершённая настройка.
+        let dir = temp_dir("default-preset-empty");
+        let profile = create(&dir, "Работа").expect("профиль");
+        let path = dir.join(&profile.id);
+        set_default_preset(&path, "dnslookup", Some("dns")).expect("указатель");
+
+        set_default_preset(&path, "dnslookup", None).expect("снятие");
+
+        let document = fs::read_to_string(path.join(PROFILE_FILE)).expect("файл");
+        assert!(!document.contains("defaults"), "файл: {document}");
+    }
+
+    #[test]
+    fn clearing_default_ignores_another_preset() {
+        let dir = temp_dir("default-preset-other");
+        let profile = create(&dir, "Работа").expect("профиль");
+        let path = dir.join(&profile.id);
+        set_default_preset(&path, "dnslookup", Some("dns")).expect("указатель");
+
+        clear_default_if(&path, "dnslookup", "ghost").expect("чужой пресет");
+
+        assert_eq!(
+            default_preset(&path, "dnslookup").expect("чтение").as_deref(),
+            Some("dns")
+        );
+    }
+
+    #[test]
+    fn default_preset_rejects_unsafe_tool() {
+        let dir = temp_dir("default-preset-unsafe");
+        let profile = create(&dir, "Работа").expect("профиль");
+        let path = dir.join(&profile.id);
+
+        assert!(
+            set_default_preset(&path, "../evil", Some("dns")).is_err(),
+            "путь наружу"
+        );
+        assert!(default_preset(&path, "../evil").is_err(), "путь наружу");
+    }
+
+    #[test]
+    fn corrupt_profile_hides_default_without_failing() {
+        // Испорченный файл не должен мешать открыть вкладку: умолчания нет.
+        let dir = temp_dir("default-preset-broken");
+        let profile = create(&dir, "Работа").expect("профиль");
+        let path = dir.join(&profile.id);
+        fs::write(path.join(PROFILE_FILE), "{ \"defaults\": ").expect("битый файл");
+
+        assert_eq!(default_preset(&path, "dnslookup").expect("чтение"), None);
+    }
+
+    #[test]
+    fn corrupt_profile_reports_reason() {
+        let dir = temp_dir("default-preset-warning");
+        let profile = create(&dir, "Работа").expect("профиль");
+        let path = dir.join(&profile.id);
+        fs::write(path.join(PROFILE_FILE), "{ \"defaults\": ").expect("битый файл");
+
+        let warning = document_warning(&path)
+            .expect("чтение")
+            .expect("причина");
+        assert!(warning.contains("не разобран"), "причина: {warning}");
+    }
+
+    #[test]
+    fn clean_profile_has_no_warning() {
+        let dir = temp_dir("default-preset-clean");
+        let profile = create(&dir, "Работа").expect("профиль");
+
+        assert_eq!(
+            document_warning(&dir.join(&profile.id)).expect("чтение"),
+            None
+        );
     }
 
     #[test]

@@ -69,6 +69,16 @@ export const JOURNAL_SOURCE = "dnslookup";
 /** Идентификатор инструмента в файлах пресетов: `presets/dnslookup/`. */
 export const PRESET_TOOL = "dnslookup";
 
+/** Действия с пресетом по умолчанию в списке пресетов. */
+export const PRESET_DEFAULT_ACTION = "Сделать пресетом по умолчанию";
+export const PRESET_DEFAULT_CLEAR = "Снять пресет по умолчанию";
+
+/** Метка строки, которая грузится в новые вкладки. */
+export const PRESET_DEFAULT_BADGE = "по умолчанию";
+
+/** Причина отказа, если состояние операции не сохранило свою. */
+export const PRESET_DEFAULT_ERROR = "Пресет по умолчанию не изменён.";
+
 /** Преднастроенные серверы: в профиль не пишутся. */
 export const PRESET_SERVERS: ServerOption[] = [
   { id: SYSTEM_SERVER_ID, label: "Системный", address: null, kind: "system" },

@@ -658,6 +658,56 @@ fn presets_list(
     presets::list(&storage.presets_dir(), &tool)
 }
 
+/// Указатель на пресет по умолчанию вместе с замечанием о файле профиля.
+#[derive(Serialize)]
+struct PresetDefault {
+    /// Идентификатор пресета; `null` — умолчание не задано.
+    id: Option<String>,
+    /// Причина, по которой файл профиля не разобран; `null` — всё в порядке.
+    warning: Option<String>,
+}
+
+/// Пресет по умолчанию для инструмента активного профиля.
+///
+/// `id = null` — умолчание не задано: новая вкладка открывается пустой, как и
+/// раньше. Указатель лежит в `profile.json`, поэтому виден только активному
+/// профилю и синхронизируется вместе с ним.
+#[tauri::command]
+fn preset_default_get(runtime: State<'_, Runtime>, tool: String) -> Result<PresetDefault, String> {
+    let storage = storage_of(&runtime)?;
+    let dir = storage.active_profile_dir();
+    Ok(PresetDefault {
+        id: profiles::default_preset(&dir, &tool)?,
+        warning: profiles::document_warning(&dir)?,
+    })
+}
+
+/// Назначает или снимает пресет по умолчанию.
+///
+/// Существование пресета проверяется здесь, а не в интерфейсе: указатель
+/// в пустоту открывал бы вкладку с предупреждением на каждом запуске.
+#[tauri::command]
+fn preset_default_set(
+    runtime: State<'_, Runtime>,
+    tool: String,
+    id: Option<String>,
+) -> Result<Option<String>, String> {
+    let storage = storage_of(&runtime)?;
+
+    if let Some(id) = &id {
+        if !presets::exists(&storage.presets_dir(), &tool, id) {
+            return Err(format!("Пресет '{id}' не найден"));
+        }
+    }
+
+    profiles::set_default_preset(&storage.active_profile_dir(), &tool, id.as_deref())?;
+    log::info!(
+        "Пресет по умолчанию для '{tool}': {}",
+        id.as_deref().unwrap_or("не задан")
+    );
+    Ok(id)
+}
+
 /// Сохраняет текущие настройки инструмента новым пресетом.
 #[tauri::command]
 fn preset_create(
@@ -724,6 +774,9 @@ fn preset_delete(
         &tool,
         &id,
     )?;
+    // Указатель на удалённый пресет молча не переживает удаление: иначе
+    // каждая новая вкладка открывалась бы с предупреждением.
+    profiles::clear_default_if(&storage.active_profile_dir(), &tool, &id)?;
     Ok(target.display().to_string())
 }
 
@@ -1023,6 +1076,8 @@ pub fn run() {
             template_duplicate,
             template_delete,
             presets_list,
+            preset_default_get,
+            preset_default_set,
             preset_create,
             preset_update,
             preset_rename,

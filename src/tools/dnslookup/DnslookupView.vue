@@ -19,7 +19,7 @@ import MultiSelect from "primevue/multiselect";
 import Popover from "primevue/popover";
 import Select from "primevue/select";
 import { useConfirm } from "primevue/useconfirm";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import type { ToolCellProps } from "../../contracts/tools";
 import { describeError } from "../../core/errors";
 import DnsTable from "./DnsTable.vue";
@@ -29,11 +29,13 @@ import {
   RECORD_TYPES,
   SERVER_LABEL_LIMIT,
   SERVER_LIMIT,
+  STANDALONE_CELL_KEY,
   STATUS_FILTERS,
   SYSTEM_SERVER_ID,
   TOOL_HEADING,
 } from "./constants";
 import {
+  applyDefaultPreset,
   dnsPresetChanged,
   dnsPresets,
   revertPresetChanges,
@@ -86,6 +88,12 @@ const columnMenu = ref<InstanceType<typeof Popover> | null>(null);
 /** Правка домена снимает прошлую ошибку добавления: сообщение не висит зря. */
 watch(draft, () => {
   addError.value = null;
+});
+
+// Новая вкладка открывается с пресетом по умолчанию. Признак свежести ячейки
+// гасится внутри загрузки, поэтому повторный показ вкладки пресет не тронет.
+onMounted(() => {
+  void applyDefaultPreset(session, props.cellKey ?? STANDALONE_CELL_KEY);
 });
 
 // Тип в поле добавления — значение по умолчанию для новых строк,

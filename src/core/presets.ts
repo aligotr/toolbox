@@ -14,6 +14,7 @@ import { reactive } from "vue";
 import type {
   Preset,
   StoredPreset,
+  StoredPresetDefault,
   StoredPresetList,
 } from "../contracts/presets";
 import { JOURNAL_CORE_SOURCE } from "./constants";
@@ -28,13 +29,16 @@ export type PresetOperation =
   | "update"
   | "rename"
   | "duplicate"
-  | "delete";
+  | "delete"
+  | "default";
 
 /** Список пресетов одного инструмента. */
 export interface PresetState {
   items: Preset[];
   /** Прочитан ли список хотя бы раз. */
   loaded: boolean;
+  /** Пресет, который грузится в новую вкладку; `null` — умолчания нет. */
+  defaultId: string | null;
 }
 
 /** Состояния операций: `status.create.loading`, `status.delete.error` и т. д. */
@@ -56,6 +60,41 @@ export interface Presets {
   duplicate(id: string): Promise<Preset | null>;
   /** Удаляет пресет в корзину. */
   remove(preset: Preset): Promise<boolean>;
+  /** Назначает или снимает пресет по умолчанию. */
+  setDefault(id: string | null): Promise<boolean>;
+}
+
+/**
+ * Названия пресетов по умолчанию по инструментам.
+ *
+ * Оболочке нужно только название: «Перезапустить вкладку» подсказывает,
+ * какой пресет загрузится, но не лезет в состояние инструмента. Пока список
+ * не прочитан, названия нет — подсказка просто не упоминает пресет.
+ */
+const defaultTitles = new Map<string, string>();
+
+/** Название пресета по умолчанию для инструмента; `null` — не задан. */
+export function defaultPresetTitle(tool: string): string | null {
+  return defaultTitles.get(tool) ?? null;
+}
+
+/**
+ * Созданные состояния пресетов по инструментам.
+ *
+ * Оболочке нужно название пресета по умолчанию, а оно известно только после
+ * чтения списка. Реестр позволяет прочитать списки не зная, какие инструменты
+ * существуют: модуль сам сообщает о себе при создании состояния.
+ */
+const byTool = new Map<string, Presets>();
+
+/**
+ * Читает списки пресетов всех созданных инструментов.
+ *
+ * Отказ не мешает работе: подсказка просто не упомянет пресет, а загрузка
+ * при открытии вкладки напишет причину в журнал.
+ */
+export async function loadPresetDefaults(): Promise<void> {
+  await Promise.all([...byTool.values()].map((presets) => presets.load()));
 }
 
 /** Переносит документ ядра в форму интерфейса. */
@@ -70,7 +109,7 @@ function toPreset(stored: StoredPreset): Preset {
 
 /** Создаёт независимое состояние пресетов инструмента. */
 export function createPresets(tool: string): Presets {
-  const state = reactive<PresetState>({ items: [], loaded: false });
+  const state = reactive<PresetState>({ items: [], loaded: false, defaultId: null });
   const status = reactive<PresetStatus>({
     list: idle(),
     create: idle(),
@@ -78,20 +117,34 @@ export function createPresets(tool: string): Presets {
     rename: idle(),
     duplicate: idle(),
     delete: idle(),
+    default: idle(),
   });
 
-  /** Перечитывает список пресетов инструмента. */
+  /** Перечитывает список пресетов инструмента и указатель по умолчанию. */
   async function reload(): Promise<void> {
-    const list = await invoke<StoredPresetList>("presets_list", { tool });
+    const [list, presetDefault] = await Promise.all([
+      invoke<StoredPresetList>("presets_list", { tool }),
+      invoke<StoredPresetDefault>("preset_default_get", { tool }),
+    ]);
 
     // Испорченный файл не мешает остальным, но причину пользователь должен
     // видеть: иначе пресет просто исчез бы из списка.
     for (const warning of list.warnings) {
       write(JOURNAL_CORE_SOURCE, "error", warning);
     }
+    if (presetDefault.warning !== null) {
+      write(JOURNAL_CORE_SOURCE, "error", presetDefault.warning);
+    }
 
     state.items = list.items.map(toPreset);
+    state.defaultId = presetDefault.id;
     state.loaded = true;
+
+    const preset = presetDefault.id === null
+      ? undefined
+      : state.items.find((item) => item.id === presetDefault.id);
+    if (preset) defaultTitles.set(tool, preset.title);
+    else defaultTitles.delete(tool);
   }
 
   /**
@@ -99,24 +152,31 @@ export function createPresets(tool: string): Presets {
    *
    * Ошибка не стирает уже показанный список: пресет мог быть добавлен
    * на другой машине, и пустой список выглядел бы потерей настроек.
+   * Повторный вызов во время чтения дожидается того же результата: автозагрузка
+   * пресета не должна принять незаполненное состояние за «умолчания нет».
    */
+  let listing: Promise<void> | null = null;
+
   async function load(): Promise<void> {
-    if (status.list.loading) return;
+    if (listing) return listing;
 
     status.list.loading = true;
     status.list.error = null;
-    try {
-      await reload();
-    } catch (error) {
-      status.list.error = describeError(error);
-      write(
-        JOURNAL_CORE_SOURCE,
-        "error",
-        `пресеты «${tool}» не прочитаны: ${status.list.error}`,
-      );
-    } finally {
-      status.list.loading = false;
-    }
+    listing = reload()
+      .catch((error: unknown) => {
+        status.list.error = describeError(error);
+        write(
+          JOURNAL_CORE_SOURCE,
+          "error",
+          `пресеты «${tool}» не прочитаны: ${status.list.error}`,
+        );
+      })
+      .finally(() => {
+        status.list.loading = false;
+        listing = null;
+      });
+
+    return listing;
   }
 
   /**
@@ -213,5 +273,42 @@ export function createPresets(tool: string): Presets {
     return target !== null;
   }
 
-  return { state, status, load, create, update, rename, duplicate, remove };
+  /**
+   * Назначает пресет по умолчанию или снимает указатель.
+   *
+   * `null` — новая вкладка инструмента снова открывается пустой. Работает
+   * только на новые вкладки: открытые сеансы настройка не трогает.
+   */
+  async function setDefault(id: string | null): Promise<boolean> {
+    const result = await perform<{ id: string | null }>(
+      status.default,
+      "пресет по умолчанию не изменён",
+      async () => ({
+        id: await invoke<string | null>("preset_default_set", { tool, id }),
+      }),
+      (value) => {
+        if (value.id === null) {
+          return `пресет по умолчанию для «${tool}» снят`;
+        }
+        const title =
+          state.items.find((item) => item.id === value.id)?.title ?? value.id;
+        return `пресет «${title}» выбран по умолчанию для «${tool}»`;
+      },
+    );
+    return result !== null;
+  }
+
+  const presets: Presets = {
+    state,
+    status,
+    load,
+    create,
+    update,
+    rename,
+    duplicate,
+    remove,
+    setDefault,
+  };
+  byTool.set(tool, presets);
+  return presets;
 }

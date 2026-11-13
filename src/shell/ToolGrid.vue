@@ -10,6 +10,7 @@
 import { computed } from "vue";
 import type { ToolDescriptor } from "../contracts/tools";
 import type { TabColumn } from "../contracts/workspace";
+import { cellKey } from "../core/workspace";
 
 const props = defineProps<{ tabId: string; columns: TabColumn[]; tools: ToolDescriptor[] }>();
 
@@ -18,11 +19,6 @@ const toolsById = computed(() => new Map(props.tools.map((tool) => [tool.id, too
 
 function findTool(id: string): ToolDescriptor | undefined {
   return toolsById.value.get(id);
-}
-
-/** Место инструмента в сетке: стабильный ключ сеанса (ADR 0017). */
-function cellKey(columnIndex: number, toolIndex: number): string {
-  return `${props.tabId}:${columnIndex}:${toolIndex}`;
 }
 </script>
 
@@ -36,13 +32,13 @@ function cellKey(columnIndex: number, toolIndex: number): string {
     >
       <div
         v-for="(toolId, toolIndex) in column.tools"
-        :key="cellKey(columnIndex, toolIndex)"
+        :key="cellKey(props.tabId, columnIndex, toolIndex)"
         class="grid__cell"
       >
         <component
           :is="findTool(toolId)?.component"
           v-if="findTool(toolId)"
-          :cell-key="cellKey(columnIndex, toolIndex)"
+          :cell-key="cellKey(props.tabId, columnIndex, toolIndex)"
         />
         <div v-else class="grid__unknown">
           <i class="pi pi-question-circle" aria-hidden="true" />

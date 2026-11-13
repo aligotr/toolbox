@@ -236,5 +236,10 @@ export const toolboxPreset = definePreset(Aura, {
     html .p-chip {
       font-size: 13px;
     }
+
+    /* Подтверждения задают сообщение несколькими строками: перенос значим. */
+    html .p-confirmdialog-message {
+      white-space: pre-line;
+    }
   `,
 });

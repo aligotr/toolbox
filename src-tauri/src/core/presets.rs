@@ -260,6 +260,11 @@ fn validate_tool(tool: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Проверяет, что пресет существует: указатель по умолчанию не ведёт в пустоту.
+pub fn exists(root: &Path, tool: &str, id: &str) -> bool {
+    validate_tool(tool).is_ok() && preset_path(root, tool, id).is_ok()
+}
+
 /// Проверяет идентификатор пресета: он становится именем файла.
 fn validate_id(id: &str) -> Result<(), String> {
     if id.is_empty() {
@@ -674,6 +679,16 @@ mod tests {
         assert_eq!(dns.items[0].title, "DNS");
         assert_eq!(ping.items.len(), 1);
         assert_eq!(ping.items[0].title, "Сеть");
+    }
+
+    #[test]
+    fn exists_reports_only_real_presets() {
+        let root = temp_dir("exists");
+        let preset = create(&root, "dnslookup", "DNS", payload()).expect("пресет");
+
+        assert!(exists(&root, "dnslookup", &preset.id));
+        assert!(!exists(&root, "dnslookup", "ghost"), "нет файла");
+        assert!(!exists(&root, "../evil", &preset.id), "путь наружу");
     }
 
     #[test]

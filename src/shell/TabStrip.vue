@@ -22,6 +22,7 @@ import { computed, nextTick, ref } from "vue";
 import type { Template } from "../contracts/templates";
 import type { WorkspaceTab } from "../contracts/workspace";
 import { copyColumns } from "../core/layout";
+import { defaultPresetTitle, loadPresetDefaults } from "../core/presets";
 import {
   createTemplate,
   renameTemplate,
@@ -30,7 +31,7 @@ import {
   updateTemplateLayout,
 } from "../core/templates";
 import * as templateBindings from "../core/templates/bindings";
-import { activateTab, closeTab, openEmptyTab, reopenTab, workspace } from "../core/workspace";
+import { activateTab, closeTab, openEmptyTab, restartTab, workspace } from "../core/workspace";
 import CloseTabDialog from "./CloseTabDialog.vue";
 import TemplateTitleDialog from "./TemplateTitleDialog.vue";
 import {
@@ -40,10 +41,13 @@ import {
   RENAME_TEMPLATE_HEADER,
   RENAME_TEMPLATE_LABEL,
   RENAME_TEMPLATE_NOTE,
-  REOPEN_TAB_ACCEPT,
-  REOPEN_TAB_HEADER,
-  REOPEN_TAB_LABEL,
-  REOPEN_TAB_REJECT,
+  RESTART_TAB_ACCEPT,
+  RESTART_TAB_HEADER,
+  RESTART_TAB_KEEP,
+  RESTART_TAB_LABEL,
+  RESTART_TAB_LOSS,
+  RESTART_TAB_REJECT,
+  restartDefaultsLine,
   SAVE_NEW_TEMPLATE_LABEL,
   SAVE_TEMPLATE_EMPTY_HINT,
   SAVE_TEMPLATE_HEADER,
@@ -140,13 +144,13 @@ const menuItems = computed<MenuItem[]>(() => {
     });
   }
 
-  // Переоткрытие стоит последним: оно разрушительное и не относится
-  // к шаблону, поэтому отделено чертой.
+  // Перезапуск стоит последним: он разрушительный и не относится
+  // к шаблону, поэтому отделён чертой.
   items.push({ separator: true });
   items.push({
-    label: REOPEN_TAB_LABEL,
+    label: RESTART_TAB_LABEL,
     icon: "pi pi-refresh",
-    command: () => requestReopen(tab),
+    command: () => void requestRestart(tab),
   });
 
   return items;
@@ -218,22 +222,42 @@ function applyUpdate(tab: WorkspaceTab, template: Template): void {
 }
 
 /**
+ * Пресеты по умолчанию для инструментов вкладки.
+ *
+ * Одинаковые названия повторяются один раз: в подтверждении важен список
+ * пресетов, а не число ячеек.
+ */
+function defaultTitlesOf(tab: WorkspaceTab): string[] {
+  const titles = tab.columns
+    .flatMap((column) => column.tools)
+    .map((tool) => defaultPresetTitle(tool))
+    .filter((title): title is string => title !== null);
+  return [...new Set(titles)];
+}
+
+/**
  * Возвращает инструменты вкладки к состоянию новой.
  *
  * Действие разрушительное: несохранённые строки, результаты и настройки
  * инструментов пропадут, поэтому спрашиваем подтверждение. Сама вкладка
  * остаётся на месте: раскладка и привязка к шаблону переходят к новой копии.
  */
-function requestReopen(tab: WorkspaceTab): void {
+async function requestRestart(tab: WorkspaceTab): Promise<void> {
+  // Названия умолчаний известны только после чтения списков: без него
+  // подтверждение не смогло бы сказать, какой пресет загрузится.
+  await loadPresetDefaults();
+
+  const lines = [RESTART_TAB_LOSS];
+  const defaults = restartDefaultsLine(defaultTitlesOf(tab));
+  if (defaults !== null) lines.push(defaults);
+  lines.push(RESTART_TAB_KEEP);
+
   confirm.require({
-    header: REOPEN_TAB_HEADER,
-    message:
-      `Инструменты вкладки «${tab.title}» вернутся к состоянию новой: ` +
-      "строки, результаты и настройки будут потеряны. Раскладка и привязка " +
-      "к шаблону сохранятся.",
-    acceptLabel: REOPEN_TAB_ACCEPT,
-    rejectLabel: REOPEN_TAB_REJECT,
-    accept: () => reopenTab(tab.id),
+    header: RESTART_TAB_HEADER,
+    message: lines.join("\n"),
+    acceptLabel: RESTART_TAB_ACCEPT,
+    rejectLabel: RESTART_TAB_REJECT,
+    accept: () => restartTab(tab.id),
   });
 }
 

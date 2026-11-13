@@ -12,6 +12,7 @@
 import type { Preset } from "../../contracts/presets";
 import { write } from "../../core/journal";
 import { createPresets } from "../../core/presets";
+import { takeFreshCell } from "../../core/workspace";
 import {
   DEFAULT_RECORD_TYPE,
   DEFAULT_SERVER_IDS,
@@ -267,6 +268,49 @@ export async function applyPreset(
   if (session.rows.length > 0) runAllRows(session);
 
   return { error: null, warnings };
+}
+
+/**
+ * Загружает пресет по умолчанию в новую ячейку инструмента.
+ *
+ * Признак свежести ячейки гаснет при первом обращении: в уже открытую вкладку
+ * пресет не приходит, а перезапуск вкладки даёт новый ключ и снова включает
+ * загрузку. Пропавший или неразобранный пресет оставляет вкладку пустой,
+ * а причину пишет в журнал — тихо подменять настройки нельзя.
+ */
+export async function applyDefaultPreset(
+  session: DnsSession,
+  cellKey: string,
+): Promise<void> {
+  if (!takeFreshCell(cellKey)) return;
+
+  if (!dnsPresets.state.loaded) await dnsPresets.load();
+
+  const id = dnsPresets.state.defaultId;
+  if (id === null) return;
+
+  const preset = dnsPresets.state.items.find((item) => item.id === id);
+  if (!preset) {
+    write(
+      JOURNAL_SOURCE,
+      "error",
+      `пресет по умолчанию «${id}» не найден: вкладка открыта пустой`,
+    );
+    return;
+  }
+
+  const result = await applyPreset(session, preset);
+  if (result.error !== null) {
+    write(
+      JOURNAL_SOURCE,
+      "error",
+      `пресет по умолчанию не загружен: ${result.error}`,
+    );
+    return;
+  }
+  for (const warning of result.warnings) {
+    write(JOURNAL_SOURCE, "info", warning);
+  }
 }
 
 /**

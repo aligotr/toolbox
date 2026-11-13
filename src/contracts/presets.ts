@@ -25,6 +25,14 @@ export interface StoredPresetList {
   warnings: string[];
 }
 
+/** Указатель на пресет по умолчанию и замечание о файле профиля. */
+export interface StoredPresetDefault {
+  /** Идентификатор пресета; `null` — умолчание не задано. */
+  id: string | null;
+  /** Причина, по которой файл профиля не разобран; `null` — всё в порядке. */
+  warning: string | null;
+}
+
 /** Пресет после переноса полей в форму интерфейса. */
 export interface Preset {
   id: string;

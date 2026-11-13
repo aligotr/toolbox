@@ -1,6 +1,6 @@
 # ADR 0029: Переоткрытие вкладки вместо сброса настроек инструмента
 
-- **Статус:** принято
+- **Статус:** заменено (ADR 0031)
 - **Дата:** 2026-11-13
 - **Область:** `src/core/workspace.ts`, `src/shell/TabStrip.vue`,
   `src/shell/constants.ts`, `src/tools/dnslookup/useDnslookup.ts`,

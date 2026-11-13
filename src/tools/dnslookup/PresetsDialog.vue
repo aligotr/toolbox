@@ -22,6 +22,10 @@ import {
   DATE_LOCALE,
   DIALOG_MAX_WIDTH,
   DIALOG_WIDTH,
+  PRESET_DEFAULT_ACTION,
+  PRESET_DEFAULT_BADGE,
+  PRESET_DEFAULT_CLEAR,
+  PRESET_DEFAULT_ERROR,
   UNKNOWN_SAVED_AT,
 } from "./constants";
 import {
@@ -66,6 +70,32 @@ const newTitle = ref("");
 const changed = computed(() => dnsPresetChanged(props.session));
 
 const bound = computed(() => props.session.presetId !== null);
+
+/** Пресет, который грузится в каждую новую вкладку инструмента. */
+function isDefault(preset: Preset): boolean {
+  return dnsPresets.state.defaultId === preset.id;
+}
+
+/**
+ * Назначает пресет по умолчанию или снимает отметку.
+ *
+ * Настройка действует на новые вкладки: открытый сеанс не трогается, иначе
+ * выбор умолчания перезаписал бы текущую работу.
+ */
+async function toggleDefault(preset: Preset): Promise<void> {
+  note.value = null;
+  const target = isDefault(preset) ? null : preset.id;
+  const done = await dnsPresets.setDefault(target);
+  if (!done) {
+    note.value = dnsPresets.status.default.error ?? PRESET_DEFAULT_ERROR;
+    return;
+  }
+
+  note.value =
+    target === null
+      ? "Пресет по умолчанию снят: новые вкладки открываются пустыми."
+      : `Пресет «${preset.title}» будет загружаться в новых вкладках.`;
+}
 
 watch(
   () => props.visible,
@@ -359,12 +389,31 @@ async function remove(preset: Preset): Promise<void> {
               :aria-label="`Загрузить пресет ${preset.title}`"
               @click="requestLoad(preset)"
             >
-              <span class="presets__title">{{ preset.title }}</span>
+              <span class="presets__title-row">
+                <span class="presets__title">{{ preset.title }}</span>
+                <span v-if="isDefault(preset)" class="presets__default">
+                  {{ PRESET_DEFAULT_BADGE }}
+                </span>
+              </span>
               <small class="presets__meta">
                 {{ savedAtLabel(preset.savedAt) }}
               </small>
             </button>
             <div class="presets__actions">
+              <Button
+                v-tooltip.top="
+                  isDefault(preset) ? PRESET_DEFAULT_CLEAR : PRESET_DEFAULT_ACTION
+                "
+                :icon="isDefault(preset) ? 'pi pi-star-fill' : 'pi pi-star'"
+                :severity="isDefault(preset) ? 'warn' : 'secondary'"
+                size="small"
+                text
+                :aria-label="
+                  isDefault(preset) ? PRESET_DEFAULT_CLEAR : PRESET_DEFAULT_ACTION
+                "
+                :loading="dnsPresets.status.default.loading"
+                @click="toggleDefault(preset)"
+              />
               <Button
                 v-tooltip.top="'Загрузить'"
                 icon="pi pi-upload"
@@ -533,10 +582,27 @@ async function remove(preset: Preset): Promise<void> {
   outline-offset: 2px;
 }
 
+.presets__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-sm);
+  min-width: 0;
+}
+
 .presets__title {
   overflow: hidden;
+  min-width: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.presets__default {
+  flex: none;
+  padding: 0 var(--ag-space-xs);
+  border: 1px solid var(--ag-border);
+  border-radius: var(--ag-radius-sm);
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
 }
 
 .presets__meta {

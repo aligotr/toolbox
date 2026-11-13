@@ -51,10 +51,61 @@ export interface WorkspaceState {
 /** Общее состояние рабочего пространства. */
 export const workspace = reactive<WorkspaceState>({ tabs: [], activeId: "" });
 
+/**
+ * Ключ места инструмента в сетке.
+ *
+ * Формат один на всё приложение (ADR 0017): им пользуются и сетка, и оболочка,
+ * помечающая свежие ячейки. Смена формата не должна расходиться между ними.
+ */
+export function cellKey(
+  tabId: string,
+  columnIndex: number,
+  toolIndex: number,
+): string {
+  return `${tabId}:${columnIndex}:${toolIndex}`;
+}
+
+/**
+ * Ячейки, появившиеся вместе с вкладкой.
+ *
+ * Инструмент грузит пресет по умолчанию только в такую ячейку: добавленная
+ * в уже открытую вкладку остаётся пустой. Признак временный и гаснет при
+ * первом обращении, поэтому включает пресет ровно один раз.
+ */
+const freshCells = new Set<string>();
+
+/** Помечает ячейки новой вкладки как свежие. */
+function markFreshCells(tabId: string, columns: TabColumn[]): void {
+  columns.forEach((column, columnIndex) => {
+    column.tools.forEach((_, toolIndex) => {
+      freshCells.add(cellKey(tabId, columnIndex, toolIndex));
+    });
+  });
+}
+
+/** Забывает свежесть всех ячеек вкладки: закрытая вкладка больше не новая. */
+function forgetFreshCells(tabId: string): void {
+  const prefix = `${tabId}:`;
+  for (const key of freshCells) {
+    if (key.startsWith(prefix)) freshCells.delete(key);
+  }
+}
+
+/**
+ * Забирает признак свежести ячейки.
+ *
+ * `true` — ячейка появилась вместе с вкладкой и ещё не видела пресета;
+ * повторное обращение вернёт `false`, поэтому загрузка не повторится.
+ */
+export function takeFreshCell(cellKey: string): boolean {
+  return freshCells.delete(cellKey);
+}
+
 /** Создаёт новую вкладку и делает её активной. */
 function addTab(tab: WorkspaceTab): WorkspaceTab {
   workspace.tabs.push(tab);
   workspace.activeId = tab.id;
+  markFreshCells(tab.id, tab.columns);
   return tab;
 }
 
@@ -127,6 +178,9 @@ export function applyTemplate(tabId: string, template: Template): boolean {
   if (!tab || tab.kind !== "workspace" || tab.columns.length > 0) return false;
 
   templateBindings.apply(tab, template);
+  // Инструменты появились вместе с вкладкой — значит, в них место пресету
+  // по умолчанию, даже если сама вкладка была открыта раньше.
+  markFreshCells(tab.id, tab.columns);
   return true;
 }
 
@@ -140,6 +194,7 @@ export function openTemplate(template: Template): void {
     columns: [],
   });
   templateBindings.apply(tab, template);
+  markFreshCells(tab.id, tab.columns);
 }
 
 /**
@@ -166,17 +221,18 @@ export function closeTab(id: string): void {
   // Связка закрытой вкладки больше не нужна: иначе файл копил бы записи
   // о вкладках, которых нет.
   templateBindings.prune(new Set(workspace.tabs.map((tab) => tab.id)));
+  forgetFreshCells(id);
 }
 
 /**
- * Переоткрывает вкладку: инструменты возвращаются к состоянию нового окна.
+ * Перезапускает вкладку: инструменты возвращаются к состоянию нового окна.
  *
  * Вкладка заменяется копией под новым идентификатором в той же позиции:
  * место в сетке задаёт ключ сеанса инструмента (ADR 0017), поэтому прежние
  * сеансы остаются без вкладки и следующий показ заводит их заново.
  * Раскладка, заголовок, иконка и привязка к шаблону сохраняются.
  */
-export function reopenTab(id: string): void {
+export function restartTab(id: string): void {
   const index = workspace.tabs.findIndex((tab) => tab.id === id);
   if (index < 0) return;
 
@@ -184,7 +240,7 @@ export function reopenTab(id: string): void {
   if (tab.kind !== "workspace") return;
 
   // Связка принадлежит вкладке, а не её идентификатору: переносим её,
-  // иначе переоткрытие молча открепило бы шаблон.
+  // иначе перезапуск молча открепил бы шаблон.
   const binding = templateBindings.of(id);
   const next: WorkspaceTab = {
     id: crypto.randomUUID(),
@@ -201,7 +257,10 @@ export function reopenTab(id: string): void {
   templateBindings.drop(id);
   if (binding) templateBindings.store(next.id, binding);
 
-  write(JOURNAL_CORE_SOURCE, "info", `вкладка «${next.title}» переоткрыта`);
+  forgetFreshCells(id);
+  markFreshCells(next.id, next.columns);
+
+  write(JOURNAL_CORE_SOURCE, "info", `вкладка «${next.title}» перезапущена`);
 }
 
 /** Гарантирует хотя бы одну вкладку — при первом показе оболочки. */
