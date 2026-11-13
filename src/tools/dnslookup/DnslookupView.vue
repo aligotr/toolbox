@@ -248,58 +248,60 @@ async function exportCsv(): Promise<void> {
         </InputGroup>
       </div>
 
-      <InputGroup class="dns__servers">
-        <MultiSelect
-          v-model="session.servers"
-          size="small"
-          :options="availableServers"
-          option-label="label"
-          option-value="id"
-          display="chip"
-          :selection-limit="SERVER_LIMIT"
-          placeholder="Выберите серверы"
-          aria-label="DNS-серверы"
-        >
-          <template #value="{ placeholder }">
-            <template v-if="session.servers.length > 0">
-              <Chip
-                v-for="serverId in shownServerIds"
-                :key="serverId"
-                :label="serverLabel(serverId)"
-                removable
-                @remove="unselectServer(serverId, $event)"
-              />
-              <span
-                v-if="overflowServerCount > 0"
-                class="dns__servers-more"
-                :aria-label="`и ещё ${overflowServerCount}`"
-              >
-                +{{ overflowServerCount }}
-              </span>
+      <div class="dns__servers-row">
+        <InputGroup class="dns__servers">
+          <MultiSelect
+            v-model="session.servers"
+            size="small"
+            :options="availableServers"
+            option-label="label"
+            option-value="id"
+            display="chip"
+            :selection-limit="SERVER_LIMIT"
+            placeholder="Выберите серверы"
+            aria-label="DNS-серверы"
+          >
+            <template #value="{ placeholder }">
+              <template v-if="session.servers.length > 0">
+                <Chip
+                  v-for="serverId in shownServerIds"
+                  :key="serverId"
+                  :label="serverLabel(serverId)"
+                  removable
+                  @remove="unselectServer(serverId, $event)"
+                />
+                <span
+                  v-if="overflowServerCount > 0"
+                  class="dns__servers-more"
+                  :aria-label="`и ещё ${overflowServerCount}`"
+                >
+                  +{{ overflowServerCount }}
+                </span>
+              </template>
+              <template v-else>{{ placeholder }}</template>
             </template>
-            <template v-else>{{ placeholder }}</template>
-          </template>
-        </MultiSelect>
-        <Button
-          v-tooltip.top="'Свои DNS-серверы'"
-          icon="pi pi-pencil"
-          severity="secondary"
-          outlined
-          size="small"
-          aria-label="Свои DNS-серверы"
-          @click="openServers"
-        />
-      </InputGroup>
+          </MultiSelect>
+          <Button
+            v-tooltip.top="'Свои DNS-серверы'"
+            icon="pi pi-pencil"
+            severity="secondary"
+            outlined
+            size="small"
+            aria-label="Свои DNS-серверы"
+            @click="openServers"
+          />
+        </InputGroup>
 
-      <Button
-        class="dns__run"
-        :label="running ? 'Остановить' : 'Проверить'"
-        :icon="running ? 'pi pi-stop' : 'pi pi-play'"
-        :severity="running ? 'contrast' : undefined"
-        size="small"
-        :disabled="!running && !canRun"
-        @click="toggleRun"
-      />
+        <Button
+          class="dns__run"
+          :label="running ? 'Остановить' : 'Проверить'"
+          :icon="running ? 'pi pi-stop' : 'pi pi-play'"
+          :severity="running ? 'contrast' : undefined"
+          size="small"
+          :disabled="!running && !canRun"
+          @click="toggleRun"
+        />
+      </div>
     </div>
 
     <p v-if="session.status.servers.error" class="dns__error" role="alert">
@@ -501,12 +503,23 @@ async function exportCsv(): Promise<void> {
   color: var(--ag-danger);
 }
 
-/* Кнопка своих серверов прижата к списку: вместе они читаются как один
-   контрол, как поле, тип и «Добавить» в строке ввода. Поле серверов —
-   гибкое место строки: оно забирает остаток ширины и уступает её кнопке
-   запуска, поэтому смена подписи не переносит строку целиком. */
-.dns__servers {
+/* Поле серверов и кнопка запуска — одна единица строки: при нехватке места
+   они переносятся вместе, кнопка не остаётся на строке одна. Запуск держится
+   у правого края, поле забирает остаток ширины и уступает место подписи.
+   `min-width` не обнуляется: строка переносится раньше, чем поле сожмёт
+   чипы серверов. */
+.dns__servers-row {
+  display: flex;
   flex: 1 1 var(--ag-field-width);
+  align-items: center;
+  gap: var(--ag-space-sm);
+  max-width: 100%;
+}
+
+/* Кнопка своих серверов прижата к списку: вместе они читаются как один
+   контрол, как поле, тип и «Добавить» в строке ввода. */
+.dns__servers {
+  flex: 1 1 auto;
   width: auto;
   min-width: 0;
   max-width: 100%;
