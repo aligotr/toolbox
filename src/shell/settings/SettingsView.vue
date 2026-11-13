@@ -67,7 +67,7 @@ onMounted(() => {
 .settings {
   display: flex;
   flex-direction: column;
-  gap: var(--ag-space-heading);
+  gap: var(--ag-space-xl);
   height: 100%;
   max-width: 1120px;
   margin: 0 auto;

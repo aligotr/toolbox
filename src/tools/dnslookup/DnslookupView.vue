@@ -438,7 +438,16 @@ async function exportCsv(): Promise<void> {
   min-width: 0;
   min-height: 0;
   height: 100%;
-  gap: var(--ag-space-heading);
+}
+
+/* Строки панели держат общий шаг: заголовок отбивается отдельно,
+   остальные блоки — зазором блока. */
+.dns > * + * {
+  margin-block-start: var(--ag-space-lg);
+}
+
+.dns__title + * {
+  margin-block-start: var(--ag-space-heading);
 }
 
 /* Сжимается только таблица: остальные блоки панели держат свою высоту. */
