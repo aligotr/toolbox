@@ -297,11 +297,13 @@ async function remove(preset: Preset): Promise<void> {
         </div>
         <div v-if="bound" class="presets__current-actions">
           <Button
-            label="Отменить изменения"
+            v-tooltip.top="'Отменить изменения'"
             icon="pi pi-undo"
             severity="secondary"
             text
+            rounded
             size="small"
+            aria-label="Отменить изменения"
             :disabled="!changed"
             @click="revertChanges"
           />
@@ -314,11 +316,11 @@ async function remove(preset: Preset): Promise<void> {
             @click="saveCurrent"
           />
           <Button
-            v-tooltip.top="'Отвязать текущие настройки от пресета'"
+            v-tooltip.top="'Отвязать настройки от пресета'"
             label="Выгрузить"
             icon="pi pi-sign-out"
             severity="secondary"
-            text
+            outlined
             size="small"
             @click="unloadCurrent"
           />
@@ -470,8 +472,8 @@ async function remove(preset: Preset): Promise<void> {
 
 .presets__current {
   display: flex;
-  flex-direction: column;
-  gap: var(--ag-space-sm);
+  align-items: center;
+  gap: var(--ag-space-md);
   padding: var(--ag-space-sm) var(--ag-space-lg);
   border: 1px solid var(--ag-border);
   border-radius: var(--ag-radius-sm);
@@ -479,6 +481,7 @@ async function remove(preset: Preset): Promise<void> {
 
 .presets__current-text {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: var(--ag-space-xs);
   min-width: 0;
@@ -486,6 +489,7 @@ async function remove(preset: Preset): Promise<void> {
 
 .presets__current-actions {
   display: flex;
+  flex: none;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
