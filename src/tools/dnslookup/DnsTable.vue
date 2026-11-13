@@ -50,7 +50,8 @@ const emit = defineEmits<{
   delete: [rowId: string];
 }>();
 
-const expandedKeys = ref<string[]>([]);
+/** Раскрытые строки: объект по ключу строки — так их ждёт DataTable. */
+const expandedRows = ref<Record<string, boolean>>({});
 const root = ref<HTMLElement | null>(null);
 
 /** Результат ячейки по паре «строка × сервер». */
@@ -77,12 +78,14 @@ function elapsedOf(cell: DnsCell | undefined): number | null {
     : cell.elapsedMs;
 }
 
-/** Первая запись и число остальных: в ячейке не место длинному списку. */
-function answerText(cell: DnsCell | undefined): string {
-  const answers = answersOf(cell);
-  if (answers.length === 0) return "";
-  const first = answers[0].value;
-  return answers.length > 1 ? `${first} +${answers.length - 1}` : first;
+/** Первая запись: остальные показываются в подробностях строки. */
+function firstAnswer(cell: DnsCell | undefined): string {
+  return answersOf(cell)[0]?.value ?? "";
+}
+
+/** Сколько записей скрыто за первой: пометка «+2» приглашает раскрыть строку. */
+function extraAnswers(cell: DnsCell | undefined): number {
+  return Math.max(answersOf(cell).length - 1, 0);
 }
 
 /** Статус — только когда он что-то сообщает: «OK» рядом с адресом лишний,
@@ -97,9 +100,13 @@ function statusShown(cell: DnsCell | undefined): boolean {
 
 /** Подпись ячейки для чтения с экрана: сначала результат, потом статус. */
 function cellLabel(server: ServerOption, cell: DnsCell | undefined): string {
-  const value = answerText(cell);
+  const value = firstAnswer(cell);
+  const extra = extraAnswers(cell);
   const status = statusLabel(cell);
-  return `${server.label}: ${value ? `${value} (${status})` : status}, подробности`;
+  const text = value
+    ? `${value}${extra > 0 ? ` и ещё ${extra}` : ""} (${status})`
+    : status;
+  return `${server.label}: ${text}, подробности`;
 }
 
 /** Оформление статуса: цвет только дополняет подпись, не заменяет её. */
@@ -107,13 +114,19 @@ function statusClass(cell: DnsCell | undefined): string {
   return `cell__status--${cell?.status ?? "pending"}`;
 }
 
-/** Текст вердикта; `null` — системного сервера нет, сравнивать не с чем. */
-function verdictText(verdict: RowVerdict | undefined): string {
-  if (!verdict) return "";
-  if (verdict.differs) {
-    return `расходится у ${verdict.total - verdict.matched} из ${verdict.total}`;
-  }
-  return `совпадает у ${verdict.matched} из ${verdict.total}`;
+/** Данные раскрытия: сервер и его результат, включая скрытые колонки. */
+function detailsOf(
+  rowId: string,
+): { server: ServerOption; cell: DnsCell | undefined }[] {
+  return props.expansionServers.map((server) => ({
+    server,
+    cell: cellOf(rowId, server.id),
+  }));
+}
+
+/** Строка раскрыта: шеврон развёрнут. */
+function isExpanded(rowId: string): boolean {
+  return expandedRows.value[rowId] === true;
 }
 
 /** Подпись сервера в раскрытии: адрес или пометка «системный». */
@@ -140,11 +153,10 @@ function rowClass(row: DnsRow): string {
 
 /** Клик по ячейке раскрывает строку, как и шеврон. */
 function toggle(rowId: string): void {
-  const index = expandedKeys.value.indexOf(rowId);
-  if (index >= 0) {
-    expandedKeys.value.splice(index, 1);
+  if (isExpanded(rowId)) {
+    delete expandedRows.value[rowId];
   } else {
-    expandedKeys.value.push(rowId);
+    expandedRows.value[rowId] = true;
   }
 }
 
@@ -175,7 +187,7 @@ watch(
 <template>
   <div ref="root" class="dns-table" :class="{ 'dns-table--empty': rows.length === 0 }">
     <DataTable
-      v-model:expanded-row-keys="expandedKeys"
+      v-model:expanded-rows="expandedRows"
       :value="rows"
       data-key="id"
       :row-class="rowClass"
@@ -200,6 +212,18 @@ watch(
         <template #body="{ data }">
           <div class="dns-table__domain">
             <div class="dns-table__domain-main">
+              <Button
+                icon="pi pi-chevron-right"
+                size="small"
+                text
+                rounded
+                severity="secondary"
+                class="dns-table__expand"
+                :class="{ 'dns-table__expand--open': isExpanded(data.id) }"
+                :aria-expanded="isExpanded(data.id)"
+                :aria-label="isExpanded(data.id) ? 'Свернуть подробности' : 'Подробности'"
+                @click="toggle(data.id)"
+              />
               <span class="dns-table__name" :data-row-id="data.id">{{ data.input }}</span>
               <Button
                 icon="pi pi-refresh"
@@ -214,13 +238,6 @@ watch(
             </div>
             <small v-if="data.name !== data.input" class="dns-table__normalized">
               {{ data.name }}
-            </small>
-            <small
-              v-if="verdicts.get(data.id)"
-              class="dns-table__verdict"
-              :class="{ 'dns-table__verdict--diff': verdicts.get(data.id)?.differs }"
-            >
-              {{ verdictText(verdicts.get(data.id)) }}
             </small>
           </div>
         </template>
@@ -262,7 +279,7 @@ watch(
           <button
             type="button"
             class="cell"
-            :aria-expanded="expandedKeys.includes(data.id)"
+            :aria-expanded="isExpanded(data.id)"
             :aria-label="cellLabel(server, cellOf(data.id, server.id))"
             @click="toggle(data.id)"
           >
@@ -273,18 +290,16 @@ watch(
             >
               {{ statusLabel(cellOf(data.id, server.id)) }}
             </span>
-            <span
-              v-if="answerText(cellOf(data.id, server.id))"
-              class="cell__value"
-              :class="{ 'cell__value--stale': cellOf(data.id, server.id)?.status === 'pending' }"
-            >
-              {{ answerText(cellOf(data.id, server.id)) }}
-            </span>
-            <span
-              v-if="elapsedOf(cellOf(data.id, server.id)) !== null"
-              class="cell__time"
-            >
-              {{ elapsedOf(cellOf(data.id, server.id)) }} мс
+            <span v-if="firstAnswer(cellOf(data.id, server.id))" class="cell__line">
+              <span
+                class="cell__value"
+                :class="{ 'cell__value--stale': cellOf(data.id, server.id)?.status === 'pending' }"
+              >
+                {{ firstAnswer(cellOf(data.id, server.id)) }}
+              </span>
+              <span v-if="extraAnswers(cellOf(data.id, server.id)) > 0" class="cell__more">
+                +{{ extraAnswers(cellOf(data.id, server.id)) }}
+              </span>
             </span>
           </button>
         </template>
@@ -292,47 +307,41 @@ watch(
 
       <template #expansion="{ data }">
         <div class="details">
-          <div
-            v-for="server in expansionServers"
-            :key="server.id"
-            class="details__row"
-          >
-            <div class="details__head">
-              <strong class="details__name">{{ server.label }}</strong>
-              <span class="details__meta">{{ serverAddress(server) }}</span>
-              <span
-                v-if="elapsedOf(cellOf(data.id, server.id)) !== null"
-                class="details__meta"
-              >
-                · {{ elapsedOf(cellOf(data.id, server.id)) }} мс
-              </span>
-              <span
-                v-if="statusShown(cellOf(data.id, server.id))"
-                class="details__status"
-                :class="statusClass(cellOf(data.id, server.id))"
-              >
-                {{ statusLabel(cellOf(data.id, server.id)) }}
-              </span>
-            </div>
-
-            <ul
-              v-if="answersOf(cellOf(data.id, server.id)).length > 0"
-              class="details__answers"
+          <div class="details__grid">
+            <article
+              v-for="entry in detailsOf(data.id)"
+              :key="entry.server.id"
+              class="details__card"
             >
-              <li
-                v-for="(answer, index) in answersOf(cellOf(data.id, server.id))"
-                :key="index"
-                class="details__answer"
-              >
-                <code>{{ answer.value }}</code>
-                <span v-if="answer.ttl !== null" class="details__ttl">
-                  TTL {{ answer.ttl }}
+              <header class="details__head">
+                <strong class="details__name">{{ entry.server.label }}</strong>
+                <span class="details__address">{{ serverAddress(entry.server) }}</span>
+                <span
+                  v-if="statusShown(entry.cell)"
+                  class="details__status"
+                  :class="statusClass(entry.cell)"
+                >
+                  {{ statusLabel(entry.cell) }}
                 </span>
-              </li>
-            </ul>
-            <p v-else class="details__note">
-              {{ noteFor(cellOf(data.id, server.id)) }}
-            </p>
+                <span v-if="elapsedOf(entry.cell) !== null" class="details__time">
+                  {{ elapsedOf(entry.cell) }} мс
+                </span>
+              </header>
+
+              <ul v-if="answersOf(entry.cell).length > 0" class="details__answers">
+                <li
+                  v-for="(answer, index) in answersOf(entry.cell)"
+                  :key="index"
+                  class="details__answer"
+                >
+                  <code>{{ answer.value }}</code>
+                  <span v-if="answer.ttl !== null" class="details__ttl">
+                    TTL {{ answer.ttl }}
+                  </span>
+                </li>
+              </ul>
+              <p v-else class="details__note">{{ noteFor(entry.cell) }}</p>
+            </article>
           </div>
 
           <div class="details__actions">
@@ -443,8 +452,26 @@ watch(
   white-space: nowrap;
 }
 
+/* Шеврон раскрытия: поворачивается, когда подробности открыты. */
+.dns-table__expand {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin-left: -4px;
+}
+
+.dns-table__expand :deep(.p-button-icon) {
+  font-size: 12px;
+  transition: transform 120ms ease;
+}
+
+.dns-table__expand--open :deep(.p-button-icon) {
+  transform: rotate(90deg);
+}
+
 .dns-table__normalized {
   overflow: hidden;
+  padding-left: 24px;
   color: var(--p-text-muted-color);
   font-family: var(--ag-font-mono);
   font-size: 12px;
@@ -452,35 +479,32 @@ watch(
   white-space: nowrap;
 }
 
-.dns-table__verdict {
-  font-size: 12px;
-  color: var(--p-text-muted-color);
-}
-
-.dns-table__verdict--diff {
-  color: var(--ag-warn);
-}
-
 .dns-table__type {
   width: 88px;
 }
 
+/* Шапка колонки — одна строка: имя резолвера и его адрес рядом. */
 .dns-table__server {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .dns-table__server-name {
+  flex-shrink: 0;
   font-size: 14px;
   font-weight: 600;
 }
 
 .dns-table__server-address {
+  overflow: hidden;
   color: var(--p-text-muted-color);
   font-family: var(--ag-font-mono);
   font-size: 12px;
   font-weight: 400;
+  text-overflow: ellipsis;
 }
 
 .cell {
@@ -532,9 +556,17 @@ watch(
   color: var(--ag-danger);
 }
 
+.cell__line {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .cell__value {
   overflow: hidden;
-  max-width: 100%;
+  min-width: 0;
   font-family: var(--ag-font-mono);
   font-size: 13px;
   text-overflow: ellipsis;
@@ -545,36 +577,51 @@ watch(
   opacity: 0.45;
 }
 
-.cell__time {
+/* Пометка «+2»: сколько записей ждёт в подробностях строки. */
+.cell__more {
+  flex-shrink: 0;
   color: var(--p-text-muted-color);
-  font-size: 11px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .details {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   padding: 8px 16px 16px;
 }
 
-.details__row {
+/* Подробности — карточками: серверы стоят рядом, пока хватает ширины. */
+.details__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.details__card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--ag-border);
+  border-radius: 8px;
+  background: var(--ag-surface-2);
 }
 
 .details__head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 8px;
+  gap: 4px 8px;
 }
 
 .details__name {
   font-size: 14px;
 }
 
-.details__meta {
+.details__address {
   color: var(--p-text-muted-color);
   font-family: var(--ag-font-mono);
   font-size: 12px;
@@ -583,6 +630,14 @@ watch(
 .details__status {
   font-size: 12px;
   font-weight: 600;
+}
+
+/* Время отклика — справа в шапке карточки: в ячейке таблицы ему тесно. */
+.details__time {
+  margin-left: auto;
+  color: var(--p-text-muted-color);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .details__answers {
@@ -597,11 +652,13 @@ watch(
 .details__answer {
   display: flex;
   align-items: baseline;
+  justify-content: space-between;
   gap: 8px;
   min-width: 0;
 }
 
 .details__answer code {
+  min-width: 0;
   overflow-wrap: anywhere;
   font-family: var(--ag-font-mono);
   font-size: 13px;

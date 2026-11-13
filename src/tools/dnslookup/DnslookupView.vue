@@ -285,21 +285,20 @@ async function exportCsv(): Promise<void> {
       </div>
 
       <Button
-        label="Вставить список"
+        v-tooltip.top="'Вставить список доменов'"
         icon="pi pi-clipboard"
         severity="secondary"
-        outlined
+        text
+        rounded
         size="small"
+        aria-label="Вставить список доменов"
         :disabled="running"
         @click="pasteOpen = true"
       />
     </div>
 
     <div class="dns__servers">
-      <span class="dns__label">
-        Серверы
-        <span class="dns__count">{{ session.servers.length }} из {{ SERVER_LIMIT }}</span>
-      </span>
+      <span class="dns__label">Серверы</span>
       <div class="dns__servers-row">
         <MultiSelect
           v-model="session.servers"
@@ -619,10 +618,6 @@ async function exportCsv(): Promise<void> {
 .dns__label {
   color: var(--p-text-muted-color);
   font-size: 13px;
-}
-
-.dns__count {
-  margin-left: 8px;
 }
 
 .dns__filters {

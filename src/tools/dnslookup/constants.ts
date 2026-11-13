@@ -37,7 +37,8 @@ export const SYSTEM_SERVER_ID = "system";
 /** Ширины колонок: закреплённые не сжимаются меньше, серверные — по адресу. */
 export const DOMAIN_COLUMN_MIN_WIDTH = "220px";
 export const TYPE_COLUMN_MIN_WIDTH = "104px";
-export const SERVER_COLUMN_MIN_WIDTH = "160px";
+/** Шапка серверной колонки в одну строку: имя и адрес рядом. */
+export const SERVER_COLUMN_MIN_WIDTH = "184px";
 
 /** Ширина диалогов инструмента. */
 export const DIALOG_WIDTH = "560px";
