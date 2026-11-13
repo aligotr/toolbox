@@ -16,6 +16,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { computed, ref, watch } from "vue";
 import type { Preset } from "../../contracts/presets";
 import { PRESET_TITLE_MAX_LENGTH } from "../../core/constants";
+import { describeError } from "../../core/errors";
 import {
   DATE_LOCALE,
   DIALOG_MAX_WIDTH,
@@ -30,6 +31,7 @@ import {
   dnsPresets,
   releaseDeletedPreset,
   savePresetToCurrent,
+  type PresetApplyResult,
 } from "./presets";
 import type { DnsSession } from "./types";
 
@@ -84,7 +86,17 @@ function savedAtLabel(value: string): string {
 /** Загружает пресет и сообщает об этом родителю. */
 async function loadPreset(preset: Preset): Promise<void> {
   note.value = null;
-  const result = await applyPreset(props.session, preset);
+
+  // Неожиданный отказ не должен оставлять диалог молчащим: иначе нажатие
+  // на пресет выглядит как «ничего не произошло».
+  let result: PresetApplyResult;
+  try {
+    result = await applyPreset(props.session, preset);
+  } catch (error) {
+    note.value = `Пресет «${preset.title}» не загружен: ${describeError(error)}`;
+    return;
+  }
+
   if (result.error) {
     note.value = result.error;
     return;
