@@ -548,7 +548,7 @@ export async function abortSessionRun(session: DnsSession): Promise<void> {
  *
  * Кнопка «Остановить» оставляет подписи ячеек ядру: событие закроет проверку
  * и запишет итог. Отцепка без ожидания нужна только загрузке пресета
- * и очистке, где старые ответы уже не относятся к таблице.
+ * и откату изменений, где старые ответы уже не относятся к таблице.
  */
 async function stopRun(session: DnsSession): Promise<void> {
   if (!session.runId || !session.status.run.loading) return;

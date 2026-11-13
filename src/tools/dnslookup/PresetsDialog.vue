@@ -1,9 +1,10 @@
 <script setup lang="ts">
 // Диалог пресетов настроек DNS.
 //
-// Здесь пресетами управляют: загрузить, переименовать, дублировать, удалить
-// и сохранить текущие настройки. Загрузка и удаление спрашивают подтверждение:
-// первое заменяет таблицу, второе уносит файл в корзину.
+// Здесь пресетами управляют: загрузить, переименовать, дублировать, удалить,
+// сохранить текущие настройки, отменить правки и выгрузить пресет. Загрузка
+// и удаление спрашивают подтверждение: первое заменяет таблицу, второе уносит
+// файл в корзину.
 //
 // Диалог не держит настройки сам: снимок и применение живут в `presets.ts`.
 // Здесь только разметка и короткие обработчики, как и в остальных диалогах
@@ -26,13 +27,15 @@ import {
 import {
   adoptPresetTitle,
   applyPreset,
-  clearPreset,
   createPresetFromSession,
   dnsPresetChanged,
   dnsPresets,
   releaseDeletedPreset,
+  revertPresetChanges,
   savePresetToCurrent,
+  unloadPreset,
   type PresetApplyResult,
+  type PresetRevertResult,
 } from "./presets";
 import type { DnsSession } from "./types";
 
@@ -149,34 +152,39 @@ async function saveCurrent(): Promise<void> {
     : (dnsPresets.status.update.error ?? "Пресет не сохранён.");
 }
 
-/** Очистка задевает и файл, и таблицу: сначала спрашиваем. */
-function requestClearPreset(): void {
-  const parts = [
-    `Пресет «${props.session.presetTitle}» станет пустым: строки, фильтры и серверы вернутся к значениям нового сеанса.`,
-    "Текущая таблица очистится.",
-  ];
-  if (props.session.status.run.loading) {
-    parts.push("Идущая проверка будет остановлена.");
+/**
+ * Отменяет правки и возвращает настройки открытого пресета.
+ *
+ * Файл не трогается: источник — снимок, снятый при загрузке или сохранении.
+ */
+async function revertChanges(): Promise<void> {
+  note.value = null;
+
+  // Неожиданный отказ не должен оставлять диалог молчащим.
+  let result: PresetRevertResult;
+  try {
+    result = await revertPresetChanges(props.session);
+  } catch (error) {
+    note.value = `Изменения не отменены: ${describeError(error)}`;
+    return;
   }
 
-  confirm.require({
-    header: "Очистить пресет",
-    message: parts.join(" "),
-    icon: "pi pi-exclamation-triangle",
-    acceptLabel: "Очистить",
-    rejectLabel: "Отмена",
-    accept: () => {
-      void clearCurrent();
-    },
-  });
+  if (result.error) {
+    note.value = result.error;
+    return;
+  }
+
+  note.value = result.restarted
+    ? "Изменения отменены. Таблица запросов изменилась: результаты очищены, проверка запущена заново."
+    : "Изменения отменены.";
+  emit("applied");
 }
 
-async function clearCurrent(): Promise<void> {
+/** Выгрузка снимает привязку: файл и таблица остаются как есть. */
+function unloadCurrent(): void {
   note.value = null;
-  const cleared = await clearPreset(props.session);
-  note.value = cleared
-    ? `Пресет «${cleared.title}» очищен.`
-    : (dnsPresets.status.update.error ?? "Пресет не очищен.");
+  unloadPreset(props.session);
+  note.value = "Пресет выгружен: настройки остались в таблице.";
 }
 
 /** Создаёт новый пресет из текущих настроек. */
@@ -289,13 +297,13 @@ async function remove(preset: Preset): Promise<void> {
         </div>
         <div v-if="bound" class="presets__current-actions">
           <Button
-            label="Очистить пресет"
-            icon="pi pi-eraser"
+            label="Отменить изменения"
+            icon="pi pi-undo"
             severity="secondary"
             text
             size="small"
-            :loading="dnsPresets.status.update.loading"
-            @click="requestClearPreset"
+            :disabled="!changed"
+            @click="revertChanges"
           />
           <Button
             label="Сохранить"
@@ -304,6 +312,15 @@ async function remove(preset: Preset): Promise<void> {
             :loading="dnsPresets.status.update.loading"
             :disabled="!changed"
             @click="saveCurrent"
+          />
+          <Button
+            v-tooltip.top="'Отвязать текущие настройки от пресета'"
+            label="Выгрузить"
+            icon="pi pi-sign-out"
+            severity="secondary"
+            text
+            size="small"
+            @click="unloadCurrent"
           />
         </div>
       </section>
@@ -453,8 +470,8 @@ async function remove(preset: Preset): Promise<void> {
 
 .presets__current {
   display: flex;
-  align-items: center;
-  gap: var(--ag-space-md);
+  flex-direction: column;
+  gap: var(--ag-space-sm);
   padding: var(--ag-space-sm) var(--ag-space-lg);
   border: 1px solid var(--ag-border);
   border-radius: var(--ag-radius-sm);
@@ -462,7 +479,6 @@ async function remove(preset: Preset): Promise<void> {
 
 .presets__current-text {
   display: flex;
-  flex: 1;
   flex-direction: column;
   gap: var(--ag-space-xs);
   min-width: 0;
@@ -470,8 +486,9 @@ async function remove(preset: Preset): Promise<void> {
 
 .presets__current-actions {
   display: flex;
-  flex: none;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--ag-space-xs);
 }
 

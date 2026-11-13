@@ -35,6 +35,14 @@ export interface PresetApplyResult {
   warnings: string[];
 }
 
+/** Итог отката изменений: причина отказа или признак перезапуска. */
+export interface PresetRevertResult {
+  /** Откат не выполнен: сеанс не тронут. */
+  error: string | null;
+  /** Таблица запросов изменилась: результаты очищены и проверка идёт заново. */
+  restarted: boolean;
+}
+
 /** Разобранные настройки и число отброшенных неполных строк. */
 interface ParsedPreset {
   payload: DnsPresetPayload;
@@ -127,17 +135,6 @@ function capturePresetPayload(session: DnsSession): DnsPresetPayload {
       status: session.filters.status,
       diffOnly: session.filters.diffOnly,
     },
-  };
-}
-
-/** Настройки нового сеанса: пустая таблица и умолчания инструмента. */
-function emptyPayload(): DnsPresetPayload {
-  return {
-    rows: [],
-    servers: [...DEFAULT_SERVER_IDS],
-    defaultType: DEFAULT_RECORD_TYPE,
-    hiddenServers: [],
-    filters: { search: "", status: "all", diffOnly: false },
   };
 }
 
@@ -273,26 +270,128 @@ export async function applyPreset(
 }
 
 /**
- * Очищает открытый пресет и текущий сеанс до состояния нового инструмента.
+ * Совпадает ли состав запросов: строки по идентификатору, имени и типу
+ * плюс набор серверов.
  *
- * Файл и таблица меняются вместе: иначе сеанс сразу показывал бы «изменён»,
- * хотя пользователь ничего не настраивал.
+ * Совпадение позволяет откатить настройки, не теряя результаты: ответы
+ * относятся к тем же запросам, поэтому ячейки и проверка остаются на месте.
  */
-export async function clearPreset(
+function sameQueries(
+  current: DnsPresetPayload,
+  target: DnsPresetPayload,
+): boolean {
+  if (current.rows.length !== target.rows.length) return false;
+
+  const rowsMatch = current.rows.every((row, index) => {
+    const other = target.rows[index];
+    return (
+      other !== undefined &&
+      row.id === other.id &&
+      row.name === other.name &&
+      row.type === other.type
+    );
+  });
+  if (!rowsMatch) return false;
+
+  if (current.servers.length !== target.servers.length) return false;
+  const currentServers = new Set(current.servers);
+  return target.servers.every((id) => currentServers.has(id));
+}
+
+/**
+ * Возвращает настройки пресета, не затрагивая результаты.
+ *
+ * Применяется, когда запросы не изменились: ячейки остаются, и повторная
+ * проверка пользователю не нужна. Порядок серверов восстанавливается
+ * вместе с составом — иначе снимок снова разошёлся бы с файлом.
+ */
+function restoreSettings(session: DnsSession, payload: DnsPresetPayload): void {
+  session.rows = payload.rows.map((row) => ({ ...row }));
+  session.servers = [...payload.servers];
+  session.hiddenServers = payload.hiddenServers.filter((id) =>
+    session.servers.includes(id),
+  );
+  session.defaultType = payload.defaultType;
+  session.filters.search = payload.filters.search;
+  session.filters.status = payload.filters.status;
+  session.filters.diffOnly =
+    payload.filters.diffOnly && session.servers.includes(SYSTEM_SERVER_ID);
+  session.highlightRowId = null;
+}
+
+/** Разбирает снимок настроек, снятый при загрузке или сохранении пресета. */
+function parseSnapshot(snapshot: string): DnsPresetPayload | null {
+  try {
+    return parsePresetPayload(JSON.parse(snapshot))?.payload ?? null;
+  } catch {
+    // Снимок собран этим же модулем, но испорченное значение не должно
+    // ронять экран: откат просто откажет.
+    return null;
+  }
+}
+
+/**
+ * Отменяет правки: возвращает настройки сохранённого пресета.
+ *
+ * Файл не перечитывается и не меняется — источником служит снимок сеанса.
+ * Если запросы не изменились, хватает фильтров и колонок, а результаты
+ * остаются. Изменившиеся запросы обесценивают ответы: идущая проверка
+ * останавливается, ячейки очищаются и проверка запускается заново.
+ */
+export async function revertPresetChanges(
   session: DnsSession,
-): Promise<Preset | null> {
-  if (session.presetId === null) return null;
+): Promise<PresetRevertResult> {
+  if (session.presetId === null || session.presetSnapshot === null) {
+    return {
+      error: "Нет открытого пресета: отменять нечего.",
+      restarted: false,
+    };
+  }
+
+  const payload = parseSnapshot(session.presetSnapshot);
+  if (!payload) {
+    return {
+      error: "Настройки открытого пресета не разобраны: откат невозможен.",
+      restarted: false,
+    };
+  }
+
+  if (sameQueries(capturePresetPayload(session), payload)) {
+    restoreSettings(session, payload);
+    write(JOURNAL_SOURCE, "info", "изменения настроек отменены");
+    return { error: null, restarted: false };
+  }
 
   await abortSessionRun(session);
-  const payload = emptyPayload();
-  const saved = await dnsPresets.update(session.presetId, payload);
-  if (!saved) return null;
-
   applyPayload(session, payload, payload.servers);
-  adoptPreset(session, saved, snapshotOfPayload(payload));
 
-  write(JOURNAL_SOURCE, "result", `пресет «${saved.title}» очищен`);
-  return saved;
+  write(
+    JOURNAL_SOURCE,
+    "info",
+    `изменения отменены: строк ${session.rows.length}, ` +
+      `серверов ${session.servers.length}`,
+  );
+
+  if (session.rows.length === 0) return { error: null, restarted: false };
+  runAllRows(session);
+  return { error: null, restarted: true };
+}
+
+/**
+ * Отвязывает сеанс от пресета, не трогая файл и таблицу.
+ *
+ * Пользователь «выгружает» пресет, когда настройки перестали быть с ним
+ * связаны: строки, результаты и файл остаются как есть.
+ */
+export function unloadPreset(session: DnsSession): void {
+  if (session.presetId === null) return;
+
+  const title = session.presetTitle;
+  session.presetId = null;
+  session.presetTitle = null;
+  session.presetSnapshot = null;
+
+  write(JOURNAL_SOURCE, "info", `пресет «${title}» выгружен`);
 }
 
 /** Сохраняет текущие настройки в пресет, к которому привязан сеанс. */

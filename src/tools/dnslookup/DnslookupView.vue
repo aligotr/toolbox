@@ -21,6 +21,7 @@ import Select from "primevue/select";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, ref, watch } from "vue";
 import type { ToolCellProps } from "../../contracts/tools";
+import { describeError } from "../../core/errors";
 import DnsTable from "./DnsTable.vue";
 import PresetsDialog from "./PresetsDialog.vue";
 import ServerDialog from "./ServerDialog.vue";
@@ -32,7 +33,12 @@ import {
   SYSTEM_SERVER_ID,
   TOOL_HEADING,
 } from "./constants";
-import { dnsPresetChanged, dnsPresets, savePresetToCurrent } from "./presets";
+import {
+  dnsPresetChanged,
+  dnsPresets,
+  revertPresetChanges,
+  savePresetToCurrent,
+} from "./presets";
 import { useDnslookup } from "./useDnslookup";
 
 const props = defineProps<ToolCellProps>();
@@ -96,6 +102,17 @@ async function savePresetChanges(): Promise<void> {
   if (!saved) {
     presetNote.value =
       dnsPresets.status.update.error ?? "Пресет не сохранён.";
+  }
+}
+
+/** Откат правок: источник — снимок открытого пресета, файл не читается. */
+async function revertPresetEdits(): Promise<void> {
+  presetNote.value = null;
+  try {
+    const result = await revertPresetChanges(session);
+    if (result.error) presetNote.value = result.error;
+  } catch (error) {
+    presetNote.value = `Изменения не отменены: ${describeError(error)}`;
   }
 }
 
@@ -452,6 +469,16 @@ async function exportCsv(): Promise<void> {
         {{ session.presetTitle }}
         <template v-if="presetChanged">
           <small class="dns__preset-changed">изменён</small>
+          <Button
+            v-tooltip.top="'Отменить изменения'"
+            icon="pi pi-undo"
+            severity="secondary"
+            text
+            rounded
+            size="small"
+            aria-label="Отменить изменения"
+            @click="revertPresetEdits"
+          />
           <Button
             v-tooltip.top="'Сохранить в пресет'"
             icon="pi pi-save"
