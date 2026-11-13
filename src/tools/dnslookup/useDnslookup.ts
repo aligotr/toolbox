@@ -37,7 +37,7 @@ import {
   STATUS_LABELS,
   SYSTEM_SERVER_ID,
 } from "./constants";
-import { parseAddressInput, parseServerAddress, rowKey } from "./normalize";
+import { parseAddressInput, parseServerAddress } from "./normalize";
 import type {
   AddRowResult,
   CellSnapshot,
@@ -47,7 +47,6 @@ import type {
   DnsResultEvent,
   DnsRow,
   DnsSession,
-  PasteResult,
   RecordType,
   RowVerdict,
   RunQuery,
@@ -567,65 +566,6 @@ function addRow(
   return { kind: "added", rowId: row.id };
 }
 
-/**
- * Добавляет список строк без автозапуска каждой.
- *
- * Так вставка списка не отправляет десятки отдельных проверок: пользователь
- * сам решает, нажать «Добавить» или «Добавить и проверить».
- */
-function addRows(
-  session: DnsSession,
-  inputs: string[],
-  type: RecordType,
-): PasteResult {
-  let added = 0;
-  let duplicates = 0;
-  let firstError: string | null = null;
-  let firstRowId: string | null = null;
-  let firstDuplicateId: string | null = null;
-
-  for (const input of inputs) {
-    const parsed = parseAddressInput(input, type);
-    if (!parsed.ok) {
-      firstError ??= parsed.error;
-      continue;
-    }
-
-    const duplicate = session.rows.find(
-      (row) =>
-        row.type === type &&
-        row.name.toLowerCase() === parsed.value.name.toLowerCase(),
-    );
-    if (duplicate) {
-      duplicates += 1;
-      firstDuplicateId ??= duplicate.id;
-      continue;
-    }
-
-    const row: DnsRow = {
-      id: crypto.randomUUID(),
-      input: parsed.value.display,
-      name: parsed.value.name,
-      type,
-    };
-    session.rows.push(row);
-    added += 1;
-    firstRowId ??= row.id;
-  }
-
-  // Дубликат и первая новая строка подсвечиваются одинаково: пользователь
-  // должен увидеть либо то, что уже было, либо то, что добавилось.
-  const highlightId = firstDuplicateId ?? firstRowId;
-  if (highlightId) highlightRow(session, highlightId);
-  write(
-    JOURNAL_SOURCE,
-    "info",
-    `вставка списка: добавлено ${added}, дублей ${duplicates}` +
-      (firstError ? ", есть ошибки" : ""),
-  );
-  return { added, duplicates, firstError, firstRowId };
-}
-
 /** Строка CSV: кавычки удваиваются, разделитель — точка с запятой. */
 function csvField(value: string): string {
   return `"${value.replace(/"/g, '""')}"`;
@@ -787,11 +727,6 @@ export function useDnslookup(props: ToolCellProps) {
       }),
   );
 
-  /** Ключи «имя + тип» строк: по ним диалог вставки считает дубликаты. */
-  const existingKeys = computed<string[]>(() =>
-    session.rows.map((row) => rowKey(row.name, row.type)),
-  );
-
   /** Сравнение возможно, только если системный сервер не единственный. */
   const canCompare = computed(
     () => hasSystem.value && selectedServers.value.length > 1,
@@ -881,7 +816,6 @@ export function useDnslookup(props: ToolCellProps) {
     columnServers,
     hasSystem,
     occupiedAddresses,
-    existingKeys,
     canCompare,
     verdicts,
     visibleRows,
@@ -890,8 +824,6 @@ export function useDnslookup(props: ToolCellProps) {
     running,
     addRow: (input: string, type: RecordType): AddRowResult =>
       addRow(session, input, type),
-    addRows: (inputs: string[], type: RecordType): PasteResult =>
-      addRows(session, inputs, type),
     addCustomServer: (label: string, address: string): Promise<string | null> =>
       addCustomServer(session, label, address),
     removeCustomServer: (serverId: string): Promise<string | null> =>

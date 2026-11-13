@@ -33,63 +33,6 @@ export type AddressResult =
   | { ok: true; value: ParsedAddress }
   | { ok: false; error: string };
 
-/** Ключ строки для поиска дубликатов: нормализованное имя и тип. */
-export function rowKey(name: string, type: RecordType): string {
-  return `${name.toLowerCase()}|${type}`;
-}
-
-/** Итог разбора вставленного списка. */
-export interface ParsedPaste {
-  /** Строки, готовые к добавлению, в порядке ввода. */
-  lines: string[];
-  duplicates: number;
-  errors: number;
-  /** Первая ошибка с номером строки: остальные не повторяются. */
-  firstError: string | null;
-}
-
-/**
- * Разбирает список доменов по строкам.
- *
- * `existing` — ключи уже добавленных строк. Дубликаты внутри вставки
- * и относительно таблицы считаются один раз: пользователь видит, сколько
- * строк действительно добавится, ещё до нажатия кнопки.
- */
-export function parsePaste(
-  text: string,
-  type: RecordType,
-  existing: string[],
-): ParsedPaste {
-  const seen = new Set(existing);
-  const lines: string[] = [];
-  let duplicates = 0;
-  let errors = 0;
-  let firstError: string | null = null;
-
-  text.split(/\r?\n/).forEach((raw, index) => {
-    const input = raw.trim();
-    if (input === "") return;
-
-    const parsed = parseAddressInput(input, type);
-    if (!parsed.ok) {
-      errors += 1;
-      firstError ??= `Строка ${index + 1}: ${parsed.error}`;
-      return;
-    }
-
-    const key = rowKey(parsed.value.name, type);
-    if (seen.has(key)) {
-      duplicates += 1;
-      return;
-    }
-
-    seen.add(key);
-    lines.push(input);
-  });
-
-  return { lines, duplicates, errors, firstError };
-}
-
 /**
  * Разбирает домен или IP с учётом типа записи.
  *

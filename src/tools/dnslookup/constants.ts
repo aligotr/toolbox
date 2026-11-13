@@ -40,11 +40,10 @@ export const TOOL_TITLE = "DNSlookup";
 /** Заголовок экрана: имя инструмента и краткое определение через дефис. */
 export const TOOL_HEADING = `${TOOL_TITLE} - проверка и сравнение ответов DNS-серверов`;
 
-/** Ширины колонок: закреплённые не сжимаются меньше, серверные — по адресу. */
+/** Ширины колонок: закреплённые не сжимаются меньше, серверные — по имени. */
 export const DOMAIN_COLUMN_MIN_WIDTH = "240px";
 export const TYPE_COLUMN_MIN_WIDTH = "88px";
-/** Шапка серверной колонки в одну строку: имя и адрес рядом. */
-export const SERVER_COLUMN_MIN_WIDTH = "184px";
+export const SERVER_COLUMN_MIN_WIDTH = "144px";
 
 /** Ширина диалогов инструмента. */
 export const DIALOG_WIDTH = "560px";

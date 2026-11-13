@@ -19,7 +19,6 @@ import { useConfirm } from "primevue/useconfirm";
 import { computed, ref, watch } from "vue";
 import type { ToolCellProps } from "../../contracts/tools";
 import DnsTable from "./DnsTable.vue";
-import PasteDialog from "./PasteDialog.vue";
 import ServerDialog from "./ServerDialog.vue";
 import {
   RECORD_TYPES,
@@ -41,14 +40,12 @@ const {
   columnServers,
   hasSystem,
   occupiedAddresses,
-  existingKeys,
   canCompare,
   verdicts,
   visibleRows,
   canRun,
   running,
   addRow,
-  addRows,
   addCustomServer,
   removeCustomServer,
   exportCsv: exportCsvAction,
@@ -65,7 +62,6 @@ const draft = ref("");
 const draftType = ref<RecordType>(session.defaultType);
 const addError = ref<string | null>(null);
 const addBox = ref<HTMLElement | null>(null);
-const pasteOpen = ref(false);
 const serversOpen = ref(false);
 const serverError = ref<string | null>(null);
 const exportNote = ref<string | null>(null);
@@ -130,14 +126,6 @@ function toggleRun(): void {
   } else {
     runAll();
   }
-}
-
-/** Вставка списка: «Добавить» только добавляет, «и проверить» запускает всё. */
-function submitPaste(payload: { lines: string[]; run: boolean }): void {
-  const result = addRows(payload.lines, draftType.value);
-  pasteOpen.value = false;
-  addError.value = result.firstError;
-  if (result.added > 0 && payload.run) runAll();
 }
 
 /** Очистка во время проверки сначала останавливает её (с подтверждением). */
@@ -241,21 +229,7 @@ async function exportCsv(): Promise<void> {
         </InputGroup>
       </div>
 
-      <Button
-        v-tooltip.top="'Вставить список доменов'"
-        icon="pi pi-clipboard"
-        severity="secondary"
-        text
-        rounded
-        size="small"
-        aria-label="Вставить список доменов"
-        :disabled="running"
-        @click="pasteOpen = true"
-      />
-    </div>
-
-    <div class="dns__servers-row">
-      <InputGroup class="dns__servers-group">
+      <InputGroup class="dns__servers">
         <MultiSelect
           v-model="session.servers"
           size="small"
@@ -277,13 +251,6 @@ async function exportCsv(): Promise<void> {
           @click="openServers"
         />
       </InputGroup>
-      <i
-        v-if="systemHint"
-        v-tooltip.top="systemHint"
-        class="pi pi-info-circle dns__resolvers"
-        :aria-label="systemHint"
-        tabindex="0"
-      />
     </div>
 
     <p v-if="session.status.servers.error" class="dns__error" role="alert">
@@ -388,6 +355,7 @@ async function exportCsv(): Promise<void> {
       :cells="session.cells"
       :verdicts="verdicts"
       :highlight-row-id="session.highlightRowId"
+      :system-hint="systemHint"
       :busy="running"
       @type-changed="changeType"
       @repeat="runRow"
@@ -410,13 +378,6 @@ async function exportCsv(): Promise<void> {
       <i class="pi pi-file" aria-hidden="true" />
       {{ exportNote }}
     </p>
-
-    <PasteDialog
-      v-model:visible="pasteOpen"
-      :type="draftType"
-      :existing="existingKeys"
-      @submit="submitPaste"
-    />
 
     <ServerDialog
       v-model:visible="serversOpen"
@@ -462,10 +423,12 @@ async function exportCsv(): Promise<void> {
   line-height: 1.25;
 }
 
+/* Добавление строки и выбор серверов стоят в одну линию: панель не плодит
+   вертикальные этажи, данные начинаются выше. */
 .dns__toolbar {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
 }
 
@@ -489,41 +452,22 @@ async function exportCsv(): Promise<void> {
   color: var(--ag-danger);
 }
 
-.dns__servers-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
 /* «Свой» прижат к списку серверов: вместе они читаются как один контрол,
    как поле, тип и «Добавить» в строке ввода. */
-.dns__servers-group {
+.dns__servers {
   flex: 0 0 auto;
   width: auto;
 }
 
-.dns__servers-row :deep(.p-multiselect) {
+.dns__servers :deep(.p-multiselect) {
   flex: 0 0 var(--ag-field-width);
   min-width: 0;
 }
 
 /* Чипы компактнее: выбранные серверы влезают в общую ширину поля. */
-.dns__servers-row :deep(.p-chip) {
+.dns__servers :deep(.p-chip) {
   padding: 0 4px;
   font-size: 13px;
-}
-
-/* Адреса системных резолверов — во всплывающей подсказке: строка не нужна. */
-.dns__resolvers {
-  color: var(--p-text-muted-color);
-  font-size: 16px;
-  cursor: help;
-}
-
-.dns__resolvers:focus-visible {
-  outline: 2px solid var(--p-primary-color);
-  outline-offset: 2px;
 }
 
 .dns__filters {

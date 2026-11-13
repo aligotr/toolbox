@@ -138,14 +138,6 @@ export type AddRowResult =
   | { kind: "duplicate"; rowId: string }
   | { kind: "error"; message: string };
 
-/** Итог вставки списка: счётчики для отчёта в диалоге. */
-export interface PasteResult {
-  added: number;
-  duplicates: number;
-  firstError: string | null;
-  firstRowId: string | null;
-}
-
 /** Один запрос проверки для ядра. */
 export interface RunQuery {
   query_id: string;

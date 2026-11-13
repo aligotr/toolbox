@@ -19,6 +19,7 @@ import {
   RECORD_TYPES,
   SERVER_COLUMN_MIN_WIDTH,
   STATUS_LABELS,
+  SYSTEM_SERVER_ID,
   TYPE_COLUMN_MIN_WIDTH,
 } from "./constants";
 import type {
@@ -40,6 +41,8 @@ const props = defineProps<{
   cells: Map<string, DnsCell>;
   verdicts: Map<string, RowVerdict>;
   highlightRowId: string | null;
+  /** Подсказка к заголовку системного сервера: его адреса приходят от ОС. */
+  systemHint: string;
   /** Идёт проверка: смена типа и повтор строки недоступны. */
   busy: boolean;
 }>();
@@ -197,7 +200,7 @@ watch(
       <template #empty>
         <div class="dns-table__empty">
           <i class="pi pi-search" aria-hidden="true" />
-          <p v-if="totalRows === 0">Добавьте домен или вставьте список</p>
+          <p v-if="totalRows === 0">Добавьте домен</p>
           <p v-else>Нет строк по текущим условиям</p>
         </div>
       </template>
@@ -282,7 +285,13 @@ watch(
         <template #header>
           <div class="dns-table__server">
             <span class="dns-table__server-name">{{ server.label }}</span>
-            <small class="dns-table__server-address">{{ serverAddress(server) }}</small>
+            <i
+              v-if="server.id === SYSTEM_SERVER_ID && systemHint"
+              v-tooltip.top="systemHint"
+              class="pi pi-info-circle dns-table__system-hint"
+              :aria-label="systemHint"
+              tabindex="0"
+            />
           </div>
         </template>
 
@@ -489,28 +498,31 @@ watch(
   width: 76px;
 }
 
-/* Шапка колонки — одна строка: имя резолвера и его адрес рядом. */
+/* Шапка колонки — только имя резолвера: адрес живёт в подробностях. */
 .dns-table__server {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
   min-width: 0;
   white-space: nowrap;
 }
 
 .dns-table__server-name {
-  flex-shrink: 0;
   font-size: 14px;
   font-weight: 600;
 }
 
-.dns-table__server-address {
-  overflow: hidden;
+/* Адреса системных резолверов приходят от ОС: подсказка у имени колонки,
+   а не отдельная строка над таблицей. */
+.dns-table__system-hint {
   color: var(--p-text-muted-color);
-  font-family: var(--ag-font-mono);
   font-size: 13px;
-  font-weight: 400;
-  text-overflow: ellipsis;
+  cursor: help;
+}
+
+.dns-table__system-hint:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 2px;
 }
 
 .cell {
