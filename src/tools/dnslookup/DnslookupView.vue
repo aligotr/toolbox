@@ -13,8 +13,6 @@ import Checkbox from "primevue/checkbox";
 import Chip from "primevue/chip";
 import InputGroup from "primevue/inputgroup";
 import InputText from "primevue/inputtext";
-import Menu from "primevue/menu";
-import type { MenuItem } from "primevue/menuitem";
 import MultiSelect from "primevue/multiselect";
 import Popover from "primevue/popover";
 import Select from "primevue/select";
@@ -26,13 +24,17 @@ import DnsTable from "./DnsTable.vue";
 import PresetsDialog from "./PresetsDialog.vue";
 import ServerDialog from "./ServerDialog.vue";
 import {
+  PRESET_BUTTON_EMPTY,
+  PRESET_CHANGED_LABEL,
+  PRESET_REVERT_HINT,
+  PRESET_SAVE_HINT,
   RECORD_TYPES,
   SERVER_LABEL_LIMIT,
   SERVER_LIMIT,
   STANDALONE_CELL_KEY,
   STATUS_FILTERS,
   SYSTEM_SERVER_ID,
-  TOOL_HEADING,
+  TOOL_TITLE,
 } from "./constants";
 import {
   applyDefaultPreset,
@@ -77,9 +79,6 @@ const addError = ref<string | null>(null);
 const addBox = ref<HTMLElement | null>(null);
 const serversOpen = ref(false);
 const presetsOpen = ref(false);
-/** Диалог открыт из быстрого меню: курсор сразу в поле названия. */
-const presetsFocusCreate = ref(false);
-const presetMenu = ref<InstanceType<typeof Menu> | null>(null);
 const presetNote = ref<string | null>(null);
 const serverError = ref<string | null>(null);
 const exportNote = ref<string | null>(null);
@@ -103,6 +102,15 @@ onMounted(() => {
 /** Настройки разошлись с сохранённым пресетом: подпись у кнопки. */
 const presetChanged = computed(() => dnsPresetChanged(session));
 
+/**
+ * Подпись кнопки пресета.
+ *
+ * Загруженный пресет называет себя сам: кнопка одновременно показывает,
+ * с чем работает сеанс, и открывает список. Без пресета кнопка зовётся
+ * «Пресеты» — это вход в список, а не имя.
+ */
+const presetLabel = computed(() => session.presetTitle ?? PRESET_BUTTON_EMPTY);
+
 /** Быстрое сохранение изменений в открытый пресет. */
 async function savePresetChanges(): Promise<void> {
   presetNote.value = null;
@@ -123,28 +131,6 @@ async function revertPresetEdits(): Promise<void> {
     presetNote.value = `Изменения не отменены: ${describeError(error)}`;
   }
 }
-
-/** Открывает диалог пресетов сразу на форме нового пресета. */
-function openPresetsForCreate(): void {
-  presetsFocusCreate.value = true;
-  presetsOpen.value = true;
-}
-
-/** Действия у подписи пресета: заменить настройки или завести новый. */
-const presetActions = computed<MenuItem[]>(() => [
-  {
-    label: `Заменить в пресете «${session.presetTitle}»`,
-    icon: "pi pi-save",
-    command: () => {
-      void savePresetChanges();
-    },
-  },
-  {
-    label: "Сохранить как новый пресет…",
-    icon: "pi pi-plus",
-    command: openPresetsForCreate,
-  },
-]);
 
 const placeholder = computed(() =>
   session.defaultType === "PTR" ? "IP-адрес или reverse-имя" : "Введите домен",
@@ -279,7 +265,48 @@ async function exportCsv(): Promise<void> {
 
 <template>
   <section class="dns">
-    <h1 class="dns__title">{{ TOOL_HEADING }}</h1>
+    <header class="dns__head">
+      <h1 class="dns__title">{{ TOOL_TITLE }}</h1>
+
+      <!-- Управление пресетом живёт в шапке: имя пресета — это и подпись
+           кнопки, и состояние сеанса. Быстрые действия появляются только
+           при расхождении настроек. -->
+      <div class="dns__preset-bar">
+        <template v-if="presetChanged">
+          <span class="dns__preset-changed">{{ PRESET_CHANGED_LABEL }}</span>
+          <Button
+            v-tooltip.top="PRESET_REVERT_HINT"
+            icon="pi pi-undo"
+            severity="secondary"
+            text
+            rounded
+            size="small"
+            :aria-label="PRESET_REVERT_HINT"
+            @click="revertPresetEdits"
+          />
+          <Button
+            v-tooltip.top="PRESET_SAVE_HINT"
+            icon="pi pi-save"
+            severity="secondary"
+            text
+            rounded
+            size="small"
+            :aria-label="PRESET_SAVE_HINT"
+            :loading="dnsPresets.status.update.loading"
+            @click="savePresetChanges"
+          />
+        </template>
+        <Button
+          class="dns__preset-button"
+          :label="presetLabel"
+          :icon="session.presetTitle ? 'pi pi-bookmark-fill' : 'pi pi-bookmark'"
+          severity="secondary"
+          outlined
+          size="small"
+          @click="presetsOpen = true"
+        />
+      </div>
+    </header>
 
     <div class="dns__toolbar">
       <div ref="addBox" class="dns__add">
@@ -463,57 +490,6 @@ async function exportCsv(): Promise<void> {
       </Popover>
     </div>
 
-    <div class="dns__presets">
-      <Button
-        label="Пресеты"
-        icon="pi pi-bookmark"
-        severity="secondary"
-        text
-        size="small"
-        @click="presetsOpen = true"
-      />
-      <span v-if="session.presetTitle" class="dns__preset">
-        <i class="pi pi-bookmark" aria-hidden="true" />
-        {{ session.presetTitle }}
-        <template v-if="presetChanged">
-          <small class="dns__preset-changed">изменён</small>
-          <Button
-            v-tooltip.top="'Отменить изменения'"
-            icon="pi pi-undo"
-            severity="secondary"
-            text
-            rounded
-            size="small"
-            aria-label="Отменить изменения"
-            @click="revertPresetEdits"
-          />
-          <Button
-            v-tooltip.top="'Сохранить в пресет'"
-            icon="pi pi-save"
-            severity="secondary"
-            text
-            rounded
-            size="small"
-            aria-label="Сохранить изменения в пресет"
-            :loading="dnsPresets.status.update.loading"
-            @click="savePresetChanges"
-          />
-          <Button
-            v-tooltip.top="'Другие действия'"
-            icon="pi pi-ellipsis-v"
-            severity="secondary"
-            text
-            rounded
-            size="small"
-            aria-label="Другие действия с пресетом"
-            aria-haspopup="true"
-            @click="presetMenu?.toggle($event)"
-          />
-        </template>
-      </span>
-      <Menu ref="presetMenu" :model="presetActions" popup />
-    </div>
-
     <p v-if="presetNote" class="dns__error" aria-live="polite">
       <i class="pi pi-exclamation-circle" aria-hidden="true" />
       {{ presetNote }}
@@ -556,11 +532,7 @@ async function exportCsv(): Promise<void> {
       @remove="deleteServer"
     />
 
-    <PresetsDialog
-      v-model:visible="presetsOpen"
-      v-model:focus-create="presetsFocusCreate"
-      :session="session"
-    />
+    <PresetsDialog v-model:visible="presetsOpen" :session="session" />
   </section>
 </template>
 
@@ -579,7 +551,7 @@ async function exportCsv(): Promise<void> {
   margin-block-start: var(--ag-space-lg);
 }
 
-.dns__title + * {
+.dns__head + * {
   margin-block-start: var(--ag-space-heading);
 }
 
@@ -594,11 +566,60 @@ async function exportCsv(): Promise<void> {
   flex: 0 1 auto;
 }
 
-/* Заголовок обслуживает данные и не занимает больше строки. */
+/* Шапка экрана: имя инструмента слева, управление пресетом — у правого
+   края. Узкая ячейка переносит управление на вторую строку: подпись пресета
+   не должна вытеснять название инструмента. */
+.dns__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-sm) var(--ag-space-md);
+}
+
+/* Заголовок забирает остаток строки и обрезается многоточием. */
 .dns__title {
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0;
+  overflow: hidden;
   font-size: var(--ag-text-xl);
   line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Управление пресетом: пометка «изменён», быстрые действия и кнопка
+   списка. Кнопка держит правый край шапки и центрируется по оси заголовка
+   вместе с соседями. */
+.dns__preset-bar {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: var(--ag-space-xs);
+  min-width: 0;
+  max-width: 100%;
+  margin-left: auto;
+}
+
+/* Длинное имя пресета обрезается: шапка не растягивает ячейку. Кнопка
+   уступает место действиям и заголовку, но не исчезает целиком. */
+.dns__preset-button {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 240px;
+}
+
+.dns__preset-button :deep(.p-button-label) {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Быстрые действия отделены от кнопки: «изменён» и иконки относятся
+   к пресету, но не сливаются с его именем. */
+.dns__preset-button:not(:first-child) {
+  margin-inline-start: var(--ag-space-sm);
 }
 
 /* Добавление строки и выбор серверов стоят в одну линию: панель не плодит
@@ -683,26 +704,12 @@ async function exportCsv(): Promise<void> {
   gap: var(--ag-space-sm) var(--ag-space-lg);
 }
 
-/* Кнопка пресетов стоит отдельной строкой под фильтрами: так её видно
-   и на узком окне. Переработка тулбара — отдельная задача. */
-.dns__presets {
-  display: flex;
-  align-items: center;
-  gap: var(--ag-space-md);
-}
-
-.dns__preset {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ag-space-sm);
-  min-width: 0;
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-sm);
-}
-
+/* Пометка расхождения живёт рядом с действиями: она объясняет, почему
+   откат и сохранение вообще появились. */
 .dns__preset-changed {
   color: var(--ag-warn);
   font-size: var(--ag-text-xs);
+  white-space: nowrap;
 }
 
 .dns__search {

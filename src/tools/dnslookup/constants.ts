@@ -40,9 +40,6 @@ export const SYSTEM_SERVER_ID = "system";
 /** Имя инструмента: сайдбар, вкладка и заголовок экрана. */
 export const TOOL_TITLE = "DNSlookup";
 
-/** Заголовок экрана: имя инструмента и краткое определение через дефис. */
-export const TOOL_HEADING = `${TOOL_TITLE} - проверка и сравнение ответов DNS-серверов`;
-
 /** Ширины колонок: закреплённые не сжимаются меньше, серверные — по имени. */
 export const DOMAIN_COLUMN_MIN_WIDTH = "240px";
 /** Потолок «Доменов»: длинное имя обрезается многоточием, а не тянет колонку. */
@@ -78,6 +75,16 @@ export const PRESET_DEFAULT_BADGE = "по умолчанию";
 
 /** Причина отказа, если состояние операции не сохранило свою. */
 export const PRESET_DEFAULT_ERROR = "Пресет по умолчанию не изменён.";
+
+/** Подпись кнопки пресета, пока пресет не загружен: она открывает список. */
+export const PRESET_BUTTON_EMPTY = "Пресеты";
+
+/** Метка расхождения настроек с сохранённым пресетом. */
+export const PRESET_CHANGED_LABEL = "изменён";
+
+/** Подсказки быстрых действий с пресетом в шапке экрана. */
+export const PRESET_REVERT_HINT = "Отменить изменения";
+export const PRESET_SAVE_HINT = "Сохранить в пресет";
 
 /** Преднастроенные серверы: в профиль не пишутся. */
 export const PRESET_SERVERS: ServerOption[] = [

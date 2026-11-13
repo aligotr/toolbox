@@ -45,13 +45,10 @@ import type { DnsSession } from "./types";
 const props = defineProps<{
   visible: boolean;
   session: DnsSession;
-  /** Открыт для создания пресета: курсор сразу в поле названия. */
-  focusCreate?: boolean;
 }>();
 
 const emit = defineEmits<{
   "update:visible": [value: boolean];
-  "update:focusCreate": [value: boolean];
   applied: [];
 }>();
 
@@ -295,7 +292,6 @@ async function remove(preset: Preset): Promise<void> {
     modal
     :draggable="false"
     :style="{ width: DIALOG_WIDTH, maxWidth: DIALOG_MAX_WIDTH }"
-    @hide="emit('update:focusCreate', false)"
     @update:visible="emit('update:visible', $event)"
   >
     <div class="presets">
@@ -467,7 +463,6 @@ async function remove(preset: Preset): Promise<void> {
           v-model="newTitle"
           class="presets__create-input"
           size="small"
-          :autofocus="focusCreate"
           :maxlength="PRESET_TITLE_MAX_LENGTH"
           placeholder="Название нового пресета"
           aria-label="Название нового пресета"
