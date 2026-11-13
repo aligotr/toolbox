@@ -18,6 +18,7 @@ import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue
 import PlainSelect from "../../ui/PlainSelect.vue";
 import { useRowDrag } from "../../ui/useRowDrag";
 import {
+  DOMAIN_COLUMN_MAX_WIDTH,
   DOMAIN_COLUMN_MIN_WIDTH,
   RECORD_TYPES,
   SERVER_COLUMN_MIN_WIDTH,
@@ -267,12 +268,17 @@ watch(
       <!-- Ширина колонки — по содержимому: `width: 1%` не даёт таблице
            отдать домену лишнюю ширину. Кнопки стоят у правого края
            колонки, а пустота за текстом остаётся только у коротких имён.
-           Нижнюю границу держит `minWidth`. -->
+           Нижнюю границу держит `minWidth`, потолок — `maxWidth`: длинное
+           имя обрезается многоточием, а не тянет колонку. -->
       <Column
         field="name"
         frozen
         align-frozen="left"
-        :style="{ minWidth: DOMAIN_COLUMN_MIN_WIDTH, width: '1%' }"
+        :style="{
+          minWidth: DOMAIN_COLUMN_MIN_WIDTH,
+          maxWidth: DOMAIN_COLUMN_MAX_WIDTH,
+          width: '1%',
+        }"
       >
         <template #header>
           <span class="dns-table__domains">

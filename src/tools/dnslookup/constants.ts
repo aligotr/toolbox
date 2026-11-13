@@ -45,6 +45,8 @@ export const TOOL_HEADING = `${TOOL_TITLE} - проверка и сравнен�
 
 /** Ширины колонок: закреплённые не сжимаются меньше, серверные — по имени. */
 export const DOMAIN_COLUMN_MIN_WIDTH = "240px";
+/** Потолок «Доменов»: длинное имя обрезается многоточием, а не тянет колонку. */
+export const DOMAIN_COLUMN_MAX_WIDTH = "360px";
 export const TYPE_COLUMN_MIN_WIDTH = "88px";
 export const SERVER_COLUMN_MIN_WIDTH = "144px";
 
