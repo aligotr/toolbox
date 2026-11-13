@@ -7,18 +7,18 @@
 //
 // «Домен» и «Тип» закреплены слева: при большом числе серверов без этого
 // теряется соответствие строки домену. Порядок строк — порядок добавления;
-// пользователь может перетащить строку за ручку слева. Сортировки нет:
-// сравнение идёт построчно.
+// при включённом `reorderable` строку можно перенести перетаскиванием.
+// Сортировки нет: сравнение идёт построчно.
 
 import Button from "primevue/button";
 import Column from "primevue/column";
 import DataTable from "primevue/datatable";
 import { nextTick, ref, watch } from "vue";
 import PlainSelect from "../../ui/PlainSelect.vue";
+import { useRowDrag } from "../../ui/useRowDrag";
 import {
   DOMAIN_COLUMN_MIN_WIDTH,
   RECORD_TYPES,
-  REORDER_COLUMN_WIDTH,
   SERVER_COLUMN_MIN_WIDTH,
   STATUS_LABELS,
   SYSTEM_SERVER_ID,
@@ -47,19 +47,30 @@ const props = defineProps<{
   systemHint: string;
   /** Идёт проверка: смена типа и повтор строки недоступны. */
   busy: boolean;
+  /** Перестановка строк перетаскиванием: выключена, пока не включена явно. */
+  reorderable?: boolean;
 }>();
 
 const emit = defineEmits<{
   "type-changed": [rowId: string, type: RecordType];
   repeat: [rowId: string];
   delete: [rowId: string];
-  /** Новый порядок строк: индексы приходят из DataTable после переноса. */
+  /** Новый порядок строк: индексы приходят после переноса. */
   reorder: [from: number, to: number];
 }>();
 
 /** Раскрытые строки: объект по ключу строки — так их ждёт DataTable. */
 const expandedRows = ref<Record<string, boolean>>({});
 const root = ref<HTMLElement | null>(null);
+
+// Перенос строк подключается одним вызовом: при выключенном флаге помощник
+// не трогает таблицу, а для удаления функции достаточно этой строки.
+useRowDrag(root, {
+  enabled: () => props.reorderable === true,
+  grab: ".dns-table__domain",
+  count: () => props.rows.length,
+  reorder: (from, to) => emit("reorder", from, to),
+});
 
 /** Результат ячейки по паре «строка × сервер». */
 function cellOf(rowId: string, serverId: string): DnsCell | undefined {
@@ -172,12 +183,6 @@ function onTypeChange(rowId: string, event: { value: unknown }): void {
   emit("type-changed", rowId, event.value as RecordType);
 }
 
-/** Перенос строки: DataTable отдаёт индексы видимого списка. */
-function onRowReorder(event: { dragIndex: number; dropIndex: number }): void {
-  if (event.dragIndex === event.dropIndex) return;
-  emit("reorder", event.dragIndex, event.dropIndex);
-}
-
 // Дубликат подсвечивается, но может быть за пределами видимой области.
 // Прокрутка идёт к маркеру внутри ячейки домена: сама строка не имеет id.
 watch(
@@ -206,7 +211,6 @@ watch(
       :row-class="rowClass"
       scrollable
       size="small"
-      @row-reorder="onRowReorder"
     >
       <template #empty>
         <div class="dns-table__empty">
@@ -215,19 +219,6 @@ watch(
           <p v-else>Нет строк по текущим условиям</p>
         </div>
       </template>
-
-      <Column
-        row-reorder
-        frozen
-        align-frozen="left"
-        :style="{ width: REORDER_COLUMN_WIDTH, minWidth: REORDER_COLUMN_WIDTH }"
-        :pt="{
-          reorderableRowHandle: {
-            title: 'Перетащите строку, чтобы изменить порядок',
-            'aria-hidden': 'true',
-          },
-        }"
-      />
 
       <Column
         field="name"

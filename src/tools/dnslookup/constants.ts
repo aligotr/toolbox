@@ -44,7 +44,6 @@ export const TOOL_TITLE = "DNSlookup";
 export const TOOL_HEADING = `${TOOL_TITLE} - проверка и сравнение ответов DNS-серверов`;
 
 /** Ширины колонок: закреплённые не сжимаются меньше, серверные — по имени. */
-export const REORDER_COLUMN_WIDTH = "40px";
 export const DOMAIN_COLUMN_MIN_WIDTH = "240px";
 export const TYPE_COLUMN_MIN_WIDTH = "88px";
 export const SERVER_COLUMN_MIN_WIDTH = "144px";

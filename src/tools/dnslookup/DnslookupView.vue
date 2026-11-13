@@ -406,6 +406,7 @@ async function exportCsv(): Promise<void> {
       :highlight-row-id="session.highlightRowId"
       :system-hint="systemHint"
       :busy="running"
+      reorderable
       @type-changed="changeType"
       @repeat="runRow"
       @delete="removeRow"
