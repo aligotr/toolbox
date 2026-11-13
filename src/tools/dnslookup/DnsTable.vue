@@ -7,8 +7,9 @@
 //
 // «Домен» и «Тип» закреплены слева: при большом числе серверов без этого
 // теряется соответствие строки домену. Порядок строк — порядок добавления;
-// при включённом `reorderable` строку можно перенести перетаскиванием.
-// Сортировки нет: сравнение идёт построчно.
+// при включённом `reorderable` строку переносят за свободное место домена
+// (текст при этом выделяется мышью, как обычно). Сортировки нет: сравнение
+// идёт построчно.
 
 import Button from "primevue/button";
 import Column from "primevue/column";
@@ -455,6 +456,13 @@ watch(
   flex-direction: column;
   gap: var(--ag-space-xs);
   min-width: 0;
+  /* Свободные места домена — место захвата строки: курсор это показывает. */
+  cursor: grab;
+}
+
+/* Текст и кнопки в зоне захвата остаются собой: их выделяют и нажимают. */
+.dns-table__domain :is(span, small, button) {
+  cursor: auto;
 }
 
 .dns-table__domain-main {
@@ -465,7 +473,9 @@ watch(
 }
 
 .dns-table__name {
-  flex: 1;
+  flex: 0 1 auto;
+  /* Свободное место остаётся у строки: за него домен и переносят. */
+  margin-right: auto;
   overflow: hidden;
   font-size: var(--ag-text-sm);
   text-overflow: ellipsis;

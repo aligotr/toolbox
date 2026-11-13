@@ -40,7 +40,7 @@ const AUTO_SCROLL_STEP_PX = 20;
 export interface RowDragOptions {
   /** Выключатель переноса: без него перенос включён. */
   enabled?: () => boolean;
-  /** Зона захвата внутри строки: в остальных местах текст выделяется как обычно. */
+  /** Зона захвата внутри строки: перенос начинается только в ней. */
   grab?: string;
   /** Текущее число строк: по нему проверяются индексы и конец списка. */
   count: () => number;
@@ -218,6 +218,10 @@ export function useRowDrag(
     document.body.style.cursor = "grabbing";
     scroller = scrollParentOf(source);
     window.getSelection()?.removeAllRanges();
+    // Фокус с нажатой кнопки снимается: иначе Esc по переносу показал бы
+    // на ней рамку фокуса вместо спокойной отмены.
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && scope.contains(focused)) focused.blur();
     window.addEventListener("keydown", onKeyDown);
     return true;
   }
@@ -328,10 +332,9 @@ export function useRowDrag(
     if (index === null) return;
     if (target.closest(INTERACTIVE_SELECTOR)) return;
 
-    // Захват идёт за названную зону и за места без текста: текст рядом
-    // остаётся доступным выделению.
-    const grabbed = options.grab ? target.closest(options.grab) !== null : true;
-    if (!grabbed && hasText(target, row)) return;
+    // Текст остаётся для выделения: перенос начинается только с мест без него.
+    if (hasText(target, row)) return;
+    if (options.grab && target.closest(options.grab) === null) return;
 
     pointerId = event.pointerId;
     startX = event.clientX;
