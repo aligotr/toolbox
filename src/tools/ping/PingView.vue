@@ -278,7 +278,7 @@ onUnmounted(() => {
 .ping {
   display: flex;
   flex-direction: column;
-  gap: var(--ag-space-xl);
+  gap: var(--ag-space-heading);
 }
 
 .ping__head {

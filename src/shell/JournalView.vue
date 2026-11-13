@@ -112,7 +112,7 @@ function time(at: number): string {
 .journal {
   display: flex;
   flex-direction: column;
-  gap: var(--ag-space-lg);
+  gap: var(--ag-space-heading);
   height: 100%;
   padding: var(--ag-space-2xl);
 }

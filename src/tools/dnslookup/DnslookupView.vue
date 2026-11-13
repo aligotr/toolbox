@@ -273,7 +273,7 @@ async function exportCsv(): Promise<void> {
                 class="dns__servers-more"
                 :aria-label="`и ещё ${overflowServerCount}`"
               >
-                …
+                +{{ overflowServerCount }}
               </span>
             </template>
             <template v-else>{{ placeholder }}</template>
@@ -438,7 +438,7 @@ async function exportCsv(): Promise<void> {
   min-width: 0;
   min-height: 0;
   height: 100%;
-  gap: var(--ag-space-lg);
+  gap: var(--ag-space-heading);
 }
 
 /* Сжимается только таблица: остальные блоки панели держат свою высоту. */
@@ -510,7 +510,7 @@ async function exportCsv(): Promise<void> {
   padding: 0 var(--ag-space-xs);
 }
 
-/* Многоточие вместо скрытых серверов: поле не растягивается на весь список. */
+/* Счётчик скрытых серверов: поле не растягивается на весь список. */
 .dns__servers-more {
   color: var(--p-text-muted-color);
 }
