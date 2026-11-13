@@ -46,7 +46,6 @@ const {
   canCompare,
   verdicts,
   visibleRows,
-  diffCount,
   canRun,
   running,
   addRow,
@@ -84,15 +83,6 @@ watch(draftType, (value) => {
   session.defaultType = value;
 });
 
-/** Русская форма числа: «1 расхождение», «2 расхождения». */
-function plural(count: number, one: string, few: string, many: string): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (mod10 === 1 && mod100 !== 11) return one;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
-  return many;
-}
-
 const badge = computed<{ text: string; tone: BadgeTone }>(() => {
   if (session.status.run.loading) return { text: "идёт проверка", tone: "muted" };
   if (session.status.run.error) return { text: "ошибка", tone: "danger" };
@@ -119,21 +109,8 @@ const compareHint = computed(() =>
   hasSystem.value ? "нужен ещё сервер" : "нужен системный сервер",
 );
 
-const summary = computed(() => {
-  const parts = [
-    `${session.rows.length} ${plural(session.rows.length, "домен", "домена", "доменов")}`,
-    `${session.servers.length} ${plural(session.servers.length, "сервер", "сервера", "серверов")}`,
-  ];
-  if (session.progress.total > 0) {
-    parts.push(`${session.progress.done} из ${session.progress.total}`);
-  }
-  if (diffCount.value > 0) {
-    parts.push(
-      `${diffCount.value} ${plural(diffCount.value, "расхождение", "расхождения", "расхождений")}`,
-    );
-  }
-  return parts.join(" · ");
-});
+/** Под таблицей — только число строк: остальное читается по самой таблице. */
+const summary = computed(() => `Доменов: ${session.rows.length}`);
 
 function focusInput(): void {
   addBox.value?.querySelector<HTMLInputElement>("input")?.focus();
@@ -297,37 +274,34 @@ async function exportCsv(): Promise<void> {
       />
     </div>
 
-    <div class="dns__servers">
-      <span class="dns__label">Серверы</span>
-      <div class="dns__servers-row">
-        <MultiSelect
-          v-model="session.servers"
-          size="small"
-          :options="availableServers"
-          option-label="label"
-          option-value="id"
-          display="chip"
-          :max-selected-labels="SERVER_LIMIT"
-          :selection-limit="SERVER_LIMIT"
-          placeholder="Выберите серверы"
-          aria-label="DNS-серверы"
-        />
-        <Button
-          label="Свой"
-          icon="pi pi-server"
-          severity="secondary"
-          outlined
-          size="small"
-          @click="openServers"
-        />
-        <i
-          v-if="systemHint"
-          v-tooltip.top="systemHint"
-          class="pi pi-info-circle dns__resolvers"
-          :aria-label="systemHint"
-          tabindex="0"
-        />
-      </div>
+    <div class="dns__servers-row">
+      <MultiSelect
+        v-model="session.servers"
+        size="small"
+        :options="availableServers"
+        option-label="label"
+        option-value="id"
+        display="chip"
+        :max-selected-labels="SERVER_LIMIT"
+        :selection-limit="SERVER_LIMIT"
+        placeholder="Выберите серверы"
+        aria-label="DNS-серверы"
+      />
+      <Button
+        label="Свой"
+        icon="pi pi-server"
+        severity="secondary"
+        outlined
+        size="small"
+        @click="openServers"
+      />
+      <i
+        v-if="systemHint"
+        v-tooltip.top="systemHint"
+        class="pi pi-info-circle dns__resolvers"
+        :aria-label="systemHint"
+        tabindex="0"
+      />
     </div>
 
     <p v-if="session.status.servers.error" class="dns__error" role="alert">
@@ -578,13 +552,6 @@ async function exportCsv(): Promise<void> {
   color: var(--ag-danger);
 }
 
-.dns__servers {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
 .dns__servers-row {
   display: flex;
   flex-wrap: wrap;
@@ -613,11 +580,6 @@ async function exportCsv(): Promise<void> {
 .dns__resolvers:focus-visible {
   outline: 2px solid var(--p-primary-color);
   outline-offset: 2px;
-}
-
-.dns__label {
-  color: var(--p-text-muted-color);
-  font-size: 13px;
 }
 
 .dns__filters {

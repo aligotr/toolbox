@@ -235,6 +235,17 @@ watch(
                 :disabled="busy"
                 @click.stop="emit('repeat', data.id)"
               />
+              <Button
+                icon="pi pi-trash"
+                size="small"
+                text
+                rounded
+                severity="secondary"
+                class="dns-table__delete"
+                aria-label="Удалить строку"
+                :disabled="busy"
+                @click.stop="emit('delete', data.id)"
+              />
             </div>
             <small v-if="data.name !== data.input" class="dns-table__normalized">
               {{ data.name }}
@@ -342,26 +353,6 @@ watch(
               </ul>
               <p v-else class="details__note">{{ noteFor(entry.cell) }}</p>
             </article>
-          </div>
-
-          <div class="details__actions">
-            <Button
-              label="Повторить строку"
-              icon="pi pi-refresh"
-              size="small"
-              text
-              :disabled="busy"
-              @click="emit('repeat', data.id)"
-            />
-            <Button
-              label="Удалить строку"
-              icon="pi pi-trash"
-              size="small"
-              text
-              severity="danger"
-              :disabled="busy"
-              @click="emit('delete', data.id)"
-            />
           </div>
         </div>
       </template>
@@ -477,6 +468,16 @@ watch(
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Удаление живёт в строке: серая иконка, опасный цвет — при наведении. */
+.dns-table__delete {
+  flex-shrink: 0;
+  color: var(--p-text-muted-color);
+}
+
+.dns-table__delete:not(:disabled):hover {
+  color: var(--ag-danger);
 }
 
 .dns-table__type {
@@ -674,12 +675,6 @@ watch(
   margin: 0;
   color: var(--p-text-muted-color);
   font-size: 13px;
-}
-
-.details__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 .dns-table :deep(.dns-row--diff > td) {

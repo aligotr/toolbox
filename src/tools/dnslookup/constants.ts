@@ -35,7 +35,7 @@ export const STANDALONE_CELL_KEY = "dnslookup:standalone";
 export const SYSTEM_SERVER_ID = "system";
 
 /** Ширины колонок: закреплённые не сжимаются меньше, серверные — по адресу. */
-export const DOMAIN_COLUMN_MIN_WIDTH = "220px";
+export const DOMAIN_COLUMN_MIN_WIDTH = "240px";
 export const TYPE_COLUMN_MIN_WIDTH = "104px";
 /** Шапка серверной колонки в одну строку: имя и адрес рядом. */
 export const SERVER_COLUMN_MIN_WIDTH = "184px";
