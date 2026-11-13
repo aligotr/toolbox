@@ -154,6 +154,15 @@ function submitRow(): void {
   focusInput();
 }
 
+/** Запуск и остановка — одно действие: во время проверки кнопка отменяет. */
+function toggleRun(): void {
+  if (running.value) {
+    cancel();
+  } else {
+    runAll();
+  }
+}
+
 /** Вставка списка: «Добавить» только добавляет, «и проверить» запускает всё. */
 function submitPaste(payload: { lines: string[]; run: boolean }): void {
   const result = addRows(payload.lines, draftType.value);
@@ -266,6 +275,8 @@ async function exportCsv(): Promise<void> {
           <Button
             label="Добавить"
             icon="pi pi-plus"
+            severity="secondary"
+            outlined
             size="small"
             :disabled="running"
             @click="submitRow"
@@ -368,6 +379,31 @@ async function exportCsv(): Promise<void> {
         :disabled="selectedServers.length === 0"
         @click="toggleColumns"
       />
+
+      <div class="dns__table-actions">
+        <Button
+          v-tooltip.top="'Экспорт CSV'"
+          icon="pi pi-download"
+          severity="secondary"
+          text
+          rounded
+          size="small"
+          aria-label="Экспорт CSV"
+          :disabled="visibleRows.length === 0"
+          @click="exportCsv"
+        />
+        <Button
+          v-tooltip.top="'Очистить'"
+          icon="pi pi-trash"
+          severity="danger"
+          text
+          rounded
+          size="small"
+          aria-label="Очистить"
+          :disabled="session.rows.length === 0 && !session.status.run.error"
+          @click="requestClear"
+        />
+      </div>
       <Popover ref="columnMenu">
         <ul class="columns">
           <li v-for="server in selectedServers" :key="server.id" class="columns__item">
@@ -405,43 +441,14 @@ async function exportCsv(): Promise<void> {
 
     <footer class="dns__footer">
       <p class="dns__summary" aria-live="polite">{{ summary }}</p>
-      <div class="dns__actions">
-        <Button
-          label="Проверить"
-          icon="pi pi-play"
-          size="small"
-          :disabled="!canRun"
-          @click="runAll"
-        />
-        <Button
-          label="Остановить"
-          icon="pi pi-stop"
-          severity="secondary"
-          size="small"
-          :disabled="!session.status.run.loading"
-          @click="cancel"
-        />
-        <Button
-          label="Очистить"
-          icon="pi pi-trash"
-          severity="danger"
-          text
-          size="small"
-          :disabled="session.rows.length === 0 && !session.status.run.error"
-          @click="requestClear"
-        />
-        <Button
-          v-tooltip.top="'Экспорт CSV'"
-          icon="pi pi-download"
-          severity="secondary"
-          text
-          rounded
-          size="small"
-          aria-label="Экспорт CSV"
-          :disabled="visibleRows.length === 0"
-          @click="exportCsv"
-        />
-      </div>
+      <Button
+        :label="running ? 'Остановить' : 'Проверить'"
+        :icon="running ? 'pi pi-stop' : 'pi pi-play'"
+        :severity="running ? 'secondary' : undefined"
+        size="small"
+        :disabled="!running && !canRun"
+        @click="toggleRun"
+      />
     </footer>
 
     <p v-if="exportNote" class="dns__hint" aria-live="polite">
@@ -553,13 +560,13 @@ async function exportCsv(): Promise<void> {
 }
 
 .dns__add {
-  flex: 0 1 520px;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
 .dns__add :deep(.p-inputtext) {
-  flex: 1;
-  min-width: 160px;
+  flex: 0 0 var(--ag-field-width);
+  min-width: 0;
 }
 
 .dns__add :deep(.p-select) {
@@ -587,8 +594,14 @@ async function exportCsv(): Promise<void> {
 }
 
 .dns__servers-row :deep(.p-multiselect) {
-  flex: 0 1 400px;
+  flex: 0 1 var(--ag-field-width);
   min-width: 0;
+}
+
+/* Чипы компактнее: выбранные серверы влезают в общую ширину поля. */
+.dns__servers-row :deep(.p-chip) {
+  padding: 0 4px;
+  font-size: 12px;
 }
 
 /* Адреса системных резолверов — во всплывающей подсказке: строка не нужна. */
@@ -620,12 +633,19 @@ async function exportCsv(): Promise<void> {
 }
 
 .dns__search {
-  flex: 0 1 240px;
+  flex: 0 1 var(--ag-field-width);
   min-width: 160px;
 }
 
 .dns__status {
   min-width: 150px;
+}
+
+/* Экспорт и очистка — у правого края над таблицей. */
+.dns__table-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .dns__check {
@@ -665,12 +685,6 @@ async function exportCsv(): Promise<void> {
   margin: 0;
   color: var(--p-text-muted-color);
   font-size: 13px;
-}
-
-.dns__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 .columns {

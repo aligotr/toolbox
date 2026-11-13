@@ -21,6 +21,10 @@
   --ag-font-ui: "Inter", "Segoe UI", system-ui, sans-serif;
   --ag-font-mono: "Cascadia Code", "Consolas", monospace;
 
+  /* Ширина полей ввода и выбора инструментов: одна на всё приложение,
+     чтобы поля не растягивались каждое по-своему. */
+  --ag-field-width: 320px;
+
   color-scheme: light;
   color: var(--ag-text);
   background: var(--ag-bg);

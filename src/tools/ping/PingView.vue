@@ -343,7 +343,7 @@ onUnmounted(() => {
 }
 
 .ping__input {
-  width: 200px;
+  width: var(--ag-field-width);
 }
 
 .ping__error {
