@@ -20,6 +20,7 @@ use core::bus::{BusError, MessageBus, ERROR_TOPIC};
 use core::data;
 use core::deps::Deps;
 use core::logging::{self, Logger};
+use core::presets;
 use core::profiles;
 use core::settings::{self, Settings};
 use core::sink::EventSink;
@@ -642,6 +643,90 @@ fn template_delete(runtime: State<'_, Runtime>, id: String) -> Result<String, St
     Ok(target.display().to_string())
 }
 
+// ─────────────────────────────── Пресеты ─────────────────────────────────────
+
+/// Список пресетов инструмента в активном профиле.
+///
+/// Замечания о непрочитанных файлах идут вместе со списком: испорченный
+/// пресет не мешает остальным, но пользователь должен знать, что он был.
+#[tauri::command]
+fn presets_list(
+    runtime: State<'_, Runtime>,
+    tool: String,
+) -> Result<presets::PresetList, String> {
+    let storage = storage_of(&runtime)?;
+    presets::list(&storage.presets_dir(), &tool)
+}
+
+/// Сохраняет текущие настройки инструмента новым пресетом.
+#[tauri::command]
+fn preset_create(
+    runtime: State<'_, Runtime>,
+    tool: String,
+    title: String,
+    payload: Value,
+) -> Result<presets::Preset, String> {
+    let storage = storage_of(&runtime)?;
+    let preset = presets::create(&storage.presets_dir(), &tool, &title, payload)?;
+    Ok(preset)
+}
+
+/// Заменяет настройки пресета; название остаётся прежним.
+#[tauri::command]
+fn preset_update(
+    runtime: State<'_, Runtime>,
+    tool: String,
+    id: String,
+    payload: Value,
+) -> Result<presets::Preset, String> {
+    let storage = storage_of(&runtime)?;
+    let preset = presets::update(&storage.presets_dir(), &tool, &id, payload)?;
+    Ok(preset)
+}
+
+/// Переименовывает пресет: файл остаётся на месте.
+#[tauri::command]
+fn preset_rename(
+    runtime: State<'_, Runtime>,
+    tool: String,
+    id: String,
+    title: String,
+) -> Result<presets::Preset, String> {
+    let storage = storage_of(&runtime)?;
+    let preset = presets::rename(&storage.presets_dir(), &tool, &id, &title)?;
+    Ok(preset)
+}
+
+/// Дублирует пресет; без названия копия получает приписку «(копия)».
+#[tauri::command]
+fn preset_duplicate(
+    runtime: State<'_, Runtime>,
+    tool: String,
+    id: String,
+    title: Option<String>,
+) -> Result<presets::Preset, String> {
+    let storage = storage_of(&runtime)?;
+    let preset = presets::duplicate(&storage.presets_dir(), &tool, &id, title.as_deref())?;
+    Ok(preset)
+}
+
+/// Удаляет пресет в `local/trash/presets/<tool>/`.
+#[tauri::command]
+fn preset_delete(
+    runtime: State<'_, Runtime>,
+    tool: String,
+    id: String,
+) -> Result<String, String> {
+    let storage = storage_of(&runtime)?;
+    let target = presets::delete(
+        &storage.presets_dir(),
+        &storage.presets_trash_dir(),
+        &tool,
+        &id,
+    )?;
+    Ok(target.display().to_string())
+}
+
 // ─────────────────────────── Сведения и данные ───────────────────────────────
 
 /// Сведения о программе для раздела «Программа» и «Журнал».
@@ -937,6 +1022,12 @@ pub fn run() {
             template_rename,
             template_duplicate,
             template_delete,
+            presets_list,
+            preset_create,
+            preset_update,
+            preset_rename,
+            preset_duplicate,
+            preset_delete,
             app_info,
             storage_stats,
             logs_prune,

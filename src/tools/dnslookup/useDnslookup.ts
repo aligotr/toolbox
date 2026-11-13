@@ -69,7 +69,7 @@ function resultKey(rowId: string, serverId: string): string {
 }
 
 /** Все доступные серверы сеанса: преднастроенные и свои. */
-function allServers(session: DnsSession): ServerOption[] {
+export function allServers(session: DnsSession): ServerOption[] {
   return [...PRESET_SERVERS, ...session.customServers];
 }
 
@@ -94,6 +94,9 @@ function createSession(): DnsSession {
     filters: { search: "", status: "all" as StatusFilter, diffOnly: false },
     hiddenServers: [],
     highlightRowId: null,
+    presetId: null,
+    presetTitle: null,
+    presetSnapshot: null,
   });
 }
 
@@ -121,15 +124,34 @@ function sessionFor(key: string): DnsSession {
   return session;
 }
 
+/** Идущее чтение серверов: загрузка пресета ждёт его, а не пропускает. */
+const serverRefreshes = new WeakMap<DnsSession, Promise<void>>();
+
 /**
  * Читает системные резолверы и свои серверы.
+ *
+ * Повторный вызов во время чтения возвращает тот же запрос: загрузке пресета
+ * нужны все серверы, и пропустить чтение значило бы не найти свои серверы.
+ */
+export function refreshServers(session: DnsSession): Promise<void> {
+  const running = serverRefreshes.get(session);
+  if (running) return running;
+
+  const task = readServers(session).finally(() => {
+    serverRefreshes.delete(session);
+  });
+  serverRefreshes.set(session, task);
+  return task;
+}
+
+/**
+ * Читает серверы один раз.
  *
  * Две операции независимы, поэтому идут параллельно: ошибка чтения файла
  * не должна скрывать адреса, полученные от ОС. Ошибки собираются в одну
  * строку — пользователю важны обе причины.
  */
-async function refreshServers(session: DnsSession): Promise<void> {
-  if (session.status.servers.loading) return;
+async function readServers(session: DnsSession): Promise<void> {
   session.status.servers.loading = true;
   session.status.servers.error = null;
 
@@ -422,23 +444,38 @@ async function runRows(session: DnsSession, rowIds: string[]): Promise<void> {
     if (!accepted.accepted) {
       failRun(
         session,
+        runId,
         rows,
         servers,
         accepted.error ?? "Проверка отклонена ядром",
       );
     }
   } catch (error) {
-    failRun(session, rows, servers, `Проверка не запущена: ${String(error)}`);
+    failRun(
+      session,
+      runId,
+      rows,
+      servers,
+      `Проверка не запущена: ${String(error)}`,
+    );
   }
 }
 
-/** Возвращает ячейки к прошлому состоянию, если запуск отклонён. */
+/**
+ * Возвращает ячейки к прошлому состоянию, если запуск отклонён.
+ *
+ * Отказ устаревшей проверки игнорируется: после отмены или загрузки пресета
+ * `runId` принадлежит уже другому запуску, и трогать его состояние нельзя.
+ */
 function failRun(
   session: DnsSession,
+  runId: string,
   rows: DnsRow[],
   servers: ServerOption[],
   message: string,
 ): void {
+  if (session.runId !== runId) return;
+
   session.status.run.loading = false;
   session.status.run.error = message;
   session.runId = null;
@@ -465,7 +502,54 @@ function failRun(
   write(JOURNAL_SOURCE, "error", message);
 }
 
-/** Просит ядро остановить текущую проверку. */
+/**
+ * Останавливает проверку и сразу отцепляет её от сеанса.
+ *
+ * `runId` обнуляется до ответа ядра: иначе загрузка пресета ждала бы события
+ * завершения, а новый запуск увидел бы занятый сеанс. Ответы отменённой
+ * проверки после отцепки игнорируются: они уже не принадлежат таблице.
+ */
+export async function abortSessionRun(session: DnsSession): Promise<void> {
+  if (!session.runId || !session.status.run.loading) return;
+
+  const runId = session.runId;
+  const total = session.progress.total;
+  const done = session.progress.done;
+  session.runId = null;
+  session.status.run.loading = false;
+
+  for (const [key, cell] of [...session.cells]) {
+    if (cell.status === "pending") {
+      session.cells.set(key, {
+        status: "cancelled",
+        answers: [],
+        elapsedMs: null,
+        error: null,
+      });
+    }
+  }
+
+  write(
+    JOURNAL_SOURCE,
+    "info",
+    `проверка остановлена: получено ${done} из ${total}`,
+  );
+
+  try {
+    await cancelDns(runId);
+  } catch (error) {
+    session.status.run.error = `Не удалось остановить проверку: ${String(error)}`;
+    write(JOURNAL_SOURCE, "error", session.status.run.error);
+  }
+}
+
+/**
+ * Просит ядро остановить проверку и ждёт события завершения.
+ *
+ * Кнопка «Остановить» оставляет подписи ячеек ядру: событие закроет проверку
+ * и запишет итог. Отцепка без ожидания нужна только загрузке пресета
+ * и очистке, где старые ответы уже не относятся к таблице.
+ */
 async function stopRun(session: DnsSession): Promise<void> {
   if (!session.runId || !session.status.run.loading) return;
   try {
@@ -476,20 +560,19 @@ async function stopRun(session: DnsSession): Promise<void> {
   }
 }
 
+/** Запускает проверку всех строк сеанса. */
+export function runAllRows(session: DnsSession): void {
+  void runRows(
+    session,
+    session.rows.map((row) => row.id),
+  );
+}
+
 /** Очищает строки и результаты; серверы и тип остаются. */
 async function clearSession(session: DnsSession): Promise<void> {
   // Запуск отцепляется от сеанса до очистки: результаты отменённой проверки
   // уже не нужны и не должны вернуть прогресс в чистую таблицу.
-  if (session.status.run.loading && session.runId) {
-    try {
-      await cancelDns(session.runId);
-    } catch (error) {
-      session.status.run.error = `Не удалось остановить проверку: ${String(error)}`;
-      write(JOURNAL_SOURCE, "error", session.status.run.error);
-    }
-    session.runId = null;
-    session.status.run.loading = false;
-  }
+  await abortSessionRun(session);
 
   session.rows = [];
   session.cells.clear();
@@ -883,12 +966,7 @@ export function useDnslookup(props: ToolCellProps) {
         rows: visibleRows.value.length,
       };
     },
-    runAll: (): void => {
-      void runRows(
-        session,
-        session.rows.map((row) => row.id),
-      );
-    },
+    runAll: (): void => runAllRows(session),
     runRow: (rowId: string): void => {
       void runRows(session, [rowId]);
     },

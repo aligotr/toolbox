@@ -20,6 +20,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { computed, ref, watch } from "vue";
 import type { ToolCellProps } from "../../contracts/tools";
 import DnsTable from "./DnsTable.vue";
+import PresetsDialog from "./PresetsDialog.vue";
 import ServerDialog from "./ServerDialog.vue";
 import {
   RECORD_TYPES,
@@ -29,7 +30,7 @@ import {
   SYSTEM_SERVER_ID,
   TOOL_HEADING,
 } from "./constants";
-import type { RecordType } from "./types";
+import { dnsPresetChanged } from "./presets";
 import { useDnslookup } from "./useDnslookup";
 
 const props = defineProps<ToolCellProps>();
@@ -62,10 +63,10 @@ const {
 } = useDnslookup(props);
 
 const draft = ref("");
-const draftType = ref<RecordType>(session.defaultType);
 const addError = ref<string | null>(null);
 const addBox = ref<HTMLElement | null>(null);
 const serversOpen = ref(false);
+const presetsOpen = ref(false);
 const serverError = ref<string | null>(null);
 const exportNote = ref<string | null>(null);
 const columnMenu = ref<InstanceType<typeof Popover> | null>(null);
@@ -76,13 +77,14 @@ watch(draft, () => {
 });
 
 // Тип в поле добавления — значение по умолчанию для новых строк,
-// а не фильтр таблицы.
-watch(draftType, (value) => {
-  session.defaultType = value;
-});
+// а не фильтр таблицы. Отдельного состояния нет: загруженный пресет
+// меняет `session.defaultType`, и поле показывает то же значение.
+
+/** Настройки разошлись с сохранённым пресетом: подпись у кнопки. */
+const presetChanged = computed(() => dnsPresetChanged(session));
 
 const placeholder = computed(() =>
-  draftType.value === "PTR" ? "IP-адрес или reverse-имя" : "Введите домен",
+  session.defaultType === "PTR" ? "IP-адрес или reverse-имя" : "Введите домен",
 );
 
 /** Подсказка о системных резолверах: адреса приходят от ОС, не из настроек. */
@@ -127,7 +129,7 @@ function focusInput(): void {
 function submitRow(): void {
   if (running.value) return;
 
-  const result = addRow(draft.value, draftType.value);
+  const result = addRow(draft.value, session.defaultType);
   if (result.kind === "error") {
     addError.value = result.message;
     return;
@@ -230,7 +232,7 @@ async function exportCsv(): Promise<void> {
             @keyup.enter="submitRow"
           />
           <Select
-            v-model="draftType"
+            v-model="session.defaultType"
             size="small"
             :options="RECORD_TYPES"
             aria-label="Тип записи по умолчанию"
@@ -398,6 +400,24 @@ async function exportCsv(): Promise<void> {
       </Popover>
     </div>
 
+    <div class="dns__presets">
+      <Button
+        label="Пресеты"
+        icon="pi pi-bookmark"
+        severity="secondary"
+        text
+        size="small"
+        @click="presetsOpen = true"
+      />
+      <span v-if="session.presetTitle" class="dns__preset">
+        <i class="pi pi-bookmark" aria-hidden="true" />
+        {{ session.presetTitle }}
+        <small v-if="presetChanged" class="dns__preset-changed">
+          изменён
+        </small>
+      </span>
+    </div>
+
     <DnsTable
       class="dns__table"
       :rows="visibleRows"
@@ -434,6 +454,8 @@ async function exportCsv(): Promise<void> {
       @add="submitServer"
       @remove="deleteServer"
     />
+
+    <PresetsDialog v-model:visible="presetsOpen" :session="session" />
   </section>
 </template>
 
@@ -554,6 +576,28 @@ async function exportCsv(): Promise<void> {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--ag-space-sm) var(--ag-space-lg);
+}
+
+/* Кнопка пресетов стоит отдельной строкой под фильтрами: так её видно
+   и на узком окне. Переработка тулбара — отдельная задача. */
+.dns__presets {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-md);
+}
+
+.dns__preset {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ag-space-sm);
+  min-width: 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-sm);
+}
+
+.dns__preset-changed {
+  color: var(--ag-warn);
+  font-size: var(--ag-text-xs);
 }
 
 .dns__search {

@@ -44,6 +44,8 @@ pub struct Profile {
     pub title: String,
     /// Сколько шаблонов лежит в профиле: подпись строки в списке.
     pub templates: u64,
+    /// Сколько пресетов настроек лежит в профиле.
+    pub presets: u64,
     /// Сколько файлов данных инструментов: подпись строки в списке.
     pub data_files: u64,
 }
@@ -94,6 +96,7 @@ pub fn list(dir: &Path) -> Result<Vec<Profile>, String> {
             id: id.to_owned(),
             title,
             templates: usage.templates,
+            presets: usage.presets,
             data_files: usage.data_files,
         });
     }
@@ -126,6 +129,7 @@ pub fn create(dir: &Path, title: &str) -> Result<Profile, String> {
         id,
         title,
         templates: 0,
+        presets: 0,
         data_files: 0,
     })
 }
@@ -141,6 +145,7 @@ pub fn rename(dir: &Path, id: &str, title: &str) -> Result<Profile, String> {
         id: id.to_owned(),
         title,
         templates: usage.templates,
+        presets: usage.presets,
         data_files: usage.data_files,
     })
 }
@@ -188,6 +193,7 @@ pub fn ensure_default(dir: &Path) -> Result<Option<Profile>, String> {
                 id: DEFAULT_PROFILE.to_owned(),
                 title: DEFAULT_TITLE.to_owned(),
                 templates: 0,
+                presets: 0,
                 data_files: 0,
             }));
         }
@@ -202,6 +208,7 @@ pub fn ensure_default(dir: &Path) -> Result<Option<Profile>, String> {
         id: DEFAULT_PROFILE.to_owned(),
         title: DEFAULT_TITLE.to_owned(),
         templates: 0,
+        presets: 0,
         data_files: 0,
     }))
 }

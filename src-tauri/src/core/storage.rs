@@ -29,6 +29,12 @@ const LOGS_DIR: &str = "logs";
 /// Папка шаблонов внутри профиля.
 pub(crate) const TEMPLATES_DIR: &str = "templates";
 
+/// Папка пресетов настроек внутри профиля: `presets/<tool>/`.
+///
+/// Пресет — пользовательская настройка, а не данные инструмента: он лежит
+/// рядом с шаблонами и не попадает под очистку `data/<tool>/`.
+pub(crate) const PRESETS_DIR: &str = "presets";
+
 /// Папка данных инструментов внутри профиля: `data/<tool>/`.
 ///
 /// Раскладка общая для всех инструментов (ADR 0010): инструмент сам решает,
@@ -130,6 +136,23 @@ impl Storage {
         self.trash_dir().join(TEMPLATES_DIR)
     }
 
+    /// Папка пресетов настроек активного профиля: `profiles/<id>/presets/`.
+    ///
+    /// Внутри — папка инструмента: `presets/<tool>/<presetId>.json`. Пресет
+    /// принадлежит профилю, как и шаблон: коллега должен получить те же
+    /// сохранённые настройки инструментов.
+    pub fn presets_dir(&self) -> PathBuf {
+        self.active_profile_dir().join(PRESETS_DIR)
+    }
+
+    /// Корзина пресетов: `local/trash/presets/`.
+    ///
+    /// Инструменты внутри разведены папками: восстанавливать однородные
+    /// сущности проще, чем смесь настроек разных инструментов.
+    pub fn presets_trash_dir(&self) -> PathBuf {
+        self.trash_dir().join(PRESETS_DIR)
+    }
+
     /// Папка данных инструментов активного профиля: `profiles/<id>/data/`.
     ///
     /// Данные принадлежат профилю: список DNS, привезённый с другой машины,
@@ -225,6 +248,14 @@ mod tests {
         assert_eq!(
             storage.templates_trash_dir(),
             root.join("local").join("trash").join("templates")
+        );
+        assert_eq!(
+            storage.presets_dir(),
+            root.join("profiles").join(DEFAULT_PROFILE).join("presets")
+        );
+        assert_eq!(
+            storage.presets_trash_dir(),
+            root.join("local").join("trash").join("presets")
         );
         assert_eq!(
             storage.data_dir(),

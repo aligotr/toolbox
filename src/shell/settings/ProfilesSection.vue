@@ -16,7 +16,7 @@ import {
   renameProfile,
   status,
 } from "../../core/profiles";
-import { filesLabel, templatesLabel } from "../plural";
+import { filesLabel, presetsLabel, templatesLabel } from "../plural";
 import { useProfiles } from "./useProfiles";
 
 const { requestSwitch, requestDelete } = useProfiles();
@@ -144,7 +144,9 @@ onMounted(() => {
             </span>
           </div>
           <span class="profile-row__meta">
-            {{ templatesLabel(profile.templates) }} · {{ filesLabel(profile.data_files) }}
+            {{ templatesLabel(profile.templates) }} ·
+            {{ presetsLabel(profile.presets) }} ·
+            {{ filesLabel(profile.data_files) }}
             <span class="profile-row__id mono">{{ profile.id }}</span>
           </span>
         </div>

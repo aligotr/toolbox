@@ -5,7 +5,7 @@
 //!
 //! Отдельно лежат **сервисы ядра** — инфраструктура, без которой приложение
 //! не работает: [`files`], [`names`], [`storage`], [`settings`], [`profiles`],
-//! [`templates`], [`workspace`], [`data`], [`logging`], [`window`]. Своего
+//! [`templates`], [`presets`], [`workspace`], [`data`], [`logging`], [`window`]. Своего
 //! пункта в меню они не имеют и удалены быть не могут (ADR 0005).
 //!
 //! Идея заимствована из образца (CQRS + loosely coupled):
@@ -20,6 +20,7 @@ pub mod logging;
 pub mod message;
 pub mod module;
 pub mod names;
+pub mod presets;
 pub mod profiles;
 pub mod settings;
 pub mod sink;

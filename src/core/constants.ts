@@ -38,6 +38,9 @@ export const TEMPLATE_TAB_ICON = "pi pi-clone";
 /** Источник записей журнала, которые сделало ядро интерфейса. */
 export const JOURNAL_CORE_SOURCE = "ядро";
 
+/** Предел длины названия пресета: тот же, что проверяет ядро. */
+export const PRESET_TITLE_MAX_LENGTH = 60;
+
 /** Версия формата `local/workspace.json`. */
 export const WORKSPACE_VERSION = 1;
 

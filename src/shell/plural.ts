@@ -24,6 +24,11 @@ export function templatesLabel(count: number): string {
   return `${count} ${form(count, "шаблон", "шаблона", "шаблонов")}`;
 }
 
+/** Подпись количества пресетов. */
+export function presetsLabel(count: number): string {
+  return `${count} ${form(count, "пресет", "пресета", "пресетов")}`;
+}
+
 /** Подпись количества файлов. */
 export function filesLabel(count: number): string {
   return `${count} ${form(count, "файл", "файла", "файлов")}`;

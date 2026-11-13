@@ -50,14 +50,24 @@ export const DOMAIN_COLUMN_MAX_WIDTH = "360px";
 export const TYPE_COLUMN_MIN_WIDTH = "88px";
 export const SERVER_COLUMN_MIN_WIDTH = "144px";
 
-/** Ширина диалогов инструмента. */
+/** Ширина диалогов инструмента и потолок для узкого окна. */
 export const DIALOG_WIDTH = "560px";
+export const DIALOG_MAX_WIDTH = "92vw";
+
+/** Язык подписей времени: местный формат вместо UTC-строки из файла. */
+export const DATE_LOCALE = "ru-RU";
+
+/** Подпись времени, если файл сохранили без него или с ошибкой. */
+export const UNKNOWN_SAVED_AT = "время не указано";
 
 /** Сколько подсвечивается найденный дубликат. */
 export const HIGHLIGHT_MS = 2400;
 
 /** Источник записей инструмента в журнале. */
 export const JOURNAL_SOURCE = "dnslookup";
+
+/** Идентификатор инструмента в файлах пресетов: `presets/dnslookup/`. */
+export const PRESET_TOOL = "dnslookup";
 
 /** Преднастроенные серверы: в профиль не пишутся. */
 export const PRESET_SERVERS: ServerOption[] = [

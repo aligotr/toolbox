@@ -42,13 +42,14 @@ pub struct StorageStats {
     pub tools: Vec<ToolStats>,
 }
 
-/// Занятое место профилем: шаблоны и данные инструментов.
+/// Занятое место профилем: шаблоны, пресеты и данные инструментов.
 ///
 /// Отдельная структура, а не [`StorageStats`]: профилю не нужны размеры
 /// логов и разбивка по инструментам, а списку профилей — только счётчики.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
 pub struct ProfileUsage {
     pub templates: u64,
+    pub presets: u64,
     pub data_files: u64,
 }
 
@@ -97,10 +98,11 @@ fn walk(dir: &Path, stats: &mut DirStats) {
     }
 }
 
-/// Считает занятое место профилем: шаблоны и данные инструментов.
+/// Считает занятое место профилем: шаблоны, пресеты и данные инструментов.
 pub fn profile_usage(profile_dir: &Path) -> ProfileUsage {
     ProfileUsage {
         templates: dir_stats(&profile_dir.join(storage::TEMPLATES_DIR)).files,
+        presets: dir_stats(&profile_dir.join(storage::PRESETS_DIR)).files,
         data_files: dir_stats(&profile_dir.join(storage::DATA_DIR)).files,
     }
 }
@@ -228,16 +230,23 @@ mod tests {
     }
 
     #[test]
-    fn profile_usage_counts_templates_and_data() {
+    fn profile_usage_counts_templates_presets_and_data() {
         let profile = temp_dir("usage");
         fs::create_dir_all(profile.join("templates")).expect("шаблоны");
         fs::write(profile.join("templates").join("dns.json"), "{}").expect("шаблон");
+        fs::create_dir_all(profile.join("presets").join("dnslookup")).expect("пресеты");
+        fs::write(
+            profile.join("presets").join("dnslookup").join("dns.json"),
+            "{}",
+        )
+        .expect("пресет");
         fs::create_dir_all(profile.join("data").join("dns")).expect("данные");
         fs::write(profile.join("data").join("dns").join("a.json"), "{}").expect("файл");
 
         let usage = profile_usage(&profile);
 
         assert_eq!(usage.templates, 1);
+        assert_eq!(usage.presets, 1);
         assert_eq!(usage.data_files, 1);
     }
 

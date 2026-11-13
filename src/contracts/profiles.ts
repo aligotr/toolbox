@@ -12,6 +12,8 @@ export interface Profile {
   title: string;
   /** Сколько шаблонов лежит в профиле. */
   templates: number;
+  /** Сколько пресетов настроек лежит в профиле. */
+  presets: number;
   /** Сколько файлов данных инструментов лежит в профиле. */
   data_files: number;
 }
