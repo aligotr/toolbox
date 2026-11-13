@@ -14,7 +14,7 @@ import { write } from "../../core/journal";
 import { onPong, onTrace, ping, tracedPing, type Pong, type TraceChain, type TraceStage } from "./api";
 
 /** Сообщение по умолчанию: его видно в панели до первого запроса. */
-const DEFAULT_ECHO = "привет, ядро";
+const DEFAULT_ECHO = "Hello, core!";
 
 /** Показательная задержка ответа: настоящая, выполняется в отдельном потоке ядра. */
 const TRACE_DELAY_MS = 120;

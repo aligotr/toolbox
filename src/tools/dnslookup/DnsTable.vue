@@ -85,6 +85,23 @@ function answerText(cell: DnsCell | undefined): string {
   return answers.length > 1 ? `${first} +${answers.length - 1}` : first;
 }
 
+/** Статус — только когда он что-то сообщает: «OK» рядом с адресом лишний,
+    ошибка или пустой ответ — наоборот, главное. */
+function statusShown(cell: DnsCell | undefined): boolean {
+  if (!cell) return true;
+  if (cell.status === "ok" || cell.status === "pending" || cell.status === "cancelled") {
+    return answersOf(cell).length === 0;
+  }
+  return true;
+}
+
+/** Подпись ячейки для чтения с экрана: сначала результат, потом статус. */
+function cellLabel(server: ServerOption, cell: DnsCell | undefined): string {
+  const value = answerText(cell);
+  const status = statusLabel(cell);
+  return `${server.label}: ${value ? `${value} (${status})` : status}, подробности`;
+}
+
 /** Оформление статуса: цвет только дополняет подпись, не заменяет её. */
 function statusClass(cell: DnsCell | undefined): string {
   return `cell__status--${cell?.status ?? "pending"}`;
@@ -246,10 +263,14 @@ watch(
             type="button"
             class="cell"
             :aria-expanded="expandedKeys.includes(data.id)"
-            :aria-label="`${server.label}: ${statusLabel(cellOf(data.id, server.id))}, подробности`"
+            :aria-label="cellLabel(server, cellOf(data.id, server.id))"
             @click="toggle(data.id)"
           >
-            <span class="cell__status" :class="statusClass(cellOf(data.id, server.id))">
+            <span
+              v-if="statusShown(cellOf(data.id, server.id))"
+              class="cell__status"
+              :class="statusClass(cellOf(data.id, server.id))"
+            >
               {{ statusLabel(cellOf(data.id, server.id)) }}
             </span>
             <span
@@ -286,6 +307,7 @@ watch(
                 · {{ elapsedOf(cellOf(data.id, server.id)) }} мс
               </span>
               <span
+                v-if="statusShown(cellOf(data.id, server.id))"
                 class="details__status"
                 :class="statusClass(cellOf(data.id, server.id))"
               >
@@ -351,15 +373,20 @@ watch(
   overflow: hidden;
 }
 
+/* Пустой таблице нужна высота, чтобы сообщение не липло к шапке. */
+.dns-table--empty {
+  min-height: 200px;
+}
+
 .dns-table :deep(.p-datatable) {
   display: flex;
-  flex: 1 1 0;
+  flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
 }
 
 .dns-table :deep(.p-datatable-table-container) {
-  flex: 1 1 0;
+  flex: 1 1 auto;
   min-height: 0;
 }
 

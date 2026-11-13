@@ -249,7 +249,9 @@ async function exportCsv(): Promise<void> {
           <InputText
             v-model="draft"
             size="small"
-            :placeholder="placeholder"
+            :class="{ 'p-invalid': addError }"
+            :placeholder="addError ?? placeholder"
+            :aria-invalid="addError !== null"
             aria-label="Домен или IP-адрес"
             :disabled="running"
             @keyup.enter="submitRow"
@@ -308,18 +310,15 @@ async function exportCsv(): Promise<void> {
           size="small"
           @click="openServers"
         />
+        <i
+          v-if="systemHint"
+          v-tooltip.top="systemHint"
+          class="pi pi-info-circle dns__resolvers"
+          :aria-label="systemHint"
+          tabindex="0"
+        />
       </div>
     </div>
-
-    <p v-if="addError" class="dns__error">
-      <i class="pi pi-exclamation-circle" aria-hidden="true" />
-      {{ addError }}
-    </p>
-
-    <p v-if="systemHint" class="dns__hint">
-      <i class="pi pi-info-circle" aria-hidden="true" />
-      {{ systemHint }}
-    </p>
 
     <p v-if="session.status.servers.error" class="dns__error" role="alert">
       <i class="pi pi-exclamation-circle" aria-hidden="true" />
@@ -410,6 +409,7 @@ async function exportCsv(): Promise<void> {
         <Button
           label="Проверить"
           icon="pi pi-play"
+          size="small"
           :disabled="!canRun"
           @click="runAll"
         />
@@ -417,6 +417,7 @@ async function exportCsv(): Promise<void> {
           label="Остановить"
           icon="pi pi-stop"
           severity="secondary"
+          size="small"
           :disabled="!session.status.run.loading"
           @click="cancel"
         />
@@ -425,14 +426,18 @@ async function exportCsv(): Promise<void> {
           icon="pi pi-trash"
           severity="danger"
           text
+          size="small"
           :disabled="session.rows.length === 0 && !session.status.run.error"
           @click="requestClear"
         />
         <Button
-          label="Экспорт CSV"
+          v-tooltip.top="'Экспорт CSV'"
           icon="pi pi-download"
           severity="secondary"
           text
+          rounded
+          size="small"
+          aria-label="Экспорт CSV"
           :disabled="visibleRows.length === 0"
           @click="exportCsv"
         />
@@ -472,14 +477,20 @@ async function exportCsv(): Promise<void> {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 100%;
+  min-height: 0;
+  height: 100%;
   gap: 16px;
 }
 
-/* Таблица — главный блок: занимает всё свободное место, шапка не уезжает. */
+/* Сжимается только таблица: остальные блоки панели держат свою высоту. */
+.dns > :not(.dns__table) {
+  flex: none;
+}
+
+/* Таблица — главный блок: высота по числу строк. При переполнении
+   сжимается и прокручивает тело. */
 .dns__table {
-  flex: 1 1 0;
-  min-height: 200px;
+  flex: 0 1 auto;
 }
 
 .dns__head {
@@ -556,6 +567,11 @@ async function exportCsv(): Promise<void> {
   min-width: 84px;
 }
 
+/* Ошибка добавления живёт в самом поле: отдельная строка не нужна. */
+.dns__add :deep(.p-inputtext.p-invalid)::placeholder {
+  color: var(--ag-danger);
+}
+
 .dns__servers {
   display: flex;
   flex-direction: column;
@@ -571,8 +587,20 @@ async function exportCsv(): Promise<void> {
 }
 
 .dns__servers-row :deep(.p-multiselect) {
-  flex: 0 1 520px;
+  flex: 0 1 400px;
   min-width: 0;
+}
+
+/* Адреса системных резолверов — во всплывающей подсказке: строка не нужна. */
+.dns__resolvers {
+  color: var(--p-text-muted-color);
+  font-size: 16px;
+  cursor: help;
+}
+
+.dns__resolvers:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 2px;
 }
 
 .dns__label {
