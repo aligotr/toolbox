@@ -515,10 +515,6 @@ watch(
 /* Адреса системных резолверов приходят от ОС: подсказка у имени колонки,
    а не отдельная строка над таблицей. */
 .dns-table__system-hint {
-  /* Глиф PrimeIcons сидит ниже строки: оптическая поправка совмещает его
-     центр с центром надписи. */
-  position: relative;
-  top: -2px;
   color: var(--p-text-muted-color);
   font-size: 13px;
   cursor: help;

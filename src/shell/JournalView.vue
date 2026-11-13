@@ -133,7 +133,7 @@ function time(at: number): string {
 
 .journal__title {
   margin: 0;
-  font-size: 28px;
+  font-size: 24px;
   line-height: 1.25;
 }
 
