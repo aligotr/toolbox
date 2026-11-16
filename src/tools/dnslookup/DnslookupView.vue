@@ -18,36 +18,26 @@ import Popover from "primevue/popover";
 import Select from "primevue/select";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted, ref, watch } from "vue";
-import type { ToolCellProps } from "../../contracts/tools";
+import type { ToolCellProps } from "@/contracts/tools";
 import {
   CONFIRM_CALM_REJECT,
   CONFIRM_DANGER_ACCEPT,
-} from "../../core/constants";
-import { describeError } from "../../core/infra/errors";
-import DnsTable from "./DnsTable.vue";
-import PresetsDialog from "./PresetsDialog.vue";
-import ServerDialog from "./ServerDialog.vue";
+} from "@/core/constants";
+import DnsTable from "./components/DnsTable.vue";
+import PresetBar from "./components/PresetBar.vue";
+import PresetsDialog from "./components/PresetsDialog.vue";
+import ServerDialog from "./components/ServerDialog.vue";
 import {
-  PRESET_BUTTON_EMPTY,
-  PRESET_CHANGED_LABEL,
-  PRESET_REVERT_HINT,
-  PRESET_SAVE_HINT,
   RECORD_TYPES,
   SERVER_LABEL_LIMIT,
   SERVER_LIMIT,
   STANDALONE_CELL_KEY,
   STATUS_FILTERS,
   SYSTEM_SERVER_ID,
-  TOOL_TITLE,
 } from "./constants";
-import {
-  applyDefaultPreset,
-  dnsPresetChanged,
-  dnsPresets,
-  revertPresetChanges,
-  savePresetToCurrent,
-} from "./presets";
+import { applyDefaultPreset } from "./presets";
 import { useDnslookup } from "./useDnslookup";
+import "./styles.css";
 
 const props = defineProps<ToolCellProps>();
 const confirm = useConfirm();
@@ -102,39 +92,6 @@ onMounted(() => {
 // Тип в поле добавления — значение по умолчанию для новых строк,
 // а не фильтр таблицы. Отдельного состояния нет: загруженный пресет
 // меняет `session.defaultType`, и поле показывает то же значение.
-
-/** Настройки разошлись с сохранённым пресетом: подпись у кнопки. */
-const presetChanged = computed(() => dnsPresetChanged(session));
-
-/**
- * Подпись кнопки пресета.
- *
- * Загруженный пресет называет себя сам: кнопка одновременно показывает,
- * с чем работает сеанс, и открывает список. Без пресета кнопка зовётся
- * «Пресеты» — это вход в список, а не имя.
- */
-const presetLabel = computed(() => session.presetTitle ?? PRESET_BUTTON_EMPTY);
-
-/** Быстрое сохранение изменений в открытый пресет. */
-async function savePresetChanges(): Promise<void> {
-  presetNote.value = null;
-  const saved = await savePresetToCurrent(session);
-  if (!saved) {
-    presetNote.value =
-      dnsPresets.status.update.error ?? "Пресет не сохранён.";
-  }
-}
-
-/** Откат правок: источник — снимок открытого пресета, файл не читается. */
-async function revertPresetEdits(): Promise<void> {
-  presetNote.value = null;
-  try {
-    const result = await revertPresetChanges(session);
-    if (result.error) presetNote.value = result.error;
-  } catch (error) {
-    presetNote.value = `Изменения не отменены: ${describeError(error)}`;
-  }
-}
 
 const placeholder = computed(() =>
   session.defaultType === "PTR" ? "IP-адрес или reverse-имя" : "Введите домен",
@@ -271,51 +228,11 @@ async function exportCsv(): Promise<void> {
 
 <template>
   <section class="dns">
-    <header class="dns__head">
-      <h1 class="dns__title">{{ TOOL_TITLE }}</h1>
-
-      <!-- Управление пресетом живёт в шапке: имя пресета — это и подпись
-           кнопки, и состояние сеанса. Быстрые действия появляются только
-           при расхождении настроек. -->
-      <div class="dns__preset-bar">
-        <div
-          class="dns__preset-state"
-          :class="{ 'dns__preset-state--hidden': !presetChanged }"
-        >
-          <span class="dns__preset-changed">{{ PRESET_CHANGED_LABEL }}</span>
-          <Button
-            v-tooltip.top="PRESET_REVERT_HINT"
-            icon="pi pi-undo"
-            severity="secondary"
-            text
-            rounded
-            size="small"
-            :aria-label="PRESET_REVERT_HINT"
-            @click="revertPresetEdits"
-          />
-          <Button
-            v-tooltip.top="PRESET_SAVE_HINT"
-            icon="pi pi-save"
-            severity="secondary"
-            text
-            rounded
-            size="small"
-            :aria-label="PRESET_SAVE_HINT"
-            :loading="dnsPresets.status.update.loading"
-            @click="savePresetChanges"
-          />
-        </div>
-        <Button
-          class="dns__preset-button"
-          :label="presetLabel"
-          :icon="session.presetTitle ? 'pi pi-bookmark-fill' : 'pi pi-bookmark'"
-          severity="secondary"
-          outlined
-          size="small"
-          @click="presetsOpen = true"
-        />
-      </div>
-    </header>
+    <PresetBar
+      :session="session"
+      @open="presetsOpen = true"
+      @note="presetNote = $event"
+    />
 
     <div class="dns__toolbar">
       <div ref="addBox" class="dns__add">
@@ -528,7 +445,7 @@ async function exportCsv(): Promise<void> {
       v-model:visible="serversOpen"
       :servers="session.customServers"
       :occupied="occupiedAddresses"
-      :saving="session.status.servers.loading"
+      :saving="session.status.serversSave.loading"
       :blocked="session.serversBroken"
       :error="
         serverError ??
@@ -543,238 +460,6 @@ async function exportCsv(): Promise<void> {
 </template>
 
 <style scoped>
-.dns {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-}
-
-/* Строки панели держат общий шаг: заголовок отбивается отдельно,
-   остальные блоки — зазором блока. */
-.dns > * + * {
-  margin-block-start: var(--ag-space-lg);
-}
-
-.dns__head + * {
-  margin-block-start: var(--ag-space-heading);
-}
-
-/* Сжимается только таблица: остальные блоки панели держат свою высоту. */
-.dns > :not(.dns__table) {
-  flex: none;
-}
-
-/* Таблица — главный блок: высота по числу строк. При переполнении
-   сжимается и прокручивает тело. */
-.dns__table {
-  flex: 0 1 auto;
-}
-
-/* Шапка экрана: имя инструмента слева, управление пресетом — у правого
-   края. Узкая ячейка переносит управление на вторую строку: подпись пресета
-   не должна вытеснять название инструмента. */
-.dns__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ag-space-sm) var(--ag-space-md);
-}
-
-/* Заголовок забирает остаток строки и обрезается многоточием. */
-.dns__title {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin: 0;
-  overflow: hidden;
-  font-size: var(--ag-text-xl);
-  line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Управление пресетом: пометка «Изменён», быстрые действия и кнопка
-   списка. Кнопка держит правый край шапки и центрируется по оси заголовка
-   вместе с соседями. */
-.dns__preset-bar {
-  display: flex;
-  flex: 0 1 auto;
-  align-items: center;
-  gap: var(--ag-space-xs);
-  min-width: 0;
-  max-width: 100%;
-  margin-left: auto;
-}
-
-/* Место под пометку и быстрые действия занято всегда: их появление
-   не сдвигает шапку и панель ниже. Скрытый блок не получает фокус
-   и не показывается подсказкам. */
-.dns__preset-state {
-  display: flex;
-  align-items: center;
-  gap: var(--ag-space-xs);
-}
-
-.dns__preset-state--hidden {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-/* Длинное имя пресета обрезается: шапка не растягивает ячейку. Кнопка
-   уступает место действиям и заголовку, но не исчезает целиком. */
-.dns__preset-button {
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 240px;
-}
-
-.dns__preset-button :deep(.p-button-label) {
-  overflow: hidden;
-  min-width: 0;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Быстрые действия отделены от кнопки: «Изменён» и иконки относятся
-   к пресету, но не сливаются с его именем. */
-.dns__preset-button:not(:first-child) {
-  margin-inline-start: var(--ag-space-sm);
-}
-
-/* Добавление строки и выбор серверов стоят в одну линию: панель не плодит
-   вертикальные этажи, данные начинаются выше. */
-.dns__toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ag-space-sm);
-}
-
-.dns__add {
-  flex: 0 0 auto;
-  min-width: 0;
-}
-
-.dns__add :deep(.p-inputtext) {
-  flex: 0 0 var(--ag-field-width);
-  min-width: 0;
-}
-
-/* Ширина под самый длинный тип («CNAME»): подпись поля не обрезается
-   многоточием, а поле не растёт от выбранного значения. */
-.dns__add :deep(.p-select) {
-  flex: 0 0 120px;
-  min-width: 120px;
-}
-
-/* Ошибка добавления живёт в самом поле: отдельная строка не нужна. */
-.dns__add :deep(.p-inputtext.p-invalid)::placeholder {
-  color: var(--ag-danger);
-}
-
-/* Поле серверов и кнопка запуска — одна единица строки: при нехватке места
-   они переносятся вместе, кнопка не остаётся на строке одна. Запуск держится
-   у правого края, поле забирает остаток ширины и уступает место подписи.
-   `min-width` не обнуляется: строка переносится раньше, чем поле сожмёт
-   чипы серверов. */
-.dns__servers-row {
-  display: flex;
-  flex: 1 1 var(--ag-field-width);
-  align-items: center;
-  gap: var(--ag-space-sm);
-  max-width: 100%;
-}
-
-/* Кнопка своих серверов прижата к списку: вместе они читаются как один
-   контрол, как поле, тип и «Добавить» в строке ввода. */
-.dns__servers {
-  flex: 1 1 auto;
-  width: auto;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.dns__servers :deep(.p-multiselect) {
-  flex: 1 1 auto;
-  width: auto;
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Кнопка запуска держит свою ширину: подпись не сжимается и не
-   переносится, когда поле серверов отдаёт или забирает место. */
-.dns__run {
-  flex: none;
-  white-space: nowrap;
-}
-
-/* Чипы компактнее: выбранные серверы влезают в общую ширину поля. */
-.dns__servers :deep(.p-chip) {
-  padding: 0 var(--ag-space-xs);
-}
-
-/* Счётчик скрытых серверов: поле не растягивается на весь список. */
-.dns__servers-more {
-  color: var(--p-text-muted-color);
-}
-
-.dns__filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ag-space-sm) var(--ag-space-lg);
-}
-
-/* Пометка расхождения живёт рядом с действиями: она объясняет, почему
-   откат и сохранение вообще появились. */
-.dns__preset-changed {
-  color: var(--ag-warn);
-  font-size: var(--ag-text-xs);
-  white-space: nowrap;
-}
-
-.dns__search {
-  flex: 0 1 var(--ag-field-width);
-  min-width: 160px;
-}
-
-.dns__status {
-  min-width: 150px;
-}
-
-/* Экспорт и очистка — у правого края над таблицей. */
-.dns__table-actions {
-  display: flex;
-  gap: var(--ag-space-sm);
-  margin-left: auto;
-}
-
-.dns__check {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ag-space-sm);
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-sm);
-}
-
-.dns__error,
-.dns__hint {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--ag-space-sm);
-  margin: 0;
-  font-size: var(--ag-text-sm);
-}
-
-.dns__error {
-  color: var(--ag-danger);
-}
-
-.dns__hint {
-  color: var(--p-text-muted-color);
-}
-
 .columns {
   display: flex;
   flex-direction: column;

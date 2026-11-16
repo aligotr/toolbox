@@ -5,8 +5,8 @@ import ConfirmationService from "primevue/confirmationservice";
 import Tooltip from "primevue/tooltip";
 import "primeicons/primeicons.css";
 import App from "./App.vue";
-import { toolboxPreset } from "../ui/theme";
-import "../styles/global.css";
+import { toolboxPreset } from "@/ui/theme";
+import "@/styles/global.css";
 
 // Ошибки интерфейса идут в тот же файловый лог, что и отказы Rust.
 //
@@ -49,7 +49,7 @@ app.use(PrimeVue, {
 app.directive("tooltip", Tooltip);
 
 // Подтверждения переключения и удаления профилей: один диалог на всё
-// приложение, текст задаётся в `shell/useProfiles.ts`.
+// приложение, текст задаётся в настройках профилей.
 app.use(ConfirmationService);
 
 app.config.errorHandler = (error, _instance, info) => {

@@ -7,18 +7,18 @@
 // должен увидеть причину, а не пустое окно (ADR 0005).
 //
 // Оболочка получает инструменты готовым списком. Импортов из `tools/*`
-// в `shell` нет: связывает их только этот файл (ADR 0012).
+// в `workbench` нет: связывает их только этот файл (ADR 0012).
 
 import { invoke } from "@tauri-apps/api/core";
 import { onMounted, onUnmounted, ref } from "vue";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import Button from "primevue/button";
 import ConfirmDialog from "primevue/confirmdialog";
-import { subscribeEvent } from "../core/infra/bus";
-import { write } from "../core/infra/journal";
-import { loadSettings, startSettingsSync } from "../core/services/settings/index";
-import { loadStartupStatus, type StartupStatus } from "../core/services/startup";
-import AppShell from "../shell/AppShell.vue";
+import { subscribeEvent } from "@/core/infra/bus";
+import { write } from "@/core/infra/journal";
+import { loadSettings, startSettingsSync } from "@/core/services/settings/index";
+import { loadStartupStatus, type StartupStatus } from "@/core/services/startup";
+import WorkbenchView from "@/workbench/WorkbenchView.vue";
 import { tools } from "./tools";
 
 /**
@@ -108,7 +108,7 @@ onUnmounted(() => {
 
   <div v-else-if="!ready" class="blocked" />
 
-  <AppShell v-else :tools="tools" :startup="startup" />
+  <WorkbenchView v-else :tools="tools" :startup="startup" />
 
   <ConfirmDialog />
 </template>

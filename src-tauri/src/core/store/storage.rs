@@ -66,9 +66,9 @@ impl Storage {
     pub fn detect() -> Result<Self, String> {
         let exe = std::env::current_exe()
             .map_err(|error| format!("Не удалось определить путь к программе: {error}"))?;
-        let root = exe.parent().ok_or_else(|| {
-            format!("У пути к программе нет папки: {}", exe.display())
-        })?;
+        let root = exe
+            .parent()
+            .ok_or_else(|| format!("У пути к программе нет папки: {}", exe.display()))?;
         Ok(Self::at(root))
     }
 
@@ -229,7 +229,10 @@ mod tests {
         let storage = Storage::at(&root);
 
         assert_eq!(storage.local_dir(), root.join("local"));
-        assert_eq!(storage.settings_path(), root.join("local").join("settings.json"));
+        assert_eq!(
+            storage.settings_path(),
+            root.join("local").join("settings.json")
+        );
         assert_eq!(
             storage.workspace_path(),
             root.join("local").join("workspace.json")
@@ -243,7 +246,9 @@ mod tests {
         );
         assert_eq!(
             storage.templates_dir(),
-            root.join("profiles").join(DEFAULT_PROFILE).join("templates")
+            root.join("profiles")
+                .join(DEFAULT_PROFILE)
+                .join("templates")
         );
         assert_eq!(
             storage.templates_trash_dir(),
@@ -283,7 +288,11 @@ mod tests {
             assert!(dir.is_dir(), "папка должна появиться: {}", dir.display());
         }
 
-        for dir in [root.clone(), storage.local_dir(), storage.active_profile_dir()] {
+        for dir in [
+            root.clone(),
+            storage.local_dir(),
+            storage.active_profile_dir(),
+        ] {
             assert!(
                 !dir.join(PROBE_FILE).exists(),
                 "пробный файл не должен оставаться: {}",
@@ -337,8 +346,7 @@ mod tests {
         let root = temp_root("storage-bad-profile");
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(root.join("profiles")).expect("временная папка");
-        fs::write(root.join("profiles").join(DEFAULT_PROFILE), "не папка")
-            .expect("мешающий файл");
+        fs::write(root.join("profiles").join(DEFAULT_PROFILE), "не папка").expect("мешающий файл");
 
         let storage = Storage::at(&root);
         let error = storage.probe().expect_err("проба обязана провалиться");

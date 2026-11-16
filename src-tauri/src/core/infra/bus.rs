@@ -25,9 +25,9 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
-use serde::de::DeserializeOwned;
 use serde::Serialize;
-use serde_json::{json, Value};
+use serde::de::DeserializeOwned;
+use serde_json::{Value, json};
 
 use crate::core::infra::deps::Deps;
 use crate::core::infra::message::{Command, Event};
@@ -127,12 +127,7 @@ struct Inner {
 /// [`ERROR_TOPIC`] (ADR 0008: в журнале нет места для причины). Событие уходит
 /// напрямую в приёмник, минуя очередь: если отказала сама шина, отправлять
 /// через неё бессмысленно.
-fn report_fault(
-    inner: &Inner,
-    source: &str,
-    short: impl Into<String>,
-    detail: impl Into<String>,
-) {
+fn report_fault(inner: &Inner, source: &str, short: impl Into<String>, detail: impl Into<String>) {
     log::error!("{}", detail.into());
     let Some(sink) = inner.sink.read().expect("sink lock").clone() else {
         return;
@@ -327,7 +322,9 @@ impl MessageBus {
         };
 
         if let Some(id) = &trace_id {
-            self.inner.recorder.stage_for(id, "route.decode", topic, None);
+            self.inner
+                .recorder
+                .stage_for(id, "route.decode", topic, None);
         }
         self.enqueue(queued);
         Ok(())
@@ -390,17 +387,13 @@ impl MessageBus {
         }
 
         let (tx, rx) = mpsc::channel::<Value>();
-        self.inner
-            .pending
-            .lock()
-            .expect("pending lock")
-            .insert(
-                correlation_id.clone(),
-                PendingAsk {
-                    reply_topic: reply_topic.to_string(),
-                    sender: tx,
-                },
-            );
+        self.inner.pending.lock().expect("pending lock").insert(
+            correlation_id.clone(),
+            PendingAsk {
+                reply_topic: reply_topic.to_string(),
+                sender: tx,
+            },
+        );
 
         // Запись взводится до публикации: иначе первые этапы потеряются.
         if traced {
@@ -412,7 +405,11 @@ impl MessageBus {
 
         // Публикуем запрос; при ошибке снимаем ожидание.
         if let Err(e) = self.dispatch_event(topic, payload) {
-            self.inner.pending.lock().expect("pending lock").remove(&correlation_id);
+            self.inner
+                .pending
+                .lock()
+                .expect("pending lock")
+                .remove(&correlation_id);
             if traced {
                 self.finish_trace(&correlation_id, "error", reply_topic, Some(e.clone()));
             }
@@ -420,7 +417,11 @@ impl MessageBus {
         }
 
         let result = rx.recv_timeout(timeout);
-        self.inner.pending.lock().expect("pending lock").remove(&correlation_id);
+        self.inner
+            .pending
+            .lock()
+            .expect("pending lock")
+            .remove(&correlation_id);
 
         if result.is_err() {
             log::warn!("Таймаут ожидания ответа на '{topic}'");
@@ -478,7 +479,11 @@ impl MessageBus {
     where
         C: Command + DeserializeOwned,
     {
-        let mut handlers = self.inner.command_handlers.write().expect("command handlers lock");
+        let mut handlers = self
+            .inner
+            .command_handlers
+            .write()
+            .expect("command handlers lock");
         if handlers.contains_key(&TypeId::of::<C>()) {
             return Err(format!("Команде '{}' уже назначен обработчик", C::TOPIC));
         }
@@ -698,9 +703,12 @@ fn dispatch(inner: &Inner, queued: QueuedEvent) {
             Some(_) => {}
         }
 
-        inner
-            .recorder
-            .stage_of(&queued.payload, "correlation.match", queued.topic, Some(detail));
+        inner.recorder.stage_of(
+            &queued.payload,
+            "correlation.match",
+            queued.topic,
+            Some(detail),
+        );
 
         if is_reply {
             if let Some(ask) = inner.pending.lock().expect("pending lock").remove(id) {
@@ -739,8 +747,8 @@ mod tests {
     use super::*;
     use crate::core::infra::message::Message;
     use serde::{Deserialize, Serialize};
-    use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
     use std::sync::Mutex as StdMutex;
+    use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
     use std::time::Duration;
 
     #[derive(Debug, Serialize, Deserialize)]
@@ -871,7 +879,9 @@ mod tests {
             correlation_id: None,
         });
 
-        let (topic, payload) = rx.recv_timeout(Duration::from_secs(2)).expect("событие в приёмнике");
+        let (topic, payload) = rx
+            .recv_timeout(Duration::from_secs(2))
+            .expect("событие в приёмнике");
         bus.stop();
 
         assert_eq!(topic, TestReply::TOPIC);
@@ -1001,14 +1011,18 @@ mod tests {
             "sink.emit",
             "ask.reply",
         ] {
-            assert!(names.contains(&expected), "нет этапа '{expected}': {names:?}");
+            assert!(
+                names.contains(&expected),
+                "нет этапа '{expected}': {names:?}"
+            );
         }
         assert_eq!(chain["outcome"], "ok");
     }
 
     /// Событие без `ask` учебной записи не создаёт.
     #[test]
-    fn plain_event_is_not_traced() {        let bus = MessageBus::new(Deps::new());
+    fn plain_event_is_not_traced() {
+        let bus = MessageBus::new(Deps::new());
         let (tx, rx) = mpsc::channel();
         bus.set_sink(Arc::new(TestSink {
             tx: StdMutex::new(tx),

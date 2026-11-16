@@ -228,7 +228,10 @@ mod tests {
         fs::write(&path, "{ не json").expect("испорченный файл");
 
         let error = load(&dir).expect_err("битый файл");
-        assert!(error.contains(&path.display().to_string()), "текст: {error}");
+        assert!(
+            error.contains(&path.display().to_string()),
+            "текст: {error}"
+        );
         assert_eq!(fs::read_to_string(&path).expect("файл"), "{ не json");
     }
 

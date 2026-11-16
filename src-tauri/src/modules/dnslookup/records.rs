@@ -80,11 +80,7 @@ mod tests {
     use hickory_proto::rr::rdata::{A, AAAA, MX, SOA, SRV, TXT};
 
     fn record(name: &str, data: RData) -> Record {
-        Record::from_rdata(
-            Name::from_utf8(name).expect("имя владельца"),
-            300,
-            data,
-        )
+        Record::from_rdata(Name::from_utf8(name).expect("имя владельца"), 300, data)
     }
 
     fn dns_name(value: &str) -> Name {
@@ -95,7 +91,10 @@ mod tests {
     fn address_records_are_plain_text() {
         let records = [
             record("example.com.", RData::A(A::new(93, 184, 216, 34))),
-            record("example.com.", RData::AAAA(AAAA::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1))),
+            record(
+                "example.com.",
+                RData::AAAA(AAAA::new(0x2001, 0xdb8, 0, 0, 0, 0, 0, 1)),
+            ),
         ];
         assert_eq!(answers(&records, RecordType::A)[0].value, "93.184.216.34");
         assert_eq!(answers(&records, RecordType::AAAA)[0].value, "2001:db8::1");
@@ -108,7 +107,10 @@ mod tests {
             "example.com.",
             RData::MX(MX::new(10, dns_name("mail.example.com."))),
         )];
-        assert_eq!(answers(&records, RecordType::MX)[0].value, "10 mail.example.com");
+        assert_eq!(
+            answers(&records, RecordType::MX)[0].value,
+            "10 mail.example.com"
+        );
     }
 
     #[test]

@@ -10,7 +10,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { reactive } from "vue";
-import type { StorageStats } from "../../contracts/data";
+import type { StorageStats } from "@/contracts/data";
 import { JOURNAL_CORE_SOURCE } from "../infra/constants";
 import { describeError } from "../infra/errors";
 import { write } from "../infra/journal";

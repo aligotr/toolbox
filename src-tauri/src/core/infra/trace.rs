@@ -12,8 +12,8 @@
 //! Готовая цепочка отдаётся в интерфейс целиком: проигрывание с паузами
 //! управляется интерфейсом, потоковая отправка этапов не нужна.
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 
 use serde::Serialize;
@@ -116,7 +116,13 @@ impl Recorder {
     /// Пишет этап по нагрузке сообщения: идентификатор берётся оттуда.
     ///
     /// Так вызываются точки съёма, у которых на руках только JSON события.
-    pub fn stage_of(&self, payload: &Value, name: &'static str, topic: &str, detail: Option<String>) {
+    pub fn stage_of(
+        &self,
+        payload: &Value,
+        name: &'static str,
+        topic: &str,
+        detail: Option<String>,
+    ) {
         let Some(id) = payload.get("correlation_id").and_then(Value::as_str) else {
             return;
         };
@@ -149,7 +155,12 @@ mod tests {
     #[test]
     fn ignores_stages_without_armed_record() {
         let recorder = Recorder::new();
-        recorder.stage_of(&json!({ "correlation_id": "a" }), "queue.enqueue", "test:x", None);
+        recorder.stage_of(
+            &json!({ "correlation_id": "a" }),
+            "queue.enqueue",
+            "test:x",
+            None,
+        );
 
         assert!(recorder.finish("ok").is_none());
     }
@@ -159,9 +170,24 @@ mod tests {
         let recorder = Recorder::new();
         recorder.arm("a", "test:request", "test:reply");
 
-        recorder.stage_of(&json!({ "correlation_id": "a" }), "ask.start", "test:request", None);
-        recorder.stage_of(&json!({ "correlation_id": "b" }), "queue.enqueue", "test:request", None);
-        recorder.stage_of(&json!({ "echo": "без идентификатора" }), "sink.emit", "test:request", None);
+        recorder.stage_of(
+            &json!({ "correlation_id": "a" }),
+            "ask.start",
+            "test:request",
+            None,
+        );
+        recorder.stage_of(
+            &json!({ "correlation_id": "b" }),
+            "queue.enqueue",
+            "test:request",
+            None,
+        );
+        recorder.stage_of(
+            &json!({ "echo": "без идентификатора" }),
+            "sink.emit",
+            "test:request",
+            None,
+        );
 
         let chain = recorder.finish("ok").expect("цепочка должна собраться");
         assert_eq!(chain.stages.len(), 1);

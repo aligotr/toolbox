@@ -7,7 +7,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { reactive } from "vue";
-import type { AppInfo } from "../../contracts/app";
+import type { AppInfo } from "@/contracts/app";
 import { JOURNAL_CORE_SOURCE } from "../infra/constants";
 import { describeError } from "../infra/errors";
 import { write } from "../infra/journal";

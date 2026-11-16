@@ -327,9 +327,7 @@ fn normalize_title(title: &str) -> Result<String, String> {
         return Err("Название профиля не может быть пустым".to_owned());
     }
     if title.chars().count() > MAX_TITLE_LEN {
-        return Err(format!(
-            "Название профиля длиннее {MAX_TITLE_LEN} символов"
-        ));
+        return Err(format!("Название профиля длиннее {MAX_TITLE_LEN} символов"));
     }
     Ok(title.to_owned())
 }
@@ -343,7 +341,8 @@ mod tests {
     use super::*;
 
     fn temp_dir(tag: &str) -> PathBuf {
-        let path = std::env::temp_dir().join(format!("toolbox-profiles-{tag}-{}", std::process::id()));
+        let path =
+            std::env::temp_dir().join(format!("toolbox-profiles-{tag}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&path);
         fs::create_dir_all(&path).expect("временная папка");
         path
@@ -378,15 +377,21 @@ mod tests {
         let dir = temp_dir("rename");
         let profile = create(&dir, "Работа").expect("профиль");
         let path = dir.join(&profile.id).join(PROFILE_FILE);
-        fs::write(&path, "{ \"version\": 1, \"title\": \"Старое\", \"note\": \"руками\" }")
-            .expect("файл с чужим полем");
+        fs::write(
+            &path,
+            "{ \"version\": 1, \"title\": \"Старое\", \"note\": \"руками\" }",
+        )
+        .expect("файл с чужим полем");
 
         let renamed = rename(&dir, &profile.id, "Офис").expect("переименование");
 
         assert_eq!(renamed.id, profile.id, "папка не двигается");
         assert_eq!(renamed.title, "Офис");
         let document = fs::read_to_string(&path).expect("файл");
-        assert!(document.contains("\"note\": \"руками\""), "файл: {document}");
+        assert!(
+            document.contains("\"note\": \"руками\""),
+            "файл: {document}"
+        );
         assert!(document.contains("\"title\": \"Офис\""), "файл: {document}");
     }
 
@@ -438,7 +443,10 @@ mod tests {
 
         let profiles = list(&dir).expect("список");
 
-        let titles: Vec<&str> = profiles.iter().map(|profile| profile.title.as_str()).collect();
+        let titles: Vec<&str> = profiles
+            .iter()
+            .map(|profile| profile.title.as_str())
+            .collect();
         assert_eq!(titles, ["Дом", "Работа"], "порядок по названию");
     }
 
@@ -496,9 +504,7 @@ mod tests {
         let path = dir.join(&profile.id);
         fs::write(path.join(PROFILE_FILE), "{ \"defaults\": ").expect("битый файл");
 
-        let warning = document_warning(&path)
-            .expect("чтение")
-            .expect("причина");
+        let warning = document_warning(&path).expect("чтение").expect("причина");
         assert!(warning.contains("не разобран"), "причина: {warning}");
     }
 

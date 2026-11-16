@@ -10,10 +10,10 @@
 
 ## Именование файлов
 
-- `.ts` — camelCase: `usePing.ts`, `workspaceStorage.ts`.
-- `.vue` — PascalCase: `PingView.vue`, `TabStrip.vue`.
-- Папка инструмента — по `id`: `src/tools/ping/`, `src/tools/dnslookup/`.
-- Имя файла composable = имя функции: `usePing.ts` → `usePing`.
+- `.ts` — camelCase: `useBusprobe.ts`, `workspaceStorage.ts`.
+- `.vue` — PascalCase: `BusprobeView.vue`, `TabStrip.vue`.
+- Папка инструмента — по `id`: `src/tools/busprobe/`, `src/tools/dnslookup/`.
+- Имя файла composable = имя функции: `useBusprobe.ts` → `useBusprobe`.
 
 Имена — полные слова. Сокращения допустимы только общепринятые (`id`, `URL`)
 или не теряющие корень (`btn`, `dir`).
@@ -62,8 +62,9 @@ status: {
   под общую логику (например, единая рамка инструмента).
 - Свой компонент допустим, если он дешевле подгонки библиотеки; причина
   фиксируется в задаче.
-- Стили компонента — `scoped` рядом с компонентом. Глобальный CSS содержит
-  только базу и раскладку оболочки.
+- Стили компонента — `scoped` рядом с компонентом. Общие стили инструмента —
+  `tools/<id>/styles.css` без `scoped`, с BEM-префиксом инструмента.
+  Глобальный CSS содержит только базу и раскладку оболочки.
 - Тема — `src/ui/theme.ts` (preset). Переключение темы — классом на `html`,
   не правкой компонентов.
 

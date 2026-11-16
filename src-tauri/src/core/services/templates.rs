@@ -412,7 +412,10 @@ mod tests {
 
         let document = fs::read_to_string(dir.join("dns-i-ping.json")).expect("файл");
         assert!(document.contains("\"version\": 1"), "файл: {document}");
-        assert!(document.contains("\"title\": \"DNS и Ping\""), "файл: {document}");
+        assert!(
+            document.contains("\"title\": \"DNS и Ping\""),
+            "файл: {document}"
+        );
         assert!(document.contains("\"ping\""), "файл: {document}");
     }
 
@@ -452,8 +455,14 @@ mod tests {
 
         assert_eq!(renamed.id, template.id, "файл не двигается");
         let document = fs::read_to_string(&path).expect("файл");
-        assert!(document.contains("\"note\": \"руками\""), "файл: {document}");
-        assert!(document.contains("\"title\": \"DNS клиенты\""), "файл: {document}");
+        assert!(
+            document.contains("\"note\": \"руками\""),
+            "файл: {document}"
+        );
+        assert!(
+            document.contains("\"title\": \"DNS клиенты\""),
+            "файл: {document}"
+        );
         assert!(!dir.join("dns-klienty.json").exists(), "нового файла нет");
     }
 
@@ -474,9 +483,15 @@ mod tests {
         assert_eq!(updated.title, "DNS", "название не меняется");
         assert_eq!(updated.layout, next);
         let document = fs::read_to_string(&path).expect("файл");
-        assert!(document.contains("\"note\": \"руками\""), "файл: {document}");
+        assert!(
+            document.contains("\"note\": \"руками\""),
+            "файл: {document}"
+        );
         assert!(document.contains("\"ping\""), "файл: {document}");
-        assert!(!document.contains("\"dns\""), "старая геометрия ушла: {document}");
+        assert!(
+            !document.contains("\"dns\""),
+            "старая геометрия ушла: {document}"
+        );
     }
 
     #[test]
@@ -539,8 +554,11 @@ mod tests {
         let dir = temp_dir("broken");
         create(&dir, "DNS", layout()).expect("целый шаблон");
         fs::write(dir.join("broken.json"), "{ \"version\": 1, ").expect("битый файл");
-        fs::write(dir.join("future.json"), "{ \"version\": 99, \"columns\": [] }")
-            .expect("чужая версия");
+        fs::write(
+            dir.join("future.json"),
+            "{ \"version\": 99, \"columns\": [] }",
+        )
+        .expect("чужая версия");
         // Служебные файлы шаблонами не считаются.
         fs::write(dir.join("dns.json.tmp"), "{}").expect("временный файл");
 

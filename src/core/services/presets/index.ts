@@ -8,6 +8,8 @@
 //
 // Состояние создаётся на инструмент: `createPresets(tool)`. Два инструмента
 // не делят список и статусы операций, даже если оба открыты одновременно.
+// Загрузку, ошибку и защиту от повторного запуска ведёт `useAsyncAction`;
+// журнал и перечитывание списка остаются здесь — обёртка не знает домена.
 
 import { invoke } from "@tauri-apps/api/core";
 import { reactive } from "vue";
@@ -15,11 +17,12 @@ import type {
   StoredPreset,
   StoredPresetDefault,
   StoredPresetList,
-} from "../../../contracts/presets";
+} from "@/contracts/presets";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { describeError } from "../../infra/errors";
 import { write } from "../../infra/journal";
-import { idle, type OperationStatus } from "../../infra/status";
+import type { OperationStatus } from "../../infra/status";
+import { useAsyncAction, type AsyncAction } from "../../infra/useAsyncAction";
 
 /** Пресет после переноса полей в форму интерфейса. */
 export interface Preset {
@@ -119,15 +122,6 @@ function toPreset(stored: StoredPreset): Preset {
 /** Создаёт независимое состояние пресетов инструмента. */
 export function createPresets(tool: string): Presets {
   const state = reactive<PresetState>({ items: [], loaded: false, defaultId: null });
-  const status = reactive<PresetStatus>({
-    list: idle(),
-    create: idle(),
-    update: idle(),
-    rename: idle(),
-    duplicate: idle(),
-    delete: idle(),
-    default: idle(),
-  });
 
   /** Перечитывает список пресетов инструмента и указатель по умолчанию. */
   async function reload(): Promise<void> {
@@ -156,81 +150,122 @@ export function createPresets(tool: string): Presets {
     else defaultTitles.delete(tool);
   }
 
-  /**
-   * Читает пресеты для интерфейса.
-   *
-   * Ошибка не стирает уже показанный список: пресет мог быть добавлен
-   * на другой машине, и пустой список выглядел бы потерей настроек.
-   * Повторный вызов во время чтения дожидается того же результата: автозагрузка
-   * пресета не должна принять незаполненное состояние за «умолчания нет».
-   */
-  let listing: Promise<void> | null = null;
-
-  async function load(): Promise<void> {
-    if (listing) return listing;
-
-    status.list.loading = true;
-    status.list.error = null;
-    listing = reload()
-      .catch((error: unknown) => {
-        status.list.error = describeError(error);
-        write(
-          JOURNAL_CORE_SOURCE,
-          "error",
-          `пресеты «${tool}» не прочитаны: ${status.list.error}`,
-        );
-      })
-      .finally(() => {
-        status.list.loading = false;
-        listing = null;
-      });
-
-    return listing;
-  }
-
-  /**
-   * Выполняет операцию над пресетом: занятость, ошибка, журнал и перечитывание.
-   *
-   * `journal` получает результат и возвращает запись об успехе. Загрузка
-   * списка сюда не входит: у неё нет результата и сообщения об успехе.
-   */
-  async function perform<T>(
-    operation: OperationStatus,
-    failure: string,
-    action: () => Promise<T>,
-    journal: (value: T) => string,
-  ): Promise<T | null> {
-    if (operation.loading) return null;
-
-    operation.loading = true;
-    operation.error = null;
+  /** Выполнение с записью причины отказа: обёртка переводит её в статус. */
+  async function attempt<T>(failure: string, action: () => Promise<T>): Promise<T> {
     try {
-      const value = await action();
-      write(JOURNAL_CORE_SOURCE, "result", journal(value));
-      await reload();
-      return value;
+      return await action();
     } catch (error) {
-      operation.error = describeError(error);
-      write(
-        JOURNAL_CORE_SOURCE,
-        "error",
-        `${failure}: ${operation.error}`,
-      );
-      return null;
-    } finally {
-      operation.loading = false;
+      write(JOURNAL_CORE_SOURCE, "error", `${failure}: ${describeError(error)}`);
+      throw error;
     }
   }
 
-  /** Сохраняет настройки новым пресетом. `null` — сохранить не удалось. */
-  async function create(title: string, payload: unknown): Promise<Preset | null> {
-    const created = await perform(
-      status.create,
-      "пресет не сохранён",
-      () => invoke<StoredPreset>("preset_create", { tool, title, payload }),
-      (value) => `сохранён пресет «${value.title}» (${value.id})`,
+  /**
+   * Операция пресета: обёртка, журнал успеха и перечитывание списка.
+   *
+   * Журнал получает результат и аргументы: переименование и копия называют
+   * и прежний, и новый идентификатор.
+   */
+  function presetAction<TArgs extends unknown[], TResult>(
+    failure: string,
+    act: (...args: TArgs) => Promise<TResult>,
+    journal: (value: TResult, ...args: TArgs) => string,
+  ): AsyncAction<TArgs, TResult> {
+    return useAsyncAction((...args: TArgs) =>
+      attempt(failure, async () => {
+        const value = await act(...args);
+        write(JOURNAL_CORE_SOURCE, "result", journal(value, ...args));
+        await reload();
+        return value;
+      }),
     );
-    return created ? toPreset(created) : null;
+  }
+
+  /**
+   * Чтение списка. Повторный вызов во время чтения дожидается того же
+   * результата: автозагрузка пресета не должна принять незаполненное
+   * состояние за «умолчания нет».
+   */
+  const listAction = useAsyncAction(() =>
+    attempt(`пресеты «${tool}» не прочитаны`, reload),
+  );
+
+  const createAction = presetAction(
+    "пресет не сохранён",
+    async (title: string, payload: unknown) =>
+      toPreset(await invoke<StoredPreset>("preset_create", { tool, title, payload })),
+    (preset) => `сохранён пресет «${preset.title}» (${preset.id})`,
+  );
+
+  const updateAction = presetAction(
+    "пресет не обновлён",
+    async (id: string, payload: unknown) =>
+      toPreset(await invoke<StoredPreset>("preset_update", { tool, id, payload })),
+    (preset) => `пресет «${preset.title}» обновлён`,
+  );
+
+  const renameAction = presetAction(
+    "пресет не переименован",
+    async (id: string, title: string) =>
+      toPreset(await invoke<StoredPreset>("preset_rename", { tool, id, title })),
+    (preset, id) => `пресет «${id}» переименован в «${preset.title}»`,
+  );
+
+  const duplicateAction = presetAction(
+    "пресет не скопирован",
+    async (id: string) =>
+      toPreset(await invoke<StoredPreset>("preset_duplicate", { tool, id })),
+    (preset, id) => `пресет «${id}» скопирован как «${preset.title}»`,
+  );
+
+  const deleteAction = presetAction(
+    "пресет не удалён",
+    (preset: Preset) => invoke<string>("preset_delete", { tool, id: preset.id }),
+    (target, preset) => `пресет «${preset.title}» перемещён в «${target}»`,
+  );
+
+  const defaultAction = presetAction(
+    "пресет по умолчанию не изменён",
+    async (id: string | null) => ({
+      id: await invoke<string | null>("preset_default_set", { tool, id }),
+    }),
+    (value) => {
+      if (value.id === null) {
+        return `пресет по умолчанию для «${tool}» снят`;
+      }
+      const title = state.items.find((item) => item.id === value.id)?.title ?? value.id;
+      return `пресет «${title}» выбран по умолчанию для «${tool}»`;
+    },
+  );
+
+  const status: PresetStatus = {
+    list: listAction.status,
+    create: createAction.status,
+    update: updateAction.status,
+    rename: renameAction.status,
+    duplicate: duplicateAction.status,
+    delete: deleteAction.status,
+    default: defaultAction.status,
+  };
+
+  let listing: Promise<void> | null = null;
+
+  /** Перечитывает список для интерфейса; отказ остаётся в `status.list`. */
+  async function load(): Promise<void> {
+    if (listing) return listing;
+
+    listing = listAction
+      .run()
+      .then(() => undefined)
+      .finally(() => {
+        listing = null;
+      });
+    return listing;
+  }
+
+  /** Сохраняет настройки новым пресетом. `null` — сохранить не удалось. */
+  function create(title: string, payload: unknown): Promise<Preset | null> {
+    return createAction.run(title, payload);
   }
 
   /**
@@ -239,47 +274,23 @@ export function createPresets(tool: string): Presets {
    * Название и незнакомые ключи файла остаются прежними: сохранение — это
    * снимок настроек, а не переименование.
    */
-  async function update(id: string, payload: unknown): Promise<Preset | null> {
-    const updated = await perform(
-      status.update,
-      "пресет не обновлён",
-      () => invoke<StoredPreset>("preset_update", { tool, id, payload }),
-      (value) => `пресет «${value.title}» обновлён`,
-    );
-    return updated ? toPreset(updated) : null;
+  function update(id: string, payload: unknown): Promise<Preset | null> {
+    return updateAction.run(id, payload);
   }
 
   /** Переименовывает пресет: файл остаётся на месте. */
-  async function rename(id: string, title: string): Promise<Preset | null> {
-    const renamed = await perform(
-      status.rename,
-      "пресет не переименован",
-      () => invoke<StoredPreset>("preset_rename", { tool, id, title }),
-      (value) => `пресет «${id}» переименован в «${value.title}»`,
-    );
-    return renamed ? toPreset(renamed) : null;
+  function rename(id: string, title: string): Promise<Preset | null> {
+    return renameAction.run(id, title);
   }
 
   /** Дублирует пресет: копия получает приписку «(копия)». */
-  async function duplicate(id: string): Promise<Preset | null> {
-    const copy = await perform(
-      status.duplicate,
-      "пресет не скопирован",
-      () => invoke<StoredPreset>("preset_duplicate", { tool, id }),
-      (value) => `пресет «${id}» скопирован как «${value.title}»`,
-    );
-    return copy ? toPreset(copy) : null;
+  function duplicate(id: string): Promise<Preset | null> {
+    return duplicateAction.run(id);
   }
 
   /** Удаляет пресет в `local/trash/presets/<tool>/`. */
   async function remove(preset: Preset): Promise<boolean> {
-    const target = await perform(
-      status.delete,
-      "пресет не удалён",
-      () => invoke<string>("preset_delete", { tool, id: preset.id }),
-      (value) => `пресет «${preset.title}» перемещён в «${value}»`,
-    );
-    return target !== null;
+    return (await deleteAction.run(preset)) !== null;
   }
 
   /**
@@ -289,22 +300,7 @@ export function createPresets(tool: string): Presets {
    * только на новые вкладки: открытые сеансы настройка не трогает.
    */
   async function setDefault(id: string | null): Promise<boolean> {
-    const result = await perform<{ id: string | null }>(
-      status.default,
-      "пресет по умолчанию не изменён",
-      async () => ({
-        id: await invoke<string | null>("preset_default_set", { tool, id }),
-      }),
-      (value) => {
-        if (value.id === null) {
-          return `пресет по умолчанию для «${tool}» снят`;
-        }
-        const title =
-          state.items.find((item) => item.id === value.id)?.title ?? value.id;
-        return `пресет «${title}» выбран по умолчанию для «${tool}»`;
-      },
-    );
-    return result !== null;
+    return (await defaultAction.run(id)) !== null;
   }
 
   const presets: Presets = {

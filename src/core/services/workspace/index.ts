@@ -18,14 +18,14 @@ import type { UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { reactive, toRaw, watch } from "vue";
 import type { Template } from "../templates";
-import type { ToolDescriptor } from "../../../contracts/tools";
+import type { ToolDescriptor } from "@/contracts/tools";
 import type {
   Binding,
   SingletonKind,
   TabColumn,
   WorkspaceFile,
   WorkspaceTab,
-} from "../../../contracts/workspace";
+} from "@/contracts/workspace";
 import {
   EMPTY_TAB_ICON,
   EMPTY_TAB_TITLE,

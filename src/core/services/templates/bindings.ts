@@ -14,7 +14,7 @@
 
 import { reactive } from "vue";
 import type { Template } from "./index";
-import type { Binding, TabColumn, WorkspaceTab } from "../../../contracts/workspace";
+import type { Binding, TabColumn, WorkspaceTab } from "@/contracts/workspace";
 import { TEMPLATE_TAB_ICON } from "../workspace/constants";
 import { copyColumns } from "../workspace/layout";
 import { templates } from "./index";

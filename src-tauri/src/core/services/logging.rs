@@ -314,7 +314,11 @@ mod tests {
         logger.write_line("INFO", "test", "проверка записи");
 
         let path = logger.path();
-        assert_eq!(path.parent(), Some(dir.as_path()), "файл должен лежать в заданной папке");
+        assert_eq!(
+            path.parent(),
+            Some(dir.as_path()),
+            "файл должен лежать в заданной папке"
+        );
         let text = fs::read_to_string(&path).expect("файл лога создан");
         assert!(text.contains("проверка записи"));
 

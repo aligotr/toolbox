@@ -1,0 +1,51 @@
+/* Общие стили оболочки (ADR 0037).
+   Здесь только каркас, нужный нескольким экранам: шапка экрана и раздел.
+   Стиль одного компонента остаётся в его `scoped`-блоке. Классы несут
+   префикс `wb-`: файл не `scoped`, и префикс — единственная защита от
+   протечки в стили инструментов. */
+
+/* Шапка экрана: заголовок и пояснение. Одна на все экраны оболочки. */
+.wb-screen__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-sm);
+}
+
+.wb-screen__title {
+  margin: 0;
+  font-size: var(--ag-text-xl);
+  /* Межстрочный заголовка экрана — часть типографики оболочки: базовые 1.5
+     рассчитаны на текст, у заголовка строки плотнее (правила интерфейса). */
+  line-height: 1.25;
+}
+
+.wb-screen__lead {
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-md);
+}
+
+/* Раздел экрана: повторяющийся каркас списка или формы. */
+.wb-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-lg);
+}
+
+.wb-section__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-sm);
+}
+
+.wb-section__title {
+  margin: 0;
+  font-size: var(--ag-text-lg);
+  font-weight: 600;
+}
+
+.wb-section__lead {
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-sm);
+}

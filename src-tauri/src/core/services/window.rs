@@ -94,7 +94,11 @@ impl Screen {
 /// Масштаб приходит из системы; ноль или отрицательное значение сломали бы
 /// деление, а монитор без масштаба ведёт себя как масштаб 1.
 fn normalize_scale(scale_factor: f64) -> f64 {
-    if scale_factor > 0.0 { scale_factor } else { 1.0 }
+    if scale_factor > 0.0 {
+        scale_factor
+    } else {
+        1.0
+    }
 }
 
 /// Размещение окна, готовое к применению.

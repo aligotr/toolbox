@@ -4,8 +4,7 @@
 //! Чтобы подключить новую подсистему, достаточно добавить один файл-модуль
 //! и одну строку в этом списке. Ядро трогать не нужно.
 
-mod app;
-mod core_ping;
+mod busprobe;
 mod dnslookup;
 
 use crate::core::infra::bus::MessageBus;
@@ -19,8 +18,7 @@ use crate::core::infra::module::Module;
 pub fn register_all(bus: &MessageBus) {
     let modules: Vec<Box<dyn Module>> = vec![
         Box::new(dnslookup::DnsLookupModule::new()),
-        Box::new(core_ping::CorePingModule),
-        Box::new(app::AppModule),
+        Box::new(busprobe::BusprobeModule),
     ];
 
     for module in &modules {

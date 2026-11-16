@@ -78,6 +78,9 @@ mod tests {
         let trash = root.join("trash");
 
         assert!(clear_tool(&profile, &trash, "ghost").is_err(), "нет папки");
-        assert!(clear_tool(&profile, &trash, "../evil").is_err(), "путь наружу");
+        assert!(
+            clear_tool(&profile, &trash, "../evil").is_err(),
+            "путь наружу"
+        );
     }
 }

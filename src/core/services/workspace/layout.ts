@@ -4,7 +4,7 @@
 // шаблона, а хранить в двух местах два разбора — значит однажды починить
 // битую колонку только в одном из них. Правила проверки живут здесь.
 
-import type { TabColumn } from "../../../contracts/workspace";
+import type { TabColumn } from "@/contracts/workspace";
 import { isRecord } from "../../infra/guards";
 
 /**

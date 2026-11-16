@@ -5,6 +5,8 @@
 // `pending`/`cancelled`, а события ядра — только проводные значения.
 // Разделение не даёт интерфейсу «протечь» в контракт Rust и наоборот.
 
+import type { OperationStatus } from "@/core/infra/status";
+
 /** Типы записей, которые поддерживает подсистема. */
 export type RecordType =
   | "A"
@@ -80,10 +82,10 @@ export interface DnsCell {
   previous?: CellSnapshot;
 }
 
-/** Состояние одной операции: загрузка и ошибка независимы. */
-export interface OperationStatus {
-  loading: boolean;
-  error: string | null;
+/** Пара «сервер и его результат» для раскрытия строки. */
+export interface CellDetailsEntry {
+  server: ServerOption;
+  cell: DnsCell | undefined;
 }
 
 /** Прогресс текущей проверки. */
@@ -112,7 +114,10 @@ export interface DnsSession {
   progress: RunProgress;
   status: {
     run: OperationStatus;
+    /** Чтение системных резолверов и своих серверов. */
     servers: OperationStatus;
+    /** Запись своих серверов в профиль. */
+    serversSave: OperationStatus;
   };
   filters: {
     search: string;

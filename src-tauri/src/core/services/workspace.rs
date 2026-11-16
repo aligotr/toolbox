@@ -164,8 +164,7 @@ mod tests {
     fn saving_something_other_than_object_is_rejected() {
         let path = temp_dir("save-array").join("workspace.json");
 
-        let error = save(&path, &json!(["вкладки"]))
-            .expect_err("массив не должен записываться");
+        let error = save(&path, &json!(["вкладки"])).expect_err("массив не должен записываться");
 
         assert!(error.contains("объектом"), "причина отказа: {error}");
         assert!(!path.exists(), "испорченный файл не создаётся");

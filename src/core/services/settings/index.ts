@@ -11,7 +11,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { computed, reactive } from "vue";
-import type { LogLevel, Settings } from "../../../contracts/settings";
+import type { LogLevel, Settings } from "@/contracts/settings";
 import { subscribeEvent } from "../../infra/bus";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { SETTINGS_CHANGED_TOPIC } from "./constants";

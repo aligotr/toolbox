@@ -11,7 +11,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { computed, reactive } from "vue";
-import type { Profile, ProfileList } from "../../contracts/profiles";
+import type { Profile, ProfileList } from "@/contracts/profiles";
 import { JOURNAL_CORE_SOURCE } from "../infra/constants";
 import { describeError } from "../infra/errors";
 import { write } from "../infra/journal";

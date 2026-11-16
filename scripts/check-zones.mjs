@@ -31,24 +31,32 @@ function key(file) {
     .replace(/\.(ts|vue)$/, "");
 }
 
-/** Импорты файла: только относительные, внешние пакеты не наши.
+/** Импорты файла: относительные, через алиас `@/` и пакетные.
  *
- * Ловятся обе формы: `from "./x"` и побочный `import "./x"`.
+ * Ловятся обе формы записи: `from "./x"` и побочный `import "./x"`. Алиас
+ * `@/` указывает на `src/`, поэтому межслойный импорт не должен проскакивать
+ * мимо стража. Пакеты нужны контрактам: им запрещён стек Vue и Tauri.
  */
 const SPECIFIERS = [
-  /\b(?:from|import)\s+"(\.[^"]*)"/g,
-  /\bimport\s*\(\s*"(\.[^"]*)"\s*\)/g,
+  /\b(?:from|import)\s+"([^"]+)"/g,
+  /\bimport\s*\(\s*"([^"]+)"\s*\)/g,
 ];
+
+/** Путь цели импорта в терминах `src/...`; пакет остаётся своим именем. */
+function resolveSpecifier(file, specifier) {
+  if (specifier.startsWith("@/")) return `src/${specifier.slice(2)}`;
+  if (!specifier.startsWith(".")) return specifier;
+  return path
+    .relative(root, path.resolve(path.dirname(file), specifier))
+    .replaceAll("\\", "/");
+}
 
 function imports(file) {
   const text = readFileSync(file, "utf8");
   const found = [];
   for (const pattern of SPECIFIERS) {
     for (const match of text.matchAll(pattern)) {
-      const target = path
-        .relative(root, path.resolve(path.dirname(file), match[1]))
-        .replaceAll("\\", "/");
-      found.push({ target, statement: match[0] });
+      found.push({ target: resolveSpecifier(file, match[1]), statement: match[0] });
     }
   }
   return found;
@@ -58,6 +66,29 @@ function imports(file) {
 function inZone(target, zone) {
   return target === zone || target.startsWith(`${zone}/`);
 }
+
+/** Слой файла по пути `src/<слой>/...`; `null` — стили и прочее вне слоёв. */
+function layerOf(target) {
+  const [head] = target.replace(/^src\//, "").split("/");
+  const layers = ["contracts", "core", "ui", "tools", "workbench", "app"];
+  return layers.includes(head) ? head : null;
+}
+
+/** Инструмент по пути `src/tools/<id>/...`; `null` — не инструмент. */
+function toolOf(target) {
+  return target.startsWith("src/tools/") ? (target.split("/")[2] ?? null) : null;
+}
+
+/** Слои, которые заявленный слой не импортирует: зависимости идут вниз. */
+const UPWARD = {
+  contracts: ["core", "ui", "tools", "workbench", "app"],
+  ui: ["tools", "workbench", "app"],
+  tools: ["workbench", "app"],
+  workbench: ["tools", "app"],
+};
+
+/** Пакеты, которых не должно быть в контрактах: словарь без стека. */
+const CONTRACT_PACKAGES = ["vue", "@vue/", "@tauri-apps/"];
 
 /** Признаки поведения в контрактах: объявление или реэкспорт значения.
  *
@@ -74,6 +105,8 @@ const violations = [];
 for (const file of walk(src)) {
   const self = key(file);
   const text = readFileSync(file, "utf8");
+  const selfLayer = layerOf(self);
+  const selfTool = toolOf(self);
 
   // Контракты — только типы: поведение принадлежит домену.
   if (inZone(self, "src/contracts")) {
@@ -83,6 +116,28 @@ for (const file of walk(src)) {
   }
 
   for (const { target } of imports(file)) {
+    // Контракты: только свои типы и никакого стека — тип компонента
+    // передаётся параметром, а не импортом Vue.
+    if (selfLayer === "contracts") {
+      const other = layerOf(target);
+      if (other && other !== "contracts") {
+        violations.push(`${self} → ${target}: контракты импортируют только контракты`);
+      }
+      if (CONTRACT_PACKAGES.some((name) => target === name || target.startsWith(name))) {
+        violations.push(`${self} → ${target}: контракты не импортируют Vue и Tauri`);
+      }
+    } else if (selfLayer && UPWARD[selfLayer]?.includes(layerOf(target))) {
+      violations.push(
+        `${self} → ${target}: слой «${selfLayer}» не импортирует слой «${layerOf(target)}»`,
+      );
+    }
+
+    // Инструменты не знают друг о друге: общий код опускается в core или ui.
+    const otherTool = toolOf(target);
+    if (selfTool && otherTool && selfTool !== otherTool) {
+      violations.push(`${self} → ${target}: инструменты не импортируют друг друга`);
+    }
+
     // Инфраструктура не знает ни доменов, ни общих подписей оболочки.
     if (inZone(self, "src/core/infra")) {
       if (inZone(target, "src/core/services")) {
@@ -95,7 +150,7 @@ for (const file of walk(src)) {
 
     // Ядро не знает ни оболочки, ни инструментов, ни сборки.
     if (inZone(self, "src/core")) {
-      for (const zone of ["src/shell", "src/tools", "src/app", "src/ui"]) {
+      for (const zone of ["src/workbench", "src/tools", "src/app", "src/ui"]) {
         if (inZone(target, zone)) {
           violations.push(`${self} → ${target}: ядро не знает слоя выше`);
         }

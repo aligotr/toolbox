@@ -16,19 +16,19 @@ use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow, WindowEvent};
 use tauri_plugin_opener::OpenerExt;
 
-use core::infra::bus::{BusError, MessageBus, ERROR_TOPIC};
-use core::store;
-use core::services::data;
+use core::infra::bus::{BusError, ERROR_TOPIC, MessageBus};
 use core::infra::deps::Deps;
+use core::infra::sink::EventSink;
+use core::services::data;
 use core::services::logging::{self, Logger};
 use core::services::presets;
 use core::services::profiles;
 use core::services::settings::{self, Settings};
-use core::infra::sink::EventSink;
-use core::store::storage::{Storage, DEFAULT_PROFILE};
 use core::services::templates;
 use core::services::window;
 use core::services::workspace;
+use core::store;
+use core::store::storage::{DEFAULT_PROFILE, Storage};
 
 /// Метка главного окна из `tauri.conf.json`. Через неё окно находится
 /// при восстановлении геометрии, сбросе размера и показе после запуска.
@@ -111,7 +111,12 @@ fn boot(app: &AppHandle) -> Runtime {
     let storage = match Storage::detect() {
         Ok(storage) => storage,
         Err(reason) => {
-            return blocked(app, "неизвестна", "Не удалось определить папку программы", reason)
+            return blocked(
+                app,
+                "неизвестна",
+                "Не удалось определить папку программы",
+                reason,
+            );
         }
     };
     let root = storage.root().display().to_string();
@@ -174,16 +179,18 @@ fn boot(app: &AppHandle) -> Runtime {
     // 3. Логирование: с этого момента отказы оставляют след.
     let logger = match logging::init(storage.logs_dir(), loaded.settings.log.level) {
         Ok(logger) => logger,
-        Err(reason) => {
-            return blocked(app, &root, "Не удалось запустить файловый лог", reason)
-        }
+        Err(reason) => return blocked(app, &root, "Не удалось запустить файловый лог", reason),
     };
     logging::install_panic_hook(logger.clone());
 
     log::info!(
         "ToolBox {}: запуск, режим {}, папка программы '{root}'",
         env!("CARGO_PKG_VERSION"),
-        if cfg!(debug_assertions) { "dev" } else { "release" }
+        if cfg!(debug_assertions) {
+            "dev"
+        } else {
+            "release"
+        }
     );
     log::info!("Применён уровень лога '{}'", loaded.settings.log.level);
     log::info!(
@@ -328,10 +335,7 @@ fn startup_status(runtime: State<'_, Runtime>) -> StartupStatus {
         blocked: runtime.blocked.is_some(),
         title: runtime.blocked.as_ref().map(|error| error.title),
         root: runtime.root.clone(),
-        reason: runtime
-            .blocked
-            .as_ref()
-            .map(|error| error.reason.clone()),
+        reason: runtime.blocked.as_ref().map(|error| error.reason.clone()),
         log_path: runtime
             .logger
             .as_ref()
@@ -475,10 +479,7 @@ fn profiles_list(runtime: State<'_, Runtime>) -> Result<profiles::ProfileList, S
 
 /// Создаёт профиль из названия: папка получает латинский идентификатор.
 #[tauri::command]
-fn profile_create(
-    runtime: State<'_, Runtime>,
-    title: String,
-) -> Result<profiles::Profile, String> {
+fn profile_create(runtime: State<'_, Runtime>, title: String) -> Result<profiles::Profile, String> {
     let storage = storage_of(&runtime)?;
     let profile = profiles::create(&storage.profiles_dir(), &title)?;
     log::info!("Создан профиль '{}' ({})", profile.title, profile.id);
@@ -646,10 +647,7 @@ fn template_delete(runtime: State<'_, Runtime>, id: String) -> Result<String, St
 /// Замечания о непрочитанных файлах идут вместе со списком: испорченный
 /// пресет не мешает остальным, но пользователь должен знать, что он был.
 #[tauri::command]
-fn presets_list(
-    runtime: State<'_, Runtime>,
-    tool: String,
-) -> Result<presets::PresetList, String> {
+fn presets_list(runtime: State<'_, Runtime>, tool: String) -> Result<presets::PresetList, String> {
     let storage = storage_of(&runtime)?;
     presets::list(&storage.presets_dir(), &tool)
 }
@@ -747,11 +745,7 @@ fn preset_duplicate(
 
 /// Удаляет пресет в `local/trash/presets/<tool>/`.
 #[tauri::command]
-fn preset_delete(
-    runtime: State<'_, Runtime>,
-    tool: String,
-    id: String,
-) -> Result<String, String> {
+fn preset_delete(runtime: State<'_, Runtime>, tool: String, id: String) -> Result<String, String> {
     let storage = storage_of(&runtime)?;
     let target = presets::delete(
         &storage.presets_dir(),
@@ -848,7 +842,10 @@ fn tool_data_clear(runtime: State<'_, Runtime>, tool: String) -> Result<String, 
         &storage.data_trash_dir(),
         &tool,
     )?;
-    log::info!("Данные инструмента '{tool}' перемещены в '{}'", target.display());
+    log::info!(
+        "Данные инструмента '{tool}' перемещены в '{}'",
+        target.display()
+    );
     Ok(target.display().to_string())
 }
 

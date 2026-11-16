@@ -96,10 +96,7 @@ impl Module for DnsLookupModule {
             let correlation_id = event.correlation_id.clone();
             std::thread::spawn(move || {
                 let (servers, error) = match servers::system_addresses() {
-                    Ok(addresses) => (
-                        addresses.iter().map(ToString::to_string).collect(),
-                        None,
-                    ),
+                    Ok(addresses) => (addresses.iter().map(ToString::to_string).collect(), None),
                     Err(error) => (Vec::new(), Some(error)),
                 };
                 bus.publish_event(SystemServersReply {
@@ -154,7 +151,11 @@ fn start_run(bus: &MessageBus, runs: &ActiveRuns, event: &DnsRun) -> DnsRunAccep
     };
 
     if event.run_id.trim().is_empty() {
-        return accepted(false, 0, Some("Не указан идентификатор проверки".to_owned()));
+        return accepted(
+            false,
+            0,
+            Some("Не указан идентификатор проверки".to_owned()),
+        );
     }
 
     let run = match request::prepare(event) {
@@ -227,30 +228,32 @@ fn execute(bus: MessageBus, runs: ActiveRuns, run: PreparedRun, cancelled: Arc<A
         let system_error = system_error.clone();
         let run_id = run.run_id.clone();
 
-        workers.push(std::thread::spawn(move || loop {
-            // Отмена проверяется до взятия запроса: после неё новые ячейки
-            // не начинаются, а уже начатые закрываются по таймауту.
-            if cancelled.load(Ordering::SeqCst) {
-                break;
-            }
-            // Отравленная очередь означает панику другого рабочего: новые
-            // запросы не берутся, но поток завершается штатно.
-            let query = match queue.lock() {
-                Ok(mut queue) => queue.pop_front(),
-                Err(_) => break,
-            };
-            let Some(query) = query else {
-                break;
-            };
-            if let Some(result) = run_query(
-                &run_id,
-                &query,
-                &system_addresses,
-                &system_error,
-                &cancelled,
-            ) {
-                bus.publish_event(result);
-                completed.fetch_add(1, Ordering::Relaxed);
+        workers.push(std::thread::spawn(move || {
+            loop {
+                // Отмена проверяется до взятия запроса: после неё новые ячейки
+                // не начинаются, а уже начатые закрываются по таймауту.
+                if cancelled.load(Ordering::SeqCst) {
+                    break;
+                }
+                // Отравленная очередь означает панику другого рабочего: новые
+                // запросы не берутся, но поток завершается штатно.
+                let query = match queue.lock() {
+                    Ok(mut queue) => queue.pop_front(),
+                    Err(_) => break,
+                };
+                let Some(query) = query else {
+                    break;
+                };
+                if let Some(result) = run_query(
+                    &run_id,
+                    &query,
+                    &system_addresses,
+                    &system_error,
+                    &cancelled,
+                ) {
+                    bus.publish_event(result);
+                    completed.fetch_add(1, Ordering::Relaxed);
+                }
             }
         }));
     }
@@ -438,16 +441,17 @@ mod tests {
             .expect("ответ на запуск");
 
         assert_eq!(accepted["accepted"], false);
-        assert!(accepted["error"].as_str().is_some(), "текст ошибки обязателен");
+        assert!(
+            accepted["error"].as_str().is_some(),
+            "текст ошибки обязателен"
+        );
         bus.stop();
     }
 
     #[test]
     fn custom_servers_roundtrip_through_bus() {
-        let dir = std::env::temp_dir().join(format!(
-            "toolbox-dnslookup-bus-{}",
-            std::process::id()
-        ));
+        let dir =
+            std::env::temp_dir().join(format!("toolbox-dnslookup-bus-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
 
         let deps = Deps::new();

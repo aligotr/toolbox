@@ -11,7 +11,7 @@
 use std::io::{Read, Write};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpStream, UdpSocket};
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
-use std::sync::{mpsc, Arc};
+use std::sync::{Arc, mpsc};
 use std::time::Duration;
 
 use hickory_proto::op::{Message, MessageType, OpCode, Query, ResponseCode};
@@ -156,9 +156,8 @@ fn exchange_udp(address: SocketAddr, request: &[u8], id: u16) -> Result<Message,
         IpAddr::V4(_) => SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), 0),
         IpAddr::V6(_) => SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), 0),
     };
-    let socket = UdpSocket::bind(bind).map_err(|error| {
-        Outcome::offline(format!("Не удалось открыть UDP-сокет: {error}"))
-    })?;
+    let socket = UdpSocket::bind(bind)
+        .map_err(|error| Outcome::offline(format!("Не удалось открыть UDP-сокет: {error}")))?;
     socket
         .set_read_timeout(Some(ATTEMPT_TIMEOUT))
         .map_err(io_outcome)?;
@@ -185,9 +184,11 @@ fn exchange_tcp(address: SocketAddr, request: &[u8], id: u16) -> Result<Message,
         .set_write_timeout(Some(ATTEMPT_TIMEOUT))
         .map_err(io_outcome)?;
 
-    let length = u16::try_from(request.len())
-        .map_err(|_| Outcome::bad("DNS-запрос больше 65535 байт"))?;
-    stream.write_all(&length.to_be_bytes()).map_err(io_outcome)?;
+    let length =
+        u16::try_from(request.len()).map_err(|_| Outcome::bad("DNS-запрос больше 65535 байт"))?;
+    stream
+        .write_all(&length.to_be_bytes())
+        .map_err(io_outcome)?;
     stream.write_all(request).map_err(io_outcome)?;
 
     let mut length_buffer = [0u8; 2];
@@ -272,8 +273,8 @@ fn random_id() -> u16 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hickory_proto::rr::rdata::A;
     use hickory_proto::rr::Record;
+    use hickory_proto::rr::rdata::A;
     use std::net::UdpSocket;
     use std::thread;
 

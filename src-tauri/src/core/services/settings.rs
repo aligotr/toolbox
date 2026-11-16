@@ -1,4 +1,4 @@
-﻿//! Настройки приложения (ADR 0010, ADR 0012).
+//! Настройки приложения (ADR 0010, ADR 0012).
 //!
 //! Схема версионирована: `version` позволяет однажды сменить форму файла,
 //! не угадывая версию по содержимому. Разделы соответствуют областям
@@ -21,9 +21,9 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-use crate::core::store::files::{strip_bom, write_atomic};
 use crate::core::services::logging::LogLevel;
 use crate::core::services::profiles;
+use crate::core::store::files::{strip_bom, write_atomic};
 use crate::core::store::storage::DEFAULT_PROFILE;
 
 /// Версия схемы файла. Меняется только вместе с миграцией чтения.
@@ -203,17 +203,20 @@ pub fn load(path: &Path) -> LoadedSettings {
     };
 
     let version = read_version(&root, path, &mut warnings);
-    let log = section_from(&root, SECTION_LOG, path, &mut warnings)
-        .unwrap_or_default();
-    let window = section_from(&root, SECTION_WINDOW, path, &mut warnings)
-        .unwrap_or_default();
-    let ui = section_from(&root, SECTION_UI, path, &mut warnings)
-        .unwrap_or_default();
+    let log = section_from(&root, SECTION_LOG, path, &mut warnings).unwrap_or_default();
+    let window = section_from(&root, SECTION_WINDOW, path, &mut warnings).unwrap_or_default();
+    let ui = section_from(&root, SECTION_UI, path, &mut warnings).unwrap_or_default();
     let active_profile = read_profile(&root, path, &mut warnings);
 
     // Всё, что не описано схемой, переносится в `extra` и вернётся при записи.
     let mut extra = root;
-    for key in ["version", SECTION_LOG, SECTION_WINDOW, SECTION_UI, SECTION_PROFILE] {
+    for key in [
+        "version",
+        SECTION_LOG,
+        SECTION_WINDOW,
+        SECTION_UI,
+        SECTION_PROFILE,
+    ] {
         extra.remove(key);
     }
 
@@ -323,11 +326,7 @@ fn default_height() -> u32 {
     DEFAULT_HEIGHT
 }
 
-fn read_version(
-    root: &Map<String, Value>,
-    path: &Path,
-    warnings: &mut Vec<String>,
-) -> u32 {
+fn read_version(root: &Map<String, Value>, path: &Path, warnings: &mut Vec<String>) -> u32 {
     let Some(value) = root.get("version") else {
         // Файл без версии — старый или собранный руками; читаем как текущий.
         return VERSION;
@@ -352,11 +351,7 @@ fn read_version(
     }
 }
 
-fn read_profile(
-    root: &Map<String, Value>,
-    path: &Path,
-    warnings: &mut Vec<String>,
-) -> String {
+fn read_profile(root: &Map<String, Value>, path: &Path, warnings: &mut Vec<String>) -> String {
     let Some(value) = root.get(SECTION_PROFILE) else {
         return default_profile();
     };
@@ -420,8 +415,7 @@ where
         base_map.insert(key, value);
     }
 
-    serde_json::from_value(base)
-        .map_err(|error| format!("Раздел '{name}' не принят: {error}"))
+    serde_json::from_value(base).map_err(|error| format!("Раздел '{name}' не принят: {error}"))
 }
 
 fn profile_from_patch(patch: Value) -> Result<String, String> {
@@ -441,7 +435,8 @@ mod tests {
     use std::path::PathBuf;
 
     fn temp_dir(tag: &str) -> PathBuf {
-        let path = std::env::temp_dir().join(format!("toolbox-settings-{tag}-{}", std::process::id()));
+        let path =
+            std::env::temp_dir().join(format!("toolbox-settings-{tag}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&path);
         fs::create_dir_all(&path).expect("временная папка");
         path
@@ -509,15 +504,21 @@ mod tests {
     fn unknown_level_falls_back_to_default_with_warning() {
         let dir = temp_dir("level");
         let path = dir.join("settings.json");
-        fs::write(&path, r#"{"version":1,"log":{"level":"verbose"}}"#)
-            .expect("файл настроек");
+        fs::write(&path, r#"{"version":1,"log":{"level":"verbose"}}"#).expect("файл настроек");
 
         let loaded = load(&path);
 
         assert_eq!(loaded.settings.log.level, LogLevel::Info);
-        assert_eq!(loaded.settings.window, WindowSettings::default(), "окно не затронуто");
+        assert_eq!(
+            loaded.settings.window,
+            WindowSettings::default(),
+            "окно не затронуто"
+        );
         assert!(
-            loaded.warnings.iter().any(|warning| warning.contains("log")),
+            loaded
+                .warnings
+                .iter()
+                .any(|warning| warning.contains("log")),
             "замечание должно называть раздел: {:?}",
             loaded.warnings
         );
@@ -549,8 +550,7 @@ mod tests {
     fn level_is_case_insensitive_for_hand_edited_files() {
         let dir = temp_dir("level-case");
         let path = dir.join("settings.json");
-        fs::write(&path, r#"{"version":1,"log":{"level":"DEBUG"}}"#)
-            .expect("файл настроек");
+        fs::write(&path, r#"{"version":1,"log":{"level":"DEBUG"}}"#).expect("файл настроек");
 
         let loaded = load(&path);
 
@@ -580,9 +580,8 @@ mod tests {
         let loaded = load(&path);
         save(&path, &loaded.settings).expect("настройки записаны");
 
-        let saved: Value =
-            serde_json::from_str(&fs::read_to_string(&path).expect("файл прочитан"))
-                .expect("записан JSON");
+        let saved: Value = serde_json::from_str(&fs::read_to_string(&path).expect("файл прочитан"))
+            .expect("записан JSON");
 
         assert_eq!(saved["plugin"]["enabled"], true);
         assert_eq!(saved["window"]["grid"], 8);

@@ -346,7 +346,8 @@ pub fn normalize_name(input: &str, record_type: RecordType) -> Result<Name, Stri
         ));
     }
 
-    let mut name = Name::from_utf8(text).map_err(|error| format!("Некорректное имя '{text}': {error}"))?;
+    let mut name =
+        Name::from_utf8(text).map_err(|error| format!("Некорректное имя '{text}': {error}"))?;
     name.set_fqdn(true);
     Ok(name)
 }
@@ -355,7 +356,8 @@ pub fn normalize_name(input: &str, record_type: RecordType) -> Result<Name, Stri
 fn reverse_name(ip: IpAddr) -> Result<Name, String> {
     let text = match ip {
         IpAddr::V4(address) => {
-            let mut labels: Vec<String> = address.octets().iter().rev().map(u8::to_string).collect();
+            let mut labels: Vec<String> =
+                address.octets().iter().rev().map(u8::to_string).collect();
             labels.push("in-addr.arpa".to_owned());
             labels.join(".")
         }
@@ -371,7 +373,8 @@ fn reverse_name(ip: IpAddr) -> Result<Name, String> {
             labels.join(".")
         }
     };
-    Name::from_ascii(format!("{text}.")).map_err(|error| format!("Не удалось построить reverse-имя: {error}"))
+    Name::from_ascii(format!("{text}."))
+        .map_err(|error| format!("Не удалось построить reverse-имя: {error}"))
 }
 
 /// Разбирает адрес сервера: `IP`, `IP:порт`, `[IPv6]:порт`.
@@ -433,7 +436,8 @@ mod tests {
 
     #[test]
     fn ipv4_ptr_is_reversed() {
-        let name = normalize_name("93.184.216.34", RecordType::PTR).expect("PTR должен развернуться");
+        let name =
+            normalize_name("93.184.216.34", RecordType::PTR).expect("PTR должен развернуться");
         assert_eq!(name.to_ascii(), "34.216.184.93.in-addr.arpa.");
     }
 

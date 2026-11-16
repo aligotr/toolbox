@@ -5,7 +5,7 @@
 ```text
 src-tauri/src/
   core/      шина, сообщения, зависимости, лог, настройки, хранилище
-  modules/   инструменты: core_ping, app, dnslookup
+  modules/   подсистемы: dnslookup, core.ping (протокол самопроверки)
   lib.rs     composition root: порядок инициализации и мост
 ```
 
@@ -16,8 +16,8 @@ src-tauri/src/
 ## Модуль
 
 ```rust
-impl Module for Ping {
-    fn id(&self) -> &'static str { "ping" }
+impl Module for DnslookupModule {
+    fn id(&self) -> &'static str { "dnslookup" }
 
     fn register(&self, bus: &MessageBus) { /* обработчики */ }
 }
@@ -80,7 +80,8 @@ impl Module for Ping {
 
 ## Чек-лист модуля
 
-- [ ] `impl Module`, `id` совпадает с дескриптором инструмента
+- [ ] `impl Module`; `id` совпадает с дескриптором инструмента либо, если
+      Rust-части с именем инструмента нет, с именем протокола (`core.ping`)
 - [ ] Строка в `register_all`
 - [ ] Зависимости из `Deps`, без глобальных синглтонов
 - [ ] Нет `log::` и вывода в stderr

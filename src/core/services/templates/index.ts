@@ -15,8 +15,8 @@ import { reactive } from "vue";
 import type {
   StoredTemplate,
   StoredTemplateList,
-} from "../../../contracts/templates";
-import type { TabColumn } from "../../../contracts/workspace";
+} from "@/contracts/templates";
+import type { TabColumn } from "@/contracts/workspace";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { describeError } from "../../infra/errors";
 import { write } from "../../infra/journal";

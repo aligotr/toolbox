@@ -19,7 +19,10 @@ pub fn read(path: &Path) -> Result<Option<String>, String> {
     match fs::read_to_string(path) {
         Ok(raw) => Ok(Some(raw)),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        Err(error) => Err(format!("Не удалось прочитать '{}': {error}", path.display())),
+        Err(error) => Err(format!(
+            "Не удалось прочитать '{}': {error}",
+            path.display()
+        )),
     }
 }
 

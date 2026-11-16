@@ -139,12 +139,7 @@ pub fn list(root: &Path, tool: &str) -> Result<PresetList, String> {
 ///
 /// Идентификатор собирается из названия, конфликт решается суффиксом: два
 /// пресета «Продакшн» — обычное дело, а совпадать имена файлов не могут.
-pub fn create(
-    root: &Path,
-    tool: &str,
-    title: &str,
-    payload: Value,
-) -> Result<Preset, String> {
+pub fn create(root: &Path, tool: &str, title: &str, payload: Value) -> Result<Preset, String> {
     validate_tool(tool)?;
     let title = normalize_title(title)?;
     ensure_payload(&payload)?;
@@ -215,12 +210,7 @@ pub fn rename(root: &Path, tool: &str, id: &str, title: &str) -> Result<Preset, 
 ///
 /// Без названия копия получает приписку «(копия)»: пользователь нажал одну
 /// кнопку и ждёт второй такой же пресет, а не диалог.
-pub fn duplicate(
-    root: &Path,
-    tool: &str,
-    id: &str,
-    title: Option<&str>,
-) -> Result<Preset, String> {
+pub fn duplicate(root: &Path, tool: &str, id: &str, title: Option<&str>) -> Result<Preset, String> {
     validate_tool(tool)?;
     let path = preset_path(root, tool, id)?;
     let document = read_current_document(&path, tool)?;
@@ -348,11 +338,7 @@ pub fn set_default(
 ///
 /// Указатель на удалённый файл открывал бы вкладку с предупреждением на
 /// каждом запуске, поэтому чистится вместе с пресетом.
-pub fn clear_default_if(
-    profile_dir: &Path,
-    tool: &str,
-    preset_id: &str,
-) -> Result<(), String> {
+pub fn clear_default_if(profile_dir: &Path, tool: &str, preset_id: &str) -> Result<(), String> {
     if default_for(profile_dir, tool)?.id.as_deref() == Some(preset_id) {
         write_default(profile_dir, tool, None)?;
     }
@@ -622,11 +608,17 @@ mod tests {
         set_default(&dir, &presets, "dnslookup", Some(&preset.id)).expect("указатель");
 
         assert_eq!(
-            default_for(&dir, "dnslookup").expect("чтение").id.as_deref(),
+            default_for(&dir, "dnslookup")
+                .expect("чтение")
+                .id
+                .as_deref(),
             Some(preset.id.as_str())
         );
         let document = fs::read_to_string(dir.join(profiles::PROFILE_FILE)).expect("файл");
-        assert!(document.contains("\"title\": \"Работа\""), "файл: {document}");
+        assert!(
+            document.contains("\"title\": \"Работа\""),
+            "файл: {document}"
+        );
     }
 
     #[test]
@@ -677,7 +669,10 @@ mod tests {
         clear_default_if(&profile, "dnslookup", "ghost").expect("чужой пресет");
 
         assert_eq!(
-            default_for(&profile, "dnslookup").expect("чтение").id.as_deref(),
+            default_for(&profile, "dnslookup")
+                .expect("чтение")
+                .id
+                .as_deref(),
             Some(preset.id.as_str())
         );
     }
@@ -702,8 +697,7 @@ mod tests {
         let root = temp_dir("default-preset-broken");
         let profile = root.join("profile");
         fs::create_dir_all(&profile).expect("профиль");
-        fs::write(profile.join(profiles::PROFILE_FILE), "{ \"defaults\": ")
-            .expect("битый файл");
+        fs::write(profile.join(profiles::PROFILE_FILE), "{ \"defaults\": ").expect("битый файл");
 
         assert_eq!(default_for(&profile, "dnslookup").expect("чтение").id, None);
     }
@@ -736,7 +730,10 @@ mod tests {
         let document =
             fs::read_to_string(root.join("dnslookup").join("prodakshn-domeny.json")).expect("файл");
         assert!(document.contains("\"version\": 1"), "файл: {document}");
-        assert!(document.contains("\"tool\": \"dnslookup\""), "файл: {document}");
+        assert!(
+            document.contains("\"tool\": \"dnslookup\""),
+            "файл: {document}"
+        );
         assert!(document.contains("\"saved_at\""), "файл: {document}");
         assert!(document.contains("\"payload\""), "файл: {document}");
         assert!(document.contains("example.com"), "файл: {document}");
@@ -772,8 +769,14 @@ mod tests {
         assert_eq!(updated.title, "DNS", "название не меняется");
         assert_eq!(updated.payload, next);
         let document = fs::read_to_string(&path).expect("файл");
-        assert!(document.contains("\"note\": \"руками\""), "файл: {document}");
-        assert!(!document.contains("example.com"), "старые настройки ушли: {document}");
+        assert!(
+            document.contains("\"note\": \"руками\""),
+            "файл: {document}"
+        );
+        assert!(
+            !document.contains("example.com"),
+            "старые настройки ушли: {document}"
+        );
     }
 
     #[test]
@@ -802,7 +805,8 @@ mod tests {
         )
         .expect("чужой инструмент");
 
-        let error = update(&root, "dnslookup", &preset.id, payload()).expect_err("чужой инструмент");
+        let error =
+            update(&root, "dnslookup", &preset.id, payload()).expect_err("чужой инструмент");
 
         assert!(error.contains("ping"), "причина: {error}");
     }
@@ -819,12 +823,19 @@ mod tests {
         )
         .expect("файл с чужим полем");
 
-        let renamed = rename(&root, "dnslookup", &preset.id, "DNS клиенты").expect("переименование");
+        let renamed =
+            rename(&root, "dnslookup", &preset.id, "DNS клиенты").expect("переименование");
 
         assert_eq!(renamed.id, preset.id, "файл не двигается");
         let document = fs::read_to_string(&path).expect("файл");
-        assert!(document.contains("\"note\": \"руками\""), "файл: {document}");
-        assert!(document.contains("\"title\": \"DNS клиенты\""), "файл: {document}");
+        assert!(
+            document.contains("\"note\": \"руками\""),
+            "файл: {document}"
+        );
+        assert!(
+            document.contains("\"title\": \"DNS клиенты\""),
+            "файл: {document}"
+        );
         assert!(!root.join("dnslookup").join("dns-klienty.json").exists());
     }
 
@@ -841,8 +852,18 @@ mod tests {
 
         assert_eq!(target, trash.join("dnslookup").join("dns.json"));
         assert!(target.is_file(), "пресет должен лежать в корзине");
-        assert!(!presets.join("dnslookup").join(file_name(&preset.id)).exists());
-        assert!(list(&presets, "dnslookup").expect("список").items.is_empty());
+        assert!(
+            !presets
+                .join("dnslookup")
+                .join(file_name(&preset.id))
+                .exists()
+        );
+        assert!(
+            list(&presets, "dnslookup")
+                .expect("список")
+                .items
+                .is_empty()
+        );
     }
 
     #[test]
@@ -945,8 +966,7 @@ mod tests {
     #[test]
     fn empty_title_is_rejected() {
         let root = temp_dir("empty-title");
-        let error =
-            create(&root, "dnslookup", "   ", payload()).expect_err("пустое название");
+        let error = create(&root, "dnslookup", "   ", payload()).expect_err("пустое название");
 
         assert!(error.contains("пустым"), "причина: {error}");
     }
@@ -969,8 +989,7 @@ mod tests {
     #[test]
     fn update_requires_preset() {
         let root = temp_dir("update-missing");
-        let error =
-            update(&root, "dnslookup", "ghost", payload()).expect_err("нет файла");
+        let error = update(&root, "dnslookup", "ghost", payload()).expect_err("нет файла");
 
         assert!(error.contains("не найден"), "причина: {error}");
     }
@@ -991,6 +1010,10 @@ mod tests {
         let copy = duplicate(&root, "dnslookup", &preset.id, None).expect("копия");
 
         assert_eq!(copy.title.chars().count(), MAX_TITLE_LEN);
-        assert!(copy.title.ends_with(COPY_SUFFIX), "название: {}", copy.title);
+        assert!(
+            copy.title.ends_with(COPY_SUFFIX),
+            "название: {}",
+            copy.title
+        );
     }
 }
