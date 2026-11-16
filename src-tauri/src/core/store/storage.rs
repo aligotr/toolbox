@@ -26,6 +26,9 @@ const PROFILES_DIR: &str = "profiles";
 /// Папка логов внутри `local/`.
 const LOGS_DIR: &str = "logs";
 
+/// Папка словарей интерфейса внутри `local/` (ADR 0039).
+const LANGUAGES_DIR: &str = "languages";
+
 /// Папка шаблонов внутри профиля.
 pub(crate) const TEMPLATES_DIR: &str = "templates";
 
@@ -112,6 +115,15 @@ impl Storage {
         self.local_dir().join(LOGS_DIR)
     }
 
+    /// Папка словарей интерфейса: `local/languages/` (ADR 0039).
+    ///
+    /// Машинное состояние: выбранный язык не переезжает вместе с профилем.
+    /// Внутри — пользовательские файлы словарей; приложение их не
+    /// перезаписывает.
+    pub fn languages_dir(&self) -> PathBuf {
+        self.local_dir().join(LANGUAGES_DIR)
+    }
+
     /// Папка корзины: `local/trash/`.
     ///
     /// Лежит в `local/`, а не в синхронизируемых `profiles/`: удаление —
@@ -189,10 +201,11 @@ impl Storage {
     pub fn probe(&self) -> Result<(), String> {
         let local = self.local_dir();
         let logs = self.logs_dir();
+        let languages = self.languages_dir();
         let profiles = self.profiles_dir();
         let profile = self.active_profile_dir();
 
-        for dir in [&local, &logs, &profiles, &profile] {
+        for dir in [&local, &logs, &languages, &profiles, &profile] {
             fs::create_dir_all(dir).map_err(|error| self.reason(dir, &error))?;
         }
 
@@ -238,6 +251,10 @@ mod tests {
             root.join("local").join("workspace.json")
         );
         assert_eq!(storage.logs_dir(), root.join("local").join("logs"));
+        assert_eq!(
+            storage.languages_dir(),
+            root.join("local").join("languages")
+        );
         assert_eq!(storage.trash_dir(), root.join("local").join("trash"));
         assert_eq!(storage.profiles_dir(), root.join("profiles"));
         assert_eq!(
@@ -282,6 +299,7 @@ mod tests {
         for dir in [
             storage.local_dir(),
             storage.logs_dir(),
+            storage.languages_dir(),
             storage.profiles_dir(),
             storage.active_profile_dir(),
         ] {

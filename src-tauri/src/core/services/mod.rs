@@ -13,6 +13,7 @@
 //! профили, окно читает настройки.
 
 pub mod data;
+pub mod languages;
 pub mod logging;
 pub mod presets;
 pub mod profiles;

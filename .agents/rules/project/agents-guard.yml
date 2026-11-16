@@ -8,6 +8,7 @@ project: tauri-toolbox
 commands:
   allowed:
     - "npm run build"
+    - "npm run test"
     - "npm run tauri dev"
     - "cargo check"
     - "cargo test --lib"
@@ -39,6 +40,10 @@ quality:
   typecheck:
     required_before: [commit]
     command: "npm run build"
+    must_exit_zero: true
+  frontend_tests:
+    required_before: [commit]
+    command: "npm run test"
     must_exit_zero: true
   rust_check:
     required_before: [commit]

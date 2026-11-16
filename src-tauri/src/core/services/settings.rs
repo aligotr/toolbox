@@ -21,6 +21,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
+use crate::core::services::languages;
 use crate::core::services::logging::LogLevel;
 use crate::core::services::profiles;
 use crate::core::store::files::{strip_bom, write_atomic};
@@ -127,6 +128,9 @@ impl Default for WindowSettings {
 pub struct UiSettings {
     #[serde(default)]
     pub sidebar_collapsed: bool,
+    /// Язык интерфейса; `None` — «как в системе» (ADR 0039).
+    #[serde(default, deserialize_with = "deserialize_language")]
+    pub language: Option<String>,
     #[serde(flatten)]
     pub extra: Map<String, Value>,
 }
@@ -135,6 +139,7 @@ impl Default for UiSettings {
     fn default() -> Self {
         Self {
             sidebar_collapsed: false,
+            language: None,
             extra: Map::new(),
         }
     }
@@ -316,6 +321,25 @@ where
             "неизвестный уровень '{text}'; допустимы error, warn, info, debug"
         ))
     })
+}
+
+/// Разбирает код языка из строки или `null`.
+///
+/// Код становится именем файла словаря, поэтому проверяется правилом сервиса
+/// словарей: путь и недопустимые символы сюда не пройдут.
+fn deserialize_language<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<String>::deserialize(deserializer)?;
+    if let Some(code) = value.as_deref() {
+        if !languages::is_code(code) {
+            return Err(serde::de::Error::custom(format!(
+                "недопустимый код языка '{code}'"
+            )));
+        }
+    }
+    Ok(value)
 }
 
 fn default_width() -> u32 {
@@ -663,6 +687,33 @@ mod tests {
 
         let cyrillic = apply_patch(&current, "active_profile", serde_json::json!("работа"));
         assert!(cyrillic.is_err(), "кириллица недопустима");
+    }
+
+    #[test]
+    fn language_patch_accepts_tag_and_null() {
+        let current = Settings::default();
+
+        let ok = apply_patch(&current, "ui", serde_json::json!({ "language": "en" }))
+            .expect("тег языка принят");
+        assert_eq!(ok.ui.language.as_deref(), Some("en"));
+
+        let auto = apply_patch(&current, "ui", serde_json::json!({ "language": null }))
+            .expect("null — «как в системе»");
+        assert_eq!(auto.ui.language, None);
+    }
+
+    #[test]
+    fn language_patch_rejects_path_and_cyrillic() {
+        let current = Settings::default();
+
+        let traversal = apply_patch(&current, "ui", serde_json::json!({ "language": "../evil" }));
+        assert!(traversal.is_err(), "разделители пути недопустимы");
+
+        let cyrillic = apply_patch(&current, "ui", serde_json::json!({ "language": "работа" }));
+        assert!(cyrillic.is_err(), "кириллица недопустима");
+
+        let underscore = apply_patch(&current, "ui", serde_json::json!({ "language": "pt_BR" }));
+        assert!(underscore.is_err(), "подчёркивание — не разделитель тега");
     }
 
     #[test]

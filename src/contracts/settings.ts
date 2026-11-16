@@ -28,6 +28,8 @@ export interface WindowSettings {
 /** Раздел `ui`: состояние интерфейса, переживающее перезапуск. */
 export interface UiSettings {
   sidebar_collapsed: boolean;
+  /** Язык интерфейса; `null` — «как в системе» (ADR 0039). */
+  language: string | null;
   [key: string]: unknown;
 }
 

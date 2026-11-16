@@ -5,6 +5,7 @@ import ConfirmationService from "primevue/confirmationservice";
 import Tooltip from "primevue/tooltip";
 import "primeicons/primeicons.css";
 import App from "./App.vue";
+import { setupLocale } from "./locales";
 import { toolboxPreset } from "@/ui/theme";
 import "@/styles/global.css";
 
@@ -32,6 +33,11 @@ window.addEventListener("unhandledrejection", (event) => {
 // Схема одна — светлая (ADR 0019). Системная настройка и класс на `html`
 // не должны менять вид: `darkModeSelector: false` отключает тёмные значения
 // пресета целиком.
+//
+// Язык выбирается до монтирования: блокирующий экран и первый кадр должны
+// быть уже переведены (ADR 0039).
+await setupLocale();
+
 const app = createApp(App);
 
 app.use(PrimeVue, {

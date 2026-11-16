@@ -11,21 +11,24 @@ export type SettingsSection =
   | "profiles"
   | "templates"
   | "data"
+  | "language"
   | "app";
 
 /** Пункт вертикального списка разделов. */
 export interface SettingsSectionMeta {
   id: SettingsSection;
-  title: string;
+  /** Ключ словаря: подпись переводится при показе (ADR 0039). */
+  titleKey: string;
   icon: string;
 }
 
 /** Порядок разделов: от ежедневного к редкому. */
 export const SETTINGS_SECTIONS: SettingsSectionMeta[] = [
-  { id: "log", title: "Журнал", icon: "pi pi-file" },
-  { id: "window", title: "Окно", icon: "pi pi-window-maximize" },
-  { id: "profiles", title: "Профили", icon: "pi pi-users" },
-  { id: "templates", title: "Шаблоны", icon: "pi pi-th-large" },
-  { id: "data", title: "Данные", icon: "pi pi-database" },
-  { id: "app", title: "Программа", icon: "pi pi-info-circle" },
+  { id: "log", titleKey: "settings.section.log", icon: "pi pi-file" },
+  { id: "window", titleKey: "settings.section.window", icon: "pi pi-window-maximize" },
+  { id: "profiles", titleKey: "settings.section.profiles", icon: "pi pi-users" },
+  { id: "templates", titleKey: "settings.section.templates", icon: "pi pi-th-large" },
+  { id: "data", titleKey: "settings.section.data", icon: "pi pi-database" },
+  { id: "language", titleKey: "settings.section.language", icon: "pi pi-globe" },
+  { id: "app", titleKey: "settings.section.app", icon: "pi pi-info-circle" },
 ];

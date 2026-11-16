@@ -1,0 +1,59 @@
+// Английский словарь ToolBox.
+//
+// Формат: JSON с комментариями и висячими запятыми. Значение — строка или
+// набор форм склонения (zero, one, two, few, many, other). Подстановка
+// записывается как {name}; другого синтаксиса нет.
+//
+// Ключи переименовывать нельзя: это контракт. Непереведённый ключ
+// показывается по-русски.
+{
+  "name": "English",
+  "messages": {
+    // ── Центр управления ──────────────────────────────────────────────────
+    "settings.view.title": "Settings",
+    "settings.view.lead":
+      "Journal, window, profiles, templates, data and program information.",
+    "settings.view.nav": "Settings sections",
+
+    "settings.section.log": "Log",
+    "settings.section.window": "Window",
+    "settings.section.profiles": "Profiles",
+    "settings.section.templates": "Templates",
+    "settings.section.data": "Data",
+    "settings.section.language": "Language",
+    "settings.section.app": "Program",
+
+    // ── Раздел «Язык» ─────────────────────────────────────────────────────
+    "settings.language.title": "Language",
+    "settings.language.lead":
+      "Russian is built into the program and always available. Other languages are files in local/languages/: you can edit and extend them without rebuilding the program.",
+    "settings.language.current": "Interface language",
+    "settings.language.russian": "Russian",
+    "settings.language.builtin": "built-in",
+    "settings.language.broken": "not read",
+    "settings.language.complete": "fully translated",
+    "settings.language.missing": {
+      "one": "{count} key missing",
+      "other": "{count} keys missing",
+    },
+    "settings.language.lost":
+      "The selected dictionary is missing or cannot be read: the interface is showing Russian. Your choice is saved.",
+    "settings.language.partial": {
+      "one": "One key is not translated and is shown in Russian.",
+      "other": "{count} keys are not translated and are shown in Russian.",
+    },
+    "settings.language.extra": {
+      "one": "{count} extra key is not in the Russian dictionary.",
+      "other": "{count} extra keys are not in the Russian dictionary.",
+    },
+    "settings.language.empty":
+      "There are no dictionary files yet: only the built-in Russian is available.",
+    "settings.language.problem": "File {code} cannot be read: {reason}",
+    "settings.language.refresh": "Refresh",
+    "settings.language.open_folder": "Open dictionaries folder",
+    "settings.language.export": "Export sample",
+    "settings.language.exported": "Sample written: {path}",
+    "settings.language.note":
+      "The program never overwrites a dictionary file: your edits and comments are preserved. Do not rename keys — they are a contract.",
+  },
+}

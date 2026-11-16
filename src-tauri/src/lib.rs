@@ -20,6 +20,7 @@ use core::infra::bus::{BusError, ERROR_TOPIC, MessageBus};
 use core::infra::deps::Deps;
 use core::infra::sink::EventSink;
 use core::services::data;
+use core::services::languages;
 use core::services::logging::{self, Logger};
 use core::services::presets;
 use core::services::profiles;
@@ -100,6 +101,20 @@ struct StartupStatus {
     reason: Option<String>,
     log_path: String,
     log_level: String,
+    /// Язык блокирующего экрана и интерфейса (ADR 0039).
+    language: String,
+}
+
+/// Язык интерфейса из настроек.
+///
+/// `None` — «как в системе»: до первого определения интерфейсом ядро
+/// работает по-русски, чтобы блокирующий экран не остался без текста.
+fn language_of(settings: &Settings) -> String {
+    settings
+        .ui
+        .language
+        .clone()
+        .unwrap_or_else(|| languages::DEFAULT_CODE.to_owned())
 }
 
 /// Собирает приложение в порядке зависимостей.
@@ -114,6 +129,7 @@ fn boot(app: &AppHandle) -> Runtime {
             return blocked(
                 app,
                 "неизвестна",
+                languages::DEFAULT_CODE,
                 "Не удалось определить папку программы",
                 reason,
             );
@@ -125,6 +141,8 @@ fn boot(app: &AppHandle) -> Runtime {
     // Читаются до пробы, потому что активный профиль определяет, какую папку
     // проверять на запись.
     let mut loaded = settings::load(&storage.settings_path());
+    // Язык нужен блокирующему экрану: интерфейс ещё не читал настройки.
+    let language = language_of(&loaded.settings);
     let configured = loaded.settings.active_profile.clone();
     let active = match profiles::list(&storage.profiles_dir()) {
         // Папки профилей нет или она пуста: восстанавливать нечего.
@@ -167,21 +185,46 @@ fn boot(app: &AppHandle) -> Runtime {
     // профиля пустой, и после неё отличить первый запуск от готового профиля
     // без названия было бы нельзя.
     if let Err(reason) = profiles::ensure_default(&storage.profiles_dir()) {
-        return blocked(app, &root, "Не могу писать в папку программы", reason);
+        return blocked(
+            app,
+            &root,
+            &language,
+            "Не могу писать в папку программы",
+            reason,
+        );
     }
 
     // Проверка записи делом — до всего остального.
     if let Err(reason) = storage.probe() {
-        return blocked(app, &root, "Не могу писать в папку программы", reason);
+        return blocked(
+            app,
+            &root,
+            &language,
+            "Не могу писать в папку программы",
+            reason,
+        );
     }
     let storage = Arc::new(storage);
 
     // 3. Логирование: с этого момента отказы оставляют след.
     let logger = match logging::init(storage.logs_dir(), loaded.settings.log.level) {
         Ok(logger) => logger,
-        Err(reason) => return blocked(app, &root, "Не удалось запустить файловый лог", reason),
+        Err(reason) => {
+            return blocked(
+                app,
+                &root,
+                &language,
+                "Не удалось запустить файловый лог",
+                reason,
+            );
+        }
     };
     logging::install_panic_hook(logger.clone());
+
+    // Английский словарь ставится один раз: дальше пользователь правит его сам.
+    if let Err(reason) = languages::seed(&storage.languages_dir()) {
+        log::warn!("Словари интерфейса не подготовлены: {reason}");
+    }
 
     log::info!(
         "ToolBox {}: запуск, режим {}, папка программы '{root}'",
@@ -257,14 +300,25 @@ fn boot(app: &AppHandle) -> Runtime {
 ///
 /// Шина всё равно публикуется — пустая и незапущенная. Иначе команды моста
 /// падали бы на отсутствующем состоянии вместо внятного отказа.
-fn blocked(app: &AppHandle, root: &str, title: &'static str, reason: String) -> Runtime {
+fn blocked(
+    app: &AppHandle,
+    root: &str,
+    language: &str,
+    title: &'static str,
+    reason: String,
+) -> Runtime {
     app.manage(MessageBus::new(Deps::new()));
+
+    // Язык нужен блокирующему экрану: настройки интерфейс ещё не читал.
+    let mut settings = Settings::default();
+    settings.ui.language = Some(language.to_owned());
+
     Runtime {
         blocked: Some(StartupError { title, reason }),
         root: root.to_owned(),
         logger: None,
         storage: None,
-        settings: Mutex::new(Settings::default()),
+        settings: Mutex::new(settings),
         geometry: Mutex::new(None),
     }
 }
@@ -342,6 +396,7 @@ fn startup_status(runtime: State<'_, Runtime>) -> StartupStatus {
             .map(|logger| logger.path().display().to_string())
             .unwrap_or_default(),
         log_level: settings.log.level.to_string(),
+        language: language_of(&settings),
     }
 }
 
@@ -757,6 +812,39 @@ fn preset_delete(runtime: State<'_, Runtime>, tool: String, id: String) -> Resul
     Ok(target.display().to_string())
 }
 
+// ─────────────────────────────── Словари ─────────────────────────────────────
+
+/// Список словарей интерфейса из `local/languages/`.
+///
+/// Отсутствие папки или файлов — норма: остаётся встроенный русский.
+#[tauri::command]
+fn languages_list(runtime: State<'_, Runtime>) -> Result<Vec<languages::LanguageSummary>, String> {
+    let storage = storage_of(&runtime)?;
+    languages::list(&storage.languages_dir())
+}
+
+/// Читает внешний словарь: интерфейс получает готовый объект.
+///
+/// Разбор — на стороне Rust: один диалект JSONC на обе стороны, а ошибка
+/// приходит с номером строки.
+#[tauri::command]
+fn language_load(runtime: State<'_, Runtime>, code: String) -> Result<languages::Language, String> {
+    let storage = storage_of(&runtime)?;
+    languages::load(&storage.languages_dir(), &code)
+}
+
+/// Выгружает образец словаря; существующий файл не перезаписывается.
+#[tauri::command]
+fn language_export(
+    runtime: State<'_, Runtime>,
+    code: String,
+    document: Value,
+) -> Result<String, String> {
+    let storage = storage_of(&runtime)?;
+    let path = languages::export(&storage.languages_dir(), &code, &document)?;
+    Ok(path.display().to_string())
+}
+
 // ─────────────────────────── Сведения и данные ───────────────────────────────
 
 /// Сведения о программе для раздела «Программа» и «Журнал».
@@ -858,6 +946,7 @@ fn open_folder(app: AppHandle, runtime: State<'_, Runtime>, kind: String) -> Res
     let storage = storage_of(&runtime)?;
     let path = match kind.as_str() {
         "logs" => storage.logs_dir(),
+        "languages" => storage.languages_dir(),
         "root" => storage.root().to_path_buf(),
         other => return Err(format!("Неизвестная папка: '{other}'")),
     };
@@ -1059,6 +1148,9 @@ pub fn run() {
             preset_rename,
             preset_duplicate,
             preset_delete,
+            languages_list,
+            language_load,
+            language_export,
             app_info,
             storage_stats,
             logs_prune,

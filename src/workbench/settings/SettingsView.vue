@@ -10,9 +10,11 @@
 
 import { onMounted } from "vue";
 import type { ToolDescriptor } from "@/contracts/tools";
+import { t } from "@/core/infra/i18n";
 import { loadSettings } from "@/core/services/settings/index";
 import AppSection from "./sections/AppSection.vue";
 import DataSection from "./sections/DataSection.vue";
+import LanguageSection from "./sections/LanguageSection.vue";
 import LogSection from "./sections/LogSection.vue";
 import ProfilesSection from "./sections/ProfilesSection.vue";
 import TemplatesSection from "./sections/TemplatesSection.vue";
@@ -30,14 +32,12 @@ onMounted(() => {
 <template>
   <section class="settings">
     <header class="wb-screen__head">
-      <h1 class="wb-screen__title">Настройки</h1>
-      <p class="wb-screen__lead">
-        Журнал, окно, профили, шаблоны, данные и сведения о программе.
-      </p>
+      <h1 class="wb-screen__title">{{ t("settings.view.title") }}</h1>
+      <p class="wb-screen__lead">{{ t("settings.view.lead") }}</p>
     </header>
 
     <div class="settings__body">
-      <nav class="settings__nav" aria-label="Разделы настроек">
+      <nav class="settings__nav" :aria-label="t('settings.view.nav')">
         <button
           v-for="section in SETTINGS_SECTIONS"
           :key="section.id"
@@ -48,7 +48,7 @@ onMounted(() => {
           @click="openSettingsSection(section.id)"
         >
           <i class="settings__nav-icon" :class="section.icon" aria-hidden="true" />
-          <span>{{ section.title }}</span>
+          <span>{{ t(section.titleKey) }}</span>
         </button>
       </nav>
 
@@ -58,6 +58,7 @@ onMounted(() => {
         <ProfilesSection v-else-if="activeSection === 'profiles'" />
         <TemplatesSection v-else-if="activeSection === 'templates'" />
         <DataSection v-else-if="activeSection === 'data'" :tools="tools" />
+        <LanguageSection v-else-if="activeSection === 'language'" />
         <AppSection v-else-if="activeSection === 'app'" />
       </div>
     </div>

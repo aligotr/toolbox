@@ -20,6 +20,8 @@ export interface StartupStatus {
   log_path: string;
   /** Действующий уровень лога. */
   log_level: string;
+  /** Язык блокирующего экрана и интерфейса (ADR 0039). */
+  language: string;
 }
 
 /**

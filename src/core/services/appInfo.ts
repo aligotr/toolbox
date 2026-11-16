@@ -14,7 +14,7 @@ import { write } from "../infra/journal";
 import { idle, type OperationStatus } from "../infra/status";
 
 /** Папки, которые умеет открывать ядро. */
-export type FolderKind = "logs" | "root";
+export type FolderKind = "logs" | "root" | "languages";
 
 /** Состояние сведений о программе. */
 export interface AppInfoState {

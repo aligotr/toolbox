@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/check-zones.mjs && vue-tsc --noEmit && vite build",
+    "test": "node --test tests/i18n",
+    "build": "node scripts/check-zones.mjs && node scripts/check-messages.mjs && vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri"
   },
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
+    "@types/node": "^26.6.6",
     "@vitejs/plugin-vue": "^6.0.7",
     "typescript": "~6.0.3",
     "vite": "^8.0.16",

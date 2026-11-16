@@ -14,6 +14,7 @@ import { computed, reactive } from "vue";
 import type { LogLevel, Settings } from "@/contracts/settings";
 import { subscribeEvent } from "../../infra/bus";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
+import { activateLanguage } from "../languages";
 import { SETTINGS_CHANGED_TOPIC } from "./constants";
 import { describeError } from "../../infra/errors";
 import { write } from "../../infra/journal";
@@ -123,6 +124,22 @@ export async function setLogLevel(level: LogLevel): Promise<boolean> {
  */
 export async function setSidebarCollapsed(collapsed: boolean): Promise<void> {
   await saveSection("ui", "ui", { sidebar_collapsed: collapsed });
+}
+
+/**
+ * Меняет язык интерфейса.
+ *
+ * Выбор сохраняется даже при битом файле: раздел «Язык» покажет
+ * предупреждение, а интерфейс откатится на русский. Сбросить выбор
+ * в «как в системе» отсюда нельзя — это делает только первый запуск.
+ */
+export async function setLanguage(language: string | null): Promise<boolean> {
+  const next = await saveSection("ui", "ui", { language });
+  if (!next) return false;
+
+  const applied = await activateLanguage(next.ui.language);
+  write(JOURNAL_CORE_SOURCE, "result", `язык интерфейса: ${applied}`);
+  return true;
 }
 
 /** Сбрасывает размер и положение окна; ядро применяет сброс сразу. */
