@@ -6,6 +6,7 @@
 
 import { useConfirm } from "primevue/useconfirm";
 import type { Profile } from "../../contracts/profiles";
+import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "../../core/constants";
 import { deleteProfile, switchProfile } from "../../core/profiles";
 
 export function useProfiles() {
@@ -18,6 +19,7 @@ export function useProfiles() {
       message: `Открыть профиль «${profile.title}»? Приложение перезапустится.`,
       acceptLabel: "Переключить",
       rejectLabel: "Отмена",
+      rejectProps: CONFIRM_CALM_REJECT,
       accept: () => void switchProfile(profile.id),
     });
   }
@@ -31,6 +33,8 @@ export function useProfiles() {
         "Данные можно вернуть, пока корзину не почистили.",
       acceptLabel: "Удалить",
       rejectLabel: "Отмена",
+      acceptProps: CONFIRM_DANGER_ACCEPT,
+      rejectProps: CONFIRM_CALM_REJECT,
       accept: () => void deleteProfile(profile),
     });
   }

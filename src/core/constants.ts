@@ -60,3 +60,13 @@ export const WORKSPACE_SAVE_DELAY_MS = 300;
  * и запись зависла. Потеря последней правки дешевле незакрывающегося окна.
  */
 export const WORKSPACE_CLOSE_TIMEOUT_MS = 3000;
+
+/**
+ * Кнопки подтверждений: один договор на всё приложение.
+ *
+ * Опасное действие — удаление, очистка — отвечает красной кнопкой:
+ * `danger` в PrimeVue и есть цвет ошибки. Отказ спокойный, без акцентной
+ * заливки, чтобы цвет главного ответа не спорил с ним.
+ */
+export const CONFIRM_DANGER_ACCEPT = { severity: "danger" } as const;
+export const CONFIRM_CALM_REJECT = { severity: "secondary", text: true } as const;

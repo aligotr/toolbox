@@ -13,6 +13,7 @@ import InputText from "primevue/inputtext";
 import { useConfirm } from "primevue/useconfirm";
 import { onMounted, ref } from "vue";
 import type { Template } from "../../contracts/templates";
+import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "../../core/constants";
 import {
   deleteTemplate,
   duplicateTemplate,
@@ -66,6 +67,8 @@ function requestDelete(template: Template): void {
       "Файл можно вернуть, пока корзину не почистили.",
     acceptLabel: "Удалить",
     rejectLabel: "Отмена",
+    acceptProps: CONFIRM_DANGER_ACCEPT,
+    rejectProps: CONFIRM_CALM_REJECT,
     accept: () => void deleteTemplate(template),
   });
 }

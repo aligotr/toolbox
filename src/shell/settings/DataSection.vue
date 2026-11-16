@@ -11,6 +11,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted } from "vue";
 import type { ToolStats } from "../../contracts/data";
 import type { ToolDescriptor } from "../../contracts/tools";
+import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "../../core/constants";
 import { clearToolData, loadStorageStats, status, storageStats } from "../../core/data";
 import { loadProfiles } from "../../core/profiles";
 import { filesLabel } from "../plural";
@@ -42,6 +43,8 @@ function requestClear(tool: ToolStats): void {
       "local/trash/data. Папку можно вернуть, пока корзину не почистили.",
     acceptLabel: "Удалить",
     rejectLabel: "Отмена",
+    acceptProps: CONFIRM_DANGER_ACCEPT,
+    rejectProps: CONFIRM_CALM_REJECT,
     accept: async () => {
       if (await clearToolData(tool.id)) {
         // Счётчики профилей показывает соседний раздел: обновляем и его,

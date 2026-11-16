@@ -16,7 +16,11 @@ import InputText from "primevue/inputtext";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, ref, watch } from "vue";
 import type { Preset } from "../../contracts/presets";
-import { PRESET_TITLE_MAX_LENGTH } from "../../core/constants";
+import {
+  CONFIRM_CALM_REJECT,
+  CONFIRM_DANGER_ACCEPT,
+  PRESET_TITLE_MAX_LENGTH,
+} from "../../core/constants";
 import { describeError } from "../../core/errors";
 import {
   DATE_LOCALE,
@@ -163,6 +167,7 @@ function requestLoad(preset: Preset): void {
     icon: "pi pi-exclamation-triangle",
     acceptLabel: "Загрузить",
     rejectLabel: "Отмена",
+    rejectProps: CONFIRM_CALM_REJECT,
     accept: () => {
       void loadPreset(preset);
     },
@@ -266,6 +271,8 @@ function requestDelete(preset: Preset): void {
     icon: "pi pi-exclamation-triangle",
     acceptLabel: "Удалить",
     rejectLabel: "Отмена",
+    acceptProps: CONFIRM_DANGER_ACCEPT,
+    rejectProps: CONFIRM_CALM_REJECT,
     accept: () => {
       void remove(preset);
     },

@@ -585,6 +585,7 @@ watch(
 }
 
 .dns-table__count {
+  margin-inline-start: var(--ag-space-sm);
   color: var(--p-text-muted-color);
   font-size: 0.75em;
   font-weight: 600;

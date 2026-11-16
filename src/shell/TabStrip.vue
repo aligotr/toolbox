@@ -21,6 +21,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { computed, nextTick, ref } from "vue";
 import type { Template } from "../contracts/templates";
 import type { WorkspaceTab } from "../contracts/workspace";
+import { CONFIRM_CALM_REJECT } from "../core/constants";
 import { copyColumns } from "../core/layout";
 import { defaultPresetTitle, loadPresetDefaults } from "../core/presets";
 import {
@@ -213,6 +214,7 @@ function applyUpdate(tab: WorkspaceTab, template: Template): void {
         `«${template.title}» заменит её — локальные правки будут потеряны.`,
       acceptLabel: "Применить",
       rejectLabel: "Отмена",
+      rejectProps: CONFIRM_CALM_REJECT,
       accept: () => templateBindings.apply(tab, template),
     });
     return;
@@ -257,6 +259,7 @@ async function requestRestart(tab: WorkspaceTab): Promise<void> {
     message: lines.join("\n"),
     acceptLabel: RESTART_TAB_ACCEPT,
     rejectLabel: RESTART_TAB_REJECT,
+    rejectProps: CONFIRM_CALM_REJECT,
     accept: () => restartTab(tab.id),
   });
 }

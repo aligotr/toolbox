@@ -16,6 +16,7 @@ import {
   openFolder,
   status as appStatus,
 } from "../../core/appInfo";
+import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "../../core/constants";
 import { pruneLogs, status as dataStatus } from "../../core/data";
 import { loadSettings, logLevel, setLogLevel, settings, status } from "../../core/settings";
 import { LOG_LEVEL_OPTIONS } from "./constants";
@@ -49,6 +50,8 @@ function requestPrune(): void {
       "Свежие записи останутся: по ним ещё можно разбирать поломки.",
     acceptLabel: "Очистить",
     rejectLabel: "Отмена",
+    acceptProps: CONFIRM_DANGER_ACCEPT,
+    rejectProps: CONFIRM_CALM_REJECT,
     accept: async () => {
       const removed = await pruneLogs();
       if (removed !== null) pruned.value = removed;

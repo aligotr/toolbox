@@ -19,6 +19,10 @@ import Select from "primevue/select";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted, ref, watch } from "vue";
 import type { ToolCellProps } from "../../contracts/tools";
+import {
+  CONFIRM_CALM_REJECT,
+  CONFIRM_DANGER_ACCEPT,
+} from "../../core/constants";
 import { describeError } from "../../core/errors";
 import DnsTable from "./DnsTable.vue";
 import PresetsDialog from "./PresetsDialog.vue";
@@ -211,6 +215,8 @@ function requestClear(): void {
     icon: "pi pi-exclamation-triangle",
     acceptLabel: "Очистить",
     rejectLabel: "Отмена",
+    acceptProps: CONFIRM_DANGER_ACCEPT,
+    rejectProps: CONFIRM_CALM_REJECT,
     accept: () => {
       void clear();
     },
@@ -272,7 +278,10 @@ async function exportCsv(): Promise<void> {
            кнопки, и состояние сеанса. Быстрые действия появляются только
            при расхождении настроек. -->
       <div class="dns__preset-bar">
-        <template v-if="presetChanged">
+        <div
+          class="dns__preset-state"
+          :class="{ 'dns__preset-state--hidden': !presetChanged }"
+        >
           <span class="dns__preset-changed">{{ PRESET_CHANGED_LABEL }}</span>
           <Button
             v-tooltip.top="PRESET_REVERT_HINT"
@@ -295,7 +304,7 @@ async function exportCsv(): Promise<void> {
             :loading="dnsPresets.status.update.loading"
             @click="savePresetChanges"
           />
-        </template>
+        </div>
         <Button
           class="dns__preset-button"
           :label="presetLabel"
@@ -596,6 +605,20 @@ async function exportCsv(): Promise<void> {
   min-width: 0;
   max-width: 100%;
   margin-left: auto;
+}
+
+/* Место под пометку и быстрые действия занято всегда: их появление
+   не сдвигает шапку и панель ниже. Скрытый блок не получает фокус
+   и не показывается подсказкам. */
+.dns__preset-state {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-xs);
+}
+
+.dns__preset-state--hidden {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* Длинное имя пресета обрезается: шапка не растягивает ячейку. Кнопка

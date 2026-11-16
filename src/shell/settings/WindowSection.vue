@@ -8,6 +8,7 @@
 import Button from "primevue/button";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted } from "vue";
+import { CONFIRM_CALM_REJECT } from "../../core/constants";
 import { loadSettings, resetWindow, settings, status } from "../../core/settings";
 
 const confirm = useConfirm();
@@ -40,6 +41,7 @@ function requestReset(): void {
       "Содержимое вкладок не изменится.",
     acceptLabel: "Сбросить",
     rejectLabel: "Отмена",
+    rejectProps: CONFIRM_CALM_REJECT,
     accept: () => void resetWindow(),
   });
 }
