@@ -14,8 +14,8 @@ import type { ToolDescriptor } from "@/contracts/tools";
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
 import { clearToolData, loadStorageStats, status, storageStats } from "@/core/services/data";
 import { loadProfiles } from "@/core/services/profiles";
-import { filesLabel } from "../plural";
-import { formatBytes } from "./format";
+import { filesLabel } from "../../plural";
+import { formatBytes } from "../formatBytes";
 
 const props = defineProps<{ tools: ToolDescriptor[] }>();
 

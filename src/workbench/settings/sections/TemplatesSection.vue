@@ -11,7 +11,7 @@
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import { useConfirm } from "primevue/useconfirm";
-import { onMounted, ref } from "vue";
+import { onMounted } from "vue";
 import type { Template } from "@/core/services/templates";
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
 import {
@@ -23,40 +23,23 @@ import {
   templates,
 } from "@/core/services/templates/index";
 import { openTemplate } from "@/core/services/workspace/index";
-import { TEMPLATE_TITLE_MAX_LENGTH } from "../constants";
-import { toolsLabel } from "../plural";
+import { TEMPLATE_TITLE_MAX_LENGTH } from "../../constants";
+import { toolsLabel } from "../../plural";
+import { useRename } from "../useRename";
 
 const confirm = useConfirm();
 
-/** Идентификатор шаблона, который сейчас переименовывают. */
-const renamingId = ref<string | null>(null);
-const renameTitle = ref("");
+const {
+  renamingId,
+  title: renameTitle,
+  start: startRename,
+  cancel: cancelRename,
+  submit: submitRename,
+} = useRename<Template>(renameTemplate, status.rename);
 
 /** Сколько инструментов в шаблоне: подпись строки. */
 function toolCount(template: Template): number {
   return template.layout.reduce((sum, column) => sum + column.tools.length, 0);
-}
-
-function startRename(template: Template): void {
-  renamingId.value = template.id;
-  renameTitle.value = template.title;
-  status.rename.error = null;
-}
-
-function cancelRename(): void {
-  renamingId.value = null;
-  renameTitle.value = "";
-  status.rename.error = null;
-}
-
-async function submitRename(template: Template): Promise<void> {
-  const title = renameTitle.value.trim();
-  if (!title) return;
-
-  if (await renameTemplate(template.id, title)) {
-    renamingId.value = null;
-    renameTitle.value = "";
-  }
 }
 
 function requestDelete(template: Template): void {

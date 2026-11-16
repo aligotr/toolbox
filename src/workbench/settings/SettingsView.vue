@@ -11,13 +11,14 @@
 import { onMounted } from "vue";
 import type { ToolDescriptor } from "@/contracts/tools";
 import { loadSettings } from "@/core/services/settings/index";
-import AppSection from "./AppSection.vue";
-import DataSection from "./DataSection.vue";
-import LogSection from "./LogSection.vue";
-import ProfilesSection from "./ProfilesSection.vue";
-import TemplatesSection from "./TemplatesSection.vue";
-import WindowSection from "./WindowSection.vue";
-import { activeSection, openSettingsSection, SETTINGS_SECTIONS } from "./state";
+import AppSection from "./sections/AppSection.vue";
+import DataSection from "./sections/DataSection.vue";
+import LogSection from "./sections/LogSection.vue";
+import ProfilesSection from "./sections/ProfilesSection.vue";
+import TemplatesSection from "./sections/TemplatesSection.vue";
+import WindowSection from "./sections/WindowSection.vue";
+import { activeSection, openSettingsSection } from "./navigation";
+import { SETTINGS_SECTIONS } from "./sections";
 
 defineProps<{ tools: ToolDescriptor[] }>();
 

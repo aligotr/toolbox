@@ -16,18 +16,23 @@ import {
   renameProfile,
   status,
 } from "@/core/services/profiles";
-import { filesLabel, presetsLabel, templatesLabel } from "../plural";
-import { useProfiles } from "./useProfiles";
+import { filesLabel, presetsLabel, templatesLabel } from "../../plural";
+import { useProfiles } from "../useProfiles";
+import { useRename } from "../useRename";
 
 const { requestSwitch, requestDelete } = useProfiles();
 
-/** Открыта ли форма создания. */
+/** Создание профиля: форма и поле живут в разделе, у него один потребитель. */
 const creating = ref(false);
 const newTitle = ref("");
 
-/** Идентификатор профиля, который сейчас переименовывают. */
-const renamingId = ref<string | null>(null);
-const renameTitle = ref("");
+const {
+  renamingId,
+  title: renameTitle,
+  start: startRename,
+  cancel: cancelRename,
+  submit: submitRename,
+} = useRename<Profile>(renameProfile, status.rename);
 
 function startCreate(): void {
   creating.value = true;
@@ -48,28 +53,6 @@ async function submitCreate(): Promise<void> {
   if (await createProfile(title)) {
     creating.value = false;
     newTitle.value = "";
-  }
-}
-
-function startRename(profile: Profile): void {
-  renamingId.value = profile.id;
-  renameTitle.value = profile.title;
-  status.rename.error = null;
-}
-
-function cancelRename(): void {
-  renamingId.value = null;
-  renameTitle.value = "";
-  status.rename.error = null;
-}
-
-async function submitRename(profile: Profile): Promise<void> {
-  const title = renameTitle.value.trim();
-  if (!title) return;
-
-  if (await renameProfile(profile.id, title)) {
-    renamingId.value = null;
-    renameTitle.value = "";
   }
 }
 

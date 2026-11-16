@@ -19,7 +19,7 @@ import {
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
 import { pruneLogs, status as dataStatus } from "@/core/services/data";
 import { loadSettings, logLevel, setLogLevel, settings, status } from "@/core/services/settings/index";
-import { LOG_LEVEL_OPTIONS } from "./constants";
+import { LOG_LEVEL_OPTIONS } from "../logLevels";
 
 const confirm = useConfirm();
 

@@ -27,7 +27,7 @@ import {
   PROFILE_TOOLTIP,
 } from "./constants";
 import RailItem from "./RailItem.vue";
-import { openSettingsSection } from "./settings/state";
+import { openSettingsSection } from "./settings/navigation";
 import { useProfiles } from "./settings/useProfiles";
 
 defineProps<{ tools: ToolDescriptor[]; collapsed: boolean }>();
