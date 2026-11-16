@@ -13,6 +13,7 @@
 // Запись поверх повреждённого файла запрещена: пользователь сначала чинит
 // или удаляет его, иначе восстановимые данные потерялись бы.
 
+import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import { useAsyncAction, type AsyncAction } from "@/core/infra/useAsyncAction";
 import {
@@ -21,13 +22,13 @@ import {
   saveCustomServers,
   type StoredServer,
 } from "../api";
-import { JOURNAL_SOURCE, PRESET_SERVERS, SERVER_LIMIT } from "../constants";
+import { JOURNAL_SOURCE, presetServers, SERVER_LIMIT } from "../constants";
 import { parseServerAddress } from "../normalize";
 import type { DnsSession, ServerOption } from "../types";
 
 /** Все доступные серверы сеанса: преднастроенные и свои. */
 export function allServers(session: DnsSession): ServerOption[] {
-  return [...PRESET_SERVERS, ...session.customServers];
+  return [...presetServers(), ...session.customServers];
 }
 
 /** Адреса доступных серверов в каноническом виде: по ним ищутся дубликаты. */
@@ -101,7 +102,9 @@ async function readServers(session: DnsSession): Promise<void> {
     session.systemAddresses = system.value.servers;
     if (system.value.error) errors.push(system.value.error);
   } else {
-    errors.push(`системные резолверы: ${String(system.reason)}`);
+    errors.push(
+      t("dnslookup.servers.systemReadError", { reason: String(system.reason) }),
+    );
   }
 
   if (custom.status === "fulfilled") {
@@ -116,7 +119,9 @@ async function readServers(session: DnsSession): Promise<void> {
     }
   } else {
     session.serversBroken = false;
-    errors.push(`свои серверы: ${String(custom.reason)}`);
+    errors.push(
+      t("dnslookup.servers.customReadError", { reason: String(custom.reason) }),
+    );
   }
 
   if (errors.length > 0) {
@@ -136,7 +141,7 @@ async function writeServers(session: DnsSession, servers: ServerOption[]): Promi
   if (session.serversBroken) {
     // Запись поверх испорченного файла потеряла бы то, что ещё можно
     // восстановить руками: сначала пользователь чинит или удаляет файл.
-    const text = "Файл своих серверов повреждён: запись запрещена до исправления или удаления";
+    const text = t("dnslookup.servers.brokenFile");
     write(JOURNAL_SOURCE, "error", text);
     throw new Error(text);
   }
@@ -149,7 +154,7 @@ async function writeServers(session: DnsSession, servers: ServerOption[]): Promi
 
   const reply = await saveCustomServers(payload);
   if (!reply.saved || reply.error) {
-    const text = reply.error ?? "Не удалось сохранить свои серверы";
+    const text = reply.error ?? t("dnslookup.servers.saveFailed");
     write(JOURNAL_SOURCE, "error", text);
     throw new Error(text);
   }
@@ -162,7 +167,7 @@ async function persistServers(
   servers: ServerOption[],
 ): Promise<string | null> {
   const save = serverActions(session).save;
-  if (save.status.loading) return "Сохранение уже идёт";
+  if (save.status.loading) return t("dnslookup.servers.saving");
 
   const saved = await save.run(servers);
   return saved === null ? save.status.error : null;

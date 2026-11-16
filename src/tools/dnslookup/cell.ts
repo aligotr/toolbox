@@ -7,8 +7,8 @@
 // Пока идёт повторная проверка, показываются прошлые записи приглушённо:
 // пустая ячейка на время запроса выглядела бы потерей данных.
 
-import { STATUS_LABELS } from "./constants";
-import type { DnsAnswer, DnsCell } from "./types";
+import { t } from "@/core/infra/i18n";
+import type { CellStatus, DnsAnswer, DnsCell } from "./types";
 
 /** Записи для показа: текущие, а во время проверки — прошлые. */
 export function answersOf(cell: DnsCell | undefined): DnsAnswer[] {
@@ -34,9 +34,39 @@ export function extraAnswers(cell: DnsCell | undefined): number {
   return Math.max(answersOf(cell).length - 1, 0);
 }
 
+/** Подпись статуса для таблицы, раскрытия и выгрузки в CSV. */
+export function statusText(status: CellStatus): string {
+  switch (status) {
+    case "ok":
+      return t("dnslookup.status.ok");
+    case "nodata":
+      return t("dnslookup.status.nodata");
+    case "nxdomain":
+      return t("dnslookup.status.nxdomain");
+    case "servfail":
+      return t("dnslookup.status.servfail");
+    case "refused":
+      return t("dnslookup.status.refused");
+    case "formerr":
+      return t("dnslookup.status.formerr");
+    case "notimp":
+      return t("dnslookup.status.notimp");
+    case "timeout":
+      return t("dnslookup.status.timeout");
+    case "offline":
+      return t("dnslookup.status.offline");
+    case "bad_response":
+      return t("dnslookup.status.badResponse");
+    case "cancelled":
+      return t("dnslookup.status.cancelled");
+    default:
+      return t("dnslookup.status.pending");
+  }
+}
+
 /** Подпись статуса; без результата это «ожидание». */
 export function statusLabel(cell: DnsCell | undefined): string {
-  return STATUS_LABELS[cell?.status ?? "pending"];
+  return statusText(cell?.status ?? "pending");
 }
 
 /** Статус — только когда он что-то сообщает: «OK» рядом с адресом лишний,
@@ -56,9 +86,9 @@ export function statusClass(cell: DnsCell | undefined): string {
 
 /** Пояснение для пустой ячейки: причина важнее прочерка. */
 export function noteFor(cell: DnsCell | undefined): string {
-  if (!cell) return "нет данных";
-  if (cell.status === "pending") return "ожидание ответа";
-  if (cell.status === "cancelled") return "проверка остановлена";
+  if (!cell) return t("dnslookup.cell.noData");
+  if (cell.status === "pending") return t("dnslookup.cell.waiting");
+  if (cell.status === "cancelled") return t("dnslookup.cell.cancelled");
   if (cell.error) return cell.error;
-  return "записей нет";
+  return t("dnslookup.cell.empty");
 }

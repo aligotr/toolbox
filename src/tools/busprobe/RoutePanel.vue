@@ -10,7 +10,9 @@
 
 import { computed, nextTick } from "vue";
 import type { ComponentPublicInstance } from "vue";
+import { t } from "@/core/infra/i18n";
 import type { TraceChain } from "./api";
+import { formatMs } from "./format";
 import type { RouteRow } from "./useBusprobe";
 
 const props = defineProps<{
@@ -22,40 +24,36 @@ const props = defineProps<{
 
 const emit = defineEmits<{ toggle: [index: number] }>();
 
-/** Кто действует на этапе: подпись этапа. */
-const ACTORS: Record<string, string> = {
-  "ask.start": "интерфейс",
-  "route.decode": "шина",
-  "queue.enqueue": "шина",
-  "dispatch.begin": "диспетчер",
-  "handler.invoke": "модуль",
-  "publish(reply)": "модуль",
-  "correlation.match": "диспетчер",
-  "sink.emit": "мост",
-  "ask.reply": "интерфейс",
-};
+/**
+ * Кто действует на этапе.
+ *
+ * Подписи собираются при показе, а не хранятся строкой: смена языка
+ * перерисовывает путь без перезапуска (ADR 0039).
+ */
+const actors = computed<Record<string, string>>(() => ({
+  "ask.start": t("busprobe.actor.ui"),
+  "route.decode": t("busprobe.actor.bus"),
+  "queue.enqueue": t("busprobe.actor.bus"),
+  "dispatch.begin": t("busprobe.actor.dispatcher"),
+  "handler.invoke": t("busprobe.actor.module"),
+  "publish(reply)": t("busprobe.actor.module"),
+  "correlation.match": t("busprobe.actor.dispatcher"),
+  "sink.emit": t("busprobe.actor.bridge"),
+  "ask.reply": t("busprobe.actor.ui"),
+}));
 
 /** Пояснение к этапу — то, ради чего прогон вообще показывается. */
-const EXPLANATIONS: Record<string, string> = {
-  "ask.start":
-    "Интерфейс просит ядро отправить запрос и дождаться ответа. Ядро создаёт correlation_id — по нему потом найдётся ожидающий. С этого момента поток команды спит.",
-  "route.decode":
-    "Ядро переводит JSON из интерфейса в типизированное сообщение Rust. Ошибка разбора оборвала бы цепочку здесь — до очереди дело бы не дошло.",
-  "queue.enqueue":
-    "Сообщение кладётся в очередь. Дальше его возьмёт отдельный поток-диспетчер: на этом месте путь расходится по времени, и появляется асинхронность.",
-  "dispatch.begin":
-    "Диспетчер достал сообщение. Разница с предыдущим этапом — время, которое оно пролежало в очереди. Это и есть цена асинхронной доставки.",
-  "handler.invoke":
-    "Диспетчер вызывает подписчиков события. Их может быть несколько; если один упадёт с паникой, остальные всё равно получат сообщение.",
-  "publish(reply)":
-    "Обработчик публикует ответ — обычное событие с тем же correlation_id. Здесь он публикует его из отдельного потока после задержки, поэтому диспетчер во время ожидания свободен.",
-  "correlation.match":
-    "Ядро смотрит, ждёт ли кто-то событие с таким идентификатором. На запросе — промах: ждут ответ, а не запрос. Именно поэтому в ask нужен явный reply_topic.",
-  "sink.emit":
-    "Событие уходит в интерфейс. Здесь цепочка покидает Rust: дальше её видят подписчики Vue и журнал.",
-  "ask.reply":
-    "Ожидающий проснулся и вернул значение в интерфейс. Поток команды снова работает — с тем же значением, которое принесло событие-ответ.",
-};
+const explanations = computed<Record<string, string>>(() => ({
+  "ask.start": t("busprobe.stage.askStart"),
+  "route.decode": t("busprobe.stage.routeDecode"),
+  "queue.enqueue": t("busprobe.stage.queueEnqueue"),
+  "dispatch.begin": t("busprobe.stage.dispatchBegin"),
+  "handler.invoke": t("busprobe.stage.handlerInvoke"),
+  "publish(reply)": t("busprobe.stage.publishReply"),
+  "correlation.match": t("busprobe.stage.correlationMatch"),
+  "sink.emit": t("busprobe.stage.sinkEmit"),
+  "ask.reply": t("busprobe.stage.askReply"),
+}));
 
 const selectedStage = computed(() =>
   props.selected === null ? null : (props.chain.stages[props.selected] ?? null),
@@ -64,11 +62,11 @@ const selectedStage = computed(() =>
 const outcomeText = computed(() => {
   switch (props.chain.outcome) {
     case "ok":
-      return "ответ получен";
+      return t("busprobe.route.outcomeOk");
     case "timeout":
-      return "таймаут";
+      return t("busprobe.route.outcomeTimeout");
     default:
-      return "ошибка";
+      return t("busprobe.route.outcomeError");
   }
 });
 
@@ -84,11 +82,16 @@ const outcomeTone = computed<string>(() => {
 });
 
 function actorOf(name: string): string {
-  return ACTORS[name] ?? "ядро";
+  return actors.value[name] ?? t("busprobe.actor.core");
 }
 
 function explanationOf(name: string): string {
-  return EXPLANATIONS[name] ?? "";
+  return explanations.value[name] ?? "";
+}
+
+/** Настоящее ожидание в очереди: миллисекунды в виде локали. */
+function waitText(ms: number): string {
+  return t("busprobe.route.wait", { ms: formatMs(ms, 1) });
 }
 
 /** Раскрытые карточки по номеру этапа: `ref` внутри `v-for` собирается в массив. */
@@ -113,10 +116,10 @@ async function choose(index: number): Promise<void> {
 <template>
   <section class="route">
     <header class="route__head">
-      <h2 class="route__title">Путь сообщения</h2>
+      <h2 class="route__title">{{ t("busprobe.route.title") }}</h2>
       <div class="route__meta">
-        <span>{{ chain.stages.length }} этапов</span>
-        <span>{{ chain.elapsed_ms.toFixed(1) }} мс</span>
+        <span>{{ t("busprobe.route.stages", { count: chain.stages.length }) }}</span>
+        <span>{{ formatMs(chain.elapsed_ms, 1) }}</span>
         <span class="route__outcome" :class="`route__outcome--${outcomeTone}`">
           {{ outcomeText }}
         </span>
@@ -128,7 +131,7 @@ async function choose(index: number): Promise<void> {
         <li v-if="row.kind === 'divider'" class="route__divider">{{ row.title }}</li>
 
         <li v-else-if="row.kind === 'wait'" class="route__wait">
-          ожидание ответа {{ (row.ms ?? 0).toFixed(1) }} мс · диспетчер свободен
+          {{ waitText(row.ms ?? 0) }}
         </li>
 
         <li v-else class="route__item">
@@ -143,7 +146,7 @@ async function choose(index: number): Promise<void> {
               {{ actorOf(row.stage?.name ?? "") }}
             </span>
             <code class="route__name">{{ row.stage?.name }}</code>
-            <span class="route__time">{{ (row.stage?.at_ms ?? 0).toFixed(2) }} мс</span>
+            <span class="route__time">{{ formatMs(row.stage?.at_ms ?? 0, 2) }}</span>
             <i
               class="pi route__chevron"
               :class="selectedStage === row.stage ? 'pi-angle-up' : 'pi-angle-down'"

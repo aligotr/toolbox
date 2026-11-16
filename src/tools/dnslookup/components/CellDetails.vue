@@ -8,6 +8,7 @@
 //
 // Правила чтения ячейки живут в `cell.ts`: те же подписи нужны таблице.
 
+import { t } from "@/core/infra/i18n";
 import { answersOf, elapsedOf, noteFor, statusClass, statusLabel, statusShown } from "../cell";
 import type { CellDetailsEntry, ServerOption } from "../types";
 
@@ -18,7 +19,7 @@ defineProps<{
 
 /** Подпись сервера: адрес или пометка «системный». */
 function serverAddress(server: ServerOption): string {
-  return server.address ?? "адреса ОС";
+  return server.address ?? t("dnslookup.cell.osAddresses");
 }
 </script>
 
@@ -37,7 +38,7 @@ function serverAddress(server: ServerOption): string {
             {{ statusLabel(entry.cell) }}
           </span>
           <span v-if="elapsedOf(entry.cell) !== null" class="details__time">
-            {{ elapsedOf(entry.cell) }} мс
+            {{ t("dnslookup.cell.elapsed", { value: elapsedOf(entry.cell) ?? 0 }) }}
           </span>
         </header>
 
@@ -48,7 +49,9 @@ function serverAddress(server: ServerOption): string {
             class="details__answer"
           >
             <code>{{ answer.value }}</code>
-            <span v-if="answer.ttl !== null" class="details__ttl">TTL {{ answer.ttl }}</span>
+            <span v-if="answer.ttl !== null" class="details__ttl">
+              {{ t("dnslookup.cell.ttl", { value: answer.ttl ?? 0 }) }}
+            </span>
           </li>
         </ul>
         <p v-else class="details__note">{{ noteFor(entry.cell) }}</p>

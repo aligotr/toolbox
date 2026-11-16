@@ -12,13 +12,8 @@
 import Button from "primevue/button";
 import { computed } from "vue";
 import { describeError } from "@/core/infra/errors";
-import {
-  PRESET_BUTTON_EMPTY,
-  PRESET_CHANGED_LABEL,
-  PRESET_REVERT_HINT,
-  PRESET_SAVE_HINT,
-  TOOL_TITLE,
-} from "../constants";
+import { t } from "@/core/infra/i18n";
+import { TOOL_TITLE } from "../constants";
 import {
   dnsPresetChanged,
   dnsPresets,
@@ -38,7 +33,9 @@ const emit = defineEmits<{
 const changed = computed(() => dnsPresetChanged(props.session));
 
 /** Загруженный пресет называет себя сам; без пресета кнопка — вход в список. */
-const label = computed(() => props.session.presetTitle ?? PRESET_BUTTON_EMPTY);
+const label = computed(
+  () => props.session.presetTitle ?? t("dnslookup.preset.buttonEmpty"),
+);
 
 function report(text: string | null): void {
   emit("note", text);
@@ -49,7 +46,7 @@ async function saveChanges(): Promise<void> {
   report(null);
   const saved = await savePresetToCurrent(props.session);
   if (!saved) {
-    report(dnsPresets.status.update.error ?? "Пресет не сохранён.");
+    report(dnsPresets.status.update.error ?? t("dnslookup.preset.notSaved"));
   }
 }
 
@@ -60,7 +57,7 @@ async function revertEdits(): Promise<void> {
     const result = await revertPresetChanges(props.session);
     if (result.error) report(result.error);
   } catch (error) {
-    report(`Изменения не отменены: ${describeError(error)}`);
+    report(t("dnslookup.preset.revertFailed", { reason: describeError(error) }));
   }
 }
 </script>
@@ -74,25 +71,25 @@ async function revertEdits(): Promise<void> {
         class="dns__preset-state"
         :class="{ 'dns__preset-state--hidden': !changed }"
       >
-        <span class="dns__preset-changed">{{ PRESET_CHANGED_LABEL }}</span>
+        <span class="dns__preset-changed">{{ t("dnslookup.preset.changed") }}</span>
         <Button
-          v-tooltip.top="PRESET_REVERT_HINT"
+          v-tooltip.top="t('dnslookup.preset.revertHint')"
           icon="pi pi-undo"
           severity="secondary"
           text
           rounded
           size="small"
-          :aria-label="PRESET_REVERT_HINT"
+          :aria-label="t('dnslookup.preset.revertHint')"
           @click="revertEdits"
         />
         <Button
-          v-tooltip.top="PRESET_SAVE_HINT"
+          v-tooltip.top="t('dnslookup.preset.saveHint')"
           icon="pi pi-save"
           severity="secondary"
           text
           rounded
           size="small"
-          :aria-label="PRESET_SAVE_HINT"
+          :aria-label="t('dnslookup.preset.saveHint')"
           :loading="dnsPresets.status.update.loading"
           @click="saveChanges"
         />

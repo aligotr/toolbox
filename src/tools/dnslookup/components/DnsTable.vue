@@ -15,6 +15,7 @@ import Button from "primevue/button";
 import Column from "primevue/column";
 import DataTable from "primevue/datatable";
 import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
+import { t } from "@/core/infra/i18n";
 import PlainSelect from "@/ui/PlainSelect.vue";
 import { useRowDrag } from "@/ui/rowDrag";
 import {
@@ -130,10 +131,16 @@ function cellLabel(server: ServerOption, cell: DnsCell | undefined): string {
   const value = firstAnswer(cell);
   const extra = extraAnswers(cell);
   const status = statusLabel(cell);
-  const text = value
-    ? `${value}${extra > 0 ? ` и ещё ${extra}` : ""} (${status})`
-    : status;
-  return `${server.label}: ${text}, подробности`;
+
+  let text = status;
+  if (value) {
+    text = extra > 0
+      ? t("dnslookup.table.cellExtra", { value, count: extra })
+      : value;
+    text = `${text} (${status})`;
+  }
+
+  return t("dnslookup.table.cellLabel", { server: server.label, text });
 }
 
 /** Данные раскрытия: сервер и его результат, включая скрытые колонки. */
@@ -208,8 +215,8 @@ watch(
       <template #empty>
         <div class="dns-table__empty">
           <i class="pi pi-search" aria-hidden="true" />
-          <p v-if="totalRows === 0">Добавьте домен</p>
-          <p v-else>Нет строк по текущим условиям</p>
+          <p v-if="totalRows === 0">{{ t("dnslookup.table.emptyAdd") }}</p>
+          <p v-else>{{ t("dnslookup.table.emptyFiltered") }}</p>
         </div>
       </template>
 
@@ -230,7 +237,7 @@ watch(
       >
         <template #header>
           <span class="dns-table__domains">
-            <span>Домены</span>
+            <span>{{ t("dnslookup.table.domains") }}</span>
             <sup v-if="totalRows > 0" class="dns-table__count">{{ totalRows }}</sup>
           </span>
         </template>
@@ -246,7 +253,11 @@ watch(
                 class="dns-table__expand"
                 :class="{ 'dns-table__expand--open': isExpanded(data.id) }"
                 :aria-expanded="isExpanded(data.id)"
-                :aria-label="isExpanded(data.id) ? 'Свернуть подробности' : 'Подробности'"
+                :aria-label="
+                  isExpanded(data.id)
+                    ? t('dnslookup.table.collapse')
+                    : t('dnslookup.table.expand')
+                "
                 @click="toggle(data.id)"
               />
               <span class="dns-table__name" :data-row-id="data.id">{{ data.input }}</span>
@@ -256,7 +267,7 @@ watch(
                 text
                 rounded
                 severity="secondary"
-                aria-label="Повторить строку"
+                :aria-label="t('dnslookup.table.repeat')"
                 :disabled="busy"
                 @click.stop="emit('repeat', data.id)"
               />
@@ -267,7 +278,7 @@ watch(
                 rounded
                 severity="secondary"
                 class="dns-table__delete"
-                aria-label="Удалить строку"
+                :aria-label="t('dnslookup.table.delete')"
                 :disabled="busy"
                 @click.stop="emit('delete', data.id)"
               />
@@ -281,7 +292,7 @@ watch(
 
       <Column
         field="type"
-        header="Тип"
+        :header="t('dnslookup.table.type')"
         frozen
         align-frozen="left"
         :style="{ minWidth: TYPE_COLUMN_MIN_WIDTH }"
@@ -293,7 +304,7 @@ watch(
             size="small"
             :style="{ width: TYPE_FIELD_WIDTH }"
             :disabled="busy"
-            :aria-label="`Тип записи для ${data.input}`"
+            :aria-label="t('dnslookup.table.typeAria', { name: data.input })"
             @change="onTypeChange(data.id, $event)"
           />
         </template>

@@ -23,6 +23,7 @@ import {
   CONFIRM_CALM_REJECT,
   CONFIRM_DANGER_ACCEPT,
 } from "@/core/constants";
+import { t } from "@/core/infra/i18n";
 import DnsTable from "./components/DnsTable.vue";
 import PresetBar from "./components/PresetBar.vue";
 import PresetsDialog from "./components/PresetsDialog.vue";
@@ -32,7 +33,7 @@ import {
   SERVER_LABEL_LIMIT,
   SERVER_LIMIT,
   STANDALONE_CELL_KEY,
-  STATUS_FILTERS,
+  statusFilterOptions,
   SYSTEM_SERVER_ID,
 } from "./constants";
 import { applyDefaultPreset } from "./presets";
@@ -94,22 +95,28 @@ onMounted(() => {
 // меняет `session.defaultType`, и поле показывает то же значение.
 
 const placeholder = computed(() =>
-  session.defaultType === "PTR" ? "IP-адрес или reverse-имя" : "Введите домен",
+  session.defaultType === "PTR"
+    ? t("dnslookup.view.placeholderPtr")
+    : t("dnslookup.view.placeholderDomain"),
 );
 
 /** Подсказка о системных резолверах: адреса приходят от ОС, не из настроек. */
 const systemHint = computed<string>(() => {
   if (!session.servers.includes(SYSTEM_SERVER_ID)) return "";
-  if (session.status.servers.loading) return "Системные резолверы: загрузка…";
+  if (session.status.servers.loading) return t("dnslookup.view.systemLoading");
   if (session.systemAddresses.length === 0) {
-    return "Системные резолверы не найдены";
+    return t("dnslookup.view.systemMissing");
   }
-  return `Системные резолверы: ${session.systemAddresses.join(", ")}`;
+  return t("dnslookup.view.systemList", {
+    list: session.systemAddresses.join(", "),
+  });
 });
 
 /** Пояснение к заблокированному фильтру расхождений. */
 const compareHint = computed(() =>
-  hasSystem.value ? "нужен ещё сервер" : "нужен системный сервер",
+  hasSystem.value
+    ? t("dnslookup.view.needMoreServer")
+    : t("dnslookup.view.needSystemServer"),
 );
 
 /** Первые выбранные серверы в поле: остальные скрыты за многоточием. */
@@ -167,11 +174,11 @@ function requestClear(): void {
   }
 
   confirm.require({
-    header: "Очистить таблицу",
-    message: "Проверка идёт. Остановить её и очистить таблицу?",
+    header: t("dnslookup.view.clearHeader"),
+    message: t("dnslookup.view.clearMessage"),
     icon: "pi pi-exclamation-triangle",
-    acceptLabel: "Очистить",
-    rejectLabel: "Отмена",
+    acceptLabel: t("dnslookup.view.clearAccept"),
+    rejectLabel: t("dnslookup.view.cancel"),
     acceptProps: CONFIRM_DANGER_ACCEPT,
     rejectProps: CONFIRM_CALM_REJECT,
     accept: () => {
@@ -216,12 +223,14 @@ async function exportCsv(): Promise<void> {
     const result = await exportCsvAction();
     exportNote.value =
       result.method === "clipboard"
-        ? `Скачивание недоступно: CSV скопирован в буфер (${result.rows} строк)`
+        ? t("dnslookup.view.exportClipboard", { count: result.rows })
         : result.copied
-          ? `Экспортировано строк: ${result.rows} (копия в буфере)`
-          : `Экспортировано строк: ${result.rows}`;
+          ? t("dnslookup.view.exportWithCopy", { count: result.rows })
+          : t("dnslookup.view.exportDone", { count: result.rows });
   } catch (error) {
-    exportNote.value = `Не удалось выгрузить CSV: ${String(error)}`;
+    exportNote.value = t("dnslookup.view.exportFailed", {
+      reason: String(error),
+    });
   }
 }
 </script>
@@ -243,7 +252,7 @@ async function exportCsv(): Promise<void> {
             :class="{ 'p-invalid': addError }"
             :placeholder="addError ?? placeholder"
             :aria-invalid="addError !== null"
-            aria-label="Домен или IP-адрес"
+            :aria-label="t('dnslookup.view.inputAria')"
             :disabled="running"
             @keyup.enter="submitRow"
           />
@@ -251,11 +260,11 @@ async function exportCsv(): Promise<void> {
             v-model="session.defaultType"
             size="small"
             :options="RECORD_TYPES"
-            aria-label="Тип записи по умолчанию"
+            :aria-label="t('dnslookup.view.typeAria')"
             :disabled="running"
           />
           <Button
-            label="Добавить"
+            :label="t('dnslookup.view.add')"
             icon="pi pi-plus"
             severity="secondary"
             outlined
@@ -276,8 +285,8 @@ async function exportCsv(): Promise<void> {
             option-value="id"
             display="chip"
             :selection-limit="SERVER_LIMIT"
-            placeholder="Выберите серверы"
-            aria-label="DNS-серверы"
+            :placeholder="t('dnslookup.view.serversPlaceholder')"
+            :aria-label="t('dnslookup.view.serversAria')"
           >
             <template #value="{ placeholder }">
               <template v-if="session.servers.length > 0">
@@ -291,7 +300,7 @@ async function exportCsv(): Promise<void> {
                 <span
                   v-if="overflowServerCount > 0"
                   class="dns__servers-more"
-                  :aria-label="`и ещё ${overflowServerCount}`"
+                  :aria-label="t('dnslookup.view.serversMore', { count: overflowServerCount })"
                 >
                   +{{ overflowServerCount }}
                 </span>
@@ -300,19 +309,19 @@ async function exportCsv(): Promise<void> {
             </template>
           </MultiSelect>
           <Button
-            v-tooltip.top="'Свои DNS-серверы'"
+            v-tooltip.top="t('dnslookup.view.customServers')"
             icon="pi pi-pencil"
             severity="secondary"
             outlined
             size="small"
-            aria-label="Свои DNS-серверы"
+            :aria-label="t('dnslookup.view.customServers')"
             @click="openServers"
           />
         </InputGroup>
 
         <Button
           class="dns__run"
-          :label="running ? 'Остановить' : 'Проверить'"
+          :label="running ? t('dnslookup.view.stop') : t('dnslookup.view.run')"
           :icon="running ? 'pi pi-stop' : 'pi pi-play'"
           :severity="running ? 'contrast' : undefined"
           size="small"
@@ -324,7 +333,7 @@ async function exportCsv(): Promise<void> {
 
     <p v-if="session.status.servers.error" class="dns__error" role="alert">
       <i class="pi pi-exclamation-circle" aria-hidden="true" />
-      Серверы: {{ session.status.servers.error }}
+      {{ t("dnslookup.view.serversError", { reason: session.status.servers.error }) }}
     </p>
 
     <p v-if="session.status.run.error" class="dns__error" role="alert">
@@ -337,17 +346,17 @@ async function exportCsv(): Promise<void> {
         v-model="session.filters.search"
         class="dns__search"
         size="small"
-        placeholder="Поиск по домену"
-        aria-label="Поиск по домену"
+        :placeholder="t('dnslookup.view.search')"
+        :aria-label="t('dnslookup.view.search')"
       />
       <Select
         v-model="session.filters.status"
-        :options="STATUS_FILTERS"
+        :options="statusFilterOptions()"
         option-label="label"
         option-value="value"
         class="dns__status"
         size="small"
-        aria-label="Фильтр по статусу"
+        :aria-label="t('dnslookup.view.statusFilter')"
       />
       <label class="dns__check">
         <Checkbox
@@ -356,42 +365,42 @@ async function exportCsv(): Promise<void> {
           :disabled="!canCompare"
         />
         <span>
-          Только расхождения
+          {{ t("dnslookup.view.diffOnly") }}
           <template v-if="!canCompare"> ({{ compareHint }})</template>
         </span>
       </label>
 
       <div class="dns__table-actions">
         <Button
-          v-tooltip.top="'Отображаемые колонки'"
+          v-tooltip.top="t('dnslookup.view.columns')"
           icon="pi pi-table"
           severity="secondary"
           text
           rounded
           size="small"
-          aria-label="Отображаемые колонки"
+          :aria-label="t('dnslookup.view.columns')"
           :disabled="selectedServers.length === 0"
           @click="toggleColumns"
         />
         <Button
-          v-tooltip.top="'Экспорт CSV'"
+          v-tooltip.top="t('dnslookup.view.export')"
           icon="pi pi-download"
           severity="secondary"
           text
           rounded
           size="small"
-          aria-label="Экспорт CSV"
+          :aria-label="t('dnslookup.view.export')"
           :disabled="visibleRows.length === 0"
           @click="exportCsv"
         />
         <Button
-          v-tooltip.top="'Очистить'"
+          v-tooltip.top="t('dnslookup.view.clear')"
           icon="pi pi-trash"
           severity="danger"
           text
           rounded
           size="small"
-          aria-label="Очистить"
+          :aria-label="t('dnslookup.view.clear')"
           :disabled="session.rows.length === 0 && !session.status.run.error"
           @click="requestClear"
         />

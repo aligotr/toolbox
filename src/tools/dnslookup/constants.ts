@@ -1,9 +1,12 @@
 // Константы инструмента DNS.
 //
-// Подписи статусов и пределы совпадают со спекой и проверкой Rust: интерфейс
+// Подписи фильтров и пределы совпадают со спекой и проверкой Rust: интерфейс
 // не придумывает свои значения, иначе таблица и ядро разойдутся в терминах.
 // Магических чисел и строк в компонентах нет — всё именовано здесь.
+// Подписи, которые видит пользователь, читаются из словаря при обращении
+// (ADR 0039); проводные значения статусов остаются кодами протокола.
 
+import { t } from "@/core/infra/i18n";
 import type { CellStatus, RecordType, ServerOption, StatusFilter } from "./types";
 
 /** Типы записей в порядке меню. */
@@ -53,12 +56,6 @@ export const SERVER_COLUMN_MIN_WIDTH = "144px";
 export const DIALOG_WIDTH = "560px";
 export const DIALOG_MAX_WIDTH = "92vw";
 
-/** Язык подписей времени: местный формат вместо UTC-строки из файла. */
-export const DATE_LOCALE = "ru-RU";
-
-/** Подпись времени, если файл сохранили без него или с ошибкой. */
-export const UNKNOWN_SAVED_AT = "время не указано";
-
 /** Сколько подсвечивается найденный дубликат. */
 export const HIGHLIGHT_MS = 2400;
 
@@ -68,54 +65,29 @@ export const JOURNAL_SOURCE = "dnslookup";
 /** Идентификатор инструмента в файлах пресетов: `presets/dnslookup/`. */
 export const PRESET_TOOL = "dnslookup";
 
-/** Действия с пресетом по умолчанию в списке пресетов. */
-export const PRESET_DEFAULT_ACTION = "Сделать пресетом по умолчанию";
-export const PRESET_DEFAULT_CLEAR = "Снять пресет по умолчанию";
-
-/** Метка строки, которая грузится в новые вкладки. */
-export const PRESET_DEFAULT_BADGE = "по умолчанию";
-
-/** Причина отказа, если состояние операции не сохранило свою. */
-export const PRESET_DEFAULT_ERROR = "Пресет по умолчанию не изменён.";
-
-/** Подпись кнопки пресета, пока пресет не загружен: она открывает список. */
-export const PRESET_BUTTON_EMPTY = "Пресеты";
-
-/** Метка расхождения настроек с сохранённым пресетом. */
-export const PRESET_CHANGED_LABEL = "Изменён";
-
-/** Подсказки быстрых действий с пресетом в шапке экрана. */
-export const PRESET_REVERT_HINT = "Отменить изменения";
-export const PRESET_SAVE_HINT = "Сохранить в пресет";
-
-/** Преднастроенные серверы: в профиль не пишутся. */
-export const PRESET_SERVERS: ServerOption[] = [
-  { id: SYSTEM_SERVER_ID, label: "Системный", address: null, kind: "system" },
-  { id: "yandex", label: "YandexDNS", address: "77.88.8.8", kind: "preset" },
-  { id: "google", label: "Google", address: "8.8.8.8", kind: "preset" },
-  { id: "cloudflare", label: "Cloudflare", address: "1.1.1.1", kind: "preset" },
-  { id: "quad9", label: "Quad9", address: "9.9.9.9", kind: "preset" },
-  { id: "adguard", label: "AdGuard", address: "94.140.14.14", kind: "preset" },
-];
+/** Преднастроенные серверы: в профиль не пишутся.
+ *
+ * Список собирается при обращении: подпись системного сервера берётся
+ * из словаря и меняется вместе с языком (ADR 0039).
+ */
+export function presetServers(): ServerOption[] {
+  return [
+    {
+      id: SYSTEM_SERVER_ID,
+      label: t("dnslookup.servers.defaultLabel"),
+      address: null,
+      kind: "system",
+    },
+    { id: "yandex", label: "YandexDNS", address: "77.88.8.8", kind: "preset" },
+    { id: "google", label: "Google", address: "8.8.8.8", kind: "preset" },
+    { id: "cloudflare", label: "Cloudflare", address: "1.1.1.1", kind: "preset" },
+    { id: "quad9", label: "Quad9", address: "9.9.9.9", kind: "preset" },
+    { id: "adguard", label: "AdGuard", address: "94.140.14.14", kind: "preset" },
+  ];
+}
 
 /** Серверы нового сеанса. */
 export const DEFAULT_SERVER_IDS: string[] = [SYSTEM_SERVER_ID, "yandex"];
-
-/** Подписи статусов: проводное значение → текст в таблице. */
-export const STATUS_LABELS: Record<CellStatus, string> = {
-  pending: "—",
-  ok: "OK",
-  nodata: "NODATA",
-  nxdomain: "NXDOMAIN",
-  servfail: "SERVFAIL",
-  refused: "REFUSED",
-  formerr: "FORMERR",
-  notimp: "NOTIMP",
-  timeout: "TIMEOUT",
-  offline: "НЕТ СЕТИ",
-  bad_response: "ОШИБКА ОТВЕТА",
-  cancelled: "—",
-};
 
 /** Статусы, которые считаются ошибкой для фильтра «есть ошибка». */
 export const ERROR_STATUSES: CellStatus[] = [
@@ -131,9 +103,11 @@ export const ERROR_STATUSES: CellStatus[] = [
 /** Статусы «ответа нет» для фильтра «без ответа». */
 export const EMPTY_STATUSES: CellStatus[] = ["nodata", "nxdomain"];
 
-/** Варианты фильтра по статусу. */
-export const STATUS_FILTERS: { label: string; value: StatusFilter }[] = [
-  { label: "все", value: "all" },
-  { label: "есть ошибка", value: "error" },
-  { label: "без ответа", value: "empty" },
-];
+/** Варианты фильтра по статусу: подписи читаются из словаря при показе. */
+export function statusFilterOptions(): { label: string; value: StatusFilter }[] {
+  return [
+    { label: t("dnslookup.filter.all"), value: "all" },
+    { label: t("dnslookup.filter.error"), value: "error" },
+    { label: t("dnslookup.filter.empty"), value: "empty" },
+  ];
+}

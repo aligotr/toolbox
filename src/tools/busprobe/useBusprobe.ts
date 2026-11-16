@@ -10,6 +10,7 @@
 
 import { computed, reactive, ref } from "vue";
 import type { UnlistenFn } from "@tauri-apps/api/event";
+import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import { useAsyncAction } from "@/core/infra/useAsyncAction";
 import { onPong, onTrace, ping, tracedPing, type Pong, type TraceChain, type TraceStage } from "./api";
@@ -88,7 +89,9 @@ export function useBusprobe() {
       unlistenTrace = await onTrace(handleTrace);
     } catch (error) {
       stop();
-      status.trace.error = `подписка на события не создана: ${String(error)}`;
+      status.trace.error = t("busprobe.view.subscribeFailed", {
+        reason: String(error),
+      });
       write(JOURNAL_SOURCE, "error", `подписка на события не создана: ${String(error)}`);
     }
   }
@@ -131,7 +134,11 @@ export function useBusprobe() {
 
     current.stages.forEach((stage, index) => {
       if (index === 0) {
-        result.push({ kind: "divider", title: "сообщение 1 · запрос", at: 0 });
+        result.push({
+          kind: "divider",
+          title: t("busprobe.route.dividerRequest"),
+          at: 0,
+        });
       }
       if (index === split && split > 0) {
         const previous = current.stages[index - 1];
@@ -140,7 +147,11 @@ export function useBusprobe() {
           ms: stage.at_ms - previous.at_ms,
           at: index,
         });
-        result.push({ kind: "divider", title: "сообщение 2 · ответ", at: index });
+        result.push({
+          kind: "divider",
+          title: t("busprobe.route.dividerReply"),
+          at: index,
+        });
       }
       result.push({ kind: "stage", stage, index, at: index + 1 });
     });

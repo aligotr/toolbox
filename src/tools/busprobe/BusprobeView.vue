@@ -11,8 +11,10 @@
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import { computed, onMounted, onUnmounted } from "vue";
+import { catalog, t } from "@/core/infra/i18n";
 import RoutePanel from "./RoutePanel.vue";
 import { TOOL_TITLE } from "./constants";
+import { formatMs } from "./format";
 import { useBusprobe } from "./useBusprobe";
 
 type BadgeTone = "muted" | "ok";
@@ -34,15 +36,15 @@ const {
 
 /** Короткое состояние для метки в шапке. */
 const badge = computed<{ text: string; tone: BadgeTone }>(() => {
-  if (status.ping.loading) return { text: "идёт запрос", tone: "muted" };
-  if (status.trace.loading) return { text: "идёт прогон", tone: "muted" };
-  if (chain.value) return { text: "путь записан", tone: "ok" };
-  if (reply.value) return { text: "ответ получен", tone: "ok" };
-  return { text: "готов", tone: "muted" };
+  if (status.ping.loading) return { text: t("busprobe.view.badgePing"), tone: "muted" };
+  if (status.trace.loading) return { text: t("busprobe.view.badgeTrace"), tone: "muted" };
+  if (chain.value) return { text: t("busprobe.view.badgeTraced"), tone: "ok" };
+  if (reply.value) return { text: t("busprobe.view.badgeReplied"), tone: "ok" };
+  return { text: t("busprobe.view.badgeReady"), tone: "muted" };
 });
 
 function formatTime(at: number): string {
-  return new Date(at).toLocaleTimeString();
+  return new Date(at).toLocaleTimeString(catalog.locale);
 }
 
 onMounted(() => {
@@ -59,10 +61,7 @@ onUnmounted(() => {
     <header class="busprobe__head">
       <div class="busprobe__heading">
         <h1 class="busprobe__title">{{ TOOL_TITLE }}</h1>
-        <p class="busprobe__lead">
-          Самопроверка шины: настоящий запрос <code>core:ping</code> и ответ
-          <code>core:pong</code>.
-        </p>
+        <p class="busprobe__lead">{{ t("busprobe.view.lead") }}</p>
       </div>
       <span class="busprobe__badge">
         <i class="busprobe__badge-dot" :class="`busprobe__badge-dot--${badge.tone}`" />
@@ -75,20 +74,20 @@ onUnmounted(() => {
         v-model="echo"
         class="busprobe__input"
         size="small"
-        aria-label="Текст сообщения"
-        placeholder="Текст для echo"
+        :aria-label="t('busprobe.view.inputAria')"
+        :placeholder="t('busprobe.view.inputPlaceholder')"
         :disabled="status.ping.loading || status.trace.loading"
         @keyup.enter="checkBus"
       />
       <Button
-        label="Проверить шину"
+        :label="t('busprobe.view.check')"
         icon="pi pi-bolt"
         size="small"
         :loading="status.ping.loading"
         @click="checkBus"
       />
       <Button
-        label="Показать путь"
+        :label="t('busprobe.view.showPath')"
         icon="pi pi-share-alt"
         severity="secondary"
         outlined
@@ -108,7 +107,7 @@ onUnmounted(() => {
     </p>
 
     <section v-if="reply" class="reply">
-      <h2 class="busprobe__section-title">Ответ</h2>
+      <h2 class="busprobe__section-title">{{ t("busprobe.view.replyTitle") }}</h2>
 
       <dl class="reply__facts">
         <div class="reply__fact">
@@ -120,20 +119,16 @@ onUnmounted(() => {
           <dd class="mono">{{ reply.correlation_id ?? "—" }}</dd>
         </div>
         <div class="reply__fact">
-          <dt>Момент ответа</dt>
+          <dt>{{ t("busprobe.view.sentAt") }}</dt>
           <dd>{{ formatTime(reply.at) }}</dd>
         </div>
         <div v-if="elapsedMs !== null" class="reply__fact">
-          <dt>Круговое время</dt>
-          <dd>{{ elapsedMs.toFixed(1) }} мс</dd>
+          <dt>{{ t("busprobe.view.roundTrip") }}</dt>
+          <dd>{{ formatMs(elapsedMs, 1) }}</dd>
         </div>
       </dl>
 
-      <p class="busprobe__note">
-        Запрос и ответ — события шины. Интерфейс ждёт ответ только по
-        <code>correlation_id</code>; второй подписчик видит тот же
-        <code>core:pong</code> в журнале.
-      </p>
+      <p class="busprobe__note">{{ t("busprobe.view.note") }}</p>
     </section>
 
     <RoutePanel v-if="chain" :chain="chain" :rows="rows" :selected="selected" @toggle="toggle" />
@@ -193,12 +188,6 @@ onUnmounted(() => {
 
 .busprobe__badge-dot--ok {
   background: var(--ag-ok);
-}
-
-.busprobe__lead code,
-.busprobe__note code {
-  font-family: var(--ag-font-mono);
-  font-size: var(--ag-text-xs);
 }
 
 .busprobe__form {

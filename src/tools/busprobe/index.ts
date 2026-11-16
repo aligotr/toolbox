@@ -11,7 +11,7 @@ import BusprobeView from "./BusprobeView.vue";
 export const busprobeTool: ToolDescriptor<typeof BusprobeView> = {
   id: "busprobe",
   title: "Busprobe",
-  description: "Самопроверка шины и путь сообщения",
+  descriptionKey: "tools.busprobe.description",
   icon: "pi pi-bolt",
   order: 10,
   component: BusprobeView,

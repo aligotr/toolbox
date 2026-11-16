@@ -20,18 +20,10 @@ import {
   CONFIRM_DANGER_ACCEPT,
 } from "@/core/constants";
 import { describeError } from "@/core/infra/errors";
+import { catalog, t } from "@/core/infra/i18n";
 import { PRESET_TITLE_MAX_LENGTH } from "@/core/services/presets/constants";
 import type { Preset } from "@/core/services/presets";
-import {
-  DATE_LOCALE,
-  DIALOG_MAX_WIDTH,
-  DIALOG_WIDTH,
-  PRESET_DEFAULT_ACTION,
-  PRESET_DEFAULT_BADGE,
-  PRESET_DEFAULT_CLEAR,
-  PRESET_DEFAULT_ERROR,
-  UNKNOWN_SAVED_AT,
-} from "../constants";
+import { DIALOG_MAX_WIDTH, DIALOG_WIDTH } from "../constants";
 import {
   adoptPresetTitle,
   applyPreset,
@@ -77,6 +69,13 @@ function isDefault(preset: Preset): boolean {
   return dnsPresets.state.defaultId === preset.id;
 }
 
+/** Действие со звёздочкой: подпись зависит от текущей отметки. */
+function defaultActionLabel(preset: Preset): string {
+  return isDefault(preset)
+    ? t("dnslookup.preset.clearDefault")
+    : t("dnslookup.preset.makeDefault");
+}
+
 /**
  * Назначает пресет по умолчанию или снимает отметку.
  *
@@ -88,14 +87,14 @@ async function toggleDefault(preset: Preset): Promise<void> {
   const target = isDefault(preset) ? null : preset.id;
   const done = await dnsPresets.setDefault(target);
   if (!done) {
-    note.value = dnsPresets.status.default.error ?? PRESET_DEFAULT_ERROR;
+    note.value = dnsPresets.status.default.error ?? t("dnslookup.preset.defaultError");
     return;
   }
 
   note.value =
     target === null
-      ? "Пресет по умолчанию снят: новые вкладки открываются пустыми."
-      : `Пресет «${preset.title}» будет загружаться в новых вкладках.`;
+      ? t("dnslookup.preset.defaultCleared")
+      : t("dnslookup.preset.defaultSet", { title: preset.title });
 }
 
 watch(
@@ -113,8 +112,8 @@ watch(
 /** Время сохранения в местном виде: UTC-строка пользователю не читается. */
 function savedAtLabel(value: string): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return UNKNOWN_SAVED_AT;
-  return date.toLocaleString(DATE_LOCALE, {
+  if (Number.isNaN(date.getTime())) return t("dnslookup.preset.unknownSavedAt");
+  return date.toLocaleString(catalog.locale, {
     dateStyle: "short",
     timeStyle: "short",
   });
@@ -130,7 +129,10 @@ async function loadPreset(preset: Preset): Promise<void> {
   try {
     result = await applyPreset(props.session, preset);
   } catch (error) {
-    note.value = `Пресет «${preset.title}» не загружен: ${describeError(error)}`;
+    note.value = t("dnslookup.preset.loadError", {
+      title: preset.title,
+      reason: describeError(error),
+    });
     return;
   }
 
@@ -141,8 +143,11 @@ async function loadPreset(preset: Preset): Promise<void> {
 
   note.value =
     result.warnings.length > 0
-      ? `Загружен пресет «${preset.title}». ${result.warnings.join("; ")}.`
-      : `Загружен пресет «${preset.title}».`;
+      ? t("dnslookup.preset.loadedWarnings", {
+          title: preset.title,
+          warnings: result.warnings.join("; "),
+        })
+      : t("dnslookup.preset.loaded", { title: preset.title });
   emit("applied");
 }
 
@@ -155,18 +160,18 @@ function requestLoad(preset: Preset): void {
   }
 
   const parts = [
-    `Текущие строки и результаты будут заменены пресетом «${preset.title}».`,
+    t("dnslookup.preset.replaceMessage", { title: preset.title }),
   ];
   if (props.session.status.run.loading) {
-    parts.push("Идущая проверка будет остановлена.");
+    parts.push(t("dnslookup.preset.replaceRunning"));
   }
 
   confirm.require({
-    header: "Загрузить пресет",
+    header: t("dnslookup.preset.loadHeader"),
     message: parts.join(" "),
     icon: "pi pi-exclamation-triangle",
-    acceptLabel: "Загрузить",
-    rejectLabel: "Отмена",
+    acceptLabel: t("dnslookup.preset.loadAccept"),
+    rejectLabel: t("dnslookup.preset.cancel"),
     rejectProps: CONFIRM_CALM_REJECT,
     accept: () => {
       void loadPreset(preset);
@@ -179,8 +184,8 @@ async function saveCurrent(): Promise<void> {
   note.value = null;
   const saved = await savePresetToCurrent(props.session);
   note.value = saved
-    ? `Пресет «${saved.title}» сохранён.`
-    : (dnsPresets.status.update.error ?? "Пресет не сохранён.");
+    ? t("dnslookup.preset.saved", { title: saved.title })
+    : (dnsPresets.status.update.error ?? t("dnslookup.preset.notSaved"));
 }
 
 /**
@@ -196,7 +201,9 @@ async function revertChanges(): Promise<void> {
   try {
     result = await revertPresetChanges(props.session);
   } catch (error) {
-    note.value = `Изменения не отменены: ${describeError(error)}`;
+    note.value = t("dnslookup.preset.revertFailed", {
+      reason: describeError(error),
+    });
     return;
   }
 
@@ -206,8 +213,8 @@ async function revertChanges(): Promise<void> {
   }
 
   note.value = result.restarted
-    ? "Изменения отменены. Таблица запросов изменилась: результаты очищены, проверка запущена заново."
-    : "Изменения отменены.";
+    ? t("dnslookup.preset.revertedRestarted")
+    : t("dnslookup.preset.reverted");
   emit("applied");
 }
 
@@ -219,12 +226,12 @@ async function createNew(): Promise<void> {
   note.value = null;
   const created = await createPresetFromSession(props.session, title);
   if (!created) {
-    note.value = dnsPresets.status.create.error ?? "Пресет не сохранён.";
+    note.value = dnsPresets.status.create.error ?? t("dnslookup.preset.notCreated");
     return;
   }
 
   newTitle.value = "";
-  note.value = `Сохранён пресет «${created.title}».`;
+  note.value = t("dnslookup.preset.created", { title: created.title });
 }
 
 function startRename(preset: Preset): void {
@@ -243,34 +250,34 @@ async function submitRename(preset: Preset): Promise<void> {
   note.value = null;
   const renamed = await dnsPresets.rename(preset.id, title);
   if (!renamed) {
-    note.value = dnsPresets.status.rename.error ?? "Пресет не переименован.";
+    note.value = dnsPresets.status.rename.error ?? t("dnslookup.preset.notRenamed");
     return;
   }
 
   adoptPresetTitle(props.session, renamed);
   renamingId.value = null;
-  note.value = `Пресет переименован: «${renamed.title}».`;
+  note.value = t("dnslookup.preset.renamed", { title: renamed.title });
 }
 
 async function duplicate(preset: Preset): Promise<void> {
   note.value = null;
   const copy = await dnsPresets.duplicate(preset.id);
   note.value = copy
-    ? `Создана копия «${copy.title}».`
-    : (dnsPresets.status.duplicate.error ?? "Пресет не скопирован.");
+    ? t("dnslookup.preset.copied", { title: copy.title })
+    : (dnsPresets.status.duplicate.error ?? t("dnslookup.preset.notCopied"));
 }
 
 /** Удаление уносит файл в корзину: промах в списке не должен стоить настроек. */
 function requestDelete(preset: Preset): void {
   const open = preset.id === props.session.presetId;
   confirm.require({
-    header: "Удалить пресет",
+    header: t("dnslookup.preset.deleteHeader"),
     message: open
-      ? `Пресет «${preset.title}» будет перемещён в корзину, привязка снимется. Текущие настройки останутся в таблице.`
-      : `Пресет «${preset.title}» будет перемещён в корзину.`,
+      ? t("dnslookup.preset.deleteOpenMessage", { title: preset.title })
+      : t("dnslookup.preset.deleteMessage", { title: preset.title }),
     icon: "pi pi-exclamation-triangle",
-    acceptLabel: "Удалить",
-    rejectLabel: "Отмена",
+    acceptLabel: t("dnslookup.preset.deleteAccept"),
+    rejectLabel: t("dnslookup.preset.cancel"),
     acceptProps: CONFIRM_DANGER_ACCEPT,
     rejectProps: CONFIRM_CALM_REJECT,
     accept: () => {
@@ -283,19 +290,19 @@ async function remove(preset: Preset): Promise<void> {
   note.value = null;
   const removed = await dnsPresets.remove(preset);
   if (!removed) {
-    note.value = dnsPresets.status.delete.error ?? "Пресет не удалён.";
+    note.value = dnsPresets.status.delete.error ?? t("dnslookup.preset.notRemoved");
     return;
   }
 
   releaseDeletedPreset(props.session, preset.id);
-  note.value = `Пресет «${preset.title}» перемещён в корзину.`;
+  note.value = t("dnslookup.preset.removed", { title: preset.title });
 }
 </script>
 
 <template>
   <Dialog
     :visible="visible"
-    header="Пресеты настроек"
+    :header="t('dnslookup.preset.dialogTitle')"
     modal
     :draggable="false"
     :style="{ width: DIALOG_WIDTH, maxWidth: DIALOG_MAX_WIDTH }"
@@ -310,30 +317,30 @@ async function remove(preset: Preset): Promise<void> {
               v-if="changed"
               class="presets__current-state presets__current-state--changed"
             >
-              настройки изменены
+              {{ t("dnslookup.preset.currentChanged") }}
             </small>
           </template>
           <template v-else>
-            <span class="presets__current-title">Пресет не выбран</span>
+            <span class="presets__current-title">{{ t("dnslookup.preset.none") }}</span>
             <small class="presets__current-state">
-              Сохраните текущие настройки отдельным пресетом.
+              {{ t("dnslookup.preset.noneHint") }}
             </small>
           </template>
         </div>
         <div v-if="bound" class="presets__current-actions">
           <Button
-            v-tooltip.top="'Отменить изменения'"
+            v-tooltip.top="t('dnslookup.preset.revertHint')"
             icon="pi pi-undo"
             severity="secondary"
             text
             rounded
             size="small"
-            aria-label="Отменить изменения"
+            :aria-label="t('dnslookup.preset.revertHint')"
             :disabled="!changed"
             @click="revertChanges"
           />
           <Button
-            label="Сохранить"
+            :label="t('dnslookup.preset.saveChanges')"
             icon="pi pi-save"
             size="small"
             :loading="dnsPresets.status.update.loading"
@@ -344,14 +351,13 @@ async function remove(preset: Preset): Promise<void> {
       </section>
 
       <p v-if="dnsPresets.status.list.loading" class="presets__note">
-        Список пресетов читается…
+        {{ t("dnslookup.preset.listLoading") }}
       </p>
       <p
         v-else-if="dnsPresets.state.loaded && dnsPresets.state.items.length === 0"
         class="presets__note"
       >
-        Пресетов пока нет. Настройте инструмент и сохраните настройки первым
-        пресетом.
+        {{ t("dnslookup.preset.listEmpty") }}
       </p>
       <ul v-else-if="dnsPresets.state.items.length > 0" class="presets__list">
         <li
@@ -365,14 +371,14 @@ async function remove(preset: Preset): Promise<void> {
               class="presets__rename"
               size="small"
               :maxlength="PRESET_TITLE_MAX_LENGTH"
-              aria-label="Новое название пресета"
+              :aria-label="t('dnslookup.preset.renameAria')"
               @keyup.enter="submitRename(preset)"
             />
             <Button
               icon="pi pi-check"
               size="small"
               text
-              aria-label="Сохранить название"
+              :aria-label="t('dnslookup.preset.renameSave')"
               :loading="dnsPresets.status.rename.loading"
               @click="submitRename(preset)"
             />
@@ -381,7 +387,7 @@ async function remove(preset: Preset): Promise<void> {
               severity="secondary"
               size="small"
               text
-              aria-label="Отменить переименование"
+              :aria-label="t('dnslookup.preset.renameCancel')"
               @click="renamingId = null"
             />
           </template>
@@ -389,13 +395,13 @@ async function remove(preset: Preset): Promise<void> {
             <button
               type="button"
               class="presets__open"
-              :aria-label="`Загрузить пресет ${preset.title}`"
+              :aria-label="t('dnslookup.preset.loadAria', { title: preset.title })"
               @click="requestLoad(preset)"
             >
               <span class="presets__title-row">
                 <span class="presets__title">{{ preset.title }}</span>
                 <span v-if="isDefault(preset)" class="presets__default">
-                  {{ PRESET_DEFAULT_BADGE }}
+                  {{ t("dnslookup.preset.badgeDefault") }}
                 </span>
               </span>
               <small class="presets__meta">
@@ -404,54 +410,50 @@ async function remove(preset: Preset): Promise<void> {
             </button>
             <div class="presets__actions">
               <Button
-                v-tooltip.top="
-                  isDefault(preset) ? PRESET_DEFAULT_CLEAR : PRESET_DEFAULT_ACTION
-                "
+                v-tooltip.top="defaultActionLabel(preset)"
                 :icon="isDefault(preset) ? 'pi pi-star-fill' : 'pi pi-star'"
                 :severity="isDefault(preset) ? 'warn' : 'secondary'"
                 size="small"
                 text
-                :aria-label="
-                  isDefault(preset) ? PRESET_DEFAULT_CLEAR : PRESET_DEFAULT_ACTION
-                "
+                :aria-label="defaultActionLabel(preset)"
                 :loading="dnsPresets.status.default.loading"
                 @click="toggleDefault(preset)"
               />
               <Button
-                v-tooltip.top="'Загрузить'"
+                v-tooltip.top="t('dnslookup.preset.loadTip')"
                 icon="pi pi-upload"
                 severity="secondary"
                 size="small"
                 text
-                aria-label="Загрузить пресет"
+                :aria-label="t('dnslookup.preset.loadTipAria')"
                 @click="requestLoad(preset)"
               />
               <Button
-                v-tooltip.top="'Переименовать'"
+                v-tooltip.top="t('dnslookup.preset.renameTip')"
                 icon="pi pi-pencil"
                 severity="secondary"
                 size="small"
                 text
-                aria-label="Переименовать пресет"
+                :aria-label="t('dnslookup.preset.renameTipAria')"
                 @click="startRename(preset)"
               />
               <Button
-                v-tooltip.top="'Дублировать'"
+                v-tooltip.top="t('dnslookup.preset.duplicateTip')"
                 icon="pi pi-copy"
                 severity="secondary"
                 size="small"
                 text
-                aria-label="Дублировать пресет"
+                :aria-label="t('dnslookup.preset.duplicateAria')"
                 :loading="dnsPresets.status.duplicate.loading"
                 @click="duplicate(preset)"
               />
               <Button
-                v-tooltip.top="'Удалить'"
+                v-tooltip.top="t('dnslookup.preset.deleteTip')"
                 icon="pi pi-trash"
                 severity="danger"
                 size="small"
                 text
-                aria-label="Удалить пресет"
+                :aria-label="t('dnslookup.preset.deleteAria')"
                 @click="requestDelete(preset)"
               />
             </div>
@@ -471,12 +473,12 @@ async function remove(preset: Preset): Promise<void> {
           class="presets__create-input"
           size="small"
           :maxlength="PRESET_TITLE_MAX_LENGTH"
-          placeholder="Название нового пресета"
-          aria-label="Название нового пресета"
+          :placeholder="t('dnslookup.preset.newTitle')"
+          :aria-label="t('dnslookup.preset.newTitle')"
         />
         <Button
           type="submit"
-          label="Сохранить как пресет"
+          :label="t('dnslookup.preset.saveAs')"
           icon="pi pi-plus"
           severity="secondary"
           outlined
@@ -489,7 +491,7 @@ async function remove(preset: Preset): Promise<void> {
 
     <template #footer>
       <Button
-        label="Закрыть"
+        :label="t('dnslookup.preset.close')"
         text
         @click="emit('update:visible', false)"
       />

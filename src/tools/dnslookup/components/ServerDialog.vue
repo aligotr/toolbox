@@ -9,6 +9,7 @@ import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import InputText from "primevue/inputtext";
 import { computed, ref, watch } from "vue";
+import { t } from "@/core/infra/i18n";
 import { DIALOG_WIDTH } from "../constants";
 import { parseServerAddress } from "../normalize";
 import type { ServerOption } from "../types";
@@ -55,7 +56,7 @@ function submit(): void {
     return;
   }
   if (props.occupied.includes(parsed.address)) {
-    localError.value = "Адрес уже добавлен";
+    localError.value = t("dnslookup.servers.duplicate");
     return;
   }
 
@@ -74,7 +75,7 @@ function remove(serverId: string): void {
 <template>
   <Dialog
     :visible="visible"
-    header="Свои DNS-серверы"
+    :header="t('dnslookup.servers.title')"
     modal
     :draggable="false"
     :style="{ width: DIALOG_WIDTH, maxWidth: '92vw' }"
@@ -82,9 +83,9 @@ function remove(serverId: string): void {
   >
     <div class="servers">
       <section class="servers__list">
-        <h3 class="servers__title">Добавленные</h3>
+        <h3 class="servers__title">{{ t("dnslookup.servers.added") }}</h3>
         <p v-if="servers.length === 0" class="servers__empty">
-          Своих серверов пока нет
+          {{ t("dnslookup.servers.empty") }}
         </p>
         <ul v-else class="servers__items">
           <li v-for="server in servers" :key="server.id" class="servers__item">
@@ -95,7 +96,7 @@ function remove(serverId: string): void {
               severity="danger"
               text
               size="small"
-              :aria-label="`Удалить сервер ${server.address}`"
+              :aria-label="t('dnslookup.servers.removeAria', { address: server.address ?? '' })"
               :disabled="locked"
               @click="remove(server.id)"
             />
@@ -105,34 +106,31 @@ function remove(serverId: string): void {
 
       <section class="servers__form">
         <label class="servers__field">
-          <span class="servers__field-label">Адрес</span>
+          <span class="servers__field-label">{{ t("dnslookup.servers.address") }}</span>
           <InputText
             v-model="address"
             placeholder="10.0.0.53:53"
-            aria-label="Адрес DNS-сервера"
+            :aria-label="t('dnslookup.servers.addressAria')"
             :disabled="locked"
             @keyup.enter="submit"
           />
         </label>
 
         <label class="servers__field">
-          <span class="servers__field-label">Название (необязательно)</span>
+          <span class="servers__field-label">{{ t("dnslookup.servers.name") }}</span>
           <InputText
             v-model="label"
-            placeholder="Локальный DNS"
-            aria-label="Название DNS-сервера"
+            :placeholder="t('dnslookup.servers.namePlaceholder')"
+            :aria-label="t('dnslookup.servers.nameAria')"
             :disabled="locked"
             @keyup.enter="submit"
           />
         </label>
 
-        <p class="servers__hint">
-          Формат: IPv4, IPv4:порт, [IPv6]:порт. Порт по умолчанию — 53.
-        </p>
+        <p class="servers__hint">{{ t("dnslookup.servers.hint") }}</p>
         <p v-if="blocked" class="servers__error" role="alert">
           <i class="pi pi-exclamation-triangle" aria-hidden="true" />
-          Сохранение запрещено: исправьте или удалите файл своих серверов
-          в профиле.
+          {{ t("dnslookup.servers.blocked") }}
         </p>
         <p v-if="shownError" class="servers__error" role="alert">
           <i class="pi pi-exclamation-circle" aria-hidden="true" />
@@ -143,13 +141,13 @@ function remove(serverId: string): void {
 
     <template #footer>
       <Button
-        label="Отмена"
+        :label="t('dnslookup.servers.cancel')"
         text
         :disabled="locked"
         @click="emit('update:visible', false)"
       />
       <Button
-        label="Добавить"
+        :label="t('dnslookup.servers.add')"
         icon="pi pi-plus"
         :loading="saving"
         :disabled="locked || address.trim() === ''"

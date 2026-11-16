@@ -7,7 +7,8 @@
 // Файл отдаётся скачиванием; копия в буфер — постоянный второй шаг, потому
 // что окно приложения не всегда сообщает о блокировке скачивания.
 
-import { STATUS_LABELS } from "../constants";
+import { t } from "@/core/infra/i18n";
+import { statusText } from "../cell";
 import { resultKey } from "./session";
 import type {
   DnsAnswer,
@@ -26,7 +27,7 @@ function csvField(value: string): string {
 /** Значение ячейки для CSV: подпись статуса и записи в формате зоны. */
 function csvCell(cell: DnsCell | undefined): string {
   if (!cell) return "";
-  const label = STATUS_LABELS[cell.status];
+  const label = statusText(cell.status);
   const answers: DnsAnswer[] =
     cell.status === "pending" ? (cell.previous?.answers ?? []) : cell.answers;
   if (answers.length === 0) return label;
@@ -40,14 +41,25 @@ export function buildCsv(
   servers: ServerOption[],
   verdicts: Map<string, RowVerdict>,
 ): string {
-  const header = ["Домен", "Тип", ...servers.map((server) => server.label), "Совпадение"];
+  const header = [
+    t("dnslookup.csv.domain"),
+    t("dnslookup.csv.type"),
+    ...servers.map((server) => server.label),
+    t("dnslookup.csv.match"),
+  ];
 
   const lines = rows.map((row) => {
     const verdict = verdicts.get(row.id);
     const verdictText = verdict
       ? verdict.differs
-        ? `расходится у ${verdict.total - verdict.matched} из ${verdict.total}`
-        : `совпадает у ${verdict.matched} из ${verdict.total}`
+        ? t("dnslookup.csv.differs", {
+            count: verdict.total - verdict.matched,
+            total: verdict.total,
+          })
+        : t("dnslookup.csv.matches", {
+            count: verdict.matched,
+            total: verdict.total,
+          })
       : "";
 
     return [
@@ -95,7 +107,7 @@ export async function saveCsv(
   }
 
   if (!downloaded && !copied) {
-    throw new Error("Не удалось сохранить CSV и скопировать его в буфер");
+    throw new Error(t("dnslookup.csv.saveFailed"));
   }
 
   return { method: downloaded ? "download" : "clipboard", copied };

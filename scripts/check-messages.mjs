@@ -20,6 +20,7 @@ const KEY_PATTERNS = [
   /\bt\(\s*"([^"]+)"/g,
   /\bt\(\s*'([^']+)'/g,
   /titleKey:\s*"([^"]+)"/g,
+  /descriptionKey:\s*"([^"]+)"/g,
 ];
 
 /** Все исходники интерфейса. */

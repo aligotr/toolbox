@@ -5,6 +5,7 @@
 // пресета, не перечитывая файл. Привязка сеанса к пресету живёт здесь же:
 // снимок берётся сразу после применения, пока сеанс совпадает с файлом.
 
+import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import type { Preset } from "@/core/services/presets";
 import {
@@ -92,7 +93,7 @@ export async function applyPreset(
   const parsed = parsePresetPayload(preset.payload);
   if (!parsed) {
     return {
-      error: `Пресет «${preset.title}» не загружен: настройки не разобраны.`,
+      error: t("dnslookup.preset.loadFailed", { title: preset.title }),
       warnings: [],
     };
   }
@@ -108,9 +109,9 @@ export async function applyPreset(
   // загрузка стёрла бы выбор, который ещё можно восстановить.
   if (missing.length > 0 && session.status.servers.error !== null) {
     return {
-      error:
-        "Пресет не загружен: свои серверы не прочитаны " +
-        `(${session.status.servers.error}). Исправьте файл и повторите.`,
+      error: t("dnslookup.preset.serversUnread", {
+        reason: session.status.servers.error,
+      }),
       warnings: [],
     };
   }
@@ -120,16 +121,20 @@ export async function applyPreset(
 
   const warnings: string[] = [];
   if (droppedRows > 0) {
-    warnings.push(`пропущено строк: ${droppedRows}`);
+    warnings.push(t("dnslookup.preset.warnRows", { count: droppedRows }));
   }
   if (missing.length > 0) {
-    warnings.push(`не найдены серверы: ${missing.join(", ")}`);
+    warnings.push(
+      t("dnslookup.preset.warnServers", { list: missing.join(", ") }),
+    );
   }
   if (available.length > SERVER_LIMIT) {
-    warnings.push(`выбраны первые ${SERVER_LIMIT} серверов`);
+    warnings.push(
+      t("dnslookup.preset.warnServerLimit", { count: SERVER_LIMIT }),
+    );
   }
   if (payload.servers.length === 0) {
-    warnings.push("в пресете не было серверов: взят набор по умолчанию");
+    warnings.push(t("dnslookup.preset.warnNoServers"));
   }
 
   applyPayload(session, payload, servers);
@@ -210,7 +215,7 @@ export async function revertPresetChanges(
 ): Promise<PresetRevertResult> {
   if (session.presetId === null || session.presetSnapshot === null) {
     return {
-      error: "Нет открытого пресета: отменять нечего.",
+      error: t("dnslookup.preset.notReverted"),
       restarted: false,
     };
   }
@@ -218,7 +223,7 @@ export async function revertPresetChanges(
   const payload = parseSnapshot(session.presetSnapshot);
   if (!payload) {
     return {
-      error: "Настройки открытого пресета не разобраны: откат невозможен.",
+      error: t("dnslookup.preset.snapshotBroken"),
       restarted: false,
     };
   }

@@ -8,6 +8,7 @@
 // `runId` — единственная связь между событием и сеансом: после отмены или
 // загрузки пресета прежние ответы уже не принадлежат таблице и отбрасываются.
 
+import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import { cancelDns, onDnsFinished, onDnsResult, runDns } from "../api";
 import { JOURNAL_SOURCE, QUERY_LIMIT } from "../constants";
@@ -102,7 +103,7 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
   if (rows.length === 0) return;
 
   if (session.servers.length === 0) {
-    session.status.run.error = "Выберите хотя бы один сервер";
+    session.status.run.error = t("dnslookup.run.pickServer");
     return;
   }
 
@@ -111,7 +112,7 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
   for (const id of session.servers) {
     const server = known.get(id);
     if (!server) {
-      session.status.run.error = `Неизвестный сервер «${id}»`;
+      session.status.run.error = t("dnslookup.run.unknownServer", { id });
       return;
     }
     servers.push(server);
@@ -119,9 +120,10 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
 
   const total = rows.length * servers.length;
   if (total > QUERY_LIMIT) {
-    session.status.run.error =
-      `Слишком много запросов: ${total}. Предел — ${QUERY_LIMIT}. ` +
-      "Уменьшите число строк или серверов";
+    session.status.run.error = t("dnslookup.run.tooMany", {
+      total,
+      limit: QUERY_LIMIT,
+    });
     write(JOURNAL_SOURCE, "error", session.status.run.error);
     return;
   }
@@ -183,10 +185,16 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
     });
 
     if (!accepted.accepted) {
-      failRun(session, runId, rows, servers, accepted.error ?? "Проверка отклонена ядром");
+      failRun(session, runId, rows, servers, accepted.error ?? t("dnslookup.run.rejected"));
     }
   } catch (error) {
-    failRun(session, runId, rows, servers, `Проверка не запущена: ${String(error)}`);
+    failRun(
+      session,
+      runId,
+      rows,
+      servers,
+      t("dnslookup.run.notStarted", { reason: String(error) }),
+    );
   }
 }
 
@@ -263,7 +271,9 @@ export async function abortSessionRun(session: DnsSession): Promise<void> {
   try {
     await cancelDns(runId);
   } catch (error) {
-    session.status.run.error = `Не удалось остановить проверку: ${String(error)}`;
+    session.status.run.error = t("dnslookup.run.stopFailed", {
+      reason: String(error),
+    });
     write(JOURNAL_SOURCE, "error", session.status.run.error);
   }
 }
@@ -280,7 +290,9 @@ export async function stopRun(session: DnsSession): Promise<void> {
   try {
     await cancelDns(session.runId);
   } catch (error) {
-    session.status.run.error = `Не удалось остановить проверку: ${String(error)}`;
+    session.status.run.error = t("dnslookup.run.stopFailed", {
+      reason: String(error),
+    });
     write(JOURNAL_SOURCE, "error", session.status.run.error);
   }
 }

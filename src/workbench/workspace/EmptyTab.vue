@@ -97,8 +97,8 @@ function useTemplate(template: Template): void {
           <i class="action-card__icon" :class="tool.icon" aria-hidden="true" />
           <span class="action-card__text">
             <strong class="action-card__title">{{ tool.title }}</strong>
-            <small v-if="tool.description" class="action-card__note">
-              {{ tool.description }}
+            <small v-if="tool.descriptionKey" class="action-card__note">
+              {{ t(tool.descriptionKey) }}
             </small>
           </span>
         </button>

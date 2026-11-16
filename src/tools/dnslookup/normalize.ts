@@ -9,6 +9,7 @@
 // IDNA и не тянет отдельную зависимость. Показ остаётся пользовательским,
 // запрос уходит в ASCII.
 
+import { t } from "@/core/infra/i18n";
 import type { RecordType } from "./types";
 
 /** Предел длины имени и метки по RFC. */
@@ -42,13 +43,13 @@ export type AddressResult =
 export function parseAddressInput(input: string, type: RecordType): AddressResult {
   const raw = input.trim();
   if (raw === "") {
-    return { ok: false, error: "Введите домен или IP-адрес" };
+    return { ok: false, error: t("dnslookup.validate.emptyAddress") };
   }
 
   const ip = canonicalIp(raw);
   if (ip !== null) {
     if (type !== "PTR") {
-      return { ok: false, error: "IP-адрес допустим только для типа PTR" };
+      return { ok: false, error: t("dnslookup.validate.ipPtrOnly") };
     }
     return { ok: true, value: { name: ip, display: raw } };
   }
@@ -56,35 +57,44 @@ export function parseAddressInput(input: string, type: RecordType): AddressResul
   if (type === "PTR" && !REVERSE_ZONE_PATTERN.test(raw)) {
     return {
       ok: false,
-      error: "Для типа PTR укажите IP-адрес или имя в зоне in-addr.arpa / ip6.arpa",
+      error: t("dnslookup.validate.ptrZone"),
     };
   }
 
   const display = raw.endsWith(".") ? raw.slice(0, -1) : raw;
   const name = toAscii(display);
   if (name === null) {
-    return { ok: false, error: `Некорректное имя «${display}»` };
+    return { ok: false, error: t("dnslookup.validate.badName", { name: display }) };
   }
 
   const wildcard = name.startsWith("*.");
   const labels = (wildcard ? name.slice(2) : name).split(".");
   if (wildcard && labels.length === 0) {
-    return { ok: false, error: "После «*.» нужно имя домена" };
+    return { ok: false, error: t("dnslookup.validate.wildcard") };
   }
   if (name.length > MAX_NAME_LENGTH) {
-    return { ok: false, error: `Имя длиннее ${MAX_NAME_LENGTH} символов` };
+    return {
+      ok: false,
+      error: t("dnslookup.validate.nameTooLong", { limit: MAX_NAME_LENGTH }),
+    };
   }
   for (const label of labels) {
     if (label === "") {
-      return { ok: false, error: "В имени есть пустая метка" };
+      return { ok: false, error: t("dnslookup.validate.emptyLabel") };
     }
     if (label.length > MAX_LABEL_LENGTH) {
-      return { ok: false, error: `Метка «${label}» длиннее ${MAX_LABEL_LENGTH} символов` };
+      return {
+        ok: false,
+        error: t("dnslookup.validate.labelTooLong", {
+          label,
+          limit: MAX_LABEL_LENGTH,
+        }),
+      };
     }
     if (!LABEL_PATTERN.test(label)) {
       return {
         ok: false,
-        error: `Недопустимый символ в «${label}»: разрешены буквы, цифры, «-» и «_»`,
+        error: t("dnslookup.validate.badChar", { label }),
       };
     }
   }
@@ -134,7 +144,7 @@ export type ServerAddressResult =
 export function parseServerAddress(input: string): ServerAddressResult {
   const text = input.trim();
   if (text === "") {
-    return { ok: false, error: "Введите адрес сервера" };
+    return { ok: false, error: t("dnslookup.validate.serverEmpty") };
   }
 
   // IPv6 в скобках, порт необязателен.
@@ -142,11 +152,17 @@ export function parseServerAddress(input: string): ServerAddressResult {
   if (bracketed) {
     const host = canonicalIp(bracketed[1]);
     if (host === null) {
-      return { ok: false, error: `Некорректный IPv6-адрес «${bracketed[1]}»` };
+      return {
+        ok: false,
+        error: t("dnslookup.validate.badIpv6", { address: bracketed[1] }),
+      };
     }
     const port = bracketed[2] === undefined ? 53 : parsePort(bracketed[2]);
     if (port === null) {
-      return { ok: false, error: `Некорректный порт в адресе «${text}»` };
+      return {
+        ok: false,
+        error: t("dnslookup.validate.badPort", { address: text }),
+      };
     }
     return { ok: true, address: `[${host}]:${port}` };
   }
@@ -155,7 +171,10 @@ export function parseServerAddress(input: string): ServerAddressResult {
   if (colons >= 2) {
     const host = canonicalIp(text);
     if (host === null) {
-      return { ok: false, error: `Некорректный IPv6-адрес «${text}»` };
+      return {
+        ok: false,
+        error: t("dnslookup.validate.badIpv6", { address: text }),
+      };
     }
     return { ok: true, address: `[${host}]:53` };
   }
@@ -165,14 +184,20 @@ export function parseServerAddress(input: string): ServerAddressResult {
     const address = canonicalIp(host);
     const port = parsePort(portText);
     if (address === null || port === null) {
-      return { ok: false, error: `Некорректный адрес сервера «${text}»` };
+      return {
+        ok: false,
+        error: t("dnslookup.validate.badServer", { address: text }),
+      };
     }
     return { ok: true, address: `${address}:${port}` };
   }
 
   const address = canonicalIp(text);
   if (address === null) {
-    return { ok: false, error: `Некорректный адрес сервера «${text}»` };
+    return {
+      ok: false,
+      error: t("dnslookup.validate.badServer", { address: text }),
+    };
   }
   return { ok: true, address: `${address}:53` };
 }

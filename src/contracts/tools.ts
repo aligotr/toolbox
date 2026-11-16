@@ -15,8 +15,8 @@ export interface ToolDescriptor<TComponent = unknown> {
   id: string;
   /** Название в сайдбаре и в заголовке вкладки. */
   title: string;
-  /** Короткое пояснение: что инструмент делает. */
-  description?: string;
+  /** Ключ словаря: короткое пояснение переводится при показе (ADR 0039). */
+  descriptionKey?: string;
   /** Класс иконки PrimeIcons, например `pi pi-bolt`. */
   icon: string;
   /** Порядок в сайдбаре; меньше — выше. */

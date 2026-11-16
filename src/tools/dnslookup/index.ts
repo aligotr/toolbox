@@ -10,7 +10,7 @@ import { TOOL_TITLE } from "./constants";
 export const dnslookupTool: ToolDescriptor<typeof DnslookupView> = {
   id: "dnslookup",
   title: TOOL_TITLE,
-  description: "Проверка и сравнение ответов DNS-серверов",
+  descriptionKey: "tools.dnslookup.description",
   icon: "pi pi-globe",
   order: 20,
   component: DnslookupView,
