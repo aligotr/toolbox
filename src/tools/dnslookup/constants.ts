@@ -80,7 +80,7 @@ export const PRESET_DEFAULT_ERROR = "Пресет по умолчанию не �
 export const PRESET_BUTTON_EMPTY = "Пресеты";
 
 /** Метка расхождения настроек с сохранённым пресетом. */
-export const PRESET_CHANGED_LABEL = "изменён";
+export const PRESET_CHANGED_LABEL = "Изменён";
 
 /** Подсказки быстрых действий с пресетом в шапке экрана. */
 export const PRESET_REVERT_HINT = "Отменить изменения";
