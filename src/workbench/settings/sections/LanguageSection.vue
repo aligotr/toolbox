@@ -291,5 +291,6 @@ onMounted(() => {
   color: var(--p-text-muted-color);
   font-size: var(--ag-text-xs);
   line-height: 1.5;
+  white-space: pre-line;
 }
 </style>

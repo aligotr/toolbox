@@ -51,6 +51,6 @@
     "settings.language.export": "Save sample",
     "settings.language.exported": "Sample saved: {path}",
     "settings.language.note":
-      "The program never changes the file: your edits and comments stay as they are. Press Refresh after editing. Do not rename lines — that is how the program finds the text.",
+      "The program never changes the file: your edits and comments stay as they are.\nPress Refresh after editing.\nDo not rename lines — that is how the program finds the text.",
   },
 }
