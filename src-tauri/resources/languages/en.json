@@ -26,34 +26,31 @@
     // ── Раздел «Язык» ─────────────────────────────────────────────────────
     "settings.language.title": "Language",
     "settings.language.lead":
-      "Russian is built into the program and always available. Other languages are files in local/languages/: you can edit and extend them without rebuilding the program.",
+      "Choose the language the program speaks. Russian is always there; other languages come as dictionary files you put in the dictionaries folder.",
     "settings.language.current": "Interface language",
     "settings.language.russian": "Russian",
-    "settings.language.builtin": "built-in",
-    "settings.language.broken": "not read",
+    "settings.language.builtin": "in the program",
+    "settings.language.broken": "cannot be read",
     "settings.language.complete": "fully translated",
-    "settings.language.missing": {
-      "one": "{count} key missing",
-      "other": "{count} keys missing",
-    },
+    "settings.language.missing": "not fully translated",
     "settings.language.lost":
-      "The selected dictionary is missing or cannot be read: the interface is showing Russian. Your choice is saved.",
+      "The dictionary for the selected language is missing or cannot be read, so the program shows Russian. Your choice is saved: restore the file or pick another language.",
     "settings.language.partial": {
-      "one": "One key is not translated and is shown in Russian.",
-      "other": "{count} keys are not translated and are shown in Russian.",
+      "one": "One line is not translated — Russian text is shown instead.",
+      "other": "{count} lines are not translated — Russian text is shown instead.",
     },
     "settings.language.extra": {
-      "one": "{count} extra key is not in the Russian dictionary.",
-      "other": "{count} extra keys are not in the Russian dictionary.",
+      "one": "{count} extra line is in the dictionary — the program does not use it.",
+      "other": "{count} extra lines are in the dictionary — the program does not use them.",
     },
     "settings.language.empty":
-      "There are no dictionary files yet: only the built-in Russian is available.",
-    "settings.language.problem": "File {code} cannot be read: {reason}",
+      "The dictionaries folder is empty for now: only Russian is available.",
+    "settings.language.problem": "Cannot read file {code}: {reason}",
     "settings.language.refresh": "Refresh",
     "settings.language.open_folder": "Open dictionaries folder",
-    "settings.language.export": "Export sample",
-    "settings.language.exported": "Sample written: {path}",
+    "settings.language.export": "Save sample",
+    "settings.language.exported": "Sample saved: {path}",
     "settings.language.note":
-      "The program never overwrites a dictionary file: your edits and comments are preserved. Do not rename keys — they are a contract.",
+      "The program never changes the file: your edits and comments stay as they are. Press Refresh after editing. Do not rename lines — that is how the program finds the text.",
   },
 }

@@ -124,7 +124,7 @@ onMounted(() => {
           {{ t("settings.language.broken") }}
         </span>
         <span v-else-if="item.missing > 0" class="language__badge">
-          {{ t("settings.language.missing", { count: item.missing }) }}
+          {{ t("settings.language.missing") }}
         </span>
         <span v-else class="language__badge language__badge--ok">
           {{ t("settings.language.complete") }}
