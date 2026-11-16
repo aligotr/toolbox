@@ -17,15 +17,9 @@ import type { MenuItem } from "primevue/menuitem";
 import { computed, onMounted, ref } from "vue";
 import type { ToolDescriptor } from "@/contracts/tools";
 import { SINGLETON_TABS } from "@/core/constants";
+import { t } from "@/core/infra/i18n";
 import { activeProfile, loadProfiles, profiles, status } from "@/core/services/profiles";
 import { openSingleton, openTool, workspace } from "@/core/services/workspace/index";
-import {
-  COLLAPSE_TOOLTIP,
-  EXPAND_TOOLTIP,
-  PROFILE_FALLBACK,
-  PROFILE_MANAGE,
-  PROFILE_TOOLTIP,
-} from "./constants";
 import RailItem from "./RailItem.vue";
 import { openSettingsSection } from "./settings/navigation";
 import { useProfiles } from "./settings/useProfiles";
@@ -43,7 +37,7 @@ const activeTab = computed(
 );
 
 /** Подпись профиля: название из ядра, пока его нет — нейтральное слово. */
-const profileTitle = computed(() => activeProfile.value?.title ?? PROFILE_FALLBACK);
+const profileTitle = computed(() => activeProfile.value?.title ?? t("shell.profile.fallback"));
 
 /**
  * Пункты меню профиля.
@@ -61,7 +55,7 @@ const profileItems = computed<MenuItem[]>(() => {
 
   if (status.list.error) {
     items.push({
-      label: `Список профилей не прочитан: ${status.list.error}`,
+      label: t("shell.profile.listError", { reason: status.list.error }),
       icon: "pi pi-exclamation-triangle",
       disabled: true,
     });
@@ -70,7 +64,7 @@ const profileItems = computed<MenuItem[]>(() => {
   items.push(
     { separator: true },
     {
-      label: PROFILE_MANAGE,
+      label: t("shell.profile.manage"),
       icon: "pi pi-cog",
       command: () => {
         openSettingsSection("profiles");
@@ -112,16 +106,16 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
       <button
         class="sidebar__toggle"
         type="button"
-        :aria-label="collapsed ? EXPAND_TOOLTIP : COLLAPSE_TOOLTIP"
-        v-tooltip.bottom="collapsed ? EXPAND_TOOLTIP : COLLAPSE_TOOLTIP"
+        :aria-label="collapsed ? t('shell.sidebar.expand') : t('shell.sidebar.collapse')"
+        v-tooltip.bottom="collapsed ? t('shell.sidebar.expand') : t('shell.sidebar.collapse')"
         @click="emit('toggle')"
       >
         <i class="pi" :class="collapsed ? 'pi-angle-right' : 'pi-angle-left'" aria-hidden="true" />
       </button>
     </header>
 
-    <nav class="nav" aria-label="Инструменты">
-      <span v-if="!collapsed" class="nav__label">Инструменты</span>
+    <nav class="nav" :aria-label="t('shell.sidebar.tools')">
+      <span v-if="!collapsed" class="nav__label">{{ t("shell.sidebar.tools") }}</span>
 
       <RailItem
         v-for="tool in tools"
@@ -133,15 +127,17 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
         @click="openTool(tool)"
       />
 
-      <p v-if="!tools.length && !collapsed" class="nav__empty">Пока нет инструментов</p>
+      <p v-if="!tools.length && !collapsed" class="nav__empty">
+        {{ t("shell.sidebar.noTools") }}
+      </p>
     </nav>
 
-    <nav class="nav" aria-label="Приложение">
-      <span v-if="!collapsed" class="nav__label">Приложение</span>
+    <nav class="nav" :aria-label="t('shell.sidebar.app')">
+      <span v-if="!collapsed" class="nav__label">{{ t("shell.sidebar.app") }}</span>
 
       <RailItem
         :icon="SINGLETON_TABS.journal.icon"
-        :title="SINGLETON_TABS.journal.title"
+        :title="t(SINGLETON_TABS.journal.titleKey)"
         :collapsed="collapsed"
         :active="sectionIsActive('journal')"
         @click="openSingleton('journal')"
@@ -149,7 +145,7 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 
       <RailItem
         :icon="SINGLETON_TABS.settings.icon"
-        :title="SINGLETON_TABS.settings.title"
+        :title="t(SINGLETON_TABS.settings.titleKey)"
         :collapsed="collapsed"
         :active="sectionIsActive('settings')"
         @click="openSingleton('settings')"
@@ -160,8 +156,8 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
       <RailItem
         icon="pi pi-user"
         :title="profileTitle"
-        :label="`Профиль: ${profileTitle}`"
-        :tooltip="PROFILE_TOOLTIP"
+        :label="t('shell.profile.label', { title: profileTitle })"
+        :tooltip="t('shell.profile.tooltip')"
         :collapsed="collapsed"
         compact
         chevron

@@ -13,12 +13,7 @@
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import { computed } from "vue";
-import {
-  CLOSE_TAB_CANCEL,
-  CLOSE_TAB_DISCARD,
-  CLOSE_TAB_HEADER,
-  CLOSE_TAB_SAVE,
-} from "../constants";
+import { t } from "@/core/infra/i18n";
 
 const props = defineProps<{
   visible: boolean;
@@ -37,15 +32,12 @@ const emit = defineEmits<{
 /** Текст зависит от того, есть ли куда сохранять. */
 const message = computed(() => {
   if (props.templateTitle) {
-    return (
-      `Вкладка «${props.tabTitle}» отличается от шаблона «${props.templateTitle}». ` +
-      "Записать изменения в шаблон?"
-    );
+    return t("tabs.close.message", {
+      tab: props.tabTitle,
+      template: props.templateTitle,
+    });
   }
-  return (
-    `Шаблон вкладки «${props.tabTitle}» удалён — сохранять изменения некуда. ` +
-    "Вкладку можно закрыть без записи."
-  );
+  return t("tabs.close.missing", { tab: props.tabTitle });
 });
 
 function cancel(): void {
@@ -57,7 +49,7 @@ function cancel(): void {
   <Dialog
     :visible="visible"
     modal
-    :header="CLOSE_TAB_HEADER"
+    :header="t('tabs.close.header')"
     :style="{ width: '460px' }"
     @update:visible="emit('update:visible', $event)"
   >
@@ -69,14 +61,14 @@ function cancel(): void {
       <footer class="close-tab__actions">
         <Button
           type="button"
-          :label="CLOSE_TAB_CANCEL"
+          :label="t('tabs.close.cancel')"
           severity="secondary"
           text
           @click="cancel"
         />
         <Button
           type="button"
-          :label="CLOSE_TAB_DISCARD"
+          :label="t('tabs.close.discard')"
           severity="secondary"
           outlined
           :disabled="saving"
@@ -84,7 +76,7 @@ function cancel(): void {
         />
         <Button
           type="button"
-          :label="CLOSE_TAB_SAVE"
+          :label="t('tabs.close.save')"
           :loading="saving"
           :disabled="!templateTitle"
           @click="emit('save')"

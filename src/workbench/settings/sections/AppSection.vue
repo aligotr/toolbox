@@ -6,12 +6,13 @@
 
 import Button from "primevue/button";
 import { computed, onMounted } from "vue";
+import { t } from "@/core/infra/i18n";
 import { appInfo, loadAppInfo, openFolder, status } from "@/core/services/appInfo";
 
 const info = computed(() => appInfo.current);
 
 const buildMode = computed(() =>
-  info.value?.debug ? "отладочная (cargo run / tauri dev)" : "релизная",
+  info.value?.debug ? t("settings.app.debug") : t("settings.app.release"),
 );
 
 const profileLabel = computed(() => {
@@ -30,38 +31,35 @@ onMounted(() => {
 <template>
   <section class="app wb-section">
     <header class="wb-section__head">
-      <h2 class="wb-section__title">Программа</h2>
-      <p class="wb-section__lead">
-        Сведения о сборке и месте, где лежат настройки, лог и профили.
-        Всё состояние хранится рядом с исполняемым файлом.
-      </p>
+      <h2 class="wb-section__title">{{ t("settings.section.app") }}</h2>
+      <p class="wb-section__lead">{{ t("settings.app.lead") }}</p>
     </header>
 
     <p v-if="status.load.error" class="app__error">{{ status.load.error }}</p>
-    <p v-if="!appInfo.loaded" class="app__note">Сведения читаются…</p>
+    <p v-if="!appInfo.loaded" class="app__note">{{ t("settings.app.loading") }}</p>
 
     <dl v-else-if="info" class="app__facts">
       <div class="app__fact">
-        <dt>Версия</dt>
+        <dt>{{ t("settings.app.version") }}</dt>
         <dd>{{ info.version }}</dd>
       </div>
       <div class="app__fact">
-        <dt>Режим сборки</dt>
+        <dt>{{ t("settings.app.buildMode") }}</dt>
         <dd>{{ buildMode }}</dd>
       </div>
       <div class="app__fact">
-        <dt>Активный профиль</dt>
+        <dt>{{ t("settings.app.activeProfile") }}</dt>
         <dd>{{ profileLabel }}</dd>
       </div>
       <div class="app__fact">
-        <dt>Папка программы</dt>
+        <dt>{{ t("settings.app.root") }}</dt>
         <dd class="mono">{{ info.root }}</dd>
       </div>
     </dl>
 
     <div class="app__actions">
       <Button
-        label="Открыть папку программы"
+        :label="t('settings.app.openFolder')"
         icon="pi pi-folder-open"
         size="small"
         severity="secondary"

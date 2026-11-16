@@ -26,11 +26,7 @@ import type {
   WorkspaceFile,
   WorkspaceTab,
 } from "@/contracts/workspace";
-import {
-  EMPTY_TAB_ICON,
-  EMPTY_TAB_TITLE,
-  SINGLETON_TABS,
-} from "../../constants";
+import { EMPTY_TAB_ICON, SINGLETON_TABS } from "../../constants";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { describeError } from "../../infra/errors";
 import { isRecord } from "../../infra/guards";
@@ -117,7 +113,7 @@ export function openEmptyTab(): void {
   addTab({
     id: crypto.randomUUID(),
     kind: "workspace",
-    title: EMPTY_TAB_TITLE,
+    title: "",
     icon: EMPTY_TAB_ICON,
     columns: [],
   });
@@ -157,7 +153,7 @@ export function openSingleton(kind: SingletonKind): void {
   addTab({
     id: crypto.randomUUID(),
     kind,
-    title: meta.title,
+    title: "",
     icon: meta.icon,
     columns: [],
   });
@@ -263,7 +259,11 @@ export function restartTab(id: string): void {
   forgetFreshCells(id);
   markFreshCells(next.id, next.columns);
 
-  write(JOURNAL_CORE_SOURCE, "info", `вкладка «${next.title}» перезапущена`);
+  write(
+    JOURNAL_CORE_SOURCE,
+    "info",
+    `вкладка «${next.title || "новая вкладка"}» перезапущена`,
+  );
 }
 
 /** Гарантирует хотя бы одну вкладку — при первом показе оболочки. */
@@ -279,8 +279,9 @@ export function ensureWorkspace(): void {
  * Разбирает одну вкладку.
  *
  * `null` — вкладка испорчена так, что чинить нечего (нет идентификатора
- * или вида). Подписи одиночных вкладок берутся из реестра, а не из файла:
- * журнал и настройки называются одинаково в любой версии программы.
+ * или вида). Подписи одиночных вкладок и пустой вкладки не хранятся в файле:
+ * они берутся из словаря при показе, иначе после смены языка в полосе
+ * остался бы прежний язык.
  */
 function parseTab(value: unknown): WorkspaceTab | null {
   if (!isRecord(value)) return null;
@@ -293,8 +294,11 @@ function parseTab(value: unknown): WorkspaceTab | null {
     return singleTab(value.id, kind);
   }
 
+  const columns = parseColumns(value.columns);
+  // Старый файл хранил «Новая вкладка»: у пустой вкладки подпись больше
+  // не читается из файла, иначе она пережила бы смену языка.
   const title =
-    typeof value.title === "string" && value.title ? value.title : EMPTY_TAB_TITLE;
+    columns.length === 0 || typeof value.title !== "string" ? "" : value.title;
   const icon = typeof value.icon === "string" && value.icon ? value.icon : EMPTY_TAB_ICON;
 
   return {
@@ -302,7 +306,7 @@ function parseTab(value: unknown): WorkspaceTab | null {
     kind,
     title,
     icon,
-    columns: parseColumns(value.columns),
+    columns,
   };
 }
 
@@ -312,7 +316,7 @@ function singleTab(id: string, kind: SingletonKind): WorkspaceTab {
   return {
     id,
     kind,
-    title: meta.title,
+    title: "",
     icon: meta.icon,
     columns: [],
   };

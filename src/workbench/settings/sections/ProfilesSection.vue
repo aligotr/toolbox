@@ -9,6 +9,7 @@ import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import { onMounted, ref } from "vue";
 import type { Profile } from "@/contracts/profiles";
+import { t } from "@/core/infra/i18n";
 import {
   createProfile,
   loadProfiles,
@@ -65,16 +66,13 @@ onMounted(() => {
   <section class="profiles wb-section">
     <header class="profiles__head">
       <div class="wb-section__head">
-        <h2 class="wb-section__title">Профили</h2>
-        <p class="wb-section__lead">
-          Профиль — отдельная папка с шаблонами и данными инструментов.
-          Переключение перезапускает приложение.
-        </p>
+        <h2 class="wb-section__title">{{ t("settings.section.profiles") }}</h2>
+        <p class="wb-section__lead">{{ t("settings.profiles.lead") }}</p>
       </div>
 
       <Button
         v-if="!creating"
-        label="Создать профиль"
+        :label="t('settings.profiles.create')"
         icon="pi pi-plus"
         size="small"
         severity="secondary"
@@ -86,19 +84,19 @@ onMounted(() => {
     <form v-if="creating" class="profiles__form" @submit.prevent="submitCreate">
       <InputText
         v-model="newTitle"
-        placeholder="Название профиля"
-        aria-label="Название нового профиля"
+        :placeholder="t('settings.profiles.titlePlaceholder')"
+        :aria-label="t('settings.profiles.titleAria')"
       />
       <Button
         type="submit"
-        label="Создать"
+        :label="t('settings.profiles.submit')"
         size="small"
         :loading="status.create.loading"
         :disabled="!newTitle.trim()"
       />
       <Button
         type="button"
-        label="Отмена"
+        :label="t('settings.profiles.cancel')"
         size="small"
         severity="secondary"
         text
@@ -107,9 +105,11 @@ onMounted(() => {
     </form>
     <p v-if="status.create.error" class="profiles__error">{{ status.create.error }}</p>
 
-    <p v-if="!profiles.loaded" class="profiles__note">Список профилей читается…</p>
+    <p v-if="!profiles.loaded" class="profiles__note">
+      {{ t("settings.profiles.loading") }}
+    </p>
     <p v-else-if="!profiles.items.length" class="profiles__note">
-      Профилей нет. Создайте первый — приложение работает только внутри профиля.
+      {{ t("settings.profiles.empty") }}
     </p>
 
     <ul v-else class="profiles__list">
@@ -123,7 +123,7 @@ onMounted(() => {
           <div class="profile-row__title-line">
             <strong class="profile-row__name">{{ profile.title }}</strong>
             <span v-if="profile.id === profiles.active" class="profile-row__badge">
-              активный
+              {{ t("settings.profiles.active") }}
             </span>
           </div>
           <span class="profile-row__meta">
@@ -141,18 +141,18 @@ onMounted(() => {
         >
           <InputText
             v-model="renameTitle"
-            :aria-label="`Новое название профиля «${profile.title}»`"
+            :aria-label="t('settings.profiles.renameAria', { title: profile.title })"
           />
           <Button
             type="submit"
-            label="Сохранить"
+            :label="t('settings.profiles.save')"
             size="small"
             :loading="status.rename.loading"
             :disabled="!renameTitle.trim()"
           />
           <Button
             type="button"
-            label="Отмена"
+            :label="t('settings.profiles.cancel')"
             size="small"
             severity="secondary"
             text
@@ -163,7 +163,7 @@ onMounted(() => {
         <div v-else class="profile-row__actions">
           <Button
             v-if="profile.id !== profiles.active"
-            label="Переключить"
+            :label="t('settings.profiles.switch')"
             size="small"
             severity="secondary"
             outlined
@@ -171,7 +171,7 @@ onMounted(() => {
             @click="requestSwitch(profile)"
           />
           <Button
-            label="Переименовать"
+            :label="t('settings.profiles.rename')"
             size="small"
             severity="secondary"
             text
@@ -180,7 +180,7 @@ onMounted(() => {
           />
           <Button
             v-if="profile.id !== profiles.active"
-            label="Удалить"
+            :label="t('settings.profiles.delete')"
             size="small"
             severity="danger"
             text

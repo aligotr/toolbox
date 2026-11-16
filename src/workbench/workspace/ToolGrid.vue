@@ -10,6 +10,7 @@
 import { computed, type Component } from "vue";
 import type { ToolDescriptor } from "@/contracts/tools";
 import type { TabColumn } from "@/contracts/workspace";
+import { t } from "@/core/infra/i18n";
 import { cellKey } from "@/core/services/workspace/index";
 
 const props = defineProps<{
@@ -46,7 +47,7 @@ function findTool(id: string): ToolDescriptor<Component> | undefined {
         />
         <div v-else class="grid__unknown">
           <i class="pi pi-question-circle" aria-hidden="true" />
-          <span>Инструмент не найден: <code>{{ toolId }}</code></span>
+          <span>{{ t("workspace.grid.unknown") }} <code>{{ toolId }}</code></span>
         </div>
       </div>
     </section>

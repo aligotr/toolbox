@@ -52,5 +52,228 @@
     "settings.language.exported": "Sample saved: {path}",
     "settings.language.note":
       "The program never changes the file: your edits and comments stay as they are.\nPress Refresh after editing.\nDo not rename lines — that is how the program finds the text.",
+
+    // ── Shell ─────────────────────────────────────────────────────────────
+    "shell.sidebar.tools": "Tools",
+    "shell.sidebar.app": "Application",
+    "shell.sidebar.noTools": "No tools yet",
+    "shell.sidebar.collapse": "Collapse panel (Ctrl+B)",
+    "shell.sidebar.expand": "Expand panel (Ctrl+B)",
+    "shell.profile.fallback": "Profile",
+    "shell.profile.label": "Profile: {title}",
+    "shell.profile.tooltip": "Profile: list and management",
+    "shell.profile.manage": "Manage profiles",
+    "shell.profile.listError": "Profile list cannot be read: {reason}",
+
+    // ── Tab strip ─────────────────────────────────────────────────────────
+    "tab.journal.title": "Journal",
+    "tab.settings.title": "Settings",
+    "tab.empty.title": "New tab",
+    "tabs.strip.label": "Tabs",
+    "tabs.tab.menu": "Tab actions",
+    "tabs.tab.menuTitle": "Actions for tab “{title}”",
+    "tabs.tab.close": "Close tab",
+    "tabs.tab.closeTitle": "Close tab “{title}”",
+    "tabs.tab.dirtyHint": "There are changes that are not in the template",
+    "tabs.tab.updateHint": "Template updated — you can apply it",
+    "tabs.menu.updateTemplate": "Update “{title}”",
+    "tabs.menu.applyUpdate": "Template updated — apply",
+    "tabs.menu.saveTemplate": "Save as template",
+    "tabs.menu.saveNewTemplate": "Save as new",
+    "tabs.menu.saveEmpty": "There is nothing to save in an empty tab",
+    "tabs.menu.renameTemplate": "Rename template",
+    "tabs.menu.detachTemplate": "Detach",
+    "tabs.menu.restart": "Restart tab",
+    "tabs.restart.header": "Restart the tab?",
+    "tabs.restart.loss": "Unsaved rows and results will be lost.",
+    "tabs.restart.keep": "The layout and template will stay.",
+    "tabs.restart.presetOne": "Preset “{title}” will load.",
+    "tabs.restart.presets": "Presets will load: {titles}.",
+    "tabs.restart.accept": "Restart",
+    "tabs.restart.reject": "Cancel",
+    "tabs.apply.header": "Apply the template update",
+    "tabs.apply.message":
+      "The layout of tab “{tab}” has changed. Applying template “{template}” will replace it — local changes will be lost.",
+    "tabs.apply.accept": "Apply",
+    "tabs.apply.reject": "Cancel",
+    "tabs.close.header": "Close the tab?",
+    "tabs.close.message":
+      "Tab “{tab}” differs from template “{template}”. Write the changes to the template?",
+    "tabs.close.missing":
+      "The template of tab “{tab}” has been deleted, so there is nowhere to save the changes. The tab can be closed without saving.",
+    "tabs.close.save": "Save",
+    "tabs.close.discard": "Do not save",
+    "tabs.close.cancel": "Cancel",
+    "tabs.title.create": "Save template",
+    "tabs.title.createNote":
+      "Only columns, tools and their widths go into the template. Entered values and query results are not saved.",
+    "tabs.title.createSubmit": "Save",
+    "tabs.title.rename": "Rename template",
+    "tabs.title.renameNote": "The template file stays where it is: only the name changes.",
+    "tabs.title.renameSubmit": "Rename",
+    "tabs.title.field": "Name",
+    "tabs.title.placeholder": "Template name",
+    "tabs.title.cancel": "Cancel",
+
+    // ── Empty tab ─────────────────────────────────────────────────────────
+    "workspace.empty.title": "Start from a template",
+    "workspace.empty.lead":
+      "Pick a ready-made workspace or add a tool — it will open in a new tab.",
+    "workspace.empty.templates": "Tab templates",
+    "workspace.empty.templatesError": "Templates cannot be read: {reason}",
+    "workspace.empty.templatesNone":
+      "There are no saved templates. Build a tab and choose “Save as template” in its menu.",
+    "workspace.empty.tools": "Tools",
+    "workspace.empty.toolsNone": "No tools are registered yet.",
+    "workspace.empty.coreOn": "Core is running",
+    "workspace.empty.coreOff": "No connection to the core",
+    "workspace.grid.unknown": "Tool not found:",
+
+    // ── Journal ───────────────────────────────────────────────────────────
+    "journal.view.title": "Journal",
+    "journal.view.lead": "What the program did: facts, results and errors.",
+    "journal.view.filter": "Filter by entry kind",
+    "journal.view.clear": "Clear",
+    "journal.view.emptyFiltered": "No entries of the selected kind.",
+    "journal.view.empty": "No entries yet.",
+    "journal.filter.info": "Fact",
+    "journal.filter.result": "Result",
+    "journal.filter.error": "Error",
+    "journal.kind.info": "fact",
+    "journal.kind.result": "result",
+    "journal.kind.error": "error",
+
+    // ── Counts ────────────────────────────────────────────────────────────
+    "count.tools": { "one": "{count} tool", "other": "{count} tools" },
+    "count.templates": { "one": "{count} template", "other": "{count} templates" },
+    "count.presets": { "one": "{count} preset", "other": "{count} presets" },
+    "count.files": { "one": "{count} file", "other": "{count} files" },
+
+    // ── Settings: log ─────────────────────────────────────────────────────
+    "settings.log.lead":
+      "The log file answers one question: why the program or a feature did not work. The level changes without a restart. Tool activity goes to the interface journal, not here.",
+    "settings.log.level": "Recording level",
+    "settings.log.level.error": "Errors",
+    "settings.log.level.errorHint": "only what stopped a feature from working",
+    "settings.log.level.warn": "Warnings",
+    "settings.log.level.warnHint": "errors and suspicious places",
+    "settings.log.level.info": "Normal",
+    "settings.log.level.infoHint": "startup and key actions",
+    "settings.log.level.debug": "Verbose",
+    "settings.log.level.debugHint": "everything needed to investigate a failure",
+    "settings.log.currentFile": "Current file",
+    "settings.log.notStarted": "The log is not running.",
+    "settings.log.folder": "Logs folder",
+    "settings.log.folderUnknown": "The folder is unknown.",
+    "settings.log.openFolder": "Open logs folder",
+    "settings.log.prune": "Clear old logs",
+    "settings.log.pruneOlder": {
+      "one": "Clear logs older than {count} day",
+      "other": "Clear logs older than {count} days",
+    },
+    "settings.log.pruneHeader": "Clear logs",
+    "settings.log.pruneMessage": {
+      "one": "Log files older than {count} day will be deleted. Recent entries will stay: they are still useful for investigating problems.",
+      "other": "Log files older than {count} days will be deleted. Recent entries will stay: they are still useful for investigating problems.",
+    },
+    "settings.log.pruneAccept": "Clear",
+    "settings.log.pruneReject": "Cancel",
+    "settings.log.pruned": "Files deleted: {count}. Recent entries are still here.",
+
+    // ── Settings: window ──────────────────────────────────────────────────
+    "settings.window.lead":
+      "Size and position are remembered between launches. If the window ends up off screen, reset returns it to the monitor working area.",
+    "settings.window.systemPosition": "the system chooses the position",
+    "settings.window.maximized": "maximized",
+    "settings.window.normal": "normal",
+    "settings.window.size": "Current size",
+    "settings.window.position": "Position",
+    "settings.window.state": "State",
+    "settings.window.reset": "Reset size and position",
+    "settings.window.resetHeader": "Reset window",
+    "settings.window.resetMessage":
+      "The window size and position will return to their defaults. The tab contents will not change.",
+    "settings.window.resetAccept": "Reset",
+    "settings.window.resetReject": "Cancel",
+
+    // ── Settings: program ─────────────────────────────────────────────────
+    "settings.app.lead":
+      "Build details and the place where settings, the log and profiles live. All state is stored next to the executable.",
+    "settings.app.debug": "debug (cargo run / tauri dev)",
+    "settings.app.release": "release",
+    "settings.app.version": "Version",
+    "settings.app.buildMode": "Build mode",
+    "settings.app.activeProfile": "Active profile",
+    "settings.app.root": "Program folder",
+    "settings.app.openFolder": "Open program folder",
+    "settings.app.loading": "Reading details…",
+
+    // ── Settings: data ────────────────────────────────────────────────────
+    "settings.data.lead":
+      "Logs, templates and tool data of the active profile. Deleting tool data moves the folder to the trash: the files can be restored until the trash is emptied.",
+    "settings.data.clearHeader": "Delete data",
+    "settings.data.clearMessage":
+      "Tool data for “{tool}” will be moved to local/trash/data. The folder can be restored until the trash is emptied.",
+    "settings.data.clearAccept": "Delete",
+    "settings.data.clearReject": "Cancel",
+    "settings.data.loading": "Reading sizes…",
+    "settings.data.logs": "Logs",
+    "settings.data.templates": "Templates",
+    "settings.data.tools": "Tool data",
+    "settings.data.empty": "No data: no tool has saved files to the profile yet.",
+    "settings.data.clearTool": "Delete data",
+
+    // ── Settings: profiles ────────────────────────────────────────────────
+    "settings.profiles.lead":
+      "A profile is a separate folder with templates and tool data. Switching restarts the program.",
+    "settings.profiles.create": "Create profile",
+    "settings.profiles.titlePlaceholder": "Profile name",
+    "settings.profiles.titleAria": "New profile name",
+    "settings.profiles.submit": "Create",
+    "settings.profiles.cancel": "Cancel",
+    "settings.profiles.loading": "Reading the profile list…",
+    "settings.profiles.empty":
+      "There are no profiles. Create the first one — the program only works inside a profile.",
+    "settings.profiles.active": "active",
+    "settings.profiles.renameAria": "New name for profile “{title}”",
+    "settings.profiles.save": "Save",
+    "settings.profiles.switch": "Switch",
+    "settings.profiles.rename": "Rename",
+    "settings.profiles.delete": "Delete",
+    "settings.profiles.switchHeader": "Switch profile",
+    "settings.profiles.switchMessage": "Open profile “{title}”? The program will restart.",
+    "settings.profiles.switchAccept": "Switch",
+    "settings.profiles.switchReject": "Cancel",
+    "settings.profiles.deleteHeader": "Delete profile",
+    "settings.profiles.deleteMessage":
+      "Profile “{title}” will be moved to local/trash. The data can be restored until the trash is emptied.",
+    "settings.profiles.deleteAccept": "Delete",
+    "settings.profiles.deleteReject": "Cancel",
+
+    // ── Settings: templates ───────────────────────────────────────────────
+    "settings.templates.lead":
+      "A template stores a tab layout: columns, tools and their widths. Entered values and results are not saved.",
+    "settings.templates.listError": "Templates cannot be read: {reason}",
+    "settings.templates.loading": "Reading the template list…",
+    "settings.templates.empty":
+      "There are no templates yet. Build a tab and choose “Save as template” in the tab menu.",
+    "settings.templates.renameAria": "New name for template “{title}”",
+    "settings.templates.save": "Save",
+    "settings.templates.cancel": "Cancel",
+    "settings.templates.open": "Open",
+    "settings.templates.rename": "Rename",
+    "settings.templates.duplicate": "Duplicate",
+    "settings.templates.delete": "Delete",
+    "settings.templates.deleteHeader": "Delete template",
+    "settings.templates.deleteMessage":
+      "Template “{title}” will be moved to local/trash/templates. The file can be restored until the trash is emptied.",
+    "settings.templates.deleteAccept": "Delete",
+    "settings.templates.deleteReject": "Cancel",
+
+    // ── Size units ────────────────────────────────────────────────────────
+    "units.bytes": "B",
+    "units.kilobytes": "KB",
+    "units.megabytes": "MB",
+    "units.gigabytes": "GB",
   },
 }

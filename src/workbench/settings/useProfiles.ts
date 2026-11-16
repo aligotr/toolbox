@@ -7,6 +7,7 @@
 import { useConfirm } from "primevue/useconfirm";
 import type { Profile } from "@/contracts/profiles";
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
+import { t } from "@/core/infra/i18n";
 import { deleteProfile, switchProfile } from "@/core/services/profiles";
 
 export function useProfiles() {
@@ -15,10 +16,10 @@ export function useProfiles() {
   /** Переключение с предупреждением о перезапуске. */
   function requestSwitch(profile: Profile): void {
     confirm.require({
-      header: "Переключение профиля",
-      message: `Открыть профиль «${profile.title}»? Приложение перезапустится.`,
-      acceptLabel: "Переключить",
-      rejectLabel: "Отмена",
+      header: t("settings.profiles.switchHeader"),
+      message: t("settings.profiles.switchMessage", { title: profile.title }),
+      acceptLabel: t("settings.profiles.switchAccept"),
+      rejectLabel: t("settings.profiles.switchReject"),
       rejectProps: CONFIRM_CALM_REJECT,
       accept: () => void switchProfile(profile.id),
     });
@@ -27,12 +28,10 @@ export function useProfiles() {
   /** Удаление в корзину: данные возвращаемы, пока корзину не почистили. */
   function requestDelete(profile: Profile): void {
     confirm.require({
-      header: "Удаление профиля",
-      message:
-        `Профиль «${profile.title}» будет перемещён в local/trash. ` +
-        "Данные можно вернуть, пока корзину не почистили.",
-      acceptLabel: "Удалить",
-      rejectLabel: "Отмена",
+      header: t("settings.profiles.deleteHeader"),
+      message: t("settings.profiles.deleteMessage", { title: profile.title }),
+      acceptLabel: t("settings.profiles.deleteAccept"),
+      rejectLabel: t("settings.profiles.deleteReject"),
       acceptProps: CONFIRM_DANGER_ACCEPT,
       rejectProps: CONFIRM_CALM_REJECT,
       accept: () => void deleteProfile(profile),

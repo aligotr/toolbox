@@ -12,6 +12,7 @@ import { computed, onMounted } from "vue";
 import type { ToolStats } from "@/contracts/data";
 import type { ToolDescriptor } from "@/contracts/tools";
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
+import { t } from "@/core/infra/i18n";
 import { clearToolData, loadStorageStats, status, storageStats } from "@/core/services/data";
 import { loadProfiles } from "@/core/services/profiles";
 import { filesLabel } from "../../plural";
@@ -37,12 +38,10 @@ function titleOf(id: string): string {
 
 function requestClear(tool: ToolStats): void {
   confirm.require({
-    header: "Удаление данных",
-    message:
-      `Данные инструмента «${titleOf(tool.id)}» будут перемещены в ` +
-      "local/trash/data. Папку можно вернуть, пока корзину не почистили.",
-    acceptLabel: "Удалить",
-    rejectLabel: "Отмена",
+    header: t("settings.data.clearHeader"),
+    message: t("settings.data.clearMessage", { tool: titleOf(tool.id) }),
+    acceptLabel: t("settings.data.clearAccept"),
+    rejectLabel: t("settings.data.clearReject"),
     acceptProps: CONFIRM_DANGER_ACCEPT,
     rejectProps: CONFIRM_CALM_REJECT,
     accept: async () => {
@@ -63,27 +62,23 @@ onMounted(() => {
 <template>
   <section class="data wb-section">
     <header class="wb-section__head">
-      <h2 class="wb-section__title">Данные</h2>
-      <p class="wb-section__lead">
-        Логи, шаблоны и данные инструментов активного профиля. Удаление данных
-        инструмента переносит папку в корзину: файлы можно вернуть, пока её
-        не почистили.
-      </p>
+      <h2 class="wb-section__title">{{ t("settings.section.data") }}</h2>
+      <p class="wb-section__lead">{{ t("settings.data.lead") }}</p>
     </header>
 
     <p v-if="status.load.error" class="data__error">{{ status.load.error }}</p>
-    <p v-if="!storageStats.loaded" class="data__note">Размеры читаются…</p>
+    <p v-if="!storageStats.loaded" class="data__note">{{ t("settings.data.loading") }}</p>
 
     <template v-else>
       <dl class="data__summary">
         <div class="data__summary-row">
-          <dt>Логи</dt>
+          <dt>{{ t("settings.data.logs") }}</dt>
           <dd v-if="logs">
             {{ filesLabel(logs.files) }} · {{ formatBytes(logs.bytes) }}
           </dd>
         </div>
         <div class="data__summary-row">
-          <dt>Шаблоны</dt>
+          <dt>{{ t("settings.data.templates") }}</dt>
           <dd v-if="templates">
             {{ filesLabel(templates.files) }} · {{ formatBytes(templates.bytes) }}
           </dd>
@@ -91,10 +86,10 @@ onMounted(() => {
       </dl>
 
       <div class="data__tools">
-        <h3 class="data__subtitle">Данные инструментов</h3>
+        <h3 class="data__subtitle">{{ t("settings.data.tools") }}</h3>
 
         <p v-if="!toolData.length" class="data__note">
-          Данных нет: пока ни один инструмент не сохранил файлы в профиль.
+          {{ t("settings.data.empty") }}
         </p>
 
         <ul v-else class="data__list">
@@ -108,7 +103,7 @@ onMounted(() => {
             </div>
 
             <Button
-              label="Удалить данные"
+              :label="t('settings.data.clearTool')"
               size="small"
               severity="danger"
               text

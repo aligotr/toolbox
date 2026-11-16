@@ -15,6 +15,7 @@
 import type { Template } from "@/core/services/templates";
 import type { ToolDescriptor } from "@/contracts/tools";
 import type { StartupStatus } from "@/core/services/startup";
+import { t } from "@/core/infra/i18n";
 import { applyTemplate, openTemplate, openTool, workspace } from "@/core/services/workspace/index";
 import { templates, status as templateStatus } from "@/core/services/templates/index";
 import { toolsLabel } from "../plural";
@@ -37,18 +38,15 @@ function useTemplate(template: Template): void {
 <template>
   <section class="empty">
     <header class="wb-screen__head">
-      <h1 class="wb-screen__title">Начать с шаблона</h1>
-      <p class="wb-screen__lead">
-        Выберите заготовку рабочего места или добавьте инструмент — он откроется
-        в новой вкладке.
-      </p>
+      <h1 class="wb-screen__title">{{ t("workspace.empty.title") }}</h1>
+      <p class="wb-screen__lead">{{ t("workspace.empty.lead") }}</p>
     </header>
 
     <section class="wb-section">
-      <h2 class="wb-section__title">Шаблоны вкладок</h2>
+      <h2 class="wb-section__title">{{ t("workspace.empty.templates") }}</h2>
 
       <p v-if="templateStatus.list.error" class="empty__note empty__note--error">
-        Шаблоны не прочитаны: {{ templateStatus.list.error }}
+        {{ t("workspace.empty.templatesError", { reason: templateStatus.list.error }) }}
       </p>
 
       <div v-else-if="templates.items.length" class="empty__templates">
@@ -81,13 +79,12 @@ function useTemplate(template: Template): void {
       </div>
 
       <p v-else class="empty__note">
-        Сохранённых шаблонов нет. Соберите вкладку и выберите «Сохранить как
-        шаблон» в её меню.
+        {{ t("workspace.empty.templatesNone") }}
       </p>
     </section>
 
     <section class="wb-section">
-      <h2 class="wb-section__title">Инструменты</h2>
+      <h2 class="wb-section__title">{{ t("workspace.empty.tools") }}</h2>
 
       <div v-if="tools.length" class="empty__tools">
         <button
@@ -107,12 +104,12 @@ function useTemplate(template: Template): void {
         </button>
       </div>
 
-      <p v-else class="empty__note">Инструменты ещё не зарегистрированы.</p>
+      <p v-else class="empty__note">{{ t("workspace.empty.toolsNone") }}</p>
     </section>
 
     <footer class="empty__status">
       <span class="status__dot" :class="{ 'status__dot--off': !startup }" aria-hidden="true" />
-      <span>{{ startup ? "Ядро запущено" : "Нет связи с ядром" }}</span>
+      <span>{{ startup ? t("workspace.empty.coreOn") : t("workspace.empty.coreOff") }}</span>
       <span v-if="startup" class="status__path">{{ startup.root }}</span>
     </footer>
   </section>

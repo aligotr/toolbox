@@ -12,6 +12,7 @@ import Button from "primevue/button";
 import DataView from "primevue/dataview";
 import SelectButton from "primevue/selectbutton";
 import { computed, ref } from "vue";
+import { t } from "@/core/infra/i18n";
 import { clearJournal, journal, type JournalKind } from "@/core/infra/journal";
 
 /** Один вариант фильтра. */
@@ -20,19 +21,22 @@ interface KindOption {
   value: JournalKind;
 }
 
-/** Три переключателя видов: по умолчанию включены все. */
-const KIND_OPTIONS: KindOption[] = [
-  { label: "Факт", value: "info" },
-  { label: "Ответ", value: "result" },
-  { label: "Ошибка", value: "error" },
-];
+/** Все виды записей: по умолчанию включены. */
+const ALL_KINDS: JournalKind[] = ["info", "result", "error"];
+
+/** Три переключателя видов; подписи читаются из словаря при показе. */
+const kindOptions = computed<KindOption[]>(() => [
+  { label: t("journal.filter.info"), value: "info" },
+  { label: t("journal.filter.result"), value: "result" },
+  { label: t("journal.filter.error"), value: "error" },
+]);
 
 /** Вид записи человеческим словом. */
-const KIND_LABELS: Record<JournalKind, string> = {
-  info: "факт",
-  result: "ответ",
-  error: "ошибка",
-};
+const kindLabels = computed<Record<JournalKind, string>>(() => ({
+  info: t("journal.kind.info"),
+  result: t("journal.kind.result"),
+  error: t("journal.kind.error"),
+}));
 
 /** Вид записи — только цвет точки: ошибка красная, ответ зелёный, факт серый. */
 const KIND_TONE: Record<JournalKind, "muted" | "ok" | "danger"> = {
@@ -41,7 +45,7 @@ const KIND_TONE: Record<JournalKind, "muted" | "ok" | "danger"> = {
   error: "danger",
 };
 
-const selectedKinds = ref<JournalKind[]>(KIND_OPTIONS.map((option) => option.value));
+const selectedKinds = ref<JournalKind[]>([...ALL_KINDS]);
 
 const entries = computed(() => journal.entries);
 
@@ -59,22 +63,22 @@ function time(at: number): string {
   <section class="journal wb-section">
     <header class="journal__head">
       <div class="wb-screen__head">
-        <h1 class="wb-screen__title">Журнал</h1>
-        <p class="wb-screen__lead">Что делала программа: факты, ответы и ошибки.</p>
+        <h1 class="wb-screen__title">{{ t("journal.view.title") }}</h1>
+        <p class="wb-screen__lead">{{ t("journal.view.lead") }}</p>
       </div>
 
       <div class="journal__actions">
         <SelectButton
           v-model="selectedKinds"
-          :options="KIND_OPTIONS"
+          :options="kindOptions"
           option-label="label"
           option-value="value"
           multiple
           size="small"
-          aria-label="Фильтр по виду записи"
+          :aria-label="t('journal.view.filter')"
         />
         <Button
-          label="Очистить"
+          :label="t('journal.view.clear')"
           icon="pi pi-trash"
           text
           size="small"
@@ -91,7 +95,7 @@ function time(at: number): string {
             <time class="journal__time">{{ time(entry.at) }}</time>
             <span class="journal__kind">
               <i class="journal__dot" :class="`journal__dot--${KIND_TONE[entry.kind]}`" />
-              {{ KIND_LABELS[entry.kind] }}
+              {{ kindLabels[entry.kind] }}
             </span>
             <span class="journal__source">{{ entry.source }}</span>
             <span class="journal__text">{{ entry.text }}</span>
@@ -101,7 +105,7 @@ function time(at: number): string {
 
       <template #empty>
         <p class="journal__empty">
-          {{ entries.length ? "Нет записей выбранного вида." : "Записей пока нет." }}
+          {{ entries.length ? t("journal.view.emptyFiltered") : t("journal.view.empty") }}
         </p>
       </template>
     </DataView>

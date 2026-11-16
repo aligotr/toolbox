@@ -14,6 +14,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { onMounted } from "vue";
 import type { Template } from "@/core/services/templates";
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
+import { t } from "@/core/infra/i18n";
 import {
   deleteTemplate,
   duplicateTemplate,
@@ -44,12 +45,10 @@ function toolCount(template: Template): number {
 
 function requestDelete(template: Template): void {
   confirm.require({
-    header: "Удаление шаблона",
-    message:
-      `Шаблон «${template.title}» будет перемещён в local/trash/templates. ` +
-      "Файл можно вернуть, пока корзину не почистили.",
-    acceptLabel: "Удалить",
-    rejectLabel: "Отмена",
+    header: t("settings.templates.deleteHeader"),
+    message: t("settings.templates.deleteMessage", { title: template.title }),
+    acceptLabel: t("settings.templates.deleteAccept"),
+    rejectLabel: t("settings.templates.deleteReject"),
     acceptProps: CONFIRM_DANGER_ACCEPT,
     rejectProps: CONFIRM_CALM_REJECT,
     accept: () => void deleteTemplate(template),
@@ -64,21 +63,19 @@ onMounted(() => {
 <template>
   <section class="templates wb-section">
     <div class="wb-section__head">
-      <h2 class="wb-section__title">Шаблоны</h2>
-      <p class="wb-section__lead">
-        Шаблон хранит раскладку вкладки: колонки, инструменты и их ширины.
-        Введённые значения и результаты не сохраняются.
-      </p>
+      <h2 class="wb-section__title">{{ t("settings.section.templates") }}</h2>
+      <p class="wb-section__lead">{{ t("settings.templates.lead") }}</p>
     </div>
 
     <p v-if="status.list.error" class="templates__error">
-      Шаблоны не прочитаны: {{ status.list.error }}
+      {{ t("settings.templates.listError", { reason: status.list.error }) }}
     </p>
 
-    <p v-if="!templates.loaded" class="templates__note">Список шаблонов читается…</p>
+    <p v-if="!templates.loaded" class="templates__note">
+      {{ t("settings.templates.loading") }}
+    </p>
     <p v-else-if="!templates.items.length" class="templates__note">
-      Шаблонов пока нет. Соберите вкладку и выберите «Сохранить как шаблон»
-      в меню вкладки.
+      {{ t("settings.templates.empty") }}
     </p>
 
     <ul v-else class="templates__list">
@@ -99,18 +96,18 @@ onMounted(() => {
           <InputText
             v-model="renameTitle"
             :maxlength="TEMPLATE_TITLE_MAX_LENGTH"
-            :aria-label="`Новое название шаблона «${template.title}»`"
+            :aria-label="t('settings.templates.renameAria', { title: template.title })"
           />
           <Button
             type="submit"
-            label="Сохранить"
+            :label="t('settings.templates.save')"
             size="small"
             :loading="status.rename.loading"
             :disabled="!renameTitle.trim()"
           />
           <Button
             type="button"
-            label="Отмена"
+            :label="t('settings.templates.cancel')"
             size="small"
             severity="secondary"
             text
@@ -120,14 +117,14 @@ onMounted(() => {
 
         <div v-else class="template-row__actions">
           <Button
-            label="Открыть"
+            :label="t('settings.templates.open')"
             size="small"
             severity="secondary"
             outlined
             @click="openTemplate(template)"
           />
           <Button
-            label="Переименовать"
+            :label="t('settings.templates.rename')"
             size="small"
             severity="secondary"
             text
@@ -135,7 +132,7 @@ onMounted(() => {
             @click="startRename(template)"
           />
           <Button
-            label="Дублировать"
+            :label="t('settings.templates.duplicate')"
             size="small"
             severity="secondary"
             text
@@ -143,7 +140,7 @@ onMounted(() => {
             @click="duplicateTemplate(template.id)"
           />
           <Button
-            label="Удалить"
+            :label="t('settings.templates.delete')"
             size="small"
             severity="danger"
             text

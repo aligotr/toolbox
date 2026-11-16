@@ -45,11 +45,15 @@ export function pluralCategories(locale: string): PluralCategory[] {
 }
 
 /** Число по правилам локали; битый тег откатывается на русский. */
-export function formatNumber(locale: string, value: number): string {
+export function formatNumber(
+  locale: string,
+  value: number,
+  options?: Intl.NumberFormatOptions,
+): string {
   try {
-    return new Intl.NumberFormat(locale).format(value);
+    return new Intl.NumberFormat(locale, options).format(value);
   } catch {
-    return new Intl.NumberFormat(FALLBACK_LOCALE).format(value);
+    return new Intl.NumberFormat(FALLBACK_LOCALE, options).format(value);
   }
 }
 

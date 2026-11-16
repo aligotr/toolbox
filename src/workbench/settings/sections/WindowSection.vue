@@ -9,6 +9,7 @@ import Button from "primevue/button";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted } from "vue";
 import { CONFIRM_CALM_REJECT } from "@/core/constants";
+import { t } from "@/core/infra/i18n";
 import { loadSettings, resetWindow, settings, status } from "@/core/services/settings/index";
 
 const confirm = useConfirm();
@@ -24,23 +25,21 @@ const size = computed(() =>
 const position = computed(() => {
   const window = geometry.value;
   if (!window || window.x === null || window.y === null) {
-    return "положение выбирает система";
+    return t("settings.window.systemPosition");
   }
   return `${window.x}, ${window.y}`;
 });
 
 const mode = computed(() =>
-  geometry.value?.maximized ? "развёрнуто на весь экран" : "обычное",
+  geometry.value?.maximized ? t("settings.window.maximized") : t("settings.window.normal"),
 );
 
 function requestReset(): void {
   confirm.require({
-    header: "Сброс окна",
-    message:
-      "Размер и положение окна вернутся к значениям по умолчанию. " +
-      "Содержимое вкладок не изменится.",
-    acceptLabel: "Сбросить",
-    rejectLabel: "Отмена",
+    header: t("settings.window.resetHeader"),
+    message: t("settings.window.resetMessage"),
+    acceptLabel: t("settings.window.resetAccept"),
+    rejectLabel: t("settings.window.resetReject"),
     rejectProps: CONFIRM_CALM_REJECT,
     accept: () => void resetWindow(),
   });
@@ -54,31 +53,28 @@ onMounted(() => {
 <template>
   <section class="window wb-section">
     <header class="wb-section__head">
-      <h2 class="wb-section__title">Окно</h2>
-      <p class="wb-section__lead">
-        Размер и положение запоминаются между запусками. Если окно оказалось
-        за краем экрана, сброс вернёт его в пределы рабочей области монитора.
-      </p>
+      <h2 class="wb-section__title">{{ t("settings.section.window") }}</h2>
+      <p class="wb-section__lead">{{ t("settings.window.lead") }}</p>
     </header>
 
     <dl class="window__facts">
       <div class="window__fact">
-        <dt>Текущий размер</dt>
+        <dt>{{ t("settings.window.size") }}</dt>
         <dd class="mono">{{ size }}</dd>
       </div>
       <div class="window__fact">
-        <dt>Положение</dt>
+        <dt>{{ t("settings.window.position") }}</dt>
         <dd class="mono">{{ position }}</dd>
       </div>
       <div class="window__fact">
-        <dt>Состояние</dt>
+        <dt>{{ t("settings.window.state") }}</dt>
         <dd>{{ mode }}</dd>
       </div>
     </dl>
 
     <div class="window__actions">
       <Button
-        label="Сбросить размер и положение"
+        :label="t('settings.window.reset')"
         icon="pi pi-window-maximize"
         size="small"
         severity="secondary"

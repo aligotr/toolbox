@@ -17,9 +17,10 @@ import {
   status as appStatus,
 } from "@/core/services/appInfo";
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
+import { t } from "@/core/infra/i18n";
 import { pruneLogs, status as dataStatus } from "@/core/services/data";
 import { loadSettings, logLevel, setLogLevel, settings, status } from "@/core/services/settings/index";
-import { LOG_LEVEL_OPTIONS } from "../logLevels";
+import { logLevelOptions } from "../logLevels";
 
 const confirm = useConfirm();
 
@@ -29,9 +30,12 @@ const level = computed<LogLevel>({
   set: (value) => void setLogLevel(value),
 });
 
+/** Список уровней; подписи берутся из словаря при смене языка. */
+const levelOptions = computed(() => logLevelOptions());
+
 /** Пояснение к выбранному уровню: что именно попадёт в файл. */
 const levelHint = computed(
-  () => LOG_LEVEL_OPTIONS.find((option) => option.value === logLevel.value)?.hint ?? "",
+  () => levelOptions.value.find((option) => option.value === logLevel.value)?.hint ?? "",
 );
 
 /** Сколько файлов удалила последняя очистка; `null` — ещё не запускали. */
@@ -44,12 +48,10 @@ function requestPrune(): void {
   if (keepDays.value === null) return;
 
   confirm.require({
-    header: "Очистка логов",
-    message:
-      `Файлы лога старше ${keepDays.value} дней будут удалены. ` +
-      "Свежие записи останутся: по ним ещё можно разбирать поломки.",
-    acceptLabel: "Очистить",
-    rejectLabel: "Отмена",
+    header: t("settings.log.pruneHeader"),
+    message: t("settings.log.pruneMessage", { count: keepDays.value }),
+    acceptLabel: t("settings.log.pruneAccept"),
+    rejectLabel: t("settings.log.pruneReject"),
     acceptProps: CONFIRM_DANGER_ACCEPT,
     rejectProps: CONFIRM_CALM_REJECT,
     accept: async () => {
@@ -68,21 +70,17 @@ onMounted(() => {
 <template>
   <section class="log wb-section">
     <header class="wb-section__head">
-      <h2 class="wb-section__title">Журнал</h2>
-      <p class="wb-section__lead">
-        Файл лога нужен для разбора: почему приложение или функция не сработали.
-        Уровень меняется без перезапуска. Работа инструментов пишется в журнал
-        интерфейса, а не сюда.
-      </p>
+      <h2 class="wb-section__title">{{ t("settings.section.log") }}</h2>
+      <p class="wb-section__lead">{{ t("settings.log.lead") }}</p>
     </header>
 
     <div class="log__field">
-      <label class="log__label" for="log-level">Уровень записи</label>
+      <label class="log__label" for="log-level">{{ t("settings.log.level") }}</label>
       <Select
         v-model="level"
         input-id="log-level"
         class="log__select"
-        :options="LOG_LEVEL_OPTIONS"
+        :options="levelOptions"
         option-label="label"
         option-value="value"
         :loading="status.load.loading"
@@ -94,24 +92,24 @@ onMounted(() => {
 
     <dl class="log__facts">
       <div class="log__fact">
-        <dt>Текущий файл</dt>
+        <dt>{{ t("settings.log.currentFile") }}</dt>
         <dd v-if="appInfo.current?.log_path" class="mono">
           {{ appInfo.current.log_path }}
         </dd>
-        <dd v-else class="log__muted">Лог не запущен.</dd>
+        <dd v-else class="log__muted">{{ t("settings.log.notStarted") }}</dd>
       </div>
       <div class="log__fact">
-        <dt>Папка логов</dt>
+        <dt>{{ t("settings.log.folder") }}</dt>
         <dd v-if="appInfo.current?.log_dir" class="mono">
           {{ appInfo.current.log_dir }}
         </dd>
-        <dd v-else class="log__muted">Папка неизвестна.</dd>
+        <dd v-else class="log__muted">{{ t("settings.log.folderUnknown") }}</dd>
       </div>
     </dl>
 
     <div class="log__actions">
       <Button
-        label="Открыть папку логов"
+        :label="t('settings.log.openFolder')"
         icon="pi pi-folder-open"
         size="small"
         severity="secondary"
@@ -123,8 +121,8 @@ onMounted(() => {
       <Button
         :label="
           keepDays === null
-            ? 'Очистить старые логи'
-            : `Очистить логи старше ${keepDays} дней`
+            ? t('settings.log.prune')
+            : t('settings.log.pruneOlder', { count: keepDays })
         "
         icon="pi pi-trash"
         size="small"
@@ -137,7 +135,7 @@ onMounted(() => {
     </div>
 
     <p v-if="pruned !== null" class="log__result">
-      Удалено файлов: {{ pruned }}. Свежие записи на месте.
+      {{ t("settings.log.pruned", { count: pruned }) }}
     </p>
 
     <p v-if="appStatus.load.error" class="log__error">{{ appStatus.load.error }}</p>

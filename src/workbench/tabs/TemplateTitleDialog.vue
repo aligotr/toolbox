@@ -12,7 +12,8 @@ import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import InputText from "primevue/inputtext";
 import { ref, watch } from "vue";
-import { TEMPLATE_TITLE_MAX_LENGTH, TEMPLATE_TITLE_PLACEHOLDER } from "../constants";
+import { t } from "@/core/infra/i18n";
+import { TEMPLATE_TITLE_MAX_LENGTH } from "../constants";
 
 const props = defineProps<{
   visible: boolean;
@@ -58,11 +59,13 @@ function close(): void {
     @update:visible="emit('update:visible', $event)"
   >
     <form class="title-dialog" @submit.prevent="submit">
-      <label class="title-dialog__label" for="template-title">Название</label>
+      <label class="title-dialog__label" for="template-title">
+        {{ t("tabs.title.field") }}
+      </label>
       <InputText
         id="template-title"
         v-model="title"
-        :placeholder="TEMPLATE_TITLE_PLACEHOLDER"
+        :placeholder="t('tabs.title.placeholder')"
         :maxlength="TEMPLATE_TITLE_MAX_LENGTH"
         autofocus
       />
@@ -74,7 +77,7 @@ function close(): void {
       <footer class="title-dialog__actions">
         <Button
           type="button"
-          label="Отмена"
+          :label="t('tabs.title.cancel')"
           severity="secondary"
           text
           @click="close"

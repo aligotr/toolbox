@@ -23,6 +23,7 @@ import { computed, nextTick, ref } from "vue";
 import type { Template } from "@/core/services/templates";
 import type { WorkspaceTab } from "@/contracts/workspace";
 import { CONFIRM_CALM_REJECT } from "@/core/constants";
+import { t } from "@/core/infra/i18n";
 import { copyColumns } from "@/core/services/workspace/layout";
 import { defaultPresetTitle, loadPresetDefaults } from "@/core/services/presets/index";
 import {
@@ -36,32 +37,7 @@ import * as templateBindings from "@/core/services/templates/bindings";
 import { activateTab, closeTab, openEmptyTab, restartTab, workspace } from "@/core/services/workspace/index";
 import CloseTabDialog from "./CloseTabDialog.vue";
 import TemplateTitleDialog from "./TemplateTitleDialog.vue";
-import {
-  APPLY_TEMPLATE_HEADER,
-  APPLY_TEMPLATE_UPDATE_LABEL,
-  DETACH_TEMPLATE_LABEL,
-  RENAME_TEMPLATE_HEADER,
-  RENAME_TEMPLATE_LABEL,
-  RENAME_TEMPLATE_NOTE,
-  RESTART_TAB_ACCEPT,
-  RESTART_TAB_HEADER,
-  RESTART_TAB_KEEP,
-  RESTART_TAB_LABEL,
-  RESTART_TAB_LOSS,
-  RESTART_TAB_REJECT,
-  restartDefaultsLine,
-  SAVE_NEW_TEMPLATE_LABEL,
-  SAVE_TEMPLATE_EMPTY_HINT,
-  SAVE_TEMPLATE_HEADER,
-  SAVE_TEMPLATE_LABEL,
-  SAVE_TEMPLATE_NOTE,
-  TAB_DIRTY_HINT,
-  TAB_MENU_TOOLTIP,
-  TAB_UPDATE_HINT,
-  TEMPLATE_RENAME_SUBMIT,
-  TEMPLATE_SAVE_SUBMIT,
-  UPDATE_TEMPLATE_LABEL,
-} from "../constants";
+import { tabTitle } from "./title";
 
 const confirm = useConfirm();
 
@@ -103,14 +79,14 @@ const menuItems = computed<MenuItem[]>(() => {
 
   if (binding && template) {
     items.push({
-      label: `${UPDATE_TEMPLATE_LABEL} «${template.title}»`,
+      label: t("tabs.menu.updateTemplate", { title: template.title }),
       icon: "pi pi-save",
       disabled: !templateBindings.hasLocalChanges(state),
       command: () => void updateFromTab(tab, template),
     });
     if (templateBindings.hasUpdate(state)) {
       items.push({
-        label: APPLY_TEMPLATE_UPDATE_LABEL,
+        label: t("tabs.menu.applyUpdate"),
         icon: "pi pi-arrow-circle-down",
         command: () => applyUpdate(tab, template),
       });
@@ -122,9 +98,9 @@ const menuItems = computed<MenuItem[]>(() => {
   items.push({
     label: canSave
       ? binding
-        ? SAVE_NEW_TEMPLATE_LABEL
-        : SAVE_TEMPLATE_LABEL
-      : SAVE_TEMPLATE_EMPTY_HINT,
+        ? t("tabs.menu.saveNewTemplate")
+        : t("tabs.menu.saveTemplate")
+      : t("tabs.menu.saveEmpty"),
     icon: "pi pi-file-plus",
     disabled: !canSave,
     command: () => openTitleDialog("create", tab),
@@ -132,7 +108,7 @@ const menuItems = computed<MenuItem[]>(() => {
 
   if (binding && template) {
     items.push({
-      label: RENAME_TEMPLATE_LABEL,
+      label: t("tabs.menu.renameTemplate"),
       icon: "pi pi-pencil",
       command: () => openTitleDialog("rename", tab, template),
     });
@@ -140,7 +116,7 @@ const menuItems = computed<MenuItem[]>(() => {
 
   if (binding) {
     items.push({
-      label: DETACH_TEMPLATE_LABEL,
+      label: t("tabs.menu.detachTemplate"),
       icon: "pi pi-link",
       command: () => templateBindings.drop(tab.id),
     });
@@ -150,7 +126,7 @@ const menuItems = computed<MenuItem[]>(() => {
   // к шаблону, поэтому отделён чертой.
   items.push({ separator: true });
   items.push({
-    label: RESTART_TAB_LABEL,
+    label: t("tabs.menu.restart"),
     icon: "pi pi-refresh",
     command: () => void requestRestart(tab),
   });
@@ -209,12 +185,13 @@ async function updateFromTab(tab: WorkspaceTab, template: Template): Promise<voi
 function applyUpdate(tab: WorkspaceTab, template: Template): void {
   if (templateBindings.hasLocalChanges(templateBindings.status(tab))) {
     confirm.require({
-      header: APPLY_TEMPLATE_HEADER,
-      message:
-        `Раскладка вкладки «${tab.title}» изменена. Применение шаблона ` +
-        `«${template.title}» заменит её — локальные правки будут потеряны.`,
-      acceptLabel: "Применить",
-      rejectLabel: "Отмена",
+      header: t("tabs.apply.header"),
+      message: t("tabs.apply.message", {
+        tab: tabTitle(tab),
+        template: template.title,
+      }),
+      acceptLabel: t("tabs.apply.accept"),
+      rejectLabel: t("tabs.apply.reject"),
       rejectProps: CONFIRM_CALM_REJECT,
       accept: () => templateBindings.apply(tab, template),
     });
@@ -239,6 +216,18 @@ function defaultTitlesOf(tab: WorkspaceTab): string[] {
 }
 
 /**
+ * Строка о пресетах по умолчанию: какие из них загрузятся после перезапуска.
+ *
+ * Упоминаются только заданные умолчания — иначе подсказка обещала бы пресет,
+ * которого нет. `null` — умолчаний нет, строки в подтверждении не будет.
+ */
+function restartDefaultsLine(titles: string[]): string | null {
+  if (titles.length === 0) return null;
+  if (titles.length === 1) return t("tabs.restart.presetOne", { title: titles[0] });
+  return t("tabs.restart.presets", { titles: titles.join(", ") });
+}
+
+/**
  * Возвращает инструменты вкладки к состоянию новой.
  *
  * Действие разрушительное: несохранённые строки, результаты и настройки
@@ -250,16 +239,16 @@ async function requestRestart(tab: WorkspaceTab): Promise<void> {
   // подтверждение не смогло бы сказать, какой пресет загрузится.
   await loadPresetDefaults();
 
-  const lines = [RESTART_TAB_LOSS];
+  const lines = [t("tabs.restart.loss")];
   const defaults = restartDefaultsLine(defaultTitlesOf(tab));
   if (defaults !== null) lines.push(defaults);
-  lines.push(RESTART_TAB_KEEP);
+  lines.push(t("tabs.restart.keep"));
 
   confirm.require({
-    header: RESTART_TAB_HEADER,
+    header: t("tabs.restart.header"),
     message: lines.join("\n"),
-    acceptLabel: RESTART_TAB_ACCEPT,
-    rejectLabel: RESTART_TAB_REJECT,
+    acceptLabel: t("tabs.restart.accept"),
+    rejectLabel: t("tabs.restart.reject"),
     rejectProps: CONFIRM_CALM_REJECT,
     accept: () => restartTab(tab.id),
   });
@@ -271,9 +260,15 @@ type TitleDialogMode = "create" | "rename";
 
 const titleDialogVisible = ref(false);
 const titleDialogMode = ref<TitleDialogMode>("create");
-const titleDialogHeader = ref(SAVE_TEMPLATE_HEADER);
-const titleDialogSubmit = ref(TEMPLATE_SAVE_SUBMIT);
-const titleDialogNote = ref(SAVE_TEMPLATE_NOTE);
+const titleDialogHeader = computed(() =>
+  titleDialogMode.value === "rename" ? t("tabs.title.rename") : t("tabs.title.create"),
+);
+const titleDialogSubmit = computed(() =>
+  titleDialogMode.value === "rename" ? t("tabs.title.renameSubmit") : t("tabs.title.createSubmit"),
+);
+const titleDialogNote = computed(() =>
+  titleDialogMode.value === "rename" ? t("tabs.title.renameNote") : t("tabs.title.createNote"),
+);
 const titleDialogSuggested = ref("");
 const titleTargetTab = ref<WorkspaceTab | null>(null);
 const titleTargetTemplate = ref<Template | null>(null);
@@ -303,15 +298,9 @@ function openTitleDialog(
   titleTargetTemplate.value = template;
 
   if (mode === "rename" && template) {
-    titleDialogHeader.value = RENAME_TEMPLATE_HEADER;
-    titleDialogSubmit.value = TEMPLATE_RENAME_SUBMIT;
-    titleDialogNote.value = RENAME_TEMPLATE_NOTE;
     titleDialogSuggested.value = template.title;
     templateStatus.rename.error = null;
   } else {
-    titleDialogHeader.value = SAVE_TEMPLATE_HEADER;
-    titleDialogSubmit.value = TEMPLATE_SAVE_SUBMIT;
-    titleDialogNote.value = SAVE_TEMPLATE_NOTE;
     titleDialogSuggested.value = tab.title;
     templateStatus.create.error = null;
   }
@@ -420,7 +409,7 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
 </script>
 
 <template>
-  <nav class="tabs" aria-label="Вкладки">
+  <nav class="tabs" :aria-label="t('tabs.strip.label')">
     <div class="tabs__list" role="tablist">
       <div
         v-for="tab in workspace.tabs"
@@ -434,29 +423,29 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
         @keydown="activateFromKeyboard(tab.id, $event)"
       >
         <i class="tab__icon" :class="tab.icon" aria-hidden="true" />
-        <span class="tab__title">{{ tab.title }}</span>
+        <span class="tab__title">{{ tabTitle(tab) }}</span>
 
         <i
           v-if="tab.kind === 'workspace' && hasLocalChanges(tab)"
           class="tab__marker tab__marker--dot pi pi-circle-fill"
           role="img"
-          :aria-label="TAB_DIRTY_HINT"
-          v-tooltip.bottom="TAB_DIRTY_HINT"
+          :aria-label="t('tabs.tab.dirtyHint')"
+          v-tooltip.bottom="t('tabs.tab.dirtyHint')"
         />
         <i
           v-if="tab.kind === 'workspace' && hasUpdate(tab)"
           class="tab__marker tab__marker--update pi pi-arrow-circle-up"
           role="img"
-          :aria-label="TAB_UPDATE_HINT"
-          v-tooltip.bottom="TAB_UPDATE_HINT"
+          :aria-label="t('tabs.tab.updateHint')"
+          v-tooltip.bottom="t('tabs.tab.updateHint')"
         />
 
         <button
           v-if="tab.kind === 'workspace'"
           class="tab__menu"
           type="button"
-          :aria-label="`Действия с вкладкой «${tab.title}»`"
-          v-tooltip.bottom="TAB_MENU_TOOLTIP"
+          :aria-label="t('tabs.tab.menuTitle', { title: tabTitle(tab) })"
+          v-tooltip.bottom="t('tabs.tab.menu')"
           @click="openMenu(tab, $event)"
         >
           <i class="pi pi-ellipsis-v" aria-hidden="true" />
@@ -464,8 +453,8 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
         <button
           class="tab__close"
           type="button"
-          :aria-label="`Закрыть вкладку «${tab.title}»`"
-          v-tooltip.bottom="'Закрыть вкладку'"
+          :aria-label="t('tabs.tab.closeTitle', { title: tabTitle(tab) })"
+          v-tooltip.bottom="t('tabs.tab.close')"
           @click="requestClose(tab, $event)"
         >
           <i class="pi pi-times" aria-hidden="true" />
@@ -479,8 +468,8 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
       text
       rounded
       size="small"
-      aria-label="Новая вкладка"
-      v-tooltip.bottom="'Новая вкладка'"
+      :aria-label="t('tab.empty.title')"
+      v-tooltip.bottom="t('tab.empty.title')"
       @click="openEmptyTab"
     />
 
@@ -499,7 +488,7 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
 
     <CloseTabDialog
       v-model:visible="closeDialogVisible"
-      :tab-title="closingTab?.title ?? ''"
+      :tab-title="closingTab ? tabTitle(closingTab) : ''"
       :template-title="closingTemplateTitle"
       :saving="closeSaving"
       :error="closeError"
