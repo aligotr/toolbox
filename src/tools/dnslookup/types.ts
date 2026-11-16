@@ -142,8 +142,6 @@ export interface DnsPresetPayload {
   rows: DnsRow[];
   /** Выбранные серверы: порядок задаёт порядок колонок. */
   servers: string[];
-  /** Тип, который получают новые строки. */
-  defaultType: RecordType;
   /** Скрытые серверные колонки. */
   hiddenServers: string[];
   /** Фильтры таблицы: часть настройки задачи, а не разовый взгляд. */

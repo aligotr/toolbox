@@ -1,9 +1,9 @@
 // Пресеты настроек DNS.
 //
-// Пресет сохраняет вход инструмента: строки, серверы, тип новых строк,
-// скрытые колонки и фильтры. Результаты проверок не сохраняются: они
-// принадлежат моменту, а не задаче, и загруженный пресет с чужими ответами
-// выглядел бы проверенным.
+// Пресет сохраняет вход инструмента: строки, серверы, скрытые колонки
+// и фильтры. Результаты проверок не сохраняются: они принадлежат моменту,
+// а не задаче, и загруженный пресет с чужими ответами выглядел бы
+// проверенным.
 //
 // Загрузка сразу запускает проверку всех строк. Работа с файлами — в
 // `core/presets.ts`, а здесь только перевод сеанса в снимок и обратно:
@@ -14,7 +14,6 @@ import { write } from "../../core/journal";
 import { createPresets } from "../../core/presets";
 import { takeFreshCell } from "../../core/workspace";
 import {
-  DEFAULT_RECORD_TYPE,
   DEFAULT_SERVER_IDS,
   JOURNAL_SOURCE,
   PRESET_TOOL,
@@ -102,9 +101,6 @@ function parsePresetPayload(payload: unknown): ParsedPreset | null {
       servers: source.servers.filter(
         (id): id is string => typeof id === "string" && id !== "",
       ),
-      defaultType: isRecordType(source.defaultType)
-        ? source.defaultType
-        : DEFAULT_RECORD_TYPE,
       hiddenServers: Array.isArray(source.hiddenServers)
         ? source.hiddenServers.filter(
             (id): id is string => typeof id === "string" && id !== "",
@@ -129,7 +125,6 @@ function capturePresetPayload(session: DnsSession): DnsPresetPayload {
       type: row.type,
     })),
     servers: [...session.servers],
-    defaultType: session.defaultType,
     hiddenServers: [...session.hiddenServers],
     filters: {
       search: session.filters.search,
@@ -188,7 +183,6 @@ function applyPayload(
   session.hiddenServers = payload.hiddenServers.filter((id) =>
     session.servers.includes(id),
   );
-  session.defaultType = payload.defaultType;
   session.filters.search = payload.filters.search;
   session.filters.status = payload.filters.status;
   // Расхождения считаются только от системного сервера: без него фильтр
@@ -355,7 +349,6 @@ function restoreSettings(session: DnsSession, payload: DnsPresetPayload): void {
   session.hiddenServers = payload.hiddenServers.filter((id) =>
     session.servers.includes(id),
   );
-  session.defaultType = payload.defaultType;
   session.filters.search = payload.filters.search;
   session.filters.status = payload.filters.status;
   session.filters.diffOnly =
