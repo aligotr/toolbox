@@ -19,8 +19,8 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use super::files::{read, strip_bom, write_atomic};
-use super::names;
+use crate::core::store::files::{read, strip_bom, write_atomic};
+use crate::core::store::names;
 
 /// Расширение файла шаблона.
 const EXTENSION: &str = "json";

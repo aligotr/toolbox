@@ -21,14 +21,19 @@ use chrono::{SecondsFormat, Utc};
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use super::files::{read, strip_bom, write_atomic};
-use super::names;
+use crate::core::services::profiles;
+use crate::core::store::files::{ensure_dir, read, strip_bom, write_atomic};
+use crate::core::store::names;
 
 /// Расширение файла пресета.
 const EXTENSION: &str = "json";
 
 /// Версия схемы файла пресета.
 pub const VERSION: u32 = 1;
+
+/// Раздел указателей на пресеты по умолчанию в `profile.json`:
+/// `defaults: { "<tool>": "<presetId>" }`.
+const DEFAULTS_KEY: &str = "defaults";
 
 /// Предел длины названия: длиннее строка списка всё равно не покажет.
 const MAX_TITLE_LEN: usize = 60;
@@ -232,13 +237,21 @@ pub fn duplicate(
 ///
 /// Переносом, а не удалением: промах в списке не должен стоить собранных
 /// настроек. Корзину чистят руками.
-pub fn delete(root: &Path, trash_root: &Path, tool: &str, id: &str) -> Result<PathBuf, String> {
+///
+/// Указатель по умолчанию снимается здесь же: правило «удалил пресет — снял
+/// указатель» принадлежит домену, а не точке сборки.
+pub fn delete(
+    root: &Path,
+    trash_root: &Path,
+    profile_dir: &Path,
+    tool: &str,
+    id: &str,
+) -> Result<PathBuf, String> {
     validate_tool(tool)?;
     let path = preset_path(root, tool, id)?;
 
     let trash_dir = trash_root.join(tool);
-    fs::create_dir_all(&trash_dir)
-        .map_err(|error| format!("Не удалось создать '{}': {error}", trash_dir.display()))?;
+    ensure_dir(&trash_dir)?;
 
     let target = trash_dir.join(unique_file_name(&trash_dir, id));
     fs::rename(&path, &target).map_err(|error| {
@@ -248,6 +261,8 @@ pub fn delete(root: &Path, trash_root: &Path, tool: &str, id: &str) -> Result<Pa
             target.display()
         )
     })?;
+
+    clear_default_if(profile_dir, tool, id)?;
 
     Ok(target)
 }
@@ -263,6 +278,115 @@ fn validate_tool(tool: &str) -> Result<(), String> {
 /// Проверяет, что пресет существует: указатель по умолчанию не ведёт в пустоту.
 pub fn exists(root: &Path, tool: &str, id: &str) -> bool {
     validate_tool(tool).is_ok() && preset_path(root, tool, id).is_ok()
+}
+
+/// Указатель на пресет по умолчанию вместе с замечанием о файле профиля.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct PresetDefault {
+    /// Идентификатор пресета; `None` — умолчание не задано.
+    pub id: Option<String>,
+    /// Причина, по которой файл профиля не разобран; `None` — всё в порядке.
+    pub warning: Option<String>,
+}
+
+/// Пресет по умолчанию для инструмента активного профиля.
+///
+/// `id = None` — умолчание не задано: новая вкладка открывается пустой.
+/// Указатель лежит в `profile.json`, потому что принадлежит профилю и
+/// синхронизируется вместе с ним. Но правило — здесь: без пресета указатель
+/// не имеет смысла, а профиль о пресетах не знает (ADR 0035).
+pub fn default_for(profile_dir: &Path, tool: &str) -> Result<PresetDefault, String> {
+    validate_tool(tool)?;
+
+    let document = profiles::document(profile_dir)?;
+    let id = document
+        .get(DEFAULTS_KEY)
+        .and_then(Value::as_object)
+        .and_then(|defaults| defaults.get(tool))
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|id| !id.is_empty())
+        .map(str::to_owned);
+
+    Ok(PresetDefault {
+        id,
+        warning: profiles::document_warning(profile_dir)?,
+    })
+}
+
+/// Назначает или снимает пресет по умолчанию.
+///
+/// Существование пресета проверяется здесь, а не в интерфейсе: указатель
+/// в пустоту открывал бы вкладку с предупреждением на каждом запуске.
+pub fn set_default(
+    profile_dir: &Path,
+    presets_dir: &Path,
+    tool: &str,
+    id: Option<&str>,
+) -> Result<Option<String>, String> {
+    validate_tool(tool)?;
+
+    let wanted = match id {
+        Some(id) => {
+            let id = id.trim();
+            if !names::is_safe_id(id) {
+                return Err("Недопустимый идентификатор пресета".to_owned());
+            }
+            if !exists(presets_dir, tool, id) {
+                return Err(format!("Пресет '{id}' не найден"));
+            }
+            Some(id.to_owned())
+        }
+        None => None,
+    };
+
+    write_default(profile_dir, tool, wanted.as_deref())?;
+    Ok(wanted)
+}
+
+/// Снимает указатель, если он ведёт на удаляемый пресет.
+///
+/// Указатель на удалённый файл открывал бы вкладку с предупреждением на
+/// каждом запуске, поэтому чистится вместе с пресетом.
+pub fn clear_default_if(
+    profile_dir: &Path,
+    tool: &str,
+    preset_id: &str,
+) -> Result<(), String> {
+    if default_for(profile_dir, tool)?.id.as_deref() == Some(preset_id) {
+        write_default(profile_dir, tool, None)?;
+    }
+    Ok(())
+}
+
+/// Перезаписывает раздел `defaults` в `profile.json`.
+///
+/// Пустой раздел удаляется: файл не должен копить незавершённые настройки.
+/// Чужие ключи документа сохраняются — файл общий с профилем.
+fn write_default(profile_dir: &Path, tool: &str, id: Option<&str>) -> Result<(), String> {
+    let next = id.map(str::to_owned);
+    profiles::update_document(profile_dir, |document| {
+        let mut defaults = match document.get(DEFAULTS_KEY) {
+            Some(Value::Object(map)) => map.clone(),
+            _ => Map::new(),
+        };
+
+        match &next {
+            Some(id) => {
+                defaults.insert(tool.to_owned(), Value::from(id.clone()));
+            }
+            None => {
+                defaults.remove(tool);
+            }
+        }
+
+        if defaults.is_empty() {
+            document.remove(DEFAULTS_KEY);
+        } else {
+            document.insert(DEFAULTS_KEY.to_owned(), Value::Object(defaults));
+        }
+        Ok(())
+    })
 }
 
 /// Проверяет идентификатор пресета: он становится именем файла.
@@ -488,6 +612,118 @@ mod tests {
     }
 
     #[test]
+    fn default_roundtrip_keeps_profile_title() {
+        let root = temp_dir("default-preset");
+        let profile = profiles::create(&root, "Работа").expect("профиль");
+        let dir = root.join(&profile.id);
+        let presets = dir.join("presets");
+        let preset = create(&presets, "dnslookup", "DNS", payload()).expect("пресет");
+
+        set_default(&dir, &presets, "dnslookup", Some(&preset.id)).expect("указатель");
+
+        assert_eq!(
+            default_for(&dir, "dnslookup").expect("чтение").id.as_deref(),
+            Some(preset.id.as_str())
+        );
+        let document = fs::read_to_string(dir.join(profiles::PROFILE_FILE)).expect("файл");
+        assert!(document.contains("\"title\": \"Работа\""), "файл: {document}");
+    }
+
+    #[test]
+    fn defaults_of_tools_are_independent() {
+        let root = temp_dir("default-preset-tools");
+        let profile = root.join("profile");
+        fs::create_dir_all(&profile).expect("профиль");
+        let open = profile.join("presets");
+        let preset = create(&open, "dnslookup", "dns", payload()).expect("пресет");
+        let ping = create(&open, "ping", "net", payload()).expect("пресет");
+
+        set_default(&profile, &open, "dnslookup", Some(&preset.id)).expect("dns");
+        set_default(&profile, &open, "ping", Some(&ping.id)).expect("ping");
+        set_default(&profile, &open, "dnslookup", None).expect("снятие");
+
+        assert_eq!(default_for(&profile, "dnslookup").expect("чтение").id, None);
+        assert_eq!(
+            default_for(&profile, "ping").expect("чтение").id.as_deref(),
+            Some(ping.id.as_str())
+        );
+    }
+
+    #[test]
+    fn empty_defaults_section_is_removed() {
+        // Пустой раздел в файле выглядит как незавершённая настройка.
+        let root = temp_dir("default-preset-empty");
+        let profile = root.join("profile");
+        fs::create_dir_all(&profile).expect("профиль");
+        let presets = root.join("presets");
+        let preset = create(&presets, "dnslookup", "DNS", payload()).expect("пресет");
+        set_default(&profile, &presets, "dnslookup", Some(&preset.id)).expect("указатель");
+
+        set_default(&profile, &presets, "dnslookup", None).expect("снятие");
+
+        let document = fs::read_to_string(profile.join(profiles::PROFILE_FILE)).expect("файл");
+        assert!(!document.contains("defaults"), "файл: {document}");
+    }
+
+    #[test]
+    fn clearing_default_ignores_another_preset() {
+        let root = temp_dir("default-preset-other");
+        let profile = root.join("profile");
+        fs::create_dir_all(&profile).expect("профиль");
+        let presets = root.join("presets");
+        let preset = create(&presets, "dnslookup", "DNS", payload()).expect("пресет");
+        set_default(&profile, &presets, "dnslookup", Some(&preset.id)).expect("указатель");
+
+        clear_default_if(&profile, "dnslookup", "ghost").expect("чужой пресет");
+
+        assert_eq!(
+            default_for(&profile, "dnslookup").expect("чтение").id.as_deref(),
+            Some(preset.id.as_str())
+        );
+    }
+
+    #[test]
+    fn set_default_rejects_unsafe_tool() {
+        let root = temp_dir("default-preset-unsafe");
+        let profile = root.join("profile");
+        fs::create_dir_all(&profile).expect("профиль");
+        let presets = root.join("presets");
+
+        assert!(
+            set_default(&profile, &presets, "../evil", Some("dns")).is_err(),
+            "путь наружу"
+        );
+        assert!(default_for(&profile, "../evil").is_err(), "путь наружу");
+    }
+
+    #[test]
+    fn corrupt_profile_hides_default_without_failing() {
+        // Испорченный файл не должен мешать открыть вкладку: умолчания нет.
+        let root = temp_dir("default-preset-broken");
+        let profile = root.join("profile");
+        fs::create_dir_all(&profile).expect("профиль");
+        fs::write(profile.join(profiles::PROFILE_FILE), "{ \"defaults\": ")
+            .expect("битый файл");
+
+        assert_eq!(default_for(&profile, "dnslookup").expect("чтение").id, None);
+    }
+
+    #[test]
+    fn delete_clears_default_pointer() {
+        let root = temp_dir("default-delete");
+        let profile = root.join("profile");
+        fs::create_dir_all(&profile).expect("профиль");
+        let presets = root.join("presets");
+        let trash = root.join("trash");
+        let preset = create(&presets, "dnslookup", "DNS", payload()).expect("пресет");
+        set_default(&profile, &presets, "dnslookup", Some(&preset.id)).expect("указатель");
+
+        delete(&presets, &trash, &profile, "dnslookup", &preset.id).expect("удаление");
+
+        assert_eq!(default_for(&profile, "dnslookup").expect("чтение").id, None);
+    }
+
+    #[test]
     fn create_writes_envelope_and_translit_id() {
         let root = temp_dir("create");
 
@@ -596,10 +832,12 @@ mod tests {
     fn delete_moves_preset_to_tool_trash() {
         let root = temp_dir("delete");
         let presets = root.join("profiles").join("work").join("presets");
+        let profile = root.join("profiles").join("work");
         let trash = root.join("local").join("trash").join("presets");
+        fs::create_dir_all(&profile).expect("профиль");
         let preset = create(&presets, "dnslookup", "DNS", payload()).expect("пресет");
 
-        let target = delete(&presets, &trash, "dnslookup", &preset.id).expect("удаление");
+        let target = delete(&presets, &trash, &profile, "dnslookup", &preset.id).expect("удаление");
 
         assert_eq!(target, trash.join("dnslookup").join("dns.json"));
         assert!(target.is_file(), "пресет должен лежать в корзине");
@@ -612,12 +850,16 @@ mod tests {
         // Тот же пресет могли создать заново после удаления.
         let root = temp_dir("trash-twice");
         let presets = root.join("presets");
+        let profile = root.join("profile");
         let trash = root.join("trash");
+        fs::create_dir_all(&profile).expect("профиль");
 
         let first = create(&presets, "dnslookup", "DNS", payload()).expect("первый");
-        let first_target = delete(&presets, &trash, "dnslookup", &first.id).expect("первое");
+        let first_target =
+            delete(&presets, &trash, &profile, "dnslookup", &first.id).expect("первое");
         let second = create(&presets, "dnslookup", "DNS", payload()).expect("второй");
-        let second_target = delete(&presets, &trash, "dnslookup", &second.id).expect("второе");
+        let second_target =
+            delete(&presets, &trash, &profile, "dnslookup", &second.id).expect("второе");
 
         assert_eq!(first_target, trash.join("dnslookup").join("dns.json"));
         assert_eq!(second_target, trash.join("dnslookup").join("dns-2.json"));

@@ -7,11 +7,11 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { reactive } from "vue";
-import type { AppInfo } from "../contracts/app";
-import { JOURNAL_CORE_SOURCE } from "./constants";
-import { describeError } from "./errors";
-import { write } from "./journal";
-import { idle, type OperationStatus } from "./status";
+import type { AppInfo } from "../../contracts/app";
+import { JOURNAL_CORE_SOURCE } from "../infra/constants";
+import { describeError } from "../infra/errors";
+import { write } from "../infra/journal";
+import { idle, type OperationStatus } from "../infra/status";
 
 /** Папки, которые умеет открывать ядро. */
 export type FolderKind = "logs" | "root";

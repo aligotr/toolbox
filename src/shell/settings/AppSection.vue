@@ -6,7 +6,7 @@
 
 import Button from "primevue/button";
 import { computed, onMounted } from "vue";
-import { appInfo, loadAppInfo, openFolder, status } from "../../core/appInfo";
+import { appInfo, loadAppInfo, openFolder, status } from "../../core/services/appInfo";
 
 const info = computed(() => appInfo.current);
 

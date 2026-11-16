@@ -21,10 +21,10 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-use super::files::{strip_bom, write_atomic};
-use super::logging::LogLevel;
-use super::profiles;
-use super::storage::DEFAULT_PROFILE;
+use crate::core::store::files::{strip_bom, write_atomic};
+use crate::core::services::logging::LogLevel;
+use crate::core::services::profiles;
+use crate::core::store::storage::DEFAULT_PROFILE;
 
 /// Версия схемы файла. Меняется только вместе с миграцией чтения.
 pub const VERSION: u32 = 1;
@@ -238,6 +238,38 @@ pub fn save(path: &Path, settings: &Settings) -> Result<(), String> {
     write_atomic(path, &format!("{text}\n"))
 }
 
+/// Результат применения правки настроек.
+#[derive(Debug)]
+pub struct Committed {
+    /// Настройки после правки.
+    pub settings: Settings,
+    /// `true` — уровень лога изменился: переключает его точка сборки.
+    pub log_level_changed: bool,
+}
+
+/// Применяет правку настроек: проверка, запись файла, новая копия в памяти.
+///
+/// Порядок жёсткий: сначала запись, потом память. Если сохранить не удалось,
+/// действующие настройки не должны разойтись с файлом. Побочные эффекты —
+/// переключение логгера и событие интерфейсу — остаются точке сборки:
+/// сервису для них пришлось бы знать про Tauri.
+pub fn commit(
+    path: &Path,
+    current: &mut Settings,
+    change: impl FnOnce(&Settings) -> Result<Settings, String>,
+) -> Result<Committed, String> {
+    let next = change(current)?;
+    save(path, &next)?;
+
+    let log_level_changed = next.log.level != current.log.level;
+    *current = next.clone();
+
+    Ok(Committed {
+        settings: next,
+        log_level_changed,
+    })
+}
+
 /// Частичное обновление: меняет только названный раздел.
 ///
 /// Неизменённые разделы копируются как есть, поэтому одновременная правка
@@ -413,6 +445,40 @@ mod tests {
         let _ = fs::remove_dir_all(&path);
         fs::create_dir_all(&path).expect("временная папка");
         path
+    }
+
+    #[test]
+    fn commit_writes_file_and_reports_log_change() {
+        let path = temp_dir("commit").join("settings.json");
+        let mut current = Settings::default();
+
+        let committed = commit(&path, &mut current, |settings| {
+            let mut next = settings.clone();
+            next.log.level = LogLevel::Debug;
+            Ok(next)
+        })
+        .expect("правка");
+
+        assert!(committed.log_level_changed, "уровень лога сменился");
+        assert_eq!(committed.settings.log.level, LogLevel::Debug);
+        assert_eq!(current.log.level, LogLevel::Debug, "память обновлена");
+        assert_eq!(load(&path).settings, current, "файл совпадает с памятью");
+    }
+
+    #[test]
+    fn failed_commit_changes_nothing() {
+        // Порядок жёсткий: отказ правки или записи не трогает ни память,
+        // ни файл — иначе действующие настройки разошлись бы с диском.
+        let path = temp_dir("commit-fail").join("settings.json");
+        let mut current = Settings::default();
+        save(&path, &current).expect("файл");
+        let before = current.clone();
+
+        let error = commit(&path, &mut current, |_| Err("нет".to_owned())).expect_err("отказ");
+
+        assert_eq!(error, "нет");
+        assert_eq!(current, before, "память не тронута");
+        assert_eq!(load(&path).settings, before, "файл не тронут");
     }
 
     #[test]

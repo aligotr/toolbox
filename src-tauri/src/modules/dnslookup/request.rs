@@ -13,7 +13,7 @@ use std::str::FromStr;
 use hickory_proto::rr::{Name, RecordType};
 use serde::{Deserialize, Serialize};
 
-use crate::core::message::{Command, Event, Message};
+use crate::core::infra::message::{Command, Event, Message};
 
 use super::servers::StoredServer;
 

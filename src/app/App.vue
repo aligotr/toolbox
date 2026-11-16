@@ -14,10 +14,10 @@ import { onMounted, onUnmounted, ref } from "vue";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import Button from "primevue/button";
 import ConfirmDialog from "primevue/confirmdialog";
-import { subscribeEvent } from "../core/bus";
-import { write } from "../core/journal";
-import { loadSettings, startSettingsSync } from "../core/settings";
-import { loadStartupStatus, type StartupStatus } from "../core/startup";
+import { subscribeEvent } from "../core/infra/bus";
+import { write } from "../core/infra/journal";
+import { loadSettings, startSettingsSync } from "../core/services/settings/index";
+import { loadStartupStatus, type StartupStatus } from "../core/services/startup";
 import AppShell from "../shell/AppShell.vue";
 import { tools } from "./tools";
 

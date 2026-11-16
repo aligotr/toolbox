@@ -11,12 +11,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { computed, reactive } from "vue";
-import type { LogLevel, Settings } from "../contracts/settings";
-import { subscribeEvent } from "./bus";
-import { JOURNAL_CORE_SOURCE, SETTINGS_CHANGED_TOPIC } from "./constants";
-import { describeError } from "./errors";
-import { write } from "./journal";
-import { idle, type OperationStatus } from "./status";
+import type { LogLevel, Settings } from "../../../contracts/settings";
+import { subscribeEvent } from "../../infra/bus";
+import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
+import { SETTINGS_CHANGED_TOPIC } from "./constants";
+import { describeError } from "../../infra/errors";
+import { write } from "../../infra/journal";
+import { idle, type OperationStatus } from "../../infra/status";
 
 /** Операции настроек: у каждой своя загрузка и своя ошибка. */
 export type SettingsOperation = "load" | "log" | "ui" | "window";

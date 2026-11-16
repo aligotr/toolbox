@@ -5,10 +5,11 @@
 // Журнал и настройки показываются здесь наравне с рабочими вкладками, хотя
 // открываются из сайдбара (ADR 0011).
 //
-// Состояние берётся из `core/workspace`: правила закрытия и активации живут
-// там, чтобы одинаково работать и для кнопки, и для будущих горячих клавиш.
-// Связка с шаблоном — отдельный слой `core/templates/bindings`: она только
-// подсказывает, что раскладка разошлась с шаблоном, и не мешает вкладке жить.
+// Состояние берётся из `core/services/workspace`: правила закрытия
+// и активации живут там, чтобы одинаково работать и для кнопки, и для будущих
+// горячих клавиш. Связка с шаблоном — отдельный модуль
+// `core/services/templates/bindings`: она только подсказывает, что раскладка
+// разошлась с шаблоном, и не мешает вкладке жить.
 //
 // Меню вкладки — одно на всю полосу: пункты строятся для той вкладки, у которой
 // нажали кнопку. Отдельное меню на каждую вкладку плодило бы экземпляры
@@ -19,20 +20,20 @@ import Menu from "primevue/menu";
 import type { MenuItem } from "primevue/menuitem";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, nextTick, ref } from "vue";
-import type { Template } from "../contracts/templates";
+import type { Template } from "../core/services/templates";
 import type { WorkspaceTab } from "../contracts/workspace";
 import { CONFIRM_CALM_REJECT } from "../core/constants";
-import { copyColumns } from "../core/layout";
-import { defaultPresetTitle, loadPresetDefaults } from "../core/presets";
+import { copyColumns } from "../core/services/workspace/layout";
+import { defaultPresetTitle, loadPresetDefaults } from "../core/services/presets/index";
 import {
   createTemplate,
   renameTemplate,
   status as templateStatus,
   templates,
   updateTemplateLayout,
-} from "../core/templates";
-import * as templateBindings from "../core/templates/bindings";
-import { activateTab, closeTab, openEmptyTab, restartTab, workspace } from "../core/workspace";
+} from "../core/services/templates/index";
+import * as templateBindings from "../core/services/templates/bindings";
+import { activateTab, closeTab, openEmptyTab, restartTab, workspace } from "../core/services/workspace/index";
 import CloseTabDialog from "./CloseTabDialog.vue";
 import TemplateTitleDialog from "./TemplateTitleDialog.vue";
 import {

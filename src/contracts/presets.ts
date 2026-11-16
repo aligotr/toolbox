@@ -32,13 +32,3 @@ export interface StoredPresetDefault {
   /** Причина, по которой файл профиля не разобран; `null` — всё в порядке. */
   warning: string | null;
 }
-
-/** Пресет после переноса полей в форму интерфейса. */
-export interface Preset {
-  id: string;
-  title: string;
-  /** Время сохранения в ISO-8601 UTC. */
-  savedAt: string;
-  /** Настройки инструмента: разбирает инструмент, не ядро. */
-  payload: unknown;
-}

@@ -7,8 +7,8 @@
 
 import { computed } from "vue";
 import type { ToolDescriptor } from "../contracts/tools";
-import type { StartupStatus } from "../core/startup";
-import { workspace } from "../core/workspace";
+import type { StartupStatus } from "../core/services/startup";
+import { workspace } from "../core/services/workspace/index";
 import EmptyTab from "./EmptyTab.vue";
 import JournalView from "./JournalView.vue";
 import SettingsView from "./settings/SettingsView.vue";

@@ -9,11 +9,11 @@
 // заполняет текущую пустую вкладку; если она уже занята, шаблон открывается
 // новой — иначе стёрлась бы текущая работа.
 
-import type { Template } from "../contracts/templates";
+import type { Template } from "../core/services/templates";
 import type { ToolDescriptor } from "../contracts/tools";
-import type { StartupStatus } from "../core/startup";
-import { applyTemplate, openTemplate, openTool, workspace } from "../core/workspace";
-import { templates, status as templateStatus } from "../core/templates";
+import type { StartupStatus } from "../core/services/startup";
+import { applyTemplate, openTemplate, openTool, workspace } from "../core/services/workspace/index";
+import { templates, status as templateStatus } from "../core/services/templates/index";
 import { toolsLabel } from "./plural";
 
 defineProps<{ tools: ToolDescriptor[]; startup: StartupStatus | null }>();

@@ -11,12 +11,12 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { computed, reactive } from "vue";
-import type { Profile, ProfileList } from "../contracts/profiles";
-import { JOURNAL_CORE_SOURCE } from "./constants";
-import { describeError } from "./errors";
-import { write } from "./journal";
-import { idle, type OperationStatus } from "./status";
-import { flushWorkspace } from "./workspace";
+import type { Profile, ProfileList } from "../../contracts/profiles";
+import { JOURNAL_CORE_SOURCE } from "../infra/constants";
+import { describeError } from "../infra/errors";
+import { write } from "../infra/journal";
+import { idle, type OperationStatus } from "../infra/status";
+import { flushWorkspace } from "./workspace/index";
 
 /** Операции, у каждой своё состояние: отказ создания не блокирует список. */
 export type ProfileOperation = "list" | "create" | "rename" | "delete" | "switch";

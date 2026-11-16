@@ -17,29 +17,32 @@ import { invoke } from "@tauri-apps/api/core";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { reactive, toRaw, watch } from "vue";
-import type { Template } from "../contracts/templates";
-import type { ToolDescriptor } from "../contracts/tools";
+import type { Template } from "../templates";
+import type { ToolDescriptor } from "../../../contracts/tools";
 import type {
   Binding,
   SingletonKind,
   TabColumn,
   WorkspaceFile,
   WorkspaceTab,
-} from "../contracts/workspace";
+} from "../../../contracts/workspace";
 import {
   EMPTY_TAB_ICON,
   EMPTY_TAB_TITLE,
-  JOURNAL_CORE_SOURCE,
   SINGLETON_TABS,
+} from "../../constants";
+import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
+import { describeError } from "../../infra/errors";
+import { isRecord } from "../../infra/guards";
+import { write } from "../../infra/journal";
+import {
   TEMPLATE_TAB_ICON,
   WORKSPACE_CLOSE_TIMEOUT_MS,
   WORKSPACE_SAVE_DELAY_MS,
   WORKSPACE_VERSION,
 } from "./constants";
-import { describeError } from "./errors";
-import { write } from "./journal";
-import { copyColumns, isRecord, parseColumns } from "./layout";
-import * as templateBindings from "./templates/bindings";
+import { copyColumns, parseColumns } from "./layout";
+import * as templateBindings from "../templates/bindings";
 
 /** Состояние рабочего пространства. */
 export interface WorkspaceState {

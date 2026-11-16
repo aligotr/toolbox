@@ -22,7 +22,7 @@ use std::time::Duration;
 use serde_json::{Map, Value};
 use tauri::{LogicalSize, Monitor, PhysicalPosition, Position, Size, WebviewWindow};
 
-use super::settings::WindowSettings;
+use crate::core::services::settings::WindowSettings;
 
 /// Минимальный размер окна. Совпадает с `minWidth`/`minHeight`
 /// в `tauri.conf.json`: ограничение окна задаёт оконная система, а здесь

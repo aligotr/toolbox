@@ -12,7 +12,7 @@ import Button from "primevue/button";
 import InputText from "primevue/inputtext";
 import { useConfirm } from "primevue/useconfirm";
 import { onMounted, ref } from "vue";
-import type { Template } from "../../contracts/templates";
+import type { Template } from "../../core/services/templates";
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "../../core/constants";
 import {
   deleteTemplate,
@@ -21,8 +21,8 @@ import {
   renameTemplate,
   status,
   templates,
-} from "../../core/templates";
-import { openTemplate } from "../../core/workspace";
+} from "../../core/services/templates/index";
+import { openTemplate } from "../../core/services/workspace/index";
 import { TEMPLATE_TITLE_MAX_LENGTH } from "../constants";
 import { toolsLabel } from "../plural";
 

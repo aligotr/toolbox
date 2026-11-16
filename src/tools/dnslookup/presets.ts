@@ -6,13 +6,13 @@
 // проверенным.
 //
 // Загрузка сразу запускает проверку всех строк. Работа с файлами — в
-// `core/presets.ts`, а здесь только перевод сеанса в снимок и обратно:
+// `core/services/presets`, а здесь только перевод сеанса в снимок и обратно:
 // формат `payload` принадлежит инструменту (ADR 0028).
 
-import type { Preset } from "../../contracts/presets";
-import { write } from "../../core/journal";
-import { createPresets } from "../../core/presets";
-import { takeFreshCell } from "../../core/workspace";
+import type { Preset } from "../../core/services/presets";
+import { write } from "../../core/infra/journal";
+import { createPresets } from "../../core/services/presets/index";
+import { takeFreshCell } from "../../core/services/workspace/index";
 import {
   DEFAULT_SERVER_IDS,
   JOURNAL_SOURCE,

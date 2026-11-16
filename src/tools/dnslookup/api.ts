@@ -9,7 +9,7 @@
 // и `RunServer` уже описаны в `types.ts`, дублировать их в сигнатуре незачем.
 
 import type { UnlistenFn } from "@tauri-apps/api/event";
-import { ask, invokeCommand, subscribeEvent } from "../../core/bus";
+import { ask, invokeCommand, subscribeEvent } from "../../core/infra/bus";
 import type {
   DnsFinishedEvent,
   DnsResultEvent,

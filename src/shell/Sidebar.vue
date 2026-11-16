@@ -14,8 +14,8 @@ import type { MenuItem } from "primevue/menuitem";
 import { computed, onMounted, ref } from "vue";
 import type { ToolDescriptor } from "../contracts/tools";
 import { SINGLETON_TABS } from "../core/constants";
-import { activeProfile, loadProfiles, profiles, status } from "../core/profiles";
-import { openSingleton, openTool, workspace } from "../core/workspace";
+import { activeProfile, loadProfiles, profiles, status } from "../core/services/profiles";
+import { openSingleton, openTool, workspace } from "../core/services/workspace/index";
 import {
   COLLAPSE_TOOLTIP,
   EXPAND_TOOLTIP,

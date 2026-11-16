@@ -12,15 +12,24 @@
 import { invoke } from "@tauri-apps/api/core";
 import { reactive } from "vue";
 import type {
-  Preset,
   StoredPreset,
   StoredPresetDefault,
   StoredPresetList,
-} from "../contracts/presets";
-import { JOURNAL_CORE_SOURCE } from "./constants";
-import { describeError } from "./errors";
-import { write } from "./journal";
-import { idle, type OperationStatus } from "./status";
+} from "../../../contracts/presets";
+import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
+import { describeError } from "../../infra/errors";
+import { write } from "../../infra/journal";
+import { idle, type OperationStatus } from "../../infra/status";
+
+/** Пресет после переноса полей в форму интерфейса. */
+export interface Preset {
+  id: string;
+  title: string;
+  /** Время сохранения в ISO-8601 UTC. */
+  savedAt: string;
+  /** Настройки инструмента: разбирает инструмент, не ядро. */
+  payload: unknown;
+}
 
 /** Операции над пресетами: отказ удаления не блокирует сохранение. */
 export type PresetOperation =

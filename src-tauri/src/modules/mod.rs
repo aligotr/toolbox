@@ -8,8 +8,8 @@ mod app;
 mod core_ping;
 mod dnslookup;
 
-use crate::core::bus::MessageBus;
-use crate::core::module::Module;
+use crate::core::infra::bus::MessageBus;
+use crate::core::infra::module::Module;
 
 /// Регистрирует все подсистемы в шине.
 ///

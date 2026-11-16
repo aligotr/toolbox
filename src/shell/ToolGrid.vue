@@ -10,7 +10,7 @@
 import { computed } from "vue";
 import type { ToolDescriptor } from "../contracts/tools";
 import type { TabColumn } from "../contracts/workspace";
-import { cellKey } from "../core/workspace";
+import { cellKey } from "../core/services/workspace/index";
 
 const props = defineProps<{ tabId: string; columns: TabColumn[]; tools: ToolDescriptor[] }>();
 

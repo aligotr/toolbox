@@ -15,9 +15,9 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
-use crate::core::bus::MessageBus;
-use crate::core::message::{Event, Message};
-use crate::core::module::Module;
+use crate::core::infra::bus::MessageBus;
+use crate::core::infra::message::{Event, Message};
+use crate::core::infra::module::Module;
 
 /// Предел показательной задержки: дольше ждать незачем, а диспетчер
 /// и очередь не должны зависать из-за учебного прогона.
@@ -124,7 +124,7 @@ mod tests {
     //! Проверка показательной задержки: она настоящая и не блокирует диспетчер.
 
     use super::*;
-    use crate::core::deps::Deps;
+    use crate::core::infra::deps::Deps;
     use std::time::Instant;
 
     #[test]

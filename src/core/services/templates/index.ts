@@ -2,10 +2,12 @@
 //
 // Шаблон — файл `profiles/<id>/templates/<templateId>.json` (ADR 0011).
 // Содержимое файла принадлежит ядру: оно выдаёт геометрию как непроверенный
-// JSON, а разбор колонок делает `core/layout.ts`. Так новое свойство колонки
+// JSON, а разбор колонок делает домен вкладок
+// (`core/services/workspace/layout.ts`). Так новое свойство колонки
 // не требует правки Rust и не роняет список шаблонов.
 //
-// Применение шаблона живёт в `core/workspace.ts`: это правка вкладки,
+// Применение шаблона живёт в домене вкладок
+// (`core/services/workspace/index.ts`): это правка вкладки,
 // а не работа с файлами шаблонов.
 
 import { invoke } from "@tauri-apps/api/core";
@@ -13,14 +15,21 @@ import { reactive } from "vue";
 import type {
   StoredTemplate,
   StoredTemplateList,
-  Template,
-} from "../contracts/templates";
-import type { TabColumn } from "../contracts/workspace";
-import { JOURNAL_CORE_SOURCE } from "./constants";
-import { describeError } from "./errors";
-import { write } from "./journal";
-import { parseColumns } from "./layout";
-import { idle, type OperationStatus } from "./status";
+} from "../../../contracts/templates";
+import type { TabColumn } from "../../../contracts/workspace";
+import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
+import { describeError } from "../../infra/errors";
+import { write } from "../../infra/journal";
+import { parseColumns } from "../workspace/layout";
+import { idle, type OperationStatus } from "../../infra/status";
+
+/** Шаблон после разбора: геометрия проверена. */
+export interface Template {
+  id: string;
+  title: string;
+  /** Колонки с инструментами и ширинами. */
+  layout: TabColumn[];
+}
 
 /** Операции над шаблонами: отказ удаления не блокирует создание. */
 export type TemplateOperation =

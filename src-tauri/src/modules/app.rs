@@ -8,9 +8,9 @@
 use serde::Deserialize;
 use tauri::AppHandle;
 
-use crate::core::bus::MessageBus;
-use crate::core::message::{Command, Message};
-use crate::core::module::Module;
+use crate::core::infra::bus::MessageBus;
+use crate::core::infra::message::{Command, Message};
+use crate::core::infra::module::Module;
 
 /// Команда «завершить приложение».
 ///

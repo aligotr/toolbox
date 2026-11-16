@@ -4,12 +4,8 @@
 // шаблона, а хранить в двух местах два разбора — значит однажды починить
 // битую колонку только в одном из них. Правила проверки живут здесь.
 
-import type { TabColumn } from "../contracts/workspace";
-
-/** Есть ли у значения вид объекта: массивы и `null` сюда не годятся. */
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
+import type { TabColumn } from "../../../contracts/workspace";
+import { isRecord } from "../../infra/guards";
 
 /**
  * Разбирает колонки вкладки.

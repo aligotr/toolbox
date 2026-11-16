@@ -10,10 +10,10 @@
 
 import { onMounted, onUnmounted, ref } from "vue";
 import type { ToolDescriptor } from "../contracts/tools";
-import { setSidebarCollapsed, settings } from "../core/settings";
-import type { StartupStatus } from "../core/startup";
-import { loadTemplates } from "../core/templates";
-import { ensureWorkspace, startWorkspace } from "../core/workspace";
+import { setSidebarCollapsed, settings } from "../core/services/settings/index";
+import type { StartupStatus } from "../core/services/startup";
+import { loadTemplates } from "../core/services/templates/index";
+import { ensureWorkspace, startWorkspace } from "../core/services/workspace/index";
 import Sidebar from "./Sidebar.vue";
 import TabStrip from "./TabStrip.vue";
 import WorkspaceView from "./WorkspaceView.vue";

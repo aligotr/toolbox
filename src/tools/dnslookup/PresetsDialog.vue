@@ -15,13 +15,13 @@ import Dialog from "primevue/dialog";
 import InputText from "primevue/inputtext";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, ref, watch } from "vue";
-import type { Preset } from "../../contracts/presets";
 import {
   CONFIRM_CALM_REJECT,
   CONFIRM_DANGER_ACCEPT,
-  PRESET_TITLE_MAX_LENGTH,
 } from "../../core/constants";
-import { describeError } from "../../core/errors";
+import { describeError } from "../../core/infra/errors";
+import { PRESET_TITLE_MAX_LENGTH } from "../../core/services/presets/constants";
+import type { Preset } from "../../core/services/presets";
 import {
   DATE_LOCALE,
   DIALOG_MAX_WIDTH,

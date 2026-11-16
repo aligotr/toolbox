@@ -33,8 +33,3 @@ export interface ToolDescriptor {
 export interface ToolCellProps {
   cellKey?: string;
 }
-
-/** Возвращает инструменты в порядке, заданном полем `order`. */
-export function sortedTools(tools: ToolDescriptor[]): ToolDescriptor[] {
-  return [...tools].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-}

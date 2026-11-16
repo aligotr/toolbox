@@ -7,7 +7,7 @@
 import { useConfirm } from "primevue/useconfirm";
 import type { Profile } from "../../contracts/profiles";
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "../../core/constants";
-import { deleteProfile, switchProfile } from "../../core/profiles";
+import { deleteProfile, switchProfile } from "../../core/services/profiles";
 
 export function useProfiles() {
   const confirm = useConfirm();

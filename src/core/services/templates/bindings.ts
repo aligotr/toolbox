@@ -13,11 +13,11 @@
 // с вкладками: это часть рабочего места, а не профиля (ADR 0011).
 
 import { reactive } from "vue";
-import type { Template } from "../../contracts/templates";
-import type { Binding, TabColumn, WorkspaceTab } from "../../contracts/workspace";
-import { TEMPLATE_TAB_ICON } from "../constants";
-import { copyColumns } from "../layout";
-import { templates } from "../templates";
+import type { Template } from "./index";
+import type { Binding, TabColumn, WorkspaceTab } from "../../../contracts/workspace";
+import { TEMPLATE_TAB_ICON } from "../workspace/constants";
+import { copyColumns } from "../workspace/layout";
+import { templates } from "./index";
 
 /**
  * Состояние связки.

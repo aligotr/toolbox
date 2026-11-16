@@ -15,7 +15,7 @@ import {
   profiles,
   renameProfile,
   status,
-} from "../../core/profiles";
+} from "../../core/services/profiles";
 import { filesLabel, presetsLabel, templatesLabel } from "../plural";
 import { useProfiles } from "./useProfiles";
 

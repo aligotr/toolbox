@@ -10,7 +10,7 @@
 
 import { computed, reactive, ref } from "vue";
 import type { UnlistenFn } from "@tauri-apps/api/event";
-import { write } from "../../core/journal";
+import { write } from "../../core/infra/journal";
 import { onPong, onTrace, ping, tracedPing, type Pong, type TraceChain, type TraceStage } from "./api";
 
 /** Сообщение по умолчанию: его видно в панели до первого запроса. */

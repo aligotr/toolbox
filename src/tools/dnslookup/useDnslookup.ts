@@ -11,8 +11,8 @@
 
 import { computed, reactive, watch } from "vue";
 import type { ToolCellProps } from "../../contracts/tools";
-import { write } from "../../core/journal";
-import { workspace } from "../../core/workspace";
+import { write } from "../../core/infra/journal";
+import { workspace } from "../../core/services/workspace/index";
 import {
   cancelDns,
   loadCustomServers,

@@ -29,10 +29,10 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use serde_json::{json, Value};
 
-use super::deps::Deps;
-use super::message::{Command, Event};
-use super::sink::EventSink;
-use super::trace::{self, Recorder};
+use crate::core::infra::deps::Deps;
+use crate::core::infra::message::{Command, Event};
+use crate::core::infra::sink::EventSink;
+use crate::core::infra::trace::{self, Recorder};
 
 /// Обработчик события. Первый аргумент — само сообщение (стёртое до `dyn Any`,
 /// чтобы хранить обработчики разных типов в одной коллекции), второй — контейнер
@@ -737,7 +737,7 @@ mod tests {
     //! проверяется сам механизм, а не прикладные модули.
 
     use super::*;
-    use crate::core::message::Message;
+    use crate::core::infra::message::Message;
     use serde::{Deserialize, Serialize};
     use std::sync::atomic::{AtomicUsize, Ordering as AtomicOrdering};
     use std::sync::Mutex as StdMutex;

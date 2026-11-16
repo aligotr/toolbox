@@ -13,7 +13,7 @@ use std::path::Path;
 
 use serde_json::Value;
 
-use super::files::{read, strip_bom, write_atomic};
+use crate::core::store::files::{read, strip_bom, write_atomic};
 
 /// Читает рабочее пространство.
 ///

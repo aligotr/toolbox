@@ -6,7 +6,7 @@
 // а не в разметке (ADR 0012).
 
 import type { UnlistenFn } from "@tauri-apps/api/event";
-import { ask, askTraced, subscribeEvent } from "../../core/bus";
+import { ask, askTraced, subscribeEvent } from "../../core/infra/bus";
 
 /** Ответ ядра на самопроверку. */
 export interface Pong {

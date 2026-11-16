@@ -18,7 +18,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::core::files;
+use crate::core::store::files;
 
 use super::request::parse_server_address;
 
@@ -86,9 +86,7 @@ pub fn save(data_dir: &Path, servers: &[StoredServer]) -> Result<(), String> {
     let path = servers_path(data_dir);
 
     if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).map_err(|error| {
-            format!("Не удалось создать папку '{}': {error}", parent.display())
-        })?;
+        files::ensure_dir(parent)?;
     }
 
     let file = ServersFile {

@@ -3,7 +3,7 @@
 //
 // Журнал — общий поток фактов: он живёт в core и не зависит от открытой
 // вкладки или профиля. Здесь только показ; запись и предел 200 строк —
-// в `core/journal.ts`.
+// в `core/infra/journal.ts`.
 //
 // Новые записи сверху: свежее важнее старого. Фильтр по виду — это взгляд
 // на тот же поток, а не отдельное хранилище.
@@ -12,7 +12,7 @@ import Button from "primevue/button";
 import DataView from "primevue/dataview";
 import SelectButton from "primevue/selectbutton";
 import { computed, ref } from "vue";
-import { clearJournal, journal, type JournalKind } from "../core/journal";
+import { clearJournal, journal, type JournalKind } from "../core/infra/journal";
 
 /** Один вариант фильтра. */
 interface KindOption {

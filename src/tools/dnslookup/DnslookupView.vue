@@ -23,7 +23,7 @@ import {
   CONFIRM_CALM_REJECT,
   CONFIRM_DANGER_ACCEPT,
 } from "../../core/constants";
-import { describeError } from "../../core/errors";
+import { describeError } from "../../core/infra/errors";
 import DnsTable from "./DnsTable.vue";
 import PresetsDialog from "./PresetsDialog.vue";
 import ServerDialog from "./ServerDialog.vue";

@@ -15,10 +15,10 @@ import {
   loadAppInfo,
   openFolder,
   status as appStatus,
-} from "../../core/appInfo";
+} from "../../core/services/appInfo";
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "../../core/constants";
-import { pruneLogs, status as dataStatus } from "../../core/data";
-import { loadSettings, logLevel, setLogLevel, settings, status } from "../../core/settings";
+import { pruneLogs, status as dataStatus } from "../../core/services/data";
+import { loadSettings, logLevel, setLogLevel, settings, status } from "../../core/services/settings/index";
 import { LOG_LEVEL_OPTIONS } from "./constants";
 
 const confirm = useConfirm();

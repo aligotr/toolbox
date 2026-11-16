@@ -10,7 +10,7 @@
 
 import { onMounted } from "vue";
 import type { ToolDescriptor } from "../../contracts/tools";
-import { loadSettings } from "../../core/settings";
+import { loadSettings } from "../../core/services/settings/index";
 import AppSection from "./AppSection.vue";
 import DataSection from "./DataSection.vue";
 import LogSection from "./LogSection.vue";

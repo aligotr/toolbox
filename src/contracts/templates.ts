@@ -4,9 +4,7 @@
 // в имени файла, название внутри документа. Геометрия приходит как JSON
 // без проверки: формат колонки принадлежит интерфейсу, и Rust его не
 // разбирает (ADR 0011). Поэтому тип из ядра честно говорит `unknown`,
-// а разбор делает `core/layout.ts`.
-
-import type { TabColumn } from "./workspace";
+// а разбор делает домен вкладок.
 
 /** Шаблон, как его отдаёт ядро: геометрия ещё не проверена. */
 export interface StoredTemplate {
@@ -23,12 +21,4 @@ export interface StoredTemplateList {
   items: StoredTemplate[];
   /** Причины, по которым часть файлов пропущена. */
   warnings: string[];
-}
-
-/** Шаблон после разбора: геометрия проверена. */
-export interface Template {
-  id: string;
-  title: string;
-  /** Колонки с инструментами и ширинами. */
-  layout: TabColumn[];
 }

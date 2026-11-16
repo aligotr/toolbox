@@ -50,6 +50,15 @@ pub fn write_atomic(path: &Path, contents: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Создаёт папку, если её ещё нет.
+///
+/// Ошибка возвращается с путём: без него причину отказа не найти, а папки
+/// создаются в том числе на сетевой шаре.
+pub fn ensure_dir(path: &Path) -> Result<(), String> {
+    fs::create_dir_all(path)
+        .map_err(|error| format!("Не удалось создать '{}': {error}", path.display()))
+}
+
 /// Имя временного файла рядом с целевым: переименование не должно пересекать
 /// границу диска или сетевой шары.
 fn temporary_path(path: &Path) -> PathBuf {

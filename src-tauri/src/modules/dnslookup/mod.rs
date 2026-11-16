@@ -19,9 +19,9 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
-use crate::core::bus::MessageBus;
-use crate::core::module::Module;
-use crate::core::storage::Storage;
+use crate::core::infra::bus::MessageBus;
+use crate::core::infra::module::Module;
+use crate::core::store::storage::Storage;
 
 use request::{
     DnsCancel, DnsFinished, DnsResult, DnsRun, DnsRunAccepted, PreparedQuery, PreparedRun,
@@ -317,8 +317,8 @@ fn run_query(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::deps::Deps;
-    use crate::core::message::Message as _;
+    use crate::core::infra::deps::Deps;
+    use crate::core::infra::message::Message as _;
     use hickory_proto::op::{Message, OpCode, ResponseCode};
     use hickory_proto::rr::rdata::A;
     use hickory_proto::rr::{Name, Record};

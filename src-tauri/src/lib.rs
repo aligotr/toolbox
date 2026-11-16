@@ -16,18 +16,19 @@ use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, State, WebviewWindow, WindowEvent};
 use tauri_plugin_opener::OpenerExt;
 
-use core::bus::{BusError, MessageBus, ERROR_TOPIC};
-use core::data;
-use core::deps::Deps;
-use core::logging::{self, Logger};
-use core::presets;
-use core::profiles;
-use core::settings::{self, Settings};
-use core::sink::EventSink;
-use core::storage::{Storage, DEFAULT_PROFILE};
-use core::templates;
-use core::window;
-use core::workspace;
+use core::infra::bus::{BusError, MessageBus, ERROR_TOPIC};
+use core::store;
+use core::services::data;
+use core::infra::deps::Deps;
+use core::services::logging::{self, Logger};
+use core::services::presets;
+use core::services::profiles;
+use core::services::settings::{self, Settings};
+use core::infra::sink::EventSink;
+use core::store::storage::{Storage, DEFAULT_PROFILE};
+use core::services::templates;
+use core::services::window;
+use core::services::workspace;
 
 /// Метка главного окна из `tauri.conf.json`. Через неё окно находится
 /// при восстановлении геометрии, сбросе размера и показе после запуска.
@@ -383,8 +384,8 @@ fn window_reset(app: AppHandle, runtime: State<'_, Runtime>) -> Result<Settings,
 
 /// Применяет изменение настроек, сохраняет файл и сообщает интерфейсу.
 ///
-/// Порядок жёсткий: сначала запись, потом память и лог. Если сохранить
-/// не удалось, действующие настройки не должны разойтись с файлом.
+/// Правило «сначала запись, потом память» живёт в `settings::commit`.
+/// Здесь остаются побочные эффекты: логгер и событие интерфейсу.
 fn commit_settings(
     app: &AppHandle,
     runtime: &Runtime,
@@ -396,22 +397,17 @@ fn commit_settings(
     };
 
     let mut guard = runtime.settings.lock().expect("settings lock");
-    let next = change(&guard)?;
-
-    settings::save(&storage.settings_path(), &next)?;
-
-    let log_changed = next.log.level != guard.log.level;
-    *guard = next.clone();
+    let committed = settings::commit(&storage.settings_path(), &mut guard, change)?;
     drop(guard);
 
-    if log_changed {
+    if committed.log_level_changed {
         if let Some(logger) = runtime.logger.as_ref() {
-            logger.set_level(next.log.level);
+            logger.set_level(committed.settings.log.level);
         }
     }
 
     emit_settings_changed(app, section);
-    Ok(next)
+    Ok(committed.settings)
 }
 
 /// Сообщение «настройки изменились» с именем раздела.
@@ -658,34 +654,24 @@ fn presets_list(
     presets::list(&storage.presets_dir(), &tool)
 }
 
-/// Указатель на пресет по умолчанию вместе с замечанием о файле профиля.
-#[derive(Serialize)]
-struct PresetDefault {
-    /// Идентификатор пресета; `null` — умолчание не задано.
-    id: Option<String>,
-    /// Причина, по которой файл профиля не разобран; `null` — всё в порядке.
-    warning: Option<String>,
-}
-
 /// Пресет по умолчанию для инструмента активного профиля.
 ///
 /// `id = null` — умолчание не задано: новая вкладка открывается пустой, как и
 /// раньше. Указатель лежит в `profile.json`, поэтому виден только активному
 /// профилю и синхронизируется вместе с ним.
 #[tauri::command]
-fn preset_default_get(runtime: State<'_, Runtime>, tool: String) -> Result<PresetDefault, String> {
+fn preset_default_get(
+    runtime: State<'_, Runtime>,
+    tool: String,
+) -> Result<presets::PresetDefault, String> {
     let storage = storage_of(&runtime)?;
-    let dir = storage.active_profile_dir();
-    Ok(PresetDefault {
-        id: profiles::default_preset(&dir, &tool)?,
-        warning: profiles::document_warning(&dir)?,
-    })
+    presets::default_for(&storage.active_profile_dir(), &tool)
 }
 
 /// Назначает или снимает пресет по умолчанию.
 ///
-/// Существование пресета проверяется здесь, а не в интерфейсе: указатель
-/// в пустоту открывал бы вкладку с предупреждением на каждом запуске.
+/// Существование пресета проверяет домен пресетов: указатель в пустоту
+/// открывал бы вкладку с предупреждением на каждом запуске.
 #[tauri::command]
 fn preset_default_set(
     runtime: State<'_, Runtime>,
@@ -693,19 +679,18 @@ fn preset_default_set(
     id: Option<String>,
 ) -> Result<Option<String>, String> {
     let storage = storage_of(&runtime)?;
+    let assigned = presets::set_default(
+        &storage.active_profile_dir(),
+        &storage.presets_dir(),
+        &tool,
+        id.as_deref(),
+    )?;
 
-    if let Some(id) = &id {
-        if !presets::exists(&storage.presets_dir(), &tool, id) {
-            return Err(format!("Пресет '{id}' не найден"));
-        }
-    }
-
-    profiles::set_default_preset(&storage.active_profile_dir(), &tool, id.as_deref())?;
     log::info!(
         "Пресет по умолчанию для '{tool}': {}",
-        id.as_deref().unwrap_or("не задан")
+        assigned.as_deref().unwrap_or("не задан")
     );
-    Ok(id)
+    Ok(assigned)
 }
 
 /// Сохраняет текущие настройки инструмента новым пресетом.
@@ -771,12 +756,10 @@ fn preset_delete(
     let target = presets::delete(
         &storage.presets_dir(),
         &storage.presets_trash_dir(),
+        &storage.active_profile_dir(),
         &tool,
         &id,
     )?;
-    // Указатель на удалённый пресет молча не переживает удаление: иначе
-    // каждая новая вкладка открывалась бы с предупреждением.
-    profiles::clear_default_if(&storage.active_profile_dir(), &tool, &id)?;
     Ok(target.display().to_string())
 }
 
@@ -839,13 +822,9 @@ fn app_info(app: AppHandle, runtime: State<'_, Runtime>) -> AppInfo {
 
 /// Размеры логов, шаблонов и данных инструментов активного профиля.
 #[tauri::command]
-fn storage_stats(runtime: State<'_, Runtime>) -> Result<data::StorageStats, String> {
+fn storage_stats(runtime: State<'_, Runtime>) -> Result<store::stats::StorageStats, String> {
     let storage = storage_of(&runtime)?;
-    Ok(data::stats(
-        &storage.logs_dir(),
-        &storage.templates_dir(),
-        &storage.data_dir(),
-    ))
+    Ok(store::stats::summary(&storage))
 }
 
 /// Удаляет файлы лога старше срока хранения и возвращает их число.

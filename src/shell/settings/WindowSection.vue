@@ -9,7 +9,7 @@ import Button from "primevue/button";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted } from "vue";
 import { CONFIRM_CALM_REJECT } from "../../core/constants";
-import { loadSettings, resetWindow, settings, status } from "../../core/settings";
+import { loadSettings, resetWindow, settings, status } from "../../core/services/settings/index";
 
 const confirm = useConfirm();
 
