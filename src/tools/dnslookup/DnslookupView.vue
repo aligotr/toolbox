@@ -481,9 +481,6 @@ async function exportCsv(): Promise<void> {
             />
             <label :for="`dns-column-${server.id}`" class="columns__label">
               {{ server.label }}
-              <small v-if="server.address" class="columns__address">
-                {{ server.address }}
-              </small>
             </label>
           </li>
         </ul>
@@ -770,16 +767,7 @@ async function exportCsv(): Promise<void> {
 }
 
 .columns__label {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ag-space-xs);
   font-size: var(--ag-text-sm);
   cursor: pointer;
-}
-
-.columns__address {
-  color: var(--p-text-muted-color);
-  font-family: var(--ag-font-mono);
-  font-size: var(--ag-text-xs);
 }
 </style>
