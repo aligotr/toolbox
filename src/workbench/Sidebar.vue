@@ -258,7 +258,6 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 .nav {
   display: flex;
   flex-direction: column;
-  gap: var(--ag-space-sm);
   min-width: 0;
 }
 
