@@ -6,6 +6,8 @@
 // разбирает (ADR 0011). Поэтому тип из ядра честно говорит `unknown`,
 // а разбор делает домен вкладок.
 
+import type { AppError } from "./errors";
+
 /** Шаблон, как его отдаёт ядро: геометрия ещё не проверена. */
 export interface StoredTemplate {
   /** Идентификатор: имя файла без расширения. */
@@ -20,5 +22,5 @@ export interface StoredTemplate {
 export interface StoredTemplateList {
   items: StoredTemplate[];
   /** Причины, по которым часть файлов пропущена. */
-  warnings: string[];
+  warnings: AppError[];
 }

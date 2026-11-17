@@ -5,20 +5,14 @@
 // `fallback` остаётся, когда перевода кода ещё нет: пустая строка выглядела
 // бы не пропуском, а поломкой интерфейса.
 
+import type { AppError } from "@/contracts/errors";
 import { hasMessage, t } from "./i18n/index.ts";
 
-/** Структурный отказ ядра: код, подстановки и русский запасной текст. */
-interface CodedError {
-  code: string;
-  params: Record<string, string>;
-  fallback: string;
-}
-
 /** Распознаёт структурный отказ среди того, что пришло из Tauri. */
-function asCodedError(error: unknown): CodedError | null {
+function asCodedError(error: unknown): AppError | null {
   if (typeof error !== "object" || error === null) return null;
 
-  const value = error as Partial<CodedError>;
+  const value = error as Partial<AppError>;
   if (typeof value.code !== "string" || typeof value.fallback !== "string") {
     return null;
   }

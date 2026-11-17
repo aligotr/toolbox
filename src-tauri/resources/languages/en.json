@@ -577,5 +577,44 @@
     "errors.profiles.serialize": "The profile was not serialized: {reason}",
     "errors.profiles.broken":
       "The profile file “{path}” was not parsed: {reason}; defaults are hidden",
+    "errors.presets.read": "Could not read “{path}”: {reason}",
+    "errors.presets.create": "Could not create “{path}”: {reason}",
+    "errors.presets.move": "Could not move “{path}” to “{target}”: {reason}",
+    "errors.presets.invalidTool": "The tool identifier is not valid",
+    "errors.presets.notFound": "Preset “{id}” was not found",
+    "errors.presets.emptyId": "The preset identifier is empty",
+    "errors.presets.invalidId":
+      "A preset identifier may contain Latin letters, digits, “-” and “_”",
+    "errors.presets.missing":
+      "The file “{path}” disappeared between reading the folder and reading the preset",
+    "errors.presets.broken": "The file “{path}” was not parsed: {reason}",
+    "errors.presets.notObject": "The file “{path}” must contain a preset object",
+    "errors.presets.version":
+      "Preset “{path}” is written in version {version}; expected {expected}",
+    "errors.presets.tool":
+      "Preset “{path}” belongs to the tool “{tool}”, not to “{expected}”",
+    "errors.presets.payloadFile":
+      "Preset “{path}” has no settings: payload must be a JSON object",
+    "errors.presets.serialize": "The preset was not serialized: {reason}",
+    "errors.presets.payload": "Preset settings must be a JSON object",
+    "errors.presets.emptyTitle": "A preset name cannot be empty",
+    "errors.presets.longTitle": "The preset name is longer than {limit} characters",
+    "errors.templates.read": "Could not read “{path}”: {reason}",
+    "errors.templates.create": "Could not create “{path}”: {reason}",
+    "errors.templates.move": "Could not move “{path}” to “{target}”: {reason}",
+    "errors.templates.emptyId": "The template identifier is empty",
+    "errors.templates.invalidId":
+      "A template identifier may contain Latin letters, digits, “-” and “_”",
+    "errors.templates.notFound": "Template “{id}” was not found",
+    "errors.templates.missing":
+      "The file “{path}” disappeared between reading the folder and reading the template",
+    "errors.templates.broken": "The file “{path}” was not parsed: {reason}",
+    "errors.templates.notObject": "The file “{path}” must contain a template object",
+    "errors.templates.version":
+      "The file “{path}” is written in version {version}; expected {expected}",
+    "errors.templates.serialize": "The template was not serialized: {reason}",
+    "errors.templates.layout": "Template geometry must be an array of columns",
+    "errors.templates.emptyTitle": "A template name cannot be empty",
+    "errors.templates.longTitle": "The template name is longer than {limit} characters",
   },
 }

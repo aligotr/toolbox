@@ -22,6 +22,7 @@ use serde::Serialize;
 use serde_json::{Map, Value};
 
 use crate::core::services::profiles;
+use crate::core::infra::error::{fail, AppError, AppResult};
 use crate::core::store::files::{ensure_dir, read, strip_bom, write_atomic};
 use crate::core::store::names;
 
@@ -58,14 +59,14 @@ pub struct Preset {
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct PresetList {
     pub items: Vec<Preset>,
-    pub warnings: Vec<String>,
+    pub warnings: Vec<AppError>,
 }
 
 /// Читает пресеты одного инструмента.
 ///
 /// Битый файл не мешает остальным: он пропускается с причиной в `warnings`.
 /// Прятать его молча нельзя — пользователь не понял бы, почему пресет исчез.
-pub fn list(root: &Path, tool: &str) -> Result<PresetList, String> {
+pub fn list(root: &Path, tool: &str) -> AppResult<PresetList> {
     validate_tool(tool)?;
     let dir = tool_dir(root, tool);
 
@@ -78,7 +79,12 @@ pub fn list(root: &Path, tool: &str) -> Result<PresetList, String> {
             });
         }
         Err(error) => {
-            return Err(format!("Не удалось прочитать '{}': {error}", dir.display()));
+            return fail!(
+                "errors.presets.read",
+                format!("Не удалось прочитать '{}': {error}", dir.display()),
+                path = dir.display(),
+                reason = error,
+            );
         }
     };
 
@@ -86,8 +92,14 @@ pub fn list(root: &Path, tool: &str) -> Result<PresetList, String> {
     let mut warnings = Vec::new();
 
     for entry in entries {
-        let entry =
-            entry.map_err(|error| format!("Не удалось прочитать '{}': {error}", dir.display()))?;
+        let entry = entry.map_err(|error| {
+            AppError::new(
+                "errors.presets.read",
+                format!("Не удалось прочитать '{}': {error}", dir.display()),
+            )
+            .with("path", dir.display())
+            .with("reason", error)
+        })?;
         let path = entry.path();
         if !path.is_file() {
             continue;
@@ -133,14 +145,20 @@ pub fn list(root: &Path, tool: &str) -> Result<PresetList, String> {
 ///
 /// Идентификатор собирается из названия, конфликт решается суффиксом: два
 /// пресета «Продакшн» — обычное дело, а совпадать имена файлов не могут.
-pub fn create(root: &Path, tool: &str, title: &str, payload: Value) -> Result<Preset, String> {
+pub fn create(root: &Path, tool: &str, title: &str, payload: Value) -> AppResult<Preset> {
     validate_tool(tool)?;
     let title = normalize_title(title)?;
     ensure_payload(&payload)?;
 
     let dir = tool_dir(root, tool);
-    fs::create_dir_all(&dir)
-        .map_err(|error| format!("Не удалось создать '{}': {error}", dir.display()))?;
+    fs::create_dir_all(&dir).map_err(|error| {
+        AppError::new(
+            "errors.presets.create",
+            format!("Не удалось создать '{}': {error}", dir.display()),
+        )
+        .with("path", dir.display())
+        .with("reason", error)
+    })?;
 
     let preset = Preset {
         id: unique_id(&dir, &names::slug(&title, "preset")),
@@ -158,7 +176,7 @@ pub fn create(root: &Path, tool: &str, title: &str, payload: Value) -> Result<Pr
 /// Название и незнакомые ключи остаются прежними: «сохранить» — это снимок
 /// текущих настроек, а не переименование. Иначе сохранение незаметно меняло бы
 /// название, которое пользователь правил отдельно.
-pub fn update(root: &Path, tool: &str, id: &str, payload: Value) -> Result<Preset, String> {
+pub fn update(root: &Path, tool: &str, id: &str, payload: Value) -> AppResult<Preset> {
     validate_tool(tool)?;
     ensure_payload(&payload)?;
     let path = preset_path(root, tool, id)?;
@@ -183,7 +201,7 @@ pub fn update(root: &Path, tool: &str, id: &str, payload: Value) -> Result<Prese
 ///
 /// Незнакомые ключи сохраняются: файл могли дополнить вручную, и терять
 /// чужие поля при переименовании нельзя.
-pub fn rename(root: &Path, tool: &str, id: &str, title: &str) -> Result<Preset, String> {
+pub fn rename(root: &Path, tool: &str, id: &str, title: &str) -> AppResult<Preset> {
     validate_tool(tool)?;
     let title = normalize_title(title)?;
     let path = preset_path(root, tool, id)?;
@@ -205,7 +223,7 @@ pub fn rename(root: &Path, tool: &str, id: &str, title: &str) -> Result<Preset, 
 /// Приписку к названию даёт интерфейс: она зависит от языка программы,
 /// а ядро языка не знает (ADR 0039). Пользователь нажал одну кнопку
 /// и ждёт второй такой же пресет, а не диалог.
-pub fn duplicate(root: &Path, tool: &str, id: &str, suffix: &str) -> Result<Preset, String> {
+pub fn duplicate(root: &Path, tool: &str, id: &str, suffix: &str) -> AppResult<Preset> {
     validate_tool(tool)?;
     let path = preset_path(root, tool, id)?;
     let document = read_current_document(&path, tool)?;
@@ -226,7 +244,7 @@ pub fn delete(
     profile_dir: &Path,
     tool: &str,
     id: &str,
-) -> Result<PathBuf, String> {
+) -> AppResult<PathBuf> {
     validate_tool(tool)?;
     let path = preset_path(root, tool, id)?;
 
@@ -235,11 +253,17 @@ pub fn delete(
 
     let target = trash_dir.join(unique_file_name(&trash_dir, id));
     fs::rename(&path, &target).map_err(|error| {
-        format!(
-            "Не удалось перенести '{}' в '{}': {error}",
-            path.display(),
-            target.display()
+        AppError::new(
+            "errors.presets.move",
+            format!(
+                "Не удалось перенести '{}' в '{}': {error}",
+                path.display(),
+                target.display()
+            ),
         )
+        .with("path", path.display())
+        .with("target", target.display())
+        .with("reason", error)
     })?;
 
     clear_default_if(profile_dir, tool, id)?;
@@ -248,9 +272,12 @@ pub fn delete(
 }
 
 /// Проверяет идентификатор инструмента: он становится именем папки.
-fn validate_tool(tool: &str) -> Result<(), String> {
+fn validate_tool(tool: &str) -> AppResult<()> {
     if !names::is_safe_id(tool) {
-        return Err("Недопустимый идентификатор инструмента".to_owned());
+        return fail!(
+            "errors.presets.invalidTool",
+            "Недопустимый идентификатор инструмента"
+        );
     }
     Ok(())
 }
@@ -266,7 +293,7 @@ pub struct PresetDefault {
     /// Идентификатор пресета; `None` — умолчание не задано.
     pub id: Option<String>,
     /// Причина, по которой файл профиля не разобран; `None` — всё в порядке.
-    pub warning: Option<String>,
+    pub warning: Option<AppError>,
 }
 
 /// Пресет по умолчанию для инструмента активного профиля.
@@ -275,12 +302,10 @@ pub struct PresetDefault {
 /// Указатель лежит в `profile.json`, потому что принадлежит профилю и
 /// синхронизируется вместе с ним. Но правило — здесь: без пресета указатель
 /// не имеет смысла, а профиль о пресетах не знает (ADR 0035).
-pub fn default_for(profile_dir: &Path, tool: &str) -> Result<PresetDefault, String> {
+pub fn default_for(profile_dir: &Path, tool: &str) -> AppResult<PresetDefault> {
     validate_tool(tool)?;
 
-    // Пресеты пока возвращают русский текст: коды ошибок дойдут до них
-    // следующим этапом (ADR 0039).
-    let document = profiles::document(profile_dir).map_err(|error| error.to_string())?;
+    let document = profiles::document(profile_dir)?;
     let id = document
         .get(DEFAULTS_KEY)
         .and_then(Value::as_object)
@@ -292,9 +317,7 @@ pub fn default_for(profile_dir: &Path, tool: &str) -> Result<PresetDefault, Stri
 
     Ok(PresetDefault {
         id,
-        warning: profiles::document_warning(profile_dir)
-            .map_err(|error| error.to_string())?
-            .map(|error| error.to_string()),
+        warning: profiles::document_warning(profile_dir)?,
     })
 }
 
@@ -307,17 +330,24 @@ pub fn set_default(
     presets_dir: &Path,
     tool: &str,
     id: Option<&str>,
-) -> Result<Option<String>, String> {
+) -> AppResult<Option<String>> {
     validate_tool(tool)?;
 
     let wanted = match id {
         Some(id) => {
             let id = id.trim();
             if !names::is_safe_id(id) {
-                return Err("Недопустимый идентификатор пресета".to_owned());
+                return fail!(
+                    "errors.presets.invalidId",
+                    "В идентификаторе пресета допустимы латиница, цифры, '-' и '_'"
+                );
             }
             if !exists(presets_dir, tool, id) {
-                return Err(format!("Пресет '{id}' не найден"));
+                return fail!(
+                    "errors.presets.notFound",
+                    format!("Пресет '{id}' не найден"),
+                    id = id,
+                );
             }
             Some(id.to_owned())
         }
@@ -332,7 +362,7 @@ pub fn set_default(
 ///
 /// Указатель на удалённый файл открывал бы вкладку с предупреждением на
 /// каждом запуске, поэтому чистится вместе с пресетом.
-pub fn clear_default_if(profile_dir: &Path, tool: &str, preset_id: &str) -> Result<(), String> {
+pub fn clear_default_if(profile_dir: &Path, tool: &str, preset_id: &str) -> AppResult<()> {
     if default_for(profile_dir, tool)?.id.as_deref() == Some(preset_id) {
         write_default(profile_dir, tool, None)?;
     }
@@ -343,7 +373,7 @@ pub fn clear_default_if(profile_dir: &Path, tool: &str, preset_id: &str) -> Resu
 ///
 /// Пустой раздел удаляется: файл не должен копить незавершённые настройки.
 /// Чужие ключи документа сохраняются — файл общий с профилем.
-fn write_default(profile_dir: &Path, tool: &str, id: Option<&str>) -> Result<(), String> {
+fn write_default(profile_dir: &Path, tool: &str, id: Option<&str>) -> AppResult<()> {
     let next = id.map(str::to_owned);
     profiles::update_document(profile_dir, |document| {
         let mut defaults = match document.get(DEFAULTS_KEY) {
@@ -367,16 +397,18 @@ fn write_default(profile_dir: &Path, tool: &str, id: Option<&str>) -> Result<(),
         }
         Ok(())
     })
-    .map_err(|error| error.to_string())
 }
 
 /// Проверяет идентификатор пресета: он становится именем файла.
-fn validate_id(id: &str) -> Result<(), String> {
+fn validate_id(id: &str) -> AppResult<()> {
     if id.is_empty() {
-        return Err("Идентификатор пресета пуст".to_owned());
+        return fail!("errors.presets.emptyId", "Идентификатор пресета пуст");
     }
     if !names::is_safe_id(id) {
-        return Err("В идентификаторе пресета допустимы латиница, цифры, '-' и '_'".to_owned());
+        return fail!(
+            "errors.presets.invalidId",
+            "В идентификаторе пресета допустимы латиница, цифры, '-' и '_'"
+        );
     }
     Ok(())
 }
@@ -387,11 +419,15 @@ fn tool_dir(root: &Path, tool: &str) -> PathBuf {
 }
 
 /// Путь к существующему пресету.
-fn preset_path(root: &Path, tool: &str, id: &str) -> Result<PathBuf, String> {
+fn preset_path(root: &Path, tool: &str, id: &str) -> AppResult<PathBuf> {
     validate_id(id)?;
     let path = tool_dir(root, tool).join(file_name(id));
     if !path.is_file() {
-        return Err(format!("Пресет '{id}' не найден"));
+        return fail!(
+            "errors.presets.notFound",
+            format!("Пресет '{id}' не найден"),
+            id = id,
+        );
     }
     Ok(path)
 }
@@ -423,53 +459,80 @@ fn unique_file_name(dir: &Path, base: &str) -> String {
 }
 
 /// Читает документ пресета целиком: незнакомые ключи нужны при перезаписи.
-fn read_document(path: &Path) -> Result<Map<String, Value>, String> {
+fn read_document(path: &Path) -> AppResult<Map<String, Value>> {
     let Some(raw) = read(path)? else {
-        return Err(format!(
-            "Файл '{}' исчез между чтением папки и чтением пресета",
-            path.display()
-        ));
+        return fail!(
+            "errors.presets.missing",
+            format!(
+                "Файл '{}' исчез между чтением папки и чтением пресета",
+                path.display()
+            ),
+            path = path.display(),
+        );
     };
 
-    let value: Value = serde_json::from_str(strip_bom(&raw))
-        .map_err(|error| format!("Файл '{}' не разобран: {error}", path.display()))?;
+    let value: Value = serde_json::from_str(strip_bom(&raw)).map_err(|error| {
+        AppError::new(
+            "errors.presets.broken",
+            format!("Файл '{}' не разобран: {error}", path.display()),
+        )
+        .with("path", path.display())
+        .with("reason", error)
+    })?;
 
     let Value::Object(document) = value else {
-        return Err(format!(
-            "Файл '{}' должен содержать объект пресета",
-            path.display()
-        ));
+        return fail!(
+            "errors.presets.notObject",
+            format!("Файл '{}' должен содержать объект пресета", path.display()),
+            path = path.display(),
+        );
     };
     Ok(document)
 }
 
 /// Проверяет, что документ записан этой версией для этого инструмента.
-fn ensure_current(document: &Map<String, Value>, path: &Path, tool: &str) -> Result<(), String> {
+fn ensure_current(document: &Map<String, Value>, path: &Path, tool: &str) -> AppResult<()> {
     let version = document.get("version").and_then(Value::as_u64);
     if version != Some(u64::from(VERSION)) {
-        return Err(format!(
-            "пресет '{}' записан в версии {}, ожидалась {VERSION}",
-            path.display(),
-            version
-                .map(|version| version.to_string())
-                .unwrap_or_else(|| "без номера".to_owned())
-        ));
+        return fail!(
+            "errors.presets.version",
+            format!(
+                "пресет '{}' записан в версии {}, ожидалась {VERSION}",
+                path.display(),
+                version
+                    .map(|version| version.to_string())
+                    .unwrap_or_else(|| "без номера".to_owned())
+            ),
+            path = path.display(),
+            version = version.map_or_else(|| "—".to_owned(), |version| version.to_string()),
+            expected = VERSION,
+        );
     }
 
     let document_tool = document.get("tool").and_then(Value::as_str);
     if document_tool != Some(tool) {
-        return Err(format!(
-            "пресет '{}' относится к инструменту '{}', а не к '{tool}'",
-            path.display(),
-            document_tool.unwrap_or("не указан")
-        ));
+        return fail!(
+            "errors.presets.tool",
+            format!(
+                "пресет '{}' относится к инструменту '{}', а не к '{tool}'",
+                path.display(),
+                document_tool.unwrap_or("не указан")
+            ),
+            path = path.display(),
+            tool = document_tool.unwrap_or("—"),
+            expected = tool,
+        );
     }
 
     if !matches!(document.get("payload"), Some(Value::Object(_))) {
-        return Err(format!(
-            "пресет '{}' не содержит настроек: payload должен быть JSON-объектом",
-            path.display()
-        ));
+        return fail!(
+            "errors.presets.payloadFile",
+            format!(
+                "пресет '{}' не содержит настроек: payload должен быть JSON-объектом",
+                path.display()
+            ),
+            path = path.display(),
+        );
     }
     Ok(())
 }
@@ -478,14 +541,14 @@ fn ensure_current(document: &Map<String, Value>, path: &Path, tool: &str) -> Res
 ///
 /// Иначе сохранение перезаписало бы поля файла, формат которого эта версия
 /// программы не знает, или настройки другого инструмента.
-fn read_current_document(path: &Path, tool: &str) -> Result<Map<String, Value>, String> {
+fn read_current_document(path: &Path, tool: &str) -> AppResult<Map<String, Value>> {
     let document = read_document(path)?;
     ensure_current(&document, path, tool)?;
     Ok(document)
 }
 
 /// Пишет документ пресета атомарно: папка может лежать на сетевой шаре.
-fn write_document(path: &Path, tool: &str, preset: &Preset) -> Result<(), String> {
+fn write_document(path: &Path, tool: &str, preset: &Preset) -> AppResult<()> {
     let mut document = Map::new();
     document.insert("version".to_owned(), Value::from(VERSION));
     document.insert("tool".to_owned(), Value::from(tool));
@@ -497,10 +560,16 @@ fn write_document(path: &Path, tool: &str, preset: &Preset) -> Result<(), String
 }
 
 /// Перезаписывает документ целиком, сохраняя незнакомые ключи.
-fn write_document_map(path: &Path, document: &Map<String, Value>) -> Result<(), String> {
-    let text = serde_json::to_string_pretty(&Value::Object(document.clone()))
-        .map_err(|error| format!("Пресет не сериализован: {error}"))?;
-    write_atomic(path, &format!("{text}\n"))
+fn write_document_map(path: &Path, document: &Map<String, Value>) -> AppResult<()> {
+    let text = serde_json::to_string_pretty(&Value::Object(document.clone())).map_err(|error| {
+        AppError::new(
+            "errors.presets.serialize",
+            format!("Пресет не сериализован: {error}"),
+        )
+        .with("reason", error)
+    })?;
+    write_atomic(path, &format!("{text}\n"))?;
+    Ok(())
 }
 
 /// Название из документа; имя файла — запасной вариант.
@@ -535,22 +604,32 @@ fn payload_of(document: &Map<String, Value>) -> Value {
 ///
 /// Список как весь снимок не имеет имён полей и плохо переживает расширение:
 /// добавить настройку к массиву нельзя, не сломав читателей.
-fn ensure_payload(payload: &Value) -> Result<(), String> {
+fn ensure_payload(payload: &Value) -> AppResult<()> {
     if payload.is_object() {
         Ok(())
     } else {
-        Err("Настройки пресета должны быть JSON-объектом".to_owned())
+        fail!(
+            "errors.presets.payload",
+            "Настройки пресета должны быть JSON-объектом"
+        )
     }
 }
 
 /// Проверяет и обрезает название.
-fn normalize_title(title: &str) -> Result<String, String> {
+fn normalize_title(title: &str) -> AppResult<String> {
     let title = title.trim();
     if title.is_empty() {
-        return Err("Название пресета не может быть пустым".to_owned());
+        return fail!(
+            "errors.presets.emptyTitle",
+            "Название пресета не может быть пустым"
+        );
     }
     if title.chars().count() > MAX_TITLE_LEN {
-        return Err(format!("Название пресета длиннее {MAX_TITLE_LEN} символов"));
+        return fail!(
+            "errors.presets.longTitle",
+            format!("Название пресета длиннее {MAX_TITLE_LEN} символов"),
+            limit = MAX_TITLE_LEN,
+        );
     }
     Ok(title.to_owned())
 }
@@ -791,7 +870,7 @@ mod tests {
 
         let error = update(&root, "dnslookup", &preset.id, payload()).expect_err("чужая версия");
 
-        assert!(error.contains("версии 99"), "причина: {error}");
+        assert!(error.to_string().contains("версии 99"), "причина: {error}");
     }
 
     #[test]
@@ -807,7 +886,7 @@ mod tests {
         let error =
             update(&root, "dnslookup", &preset.id, payload()).expect_err("чужой инструмент");
 
-        assert!(error.contains("ping"), "причина: {error}");
+        assert!(error.to_string().contains("ping"), "причина: {error}");
     }
 
     #[test]
@@ -959,7 +1038,7 @@ mod tests {
         let error = create(&root, "dnslookup", "DNS", serde_json::json!(["a"]))
             .expect_err("массив вместо объекта");
 
-        assert!(error.contains("JSON-объектом"), "причина: {error}");
+        assert!(error.to_string().contains("JSON-объектом"), "причина: {error}");
     }
 
     #[test]
@@ -967,7 +1046,7 @@ mod tests {
         let root = temp_dir("empty-title");
         let error = create(&root, "dnslookup", "   ", payload()).expect_err("пустое название");
 
-        assert!(error.contains("пустым"), "причина: {error}");
+        assert!(error.to_string().contains("пустым"), "причина: {error}");
     }
 
     #[test]
@@ -990,7 +1069,7 @@ mod tests {
         let root = temp_dir("update-missing");
         let error = update(&root, "dnslookup", "ghost", payload()).expect_err("нет файла");
 
-        assert!(error.contains("не найден"), "причина: {error}");
+        assert!(error.to_string().contains("не найден"), "причина: {error}");
     }
 
     #[test]

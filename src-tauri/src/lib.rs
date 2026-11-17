@@ -629,7 +629,7 @@ fn app_restart(app: AppHandle) {
 /// Замечания о непрочитанных файлах идут вместе со списком: испорченный
 /// шаблон не мешает остальным, но пользователь должен знать, что он был.
 #[tauri::command]
-fn templates_list(runtime: State<'_, Runtime>) -> Result<templates::TemplateList, String> {
+fn templates_list(runtime: State<'_, Runtime>) -> AppResult<templates::TemplateList> {
     let storage = storage_of(&runtime)?;
     templates::list(&storage.templates_dir())
 }
@@ -640,7 +640,7 @@ fn template_create(
     runtime: State<'_, Runtime>,
     title: String,
     layout: Value,
-) -> Result<templates::Template, String> {
+) -> AppResult<templates::Template> {
     let storage = storage_of(&runtime)?;
     let template = templates::create(&storage.templates_dir(), &title, layout)?;
     log::info!("Создан шаблон '{}' ({})", template.title, template.id);
@@ -656,7 +656,7 @@ fn template_update(
     runtime: State<'_, Runtime>,
     id: String,
     layout: Value,
-) -> Result<templates::Template, String> {
+) -> AppResult<templates::Template> {
     let storage = storage_of(&runtime)?;
     let template = templates::update(&storage.templates_dir(), &id, layout)?;
     log::info!("Шаблон '{}' обновлён из вкладки", template.title);
@@ -669,7 +669,7 @@ fn template_rename(
     runtime: State<'_, Runtime>,
     id: String,
     title: String,
-) -> Result<templates::Template, String> {
+) -> AppResult<templates::Template> {
     let storage = storage_of(&runtime)?;
     let template = templates::rename(&storage.templates_dir(), &id, &title)?;
     log::info!("Шаблон '{id}' переименован в '{}'", template.title);
@@ -682,7 +682,7 @@ fn template_duplicate(
     runtime: State<'_, Runtime>,
     id: String,
     suffix: String,
-) -> Result<templates::Template, String> {
+) -> AppResult<templates::Template> {
     let storage = storage_of(&runtime)?;
     let template = templates::duplicate(&storage.templates_dir(), &id, &suffix)?;
     log::info!("Шаблон '{id}' дублирован как '{}'", template.id);
@@ -691,7 +691,7 @@ fn template_duplicate(
 
 /// Удаляет шаблон в `local/trash/templates/`.
 #[tauri::command]
-fn template_delete(runtime: State<'_, Runtime>, id: String) -> Result<String, String> {
+fn template_delete(runtime: State<'_, Runtime>, id: String) -> AppResult<String> {
     let storage = storage_of(&runtime)?;
     let target = templates::delete(
         &storage.templates_dir(),
@@ -709,7 +709,7 @@ fn template_delete(runtime: State<'_, Runtime>, id: String) -> Result<String, St
 /// Замечания о непрочитанных файлах идут вместе со списком: испорченный
 /// пресет не мешает остальным, но пользователь должен знать, что он был.
 #[tauri::command]
-fn presets_list(runtime: State<'_, Runtime>, tool: String) -> Result<presets::PresetList, String> {
+fn presets_list(runtime: State<'_, Runtime>, tool: String) -> AppResult<presets::PresetList> {
     let storage = storage_of(&runtime)?;
     presets::list(&storage.presets_dir(), &tool)
 }
@@ -723,7 +723,7 @@ fn presets_list(runtime: State<'_, Runtime>, tool: String) -> Result<presets::Pr
 fn preset_default_get(
     runtime: State<'_, Runtime>,
     tool: String,
-) -> Result<presets::PresetDefault, String> {
+) -> AppResult<presets::PresetDefault> {
     let storage = storage_of(&runtime)?;
     presets::default_for(&storage.active_profile_dir(), &tool)
 }
@@ -737,7 +737,7 @@ fn preset_default_set(
     runtime: State<'_, Runtime>,
     tool: String,
     id: Option<String>,
-) -> Result<Option<String>, String> {
+) -> AppResult<Option<String>> {
     let storage = storage_of(&runtime)?;
     let assigned = presets::set_default(
         &storage.active_profile_dir(),
@@ -760,7 +760,7 @@ fn preset_create(
     tool: String,
     title: String,
     payload: Value,
-) -> Result<presets::Preset, String> {
+) -> AppResult<presets::Preset> {
     let storage = storage_of(&runtime)?;
     let preset = presets::create(&storage.presets_dir(), &tool, &title, payload)?;
     Ok(preset)
@@ -773,7 +773,7 @@ fn preset_update(
     tool: String,
     id: String,
     payload: Value,
-) -> Result<presets::Preset, String> {
+) -> AppResult<presets::Preset> {
     let storage = storage_of(&runtime)?;
     let preset = presets::update(&storage.presets_dir(), &tool, &id, payload)?;
     Ok(preset)
@@ -786,7 +786,7 @@ fn preset_rename(
     tool: String,
     id: String,
     title: String,
-) -> Result<presets::Preset, String> {
+) -> AppResult<presets::Preset> {
     let storage = storage_of(&runtime)?;
     let preset = presets::rename(&storage.presets_dir(), &tool, &id, &title)?;
     Ok(preset)
@@ -799,7 +799,7 @@ fn preset_duplicate(
     tool: String,
     id: String,
     suffix: String,
-) -> Result<presets::Preset, String> {
+) -> AppResult<presets::Preset> {
     let storage = storage_of(&runtime)?;
     let preset = presets::duplicate(&storage.presets_dir(), &tool, &id, &suffix)?;
     Ok(preset)
@@ -807,7 +807,7 @@ fn preset_duplicate(
 
 /// Удаляет пресет в `local/trash/presets/<tool>/`.
 #[tauri::command]
-fn preset_delete(runtime: State<'_, Runtime>, tool: String, id: String) -> Result<String, String> {
+fn preset_delete(runtime: State<'_, Runtime>, tool: String, id: String) -> AppResult<String> {
     let storage = storage_of(&runtime)?;
     let target = presets::delete(
         &storage.presets_dir(),

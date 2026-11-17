@@ -603,4 +603,44 @@ export const ruMessages: Messages = {
   "errors.profiles.serialize": "Профиль не сериализован: {reason}",
   "errors.profiles.broken":
     "Файл профиля «{path}» не разобран: {reason}; умолчания скрыты",
+  "errors.presets.read": "Не удалось прочитать «{path}»: {reason}",
+  "errors.presets.create": "Не удалось создать «{path}»: {reason}",
+  "errors.presets.move": "Не удалось перенести «{path}» в «{target}»: {reason}",
+  "errors.presets.invalidTool": "Недопустимый идентификатор инструмента",
+  "errors.presets.notFound": "Пресет «{id}» не найден",
+  "errors.presets.emptyId": "Идентификатор пресета пуст",
+  "errors.presets.invalidId":
+    "В идентификаторе пресета допустимы латиница, цифры, «-» и «_»",
+  "errors.presets.missing":
+    "Файл «{path}» исчез между чтением папки и чтением пресета",
+  "errors.presets.broken": "Файл «{path}» не разобран: {reason}",
+  "errors.presets.notObject": "Файл «{path}» должен содержать объект пресета",
+  "errors.presets.version":
+    "Пресет «{path}» записан в версии {version}, ожидалась {expected}",
+  "errors.presets.tool":
+    "Пресет «{path}» относится к инструменту «{tool}», а не к «{expected}»",
+  "errors.presets.payloadFile":
+    "Пресет «{path}» не содержит настроек: payload должен быть JSON-объектом",
+  "errors.presets.serialize": "Пресет не сериализован: {reason}",
+  "errors.presets.payload": "Настройки пресета должны быть JSON-объектом",
+  "errors.presets.emptyTitle": "Название пресета не может быть пустым",
+  "errors.presets.longTitle": "Название пресета длиннее {limit} символов",
+  "errors.templates.read": "Не удалось прочитать «{path}»: {reason}",
+  "errors.templates.create": "Не удалось создать «{path}»: {reason}",
+  "errors.templates.move": "Не удалось перенести «{path}» в «{target}»: {reason}",
+  "errors.templates.emptyId": "Идентификатор шаблона пуст",
+  "errors.templates.invalidId":
+    "В идентификаторе шаблона допустимы латиница, цифры, «-» и «_»",
+  "errors.templates.notFound": "Шаблон «{id}» не найден",
+  "errors.templates.missing":
+    "Файл «{path}» исчез между чтением папки и чтением шаблона",
+  "errors.templates.broken": "Файл «{path}» не разобран: {reason}",
+  "errors.templates.notObject": "Файл «{path}» должен содержать объект шаблона",
+  "errors.templates.version":
+    "Файл «{path}» записан в версии {version}, ожидалась {expected}",
+  "errors.templates.serialize": "Шаблон не сериализован: {reason}",
+  "errors.templates.layout":
+    "Геометрия шаблона должна быть массивом колонок",
+  "errors.templates.emptyTitle": "Название шаблона не может быть пустым",
+  "errors.templates.longTitle": "Название шаблона длиннее {limit} символов",
 }

@@ -68,7 +68,7 @@ async function reload(): Promise<void> {
   // Испорченный файл не мешает остальным, но причину пользователь должен
   // видеть: иначе шаблон просто исчез бы из списка.
   for (const warning of list.warnings) {
-    write(JOURNAL_CORE_SOURCE, "error", warning);
+    write(JOURNAL_CORE_SOURCE, "error", describeError(warning));
   }
 
   templates.items = list.items.map((item: StoredTemplate) => ({

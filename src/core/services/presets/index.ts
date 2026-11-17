@@ -134,10 +134,10 @@ export function createPresets(tool: string): Presets {
     // Испорченный файл не мешает остальным, но причину пользователь должен
     // видеть: иначе пресет просто исчез бы из списка.
     for (const warning of list.warnings) {
-      write(JOURNAL_CORE_SOURCE, "error", warning);
+      write(JOURNAL_CORE_SOURCE, "error", describeError(warning));
     }
     if (presetDefault.warning !== null) {
-      write(JOURNAL_CORE_SOURCE, "error", presetDefault.warning);
+      write(JOURNAL_CORE_SOURCE, "error", describeError(presetDefault.warning));
     }
 
     state.items = list.items.map(toPreset);

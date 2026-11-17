@@ -19,6 +19,7 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use serde_json::{Map, Value};
 
+use crate::core::infra::error::{fail, AppError, AppResult};
 use crate::core::store::files::{read, strip_bom, write_atomic};
 use crate::core::store::names;
 
@@ -49,14 +50,14 @@ pub struct Template {
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct TemplateList {
     pub items: Vec<Template>,
-    pub warnings: Vec<String>,
+    pub warnings: Vec<AppError>,
 }
 
 /// Читает шаблоны профиля.
 ///
 /// Битый файл не мешает остальным: он пропускается с причиной в `warnings`.
 /// Прятать его молча нельзя — пользователь не понял бы, почему шаблон исчез.
-pub fn list(dir: &Path) -> Result<TemplateList, String> {
+pub fn list(dir: &Path) -> AppResult<TemplateList> {
     let entries = match fs::read_dir(dir) {
         Ok(entries) => entries,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -66,7 +67,12 @@ pub fn list(dir: &Path) -> Result<TemplateList, String> {
             });
         }
         Err(error) => {
-            return Err(format!("Не удалось прочитать '{}': {error}", dir.display()));
+            return fail!(
+                "errors.templates.read",
+                format!("Не удалось прочитать '{}': {error}", dir.display()),
+                path = dir.display(),
+                reason = error,
+            );
         }
     };
 
@@ -74,8 +80,14 @@ pub fn list(dir: &Path) -> Result<TemplateList, String> {
     let mut warnings = Vec::new();
 
     for entry in entries {
-        let entry =
-            entry.map_err(|error| format!("Не удалось прочитать '{}': {error}", dir.display()))?;
+        let entry = entry.map_err(|error| {
+            AppError::new(
+                "errors.templates.read",
+                format!("Не удалось прочитать '{}': {error}", dir.display()),
+            )
+            .with("path", dir.display())
+            .with("reason", error)
+        })?;
         let path = entry.path();
         if !path.is_file() {
             continue;
@@ -100,14 +112,25 @@ pub fn list(dir: &Path) -> Result<TemplateList, String> {
         };
 
         if document.get("version").and_then(Value::as_u64) != Some(u64::from(VERSION)) {
-            warnings.push(format!(
-                "шаблон '{}' не прочитан: версия {}, ожидалась {VERSION}",
-                path.display(),
-                document
-                    .get("version")
-                    .map(Value::to_string)
-                    .unwrap_or_else(|| "отсутствует".to_owned())
-            ));
+            warnings.push(
+                AppError::new(
+                    "errors.templates.version",
+                    format!(
+                        "шаблон '{}' не прочитан: версия {}, ожидалась {VERSION}",
+                        path.display(),
+                        document
+                            .get("version")
+                            .map(Value::to_string)
+                            .unwrap_or_else(|| "отсутствует".to_owned())
+                    ),
+                )
+                .with("path", path.display())
+                .with("version", document.get("version").map_or_else(
+                    || "—".to_owned(),
+                    Value::to_string,
+                ))
+                .with("expected", VERSION),
+            );
             continue;
         }
 
@@ -130,12 +153,18 @@ pub fn list(dir: &Path) -> Result<TemplateList, String> {
 ///
 /// Идентификатор собирается из названия, конфликт решается суффиксом: два
 /// шаблона «DNS» — обычное дело, а совпадать имена файлов не могут.
-pub fn create(dir: &Path, title: &str, layout: Value) -> Result<Template, String> {
+pub fn create(dir: &Path, title: &str, layout: Value) -> AppResult<Template> {
     let title = normalize_title(title)?;
     ensure_layout(&layout)?;
 
-    fs::create_dir_all(dir)
-        .map_err(|error| format!("Не удалось создать '{}': {error}", dir.display()))?;
+    fs::create_dir_all(dir).map_err(|error| {
+        AppError::new(
+            "errors.templates.create",
+            format!("Не удалось создать '{}': {error}", dir.display()),
+        )
+        .with("path", dir.display())
+        .with("reason", error)
+    })?;
 
     let id = unique_id(dir, &names::slug(&title, "template"));
     write_document(&dir.join(file_name(&id)), &title, &layout)?;
@@ -147,7 +176,7 @@ pub fn create(dir: &Path, title: &str, layout: Value) -> Result<Template, String
 ///
 /// Незнакомые ключи сохраняются: файл могли дополнить вручную, и терять
 /// чужие поля при переименовании нельзя.
-pub fn rename(dir: &Path, id: &str, title: &str) -> Result<Template, String> {
+pub fn rename(dir: &Path, id: &str, title: &str) -> AppResult<Template> {
     let title = normalize_title(title)?;
     let path = template_path(dir, id)?;
 
@@ -168,7 +197,7 @@ pub fn rename(dir: &Path, id: &str, title: &str) -> Result<Template, String> {
 /// Название и незнакомые ключи остаются прежними: обновление — это смена
 /// раскладки, а не переименование. Иначе «обновить» незаметно меняло бы
 /// название, которое пользователь правил отдельно.
-pub fn update(dir: &Path, id: &str, layout: Value) -> Result<Template, String> {
+pub fn update(dir: &Path, id: &str, layout: Value) -> AppResult<Template> {
     ensure_layout(&layout)?;
     let path = template_path(dir, id)?;
 
@@ -189,7 +218,7 @@ pub fn update(dir: &Path, id: &str, layout: Value) -> Result<Template, String> {
 /// Приписку к названию даёт интерфейс: она зависит от языка программы,
 /// а ядро языка не знает (ADR 0039). Пользователь нажал одну кнопку
 /// и ждёт второй такой же шаблон, а не диалог.
-pub fn duplicate(dir: &Path, id: &str, suffix: &str) -> Result<Template, String> {
+pub fn duplicate(dir: &Path, id: &str, suffix: &str) -> AppResult<Template> {
     let path = template_path(dir, id)?;
     let document = read_current_document(&path)?;
 
@@ -200,41 +229,60 @@ pub fn duplicate(dir: &Path, id: &str, suffix: &str) -> Result<Template, String>
 ///
 /// Переносом, а не удалением: промах в меню не должен стоить пользователю
 /// собранной раскладки. Корзину чистят руками.
-pub fn delete(dir: &Path, trash_dir: &Path, id: &str) -> Result<PathBuf, String> {
+pub fn delete(dir: &Path, trash_dir: &Path, id: &str) -> AppResult<PathBuf> {
     let path = template_path(dir, id)?;
 
-    fs::create_dir_all(trash_dir)
-        .map_err(|error| format!("Не удалось создать '{}': {error}", trash_dir.display()))?;
+    fs::create_dir_all(trash_dir).map_err(|error| {
+        AppError::new(
+            "errors.templates.create",
+            format!("Не удалось создать '{}': {error}", trash_dir.display()),
+        )
+        .with("path", trash_dir.display())
+        .with("reason", error)
+    })?;
 
     let target = trash_dir.join(unique_file_name(trash_dir, id));
     fs::rename(&path, &target).map_err(|error| {
-        format!(
-            "Не удалось перенести '{}' в '{}': {error}",
-            path.display(),
-            target.display()
+        AppError::new(
+            "errors.templates.move",
+            format!(
+                "Не удалось перенести '{}' в '{}': {error}",
+                path.display(),
+                target.display()
+            ),
         )
+        .with("path", path.display())
+        .with("target", target.display())
+        .with("reason", error)
     })?;
 
     Ok(target)
 }
 
 /// Проверяет идентификатор шаблона: он становится именем файла.
-fn validate_id(id: &str) -> Result<(), String> {
+fn validate_id(id: &str) -> AppResult<()> {
     if id.is_empty() {
-        return Err("Идентификатор шаблона пуст".to_owned());
+        return fail!("errors.templates.emptyId", "Идентификатор шаблона пуст");
     }
     if !names::is_safe_id(id) {
-        return Err("В идентификаторе шаблона допустимы латиница, цифры, '-' и '_'".to_owned());
+        return fail!(
+            "errors.templates.invalidId",
+            "В идентификаторе шаблона допустимы латиница, цифры, '-' и '_'"
+        );
     }
     Ok(())
 }
 
 /// Путь к существующему шаблону.
-fn template_path(dir: &Path, id: &str) -> Result<PathBuf, String> {
+fn template_path(dir: &Path, id: &str) -> AppResult<PathBuf> {
     validate_id(id)?;
     let path = dir.join(file_name(id));
     if !path.is_file() {
-        return Err(format!("Шаблон '{id}' не найден"));
+        return fail!(
+            "errors.templates.notFound",
+            format!("Шаблон '{id}' не найден"),
+            id = id,
+        );
     }
     Ok(path)
 }
@@ -267,22 +315,33 @@ fn unique_file_name(dir: &Path, base: &str) -> String {
 }
 
 /// Читает документ шаблона целиком: незнакомые ключи нужны при перезаписи.
-fn read_document(path: &Path) -> Result<Map<String, Value>, String> {
+fn read_document(path: &Path) -> AppResult<Map<String, Value>> {
     let Some(raw) = read(path)? else {
-        return Err(format!(
-            "Файл '{}' исчез между чтением папки и чтением шаблона",
-            path.display()
-        ));
+        return fail!(
+            "errors.templates.missing",
+            format!(
+                "Файл '{}' исчез между чтением папки и чтением шаблона",
+                path.display()
+            ),
+            path = path.display(),
+        );
     };
 
-    let value: Value = serde_json::from_str(strip_bom(&raw))
-        .map_err(|error| format!("Файл '{}' не разобран: {error}", path.display()))?;
+    let value: Value = serde_json::from_str(strip_bom(&raw)).map_err(|error| {
+        AppError::new(
+            "errors.templates.broken",
+            format!("Файл '{}' не разобран: {error}", path.display()),
+        )
+        .with("path", path.display())
+        .with("reason", error)
+    })?;
 
     let Value::Object(document) = value else {
-        return Err(format!(
-            "Файл '{}' должен содержать объект шаблона",
-            path.display()
-        ));
+        return fail!(
+            "errors.templates.notObject",
+            format!("Файл '{}' должен содержать объект шаблона", path.display()),
+            path = path.display(),
+        );
     };
     Ok(document)
 }
@@ -291,23 +350,29 @@ fn read_document(path: &Path) -> Result<Map<String, Value>, String> {
 ///
 /// Иначе переименование или обновление перезаписало бы поля файла, формат
 /// которого эта версия программы не знает.
-fn read_current_document(path: &Path) -> Result<Map<String, Value>, String> {
+fn read_current_document(path: &Path) -> AppResult<Map<String, Value>> {
     let document = read_document(path)?;
     let version = document.get("version").and_then(Value::as_u64);
     if version != Some(u64::from(VERSION)) {
-        return Err(format!(
-            "Файл '{}' записан в версии {}, ожидалась {VERSION}",
-            path.display(),
-            version
-                .map(|version| version.to_string())
-                .unwrap_or_else(|| "отсутствует".to_owned())
-        ));
+        return fail!(
+            "errors.templates.version",
+            format!(
+                "Файл '{}' записан в версии {}, ожидалась {VERSION}",
+                path.display(),
+                version
+                    .map(|version| version.to_string())
+                    .unwrap_or_else(|| "отсутствует".to_owned())
+            ),
+            path = path.display(),
+            version = version.map_or_else(|| "—".to_owned(), |version| version.to_string()),
+            expected = VERSION,
+        );
     }
     Ok(document)
 }
 
 /// Пишет документ шаблона атомарно: папка может лежать на сетевой шаре.
-fn write_document(path: &Path, title: &str, layout: &Value) -> Result<(), String> {
+fn write_document(path: &Path, title: &str, layout: &Value) -> AppResult<()> {
     let mut document = Map::new();
     document.insert("version".to_owned(), Value::from(VERSION));
     document.insert("title".to_owned(), Value::from(title));
@@ -317,10 +382,16 @@ fn write_document(path: &Path, title: &str, layout: &Value) -> Result<(), String
 }
 
 /// Перезаписывает документ целиком, сохраняя незнакомые ключи.
-fn write_document_map(path: &Path, document: &Map<String, Value>) -> Result<(), String> {
-    let text = serde_json::to_string_pretty(&Value::Object(document.clone()))
-        .map_err(|error| format!("Шаблон не сериализован: {error}"))?;
-    write_atomic(path, &format!("{text}\n"))
+fn write_document_map(path: &Path, document: &Map<String, Value>) -> AppResult<()> {
+    let text = serde_json::to_string_pretty(&Value::Object(document.clone())).map_err(|error| {
+        AppError::new(
+            "errors.templates.serialize",
+            format!("Шаблон не сериализован: {error}"),
+        )
+        .with("reason", error)
+    })?;
+    write_atomic(path, &format!("{text}\n"))?;
+    Ok(())
 }
 
 /// Название из документа; имя файла — запасной вариант.
@@ -343,22 +414,32 @@ fn layout_of(document: &Map<String, Value>) -> Value {
 }
 
 /// Проверяет, что геометрия — массив колонок.
-fn ensure_layout(layout: &Value) -> Result<(), String> {
+fn ensure_layout(layout: &Value) -> AppResult<()> {
     if layout.is_array() {
         Ok(())
     } else {
-        Err("Геометрия шаблона должна быть массивом колонок".to_owned())
+        fail!(
+            "errors.templates.layout",
+            "Геометрия шаблона должна быть массивом колонок"
+        )
     }
 }
 
 /// Проверяет и обрезает название.
-fn normalize_title(title: &str) -> Result<String, String> {
+fn normalize_title(title: &str) -> AppResult<String> {
     let title = title.trim();
     if title.is_empty() {
-        return Err("Название шаблона не может быть пустым".to_owned());
+        return fail!(
+            "errors.templates.emptyTitle",
+            "Название шаблона не может быть пустым"
+        );
     }
     if title.chars().count() > MAX_TITLE_LEN {
-        return Err(format!("Название шаблона длиннее {MAX_TITLE_LEN} символов"));
+        return fail!(
+            "errors.templates.longTitle",
+            format!("Название шаблона длиннее {MAX_TITLE_LEN} символов"),
+            limit = MAX_TITLE_LEN,
+        );
     }
     Ok(title.to_owned())
 }
@@ -504,7 +585,7 @@ mod tests {
 
         let error = update(&dir, &template.id, layout()).expect_err("чужая версия");
 
-        assert!(error.contains("версии 99"), "причина: {error}");
+        assert!(error.to_string().contains("версии 99"), "причина: {error}");
     }
 
     #[test]
@@ -512,7 +593,7 @@ mod tests {
         let dir = temp_dir("update-missing");
         let error = update(&dir, "ghost", layout()).expect_err("нет файла");
 
-        assert!(error.contains("не найден"), "причина: {error}");
+        assert!(error.to_string().contains("не найден"), "причина: {error}");
     }
 
     #[test]
@@ -572,7 +653,7 @@ mod tests {
         let error = create(&dir, "DNS", serde_json::json!({ "width": 1 }))
             .expect_err("объект вместо массива");
 
-        assert!(error.contains("массивом"), "причина: {error}");
+        assert!(error.to_string().contains("массивом"), "причина: {error}");
         assert!(!dir.join("dns.json").exists(), "файл не создан");
     }
 
@@ -581,6 +662,6 @@ mod tests {
         let dir = temp_dir("empty-title");
         let error = create(&dir, "   ", layout()).expect_err("пустое название");
 
-        assert!(error.contains("пустым"), "причина: {error}");
+        assert!(error.to_string().contains("пустым"), "причина: {error}");
     }
 }

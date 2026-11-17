@@ -6,6 +6,8 @@
 // инструменту, и Rust его не разбирает. Поэтому тип честно говорит
 // `unknown`, а разбор делает модуль инструмента.
 
+import type { AppError } from "./errors";
+
 /** Пресет, как его отдаёт ядро: настройки ещё не проверены. */
 export interface StoredPreset {
   /** Идентификатор: имя файла без расширения. */
@@ -22,7 +24,7 @@ export interface StoredPreset {
 export interface StoredPresetList {
   items: StoredPreset[];
   /** Причины, по которым часть файлов пропущена. */
-  warnings: string[];
+  warnings: AppError[];
 }
 
 /** Указатель на пресет по умолчанию и замечание о файле профиля. */
@@ -30,5 +32,5 @@ export interface StoredPresetDefault {
   /** Идентификатор пресета; `null` — умолчание не задано. */
   id: string | null;
   /** Причина, по которой файл профиля не разобран; `null` — всё в порядке. */
-  warning: string | null;
+  warning: AppError | null;
 }
