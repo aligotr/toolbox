@@ -108,7 +108,7 @@ onUnmounted(() => {
       <Button
         class="blocked__exit"
         :label="t('startup.exit')"
-        severity="secondary"
+        severity="danger"
         @click="exitApp"
       />
     </section>
