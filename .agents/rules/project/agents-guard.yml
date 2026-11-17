@@ -12,6 +12,7 @@ commands:
     - "npm run tauri dev"
     - "cargo check"
     - "cargo test --lib"
+    - "node scripts/check-messages.mjs"
   denied:
     patterns:
       - "rm -rf"
@@ -52,6 +53,10 @@ quality:
   tests:
     required_before: [commit]
     command: "cargo test --lib"
+    must_exit_zero: true
+  dictionaries:
+    required_before: [commit]
+    command: "node scripts/check-messages.mjs"
     must_exit_zero: true
   no_skip_strict: true
 

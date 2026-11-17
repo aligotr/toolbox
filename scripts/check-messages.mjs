@@ -15,6 +15,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { ruMessages } from "../src/core/infra/i18n/messages.ts";
+import { pluralCategories } from "../src/core/infra/i18n/locale.ts";
 
 const root = path.resolve(import.meta.dirname, "..");
 const src = path.join(root, "src");
@@ -22,6 +23,9 @@ const dictionaries = path.join(root, "src-tauri", "resources", "languages");
 
 /** Подстановка словаря: `{name}`. */
 const PLACEHOLDER = /\{(\w+)\}/g;
+
+/** Категории склонения русского эталона: по ним проверяется полнота форм. */
+const REFERENCE_CATEGORIES = pluralCategories("ru");
 
 /** Строк для перечня в выводе: полный список заслоняет остальные замечания. */
 const LIST_LIMIT = 12;
@@ -165,6 +169,21 @@ function placeholderNames(message) {
   return names;
 }
 
+/**
+ * Формы склонения, которых не хватает языку.
+ *
+ * Набор задаёт `Intl.PluralRules`, а не привычка: английскому хватает
+ * `one` и `other`, русскому нужны ещё `few` и `many`. Пропущенная форма —
+ * такой же пропуск, как отсутствующий ключ: иначе сборка говорила бы
+ * «переведён полностью» там, где интерфейс уже показывает неполноту.
+ */
+function missingForms(message, categories) {
+  if (!message || typeof message !== "object" || Array.isArray(message)) {
+    return categories;
+  }
+  return categories.filter((category) => typeof message[category] !== "string");
+}
+
 /** Печатает перечень с пределом: полный список не нужен в выводе сборки. */
 function printLimited(prefix, items, describe = (item) => item) {
   for (const item of items.slice(0, LIST_LIMIT)) {
@@ -199,6 +218,7 @@ function checkDictionary(file) {
     return;
   }
 
+  const categories = pluralCategories(code);
   const keys = Object.keys(ruMessages);
   const missing = keys.filter((key) => !Object.hasOwn(messages, key));
   const extra = Object.keys(messages).filter((key) => !Object.hasOwn(ruMessages, key));
@@ -210,7 +230,13 @@ function checkDictionary(file) {
     const actual = placeholderNames(messages[key]);
     const lost = [...expected].filter((name) => !actual.has(name));
     const added = [...actual].filter((name) => !expected.has(name));
-    if (lost.length > 0 || added.length > 0) broken.push({ key, lost, added });
+    // Формы нужны там, где эталон склоняется: язык обязан покрыть категории,
+    // которые требуют его правила. Набор берётся из `Intl`, а не из числа
+    // форм в русском тексте.
+    const forms = typeof ruMessages[key] === "object" ? missingForms(messages[key], categories) : [];
+    if (lost.length > 0 || added.length > 0 || forms.length > 0) {
+      broken.push({ key, lost, added, forms });
+    }
   }
 
   if (missing.length === 0 && extra.length === 0 && broken.length === 0) {
@@ -228,15 +254,16 @@ function checkDictionary(file) {
     printLimited("+ ", extra);
   }
   if (broken.length > 0) {
-    console.warn(`  расходятся подстановки: ${broken.length}`);
+    console.warn(`  расходятся подстановки или формы: ${broken.length}`);
     printLimited(
       "",
       broken,
-      ({ key, lost, added }) =>
+      ({ key, lost, added, forms }) =>
         `${key}: ` +
         [
           lost.length > 0 ? `нет {${lost.join("}, {")}}` : "",
           added.length > 0 ? `лишняя {${added.join("}, {")}}` : "",
+          forms.length > 0 ? `нет форм ${forms.join(", ")}` : "",
         ]
           .filter(Boolean)
           .join(", "),
@@ -275,6 +302,21 @@ const missing = [...used].filter(([key]) => !Object.hasOwn(ruMessages, key));
 if (missing.length > 0) {
   console.error("В русском словаре нет используемых ключей (ADR 0039):");
   for (const [key, file] of missing) console.error(`  ${key} — ${file}`);
+  process.exit(1);
+}
+
+// Формы склонения эталона проверяются так же строго, как ключи: набор форм —
+// часть контракта, по нему строятся переводы и считается полнота.
+const incompleteForms = Object.entries(ruMessages)
+  .filter(([, message]) => typeof message === "object")
+  .map(([key, message]) => ({ key, forms: missingForms(message, REFERENCE_CATEGORIES) }))
+  .filter(({ forms }) => forms.length > 0);
+
+if (incompleteForms.length > 0) {
+  console.error("В русском словаре не хватает форм склонения (ADR 0039):");
+  for (const { key, forms } of incompleteForms) {
+    console.error(`  ${key}: нет ${forms.join(", ")}`);
+  }
   process.exit(1);
 }
 
