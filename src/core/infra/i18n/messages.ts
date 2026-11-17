@@ -135,7 +135,7 @@ export const ruMessages: Messages = {
   // ── Пустая вкладка ───────────────────────────────────────────────────────
   "workspace.empty.title": "Начать с шаблона",
   "workspace.empty.lead":
-    "Выберите заготовку рабочего места или добавьте инструмент — он откроется в новой вкладке.",
+    "Выберите заготовку рабочего места или добавьте инструмент.",
   "workspace.empty.templates": "Шаблоны вкладок",
   "workspace.empty.templatesError": "Шаблоны не прочитаны: {reason}",
   "workspace.empty.templatesNone":
@@ -462,6 +462,9 @@ export const ruMessages: Messages = {
   "units.kilobytes": "КБ",
   "units.megabytes": "МБ",
   "units.gigabytes": "ГБ",
+
+  // ── Открытие инструментов ────────────────────────────────────────────────
+  "tools.open.anotherTab": "Ctrl+клик — ещё одна вкладка",
 
   // ── Описания инструментов ───────────────────────────────────────────────
   "tools.busprobe.description": "Самопроверка шины и путь сообщения",

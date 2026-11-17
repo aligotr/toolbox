@@ -19,8 +19,9 @@ import type { ToolDescriptor } from "@/contracts/tools";
 import { SINGLETON_TABS } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
 import { activeProfile, loadProfiles, profiles, status } from "@/core/services/profiles";
-import { openSingleton, openTool, workspace } from "@/core/services/workspace/index";
+import { openSingleton, workspace } from "@/core/services/workspace/index";
 import RailItem from "./RailItem.vue";
+import { openToolOnAuxClick, openToolOnClick, openToolOnKeydown } from "./toolGestures";
 import { openSettingsSection } from "./settings/navigation";
 import { useProfiles } from "./settings/useProfiles";
 
@@ -122,9 +123,12 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
         :key="tool.id"
         :icon="tool.icon"
         :title="tool.title"
+        :hint="tool.multipleTabs ? t('tools.open.anotherTab') : undefined"
         :collapsed="collapsed"
         :active="toolIsActive(tool.id)"
-        @click="openTool(tool)"
+        @click="openToolOnClick(tool, $event)"
+        @auxclick="openToolOnAuxClick(tool, $event)"
+        @keydown="openToolOnKeydown(tool, $event)"
       />
 
       <p v-if="!tools.length && !collapsed" class="nav__empty">

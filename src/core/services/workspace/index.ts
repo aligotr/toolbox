@@ -37,6 +37,13 @@ import {
   WORKSPACE_VERSION,
 } from "./constants";
 import { copyColumns, parseColumns } from "./layout";
+import {
+  forgetTab,
+  recentTabIds,
+  rememberTab,
+  renameTab,
+  resetRecentTabs,
+} from "./recentTabs";
 import * as templateBindings from "../templates/bindings";
 
 /** Состояние рабочего пространства. */
@@ -48,6 +55,12 @@ export interface WorkspaceState {
 
 /** Общее состояние рабочего пространства. */
 export const workspace = reactive<WorkspaceState>({ tabs: [], activeId: "" });
+
+/** Делает вкладку активной и отмечает её свежей в памяти активаций. */
+function focusTab(id: string): void {
+  workspace.activeId = id;
+  rememberTab(id);
+}
 
 /**
  * Ключ места инструмента в сетке.
@@ -102,7 +115,7 @@ export function takeFreshCell(cellKey: string): boolean {
 /** Создаёт новую вкладку и делает её активной. */
 function addTab(tab: WorkspaceTab): WorkspaceTab {
   workspace.tabs.push(tab);
-  workspace.activeId = tab.id;
+  focusTab(tab.id);
   markFreshCells(tab.id, tab.columns);
   return tab;
 }
@@ -138,7 +151,10 @@ function dropEmptyTabs(): void {
   if (empty.size === 0) return;
 
   workspace.tabs = workspace.tabs.filter((tab) => !empty.has(tab.id));
-  for (const id of empty) forgetFreshCells(id);
+  for (const id of empty) {
+    forgetFreshCells(id);
+    forgetTab(id);
+  }
 
   templateBindings.prune(new Set(workspace.tabs.map((tab) => tab.id)));
 }
@@ -152,11 +168,33 @@ function tabHasTool(tab: WorkspaceTab, toolId: string): boolean {
 }
 
 /**
+ * Ищет подходящую вкладку, начиная с последней активной.
+ *
+ * Память может не знать о вкладке — например, файл восстановлен без истории.
+ * Тогда порядок прежний: активная, затем слева направо. Он же действует
+ * после перезапуска, пока пользователь ничего не выбрал (ADR 0042).
+ */
+function lastActiveMatching(
+  match: (tab: WorkspaceTab) => boolean,
+): WorkspaceTab | undefined {
+  for (const id of recentTabIds()) {
+    const tab = workspace.tabs.find((item) => item.id === id);
+    if (tab && match(tab)) return tab;
+  }
+
+  const active = workspace.tabs.find(
+    (tab) => tab.id === workspace.activeId && match(tab),
+  );
+  return active ?? workspace.tabs.find(match);
+}
+
+/**
  * Открывает вкладку, которая существует в единственном экземпляре.
  *
  * Совпадение задаёт вызывающий: журнал и настройки ищутся по виду вкладки,
- * инструмент — по месту в колонках. Нашлась — активируем, иначе создаём.
- * Пустые вкладки уступают место содержимому в обоих случаях (ADR 0040).
+ * инструмент — по месту в колонках. Нашлась — активируем последнюю активную,
+ * иначе создаём. Пустые вкладки уступают место содержимому в обоих случаях
+ * (ADR 0040).
  */
 function openUniqueTab(
   match: (tab: WorkspaceTab) => boolean,
@@ -164,9 +202,9 @@ function openUniqueTab(
 ): void {
   dropEmptyTabs();
 
-  const existing = workspace.tabs.find(match);
+  const existing = lastActiveMatching(match);
   if (existing) {
-    workspace.activeId = existing.id;
+    focusTab(existing.id);
     return;
   }
 
@@ -174,16 +212,19 @@ function openUniqueTab(
 }
 
 /**
- * Открывает инструмент в новой вкладке.
+ * Открывает инструмент: обычный выбор или ещё одна вкладка.
  *
- * Колонка одна на всю ширину: добавление в существующую вкладку делается
- * перетаскиванием, а клик в сайдбаре всегда создаёт рабочее место (ADR 0011).
+ * Обычный выбор ведёт в последнюю активную вкладку с инструментом, а если
+ * такой нет — создаёт новую. Умолчание одно для инструментов и разделов
+ * (ADR 0042).
  *
- * Инструмент с `singleInstance` второй вкладки не заводит: повторный выбор
- * активирует уже открытую, где бы она ни стояла (ADR 0041). Вкладку с другими
- * инструментами не разбираем: пользователь собирал рабочее место целиком.
+ * `another` — жест «ещё одна вкладка»: Ctrl+клик, средняя кнопка мыши или
+ * Ctrl+Enter. Он действует только на многовариантный инструмент
+ * (`multipleTabs`); у остальных вторая вкладка не появляется. Новая вкладка
+ * содержит только выбранный инструмент: общую раскладку не разбираем,
+ * а вкладку с другими инструментами не дублируем.
  */
-export function openTool(tool: ToolDescriptor): void {
+export function openTool(tool: ToolDescriptor, another = false): void {
   const create = (): void => {
     const columns: TabColumn[] = [{ width: 1, tools: [tool.id] }];
     addTab({
@@ -195,13 +236,13 @@ export function openTool(tool: ToolDescriptor): void {
     });
   };
 
-  if (tool.singleInstance) {
-    openUniqueTab((tab) => tabHasTool(tab, tool.id), create);
+  if (tool.multipleTabs && another) {
+    dropEmptyTabs();
+    create();
     return;
   }
 
-  dropEmptyTabs();
-  create();
+  openUniqueTab((tab) => tabHasTool(tab, tool.id), create);
 }
 
 /**
@@ -209,8 +250,8 @@ export function openTool(tool: ToolDescriptor): void {
  * экземпляре.
  *
  * Повторный клик переключает на уже открытую: второй экземпляр журнала
- * показывал бы те же записи и занимал место в полосе. Правило то же, что
- * у инструментов с `singleInstance` (ADR 0041).
+ * показывал бы те же записи и занимал место в полосе. Это то же умолчание,
+ * что у инструментов без `multipleTabs` (ADR 0042).
  */
 export function openSingleton(kind: SingletonKind): void {
   openUniqueTab(
@@ -231,7 +272,7 @@ export function openSingleton(kind: SingletonKind): void {
 /** Делает вкладку активной, если она ещё существует. */
 export function activateTab(id: string): void {
   if (workspace.tabs.some((tab) => tab.id === id)) {
-    workspace.activeId = id;
+    focusTab(id);
   }
 }
 
@@ -279,12 +320,13 @@ export function closeTab(id: string): void {
 
   const wasActive = workspace.activeId === id;
   workspace.tabs.splice(index, 1);
+  forgetTab(id);
 
   if (workspace.tabs.length === 0) {
     openEmptyTab();
   } else if (wasActive) {
     const next = workspace.tabs[Math.min(index, workspace.tabs.length - 1)];
-    workspace.activeId = next.id;
+    focusTab(next.id);
   }
 
   // Связка закрытой вкладки больше не нужна: иначе файл копил бы записи
@@ -321,7 +363,8 @@ export function restartTab(id: string): void {
 
   const wasActive = workspace.activeId === id;
   workspace.tabs.splice(index, 1, next);
-  if (wasActive) workspace.activeId = next.id;
+  renameTab(id, next.id);
+  if (wasActive) focusTab(next.id);
 
   templateBindings.drop(id);
   if (binding) templateBindings.store(next.id, binding);
@@ -525,6 +568,10 @@ function parseFile(stored: unknown): ParsedWorkspace | WorkspaceFault {
  * вместо его вкладок открылась пустая.
  */
 async function restore(): Promise<void> {
+  // История активаций принадлежит сеансу: любой запуск начинает историю
+  // заново, в том числе после отказа чтения (ADR 0042).
+  resetRecentTabs();
+
   let stored: unknown;
 
   try {
@@ -555,9 +602,17 @@ async function restore(): Promise<void> {
 
   workspace.tabs = parsed.file.tabs;
   templateBindings.reset(parsed.file.bindings);
-  workspace.activeId = parsed.file.tabs.some((tab) => tab.id === parsed.file.activeId)
+
+  // Память начинается с активной вкладки, а если её нет — с самой левой.
+  const active = parsed.file.tabs.some((tab) => tab.id === parsed.file.activeId)
     ? parsed.file.activeId
     : (parsed.file.tabs[0]?.id ?? "");
+
+  if (active) {
+    focusTab(active);
+  } else {
+    workspace.activeId = "";
+  }
 }
 
 /** Снимок состояния для файла: копия, которую нельзя изменить из интерфейса. */

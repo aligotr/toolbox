@@ -16,9 +16,10 @@ import type { Template } from "@/core/services/templates";
 import type { ToolDescriptor } from "@/contracts/tools";
 import type { StartupStatus } from "@/core/services/startup";
 import { t } from "@/core/infra/i18n";
-import { applyTemplate, openTemplate, openTool, workspace } from "@/core/services/workspace/index";
+import { applyTemplate, openTemplate, workspace } from "@/core/services/workspace/index";
 import { templates, status as templateStatus } from "@/core/services/templates/index";
 import { toolsLabel } from "../plural";
+import { openToolOnAuxClick, openToolOnClick, openToolOnKeydown } from "../toolGestures";
 
 defineProps<{ tools: ToolDescriptor[]; startup: StartupStatus | null }>();
 
@@ -92,7 +93,13 @@ function useTemplate(template: Template): void {
           :key="tool.id"
           class="action-card action-card--tool"
           type="button"
-          @click="openTool(tool)"
+          v-tooltip.bottom="{
+            value: t('tools.open.anotherTab'),
+            disabled: !tool.multipleTabs,
+          }"
+          @click="openToolOnClick(tool, $event)"
+          @auxclick="openToolOnAuxClick(tool, $event)"
+          @keydown="openToolOnKeydown(tool, $event)"
         >
           <i class="action-card__icon" :class="tool.icon" aria-hidden="true" />
           <span class="action-card__text">

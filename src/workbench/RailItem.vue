@@ -5,8 +5,9 @@
 // профиль выглядят и ведут себя одинаково. Сайдбар передаёт данные и не
 // повторяет ни разметку, ни состояния; свёрнутый вид тоже решает пункт.
 //
-// Подсказка нужна только в рейле: в развёрнутом сайдбаре подпись видна,
-// и всплывающая подсказка дублировала бы текст.
+// Подсказка нужна в рейле: в развёрнутом сайдбаре подпись видна, и всплывающая
+// подсказка дублировала бы текст. Исключение — подсказка о жесте: она
+// объясняет то, чего в подписи нет.
 
 import { computed } from "vue";
 
@@ -19,6 +20,8 @@ const props = defineProps<{
   label?: string;
   /** Текст подсказки; по умолчанию — подпись. */
   tooltip?: string;
+  /** Дополнение к подсказке: например, жест второго экземпляра. */
+  hint?: string;
   /** Сайдбар свёрнут: подпись скрыта, подсказка включена. */
   collapsed: boolean;
   /** Пункт открыт в активной вкладке. */
@@ -29,13 +32,20 @@ const props = defineProps<{
   chevron?: boolean;
 }>();
 
-const emit = defineEmits<{ click: [event: MouseEvent] }>();
+const emit = defineEmits<{
+  click: [event: MouseEvent];
+  auxclick: [event: MouseEvent];
+  keydown: [event: KeyboardEvent];
+}>();
 
 /** Доступное имя: подпись пункта, если владелец не задал своё. */
 const label = computed(() => props.label ?? props.title);
 
-/** Подсказка рейла: у профиля она шире подписи. */
-const tooltip = computed(() => props.tooltip ?? props.title);
+/** Подсказка пункта: подпись и, если есть, объяснение жеста. */
+const tooltip = computed(() => {
+  const base = props.tooltip ?? props.title;
+  return props.hint ? `${base} · ${props.hint}` : base;
+});
 </script>
 
 <template>
@@ -48,8 +58,10 @@ const tooltip = computed(() => props.tooltip ?? props.title);
     }"
     type="button"
     :aria-label="label"
-    v-tooltip.right="{ value: tooltip, disabled: !collapsed }"
+    v-tooltip.right="{ value: tooltip, disabled: !collapsed && !hint }"
     @click="emit('click', $event)"
+    @auxclick="emit('auxclick', $event)"
+    @keydown="emit('keydown', $event)"
   >
     <i class="rail-item__icon" :class="icon" aria-hidden="true" />
     <span v-if="!collapsed" class="rail-item__title">{{ title }}</span>

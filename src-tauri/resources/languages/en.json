@@ -131,7 +131,7 @@
     // ── Empty tab ─────────────────────────────────────────────────────────
     "workspace.empty.title": "Start from a template",
     "workspace.empty.lead":
-      "Pick a ready-made workspace or add a tool — it will open in a new tab.",
+      "Pick a ready-made workspace or add a tool.",
     "workspace.empty.templates": "Tab templates",
     "workspace.empty.templatesError": "Templates cannot be read: {reason}",
     "workspace.empty.templatesNone":
@@ -448,6 +448,9 @@
     "units.kilobytes": "KB",
     "units.megabytes": "MB",
     "units.gigabytes": "GB",
+
+    // ── Opening tools ─────────────────────────────────────────────────────
+    "tools.open.anotherTab": "Ctrl+click for another tab",
 
     // ── Tool descriptions ─────────────────────────────────────────────────
     "tools.busprobe.description": "Bus self-check and the path of a message",
