@@ -12,16 +12,16 @@ import type { Messages } from "./types.ts"
 /** Русский встроенный словарь. */
 export const ruMessages: Messages = {
   // ── Блокирующий экран ───────────────────────────────────────────────────
-  "startup.title": "Не могу начать работу",
+  "startup.title": "Программа не может начать работу",
   "startup.lead":
-    "ToolBox хранит настройки и лог рядом с исполняемым файлом — в этом смысл переносимости. Без записи приложение не работает правильно, поэтому модули не запущены.",
+    "ToolBox хранит настройки и журналы рядом с программой, чтобы папку можно было перенести на другой компьютер вместе с данными. Сейчас записать файлы не удалось, поэтому работа остановлена.",
   "startup.folder": "Папка программы",
-  "startup.reason": "Что именно не удалось",
+  "startup.reason": "Причина",
   "startup.hint": "Что сделать:",
   "startup.move":
     "перенесите папку с программой в доступное место — например, в «Документы»;",
   "startup.permissions":
-    "или снимите атрибут «только чтение» и проверьте права на папку.",
+    "или проверьте права на папку и уберите файлы, которые мешают.",
   "startup.exit": "Выйти",
 
   // ── Центр управления ────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ export const ruMessages: Messages = {
   "settings.section.templates": "Шаблоны",
   "settings.section.data": "Данные",
   "settings.section.language": "Язык",
-  "settings.section.app": "Программа",
+  "settings.section.app": "О программе",
 
   // ── Раздел «Язык» ───────────────────────────────────────────────────────
   "settings.language.title": "Язык",
@@ -43,7 +43,7 @@ export const ruMessages: Messages = {
     "Выберите, на каком языке показывать программу. Русский уже есть; другие языки добавляются своим словарём — файл перевода кладётся в папку словарей.",
   "settings.language.current": "Язык интерфейса",
   "settings.language.russian": "Русский",
-  "settings.language.builtin": "в программе",
+  "settings.language.builtin": "встроен",
   "settings.language.broken": "не читается",
   "settings.language.complete": "переведён полностью",
   "settings.language.missing": "переведён не полностью",
@@ -68,7 +68,7 @@ export const ruMessages: Messages = {
   "settings.language.export": "Сохранить образец",
   "settings.language.exported": "Образец сохранён: {path}",
   "settings.language.note":
-    "Программа не меняет файлы: ваши правки и комментарии сохраняются.\nНазвания строк не меняйте - по ним программа находит текст.\nПосле правки нажмите «Обновить».",
+    "Программа не меняет файлы: ваши правки и комментарии сохраняются.\nНазвания строк не меняйте — по ним программа находит текст.\nПосле правки нажмите «Обновить».",
 
   // ── Оболочка ─────────────────────────────────────────────────────────────
   "shell.sidebar.tools": "Инструменты",
@@ -751,9 +751,9 @@ export const ruMessages: Messages = {
 
   // ── Ошибки запуска ───────────────────────────────────────────────────────
   // Заголовок блокирующего экрана — тоже код: причина отказа у каждого своя.
-  "errors.startup.storage": "Не удалось определить папку программы",
-  "errors.startup.write": "Не удалось писать в папку программы",
-  "errors.startup.logging": "Не удалось запустить файловый лог",
+  "errors.startup.storage": "Не удалось найти папку программы",
+  "errors.startup.write": "Программа не может сохранять файлы",
+  "errors.startup.logging": "Не удалось начать запись журнала",
   "errors.startup.profileMissing":
     "Активный профиль «{profile}» не найден среди папок «{path}»; выбран «{chosen}»",
 
@@ -781,8 +781,11 @@ export const ruMessages: Messages = {
   "errors.files.create": "Не удалось создать «{path}»: {reason}",
   "errors.storage.exe": "Не удалось определить путь к программе: {reason}",
   "errors.storage.noFolder": "У пути к программе нет папки: {path}",
-  "errors.storage.create": "Не удалось создать «{path}»: {reason}",
+  "errors.storage.create": "Не удалось создать папку «{path}»: {reason}",
   "errors.storage.write": "Не удалось записать «{path}»: {reason}",
+  "errors.storage.pathIsFile":
+    "По пути «{path}» уже лежит файл, а программа ожидает папку",
+  "errors.storage.denied": "Нет прав на запись в «{path}»",
   "errors.workspace.broken": "Файл «{path}» не разобран как JSON: {reason}",
   "errors.workspace.notObject": "Файл «{path}» должен содержать объект JSON",
   "errors.workspace.saveNotObject":

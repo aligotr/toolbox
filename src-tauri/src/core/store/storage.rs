@@ -11,6 +11,7 @@
 //! ошибка в одном месте сломала бы синхронизацию незаметно.
 
 use std::fs;
+use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
 use crate::core::infra::error::{AppError, AppResult};
@@ -228,24 +229,51 @@ impl Storage {
         Ok(())
     }
 
-    /// Отказ создать папку раскладки: путь важнее кода ошибки.
+    /// Отказ создать папку раскладки: причина словами пользователя.
+    ///
+    /// Код ОС («os error 183») ничего не объясняет: на месте папки чаще всего
+    /// лежит файл, а на запись не хватает прав. Для этих случаев есть свои
+    /// формулировки; неизвестная причина остаётся технической и попадает
+    /// в запасной текст.
     fn create_error(&self, path: &Path, error: &std::io::Error) -> AppError {
-        AppError::new(
-            "errors.storage.create",
-            format!("Не удалось создать '{}': {error}", path.display()),
-        )
-        .with("path", path.display())
-        .with("reason", error)
+        match error.kind() {
+            ErrorKind::AlreadyExists => AppError::new(
+                "errors.storage.pathIsFile",
+                format!(
+                    "По пути '{}' уже лежит файл, а программа ожидает папку",
+                    path.display()
+                ),
+            )
+            .with("path", path.display()),
+            ErrorKind::PermissionDenied => AppError::new(
+                "errors.storage.denied",
+                format!("Нет прав на запись в '{}'", path.display()),
+            )
+            .with("path", path.display()),
+            _ => AppError::new(
+                "errors.storage.create",
+                format!("Не удалось создать папку '{}': {error}", path.display()),
+            )
+            .with("path", path.display())
+            .with("reason", error),
+        }
     }
 
     /// Отказ записать или удалить пробный файл.
     fn write_error(&self, path: &Path, error: &std::io::Error) -> AppError {
-        AppError::new(
-            "errors.storage.write",
-            format!("Не удалось записать '{}': {error}", path.display()),
-        )
-        .with("path", path.display())
-        .with("reason", error)
+        match error.kind() {
+            ErrorKind::PermissionDenied => AppError::new(
+                "errors.storage.denied",
+                format!("Нет прав на запись в '{}'", path.display()),
+            )
+            .with("path", path.display()),
+            _ => AppError::new(
+                "errors.storage.write",
+                format!("Не удалось записать '{}': {error}", path.display()),
+            )
+            .with("path", path.display())
+            .with("reason", error),
+        }
     }
 }
 
@@ -380,8 +408,31 @@ mod tests {
             error.to_string().contains("local"),
             "в объяснении должен быть путь: {error}"
         );
+        assert!(
+            error.to_string().contains("файл"),
+            "причина названа словами пользователя: {error}"
+        );
+        assert!(
+            !error.to_string().contains("os error"),
+            "код ОС не показывается пользователю: {error}"
+        );
 
         let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn create_error_explains_permission_denied() {
+        let storage = Storage::at(temp_root("storage-denied"));
+        let path = storage.root().join("local");
+        let denied = std::io::Error::from(ErrorKind::PermissionDenied);
+
+        let error = storage.create_error(&path, &denied);
+
+        assert_eq!(error.code, "errors.storage.denied");
+        assert!(
+            !error.to_string().contains("os error"),
+            "код ОС не показывается пользователю: {error}"
+        );
     }
 
     #[test]

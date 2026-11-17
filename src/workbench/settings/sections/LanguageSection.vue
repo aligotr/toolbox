@@ -219,6 +219,11 @@ onMounted(() => {
   cursor: pointer;
 }
 
+/* Отметка выбора — цветом действия, а не системным синим. */
+.language__item input {
+  accent-color: var(--p-primary-color);
+}
+
 .language__item--active {
   border-color: var(--p-primary-color);
   background: var(--p-surface-100);

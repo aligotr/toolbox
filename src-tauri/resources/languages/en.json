@@ -10,16 +10,16 @@
   "name": "English",
   "messages": {
     // ── Blocking screen ───────────────────────────────────────────────────
-    "startup.title": "Cannot start",
+    "startup.title": "The program cannot start",
     "startup.lead":
-      "ToolBox keeps its settings and log next to the executable — that is what portability means here. Without write access the program cannot work correctly, so the modules are not started.",
+      "ToolBox keeps its settings and logs next to the program so the folder can be moved to another computer together with the data. Right now the files could not be written, so work has stopped.",
     "startup.folder": "Program folder",
-    "startup.reason": "What exactly failed",
+    "startup.reason": "Reason",
     "startup.hint": "What to do:",
     "startup.move":
       "move the program folder to a writable place — for example, Documents;",
     "startup.permissions":
-      "or clear the read-only attribute and check the folder permissions.",
+      "or check the folder permissions and remove the files that are in the way.",
     "startup.exit": "Exit",
 
     // ── Центр управления ──────────────────────────────────────────────────
@@ -34,7 +34,7 @@
     "settings.section.templates": "Templates",
     "settings.section.data": "Data",
     "settings.section.language": "Language",
-    "settings.section.app": "Program",
+    "settings.section.app": "About",
 
     // ── Раздел «Язык» ─────────────────────────────────────────────────────
     "settings.language.title": "Language",
@@ -738,9 +738,9 @@
     "errors.core.openFolder": "Could not open “{path}”: {reason}",
 
     // ── Startup errors ────────────────────────────────────────────────────
-    "errors.startup.storage": "Could not determine the program folder",
-    "errors.startup.write": "Could not write to the program folder",
-    "errors.startup.logging": "Could not start the file log",
+    "errors.startup.storage": "Could not find the program folder",
+    "errors.startup.write": "The program cannot save files",
+    "errors.startup.logging": "Could not start writing the log",
     "errors.startup.profileMissing":
       "The active profile “{profile}” was not found among the folders in “{path}”; “{chosen}” was selected",
 
@@ -768,8 +768,11 @@
     "errors.files.create": "Could not create “{path}”: {reason}",
     "errors.storage.exe": "Could not determine the program path: {reason}",
     "errors.storage.noFolder": "The program path has no folder: {path}",
-    "errors.storage.create": "Could not create “{path}”: {reason}",
+    "errors.storage.create": "Could not create the folder “{path}”: {reason}",
     "errors.storage.write": "Could not write “{path}”: {reason}",
+    "errors.storage.pathIsFile":
+      "A file already exists at “{path}”, but the program needs a folder",
+    "errors.storage.denied": "No permission to write to “{path}”",
     "errors.workspace.broken": "The file “{path}” was not parsed as JSON: {reason}",
     "errors.workspace.notObject": "The file “{path}” must contain a JSON object",
     "errors.workspace.saveNotObject": "The workspace must be a JSON object",
