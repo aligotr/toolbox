@@ -42,7 +42,7 @@
       "Choose the language the program speaks. Russian is always there; other languages come as dictionary files you put in the dictionaries folder.",
     "settings.language.current": "Interface language",
     "settings.language.russian": "Russian",
-    "settings.language.builtin": "in the program",
+    "settings.language.builtin": "built in",
     "settings.language.broken": "cannot be read",
     "settings.language.complete": "fully translated",
     "settings.language.missing": "not fully translated",
@@ -64,7 +64,7 @@
     "settings.language.export": "Save sample",
     "settings.language.exported": "Sample saved: {path}",
     "settings.language.note":
-      "The program never changes the file: your edits and comments stay as they are.\nPress Refresh after editing.\nDo not rename lines — that is how the program finds the text.",
+      "The program never changes the files: your edits and comments stay as they are.\nDo not rename lines — that is how the program finds the text.\nPress Refresh after editing.",
 
     // ── Shell ─────────────────────────────────────────────────────────────
     "shell.sidebar.tools": "Tools",
