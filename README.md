@@ -34,9 +34,9 @@ npm run tauri build
 npm run verify
 ```
 
-Она запускает тесты интерфейса (`npm run test`) и сборку (`npm run build`:
-границы зон, полнота словаря, типы, Vite), затем `cargo check`
-и `cargo test --lib`.
+Она запускает тесты интерфейса (`npm run test`), линт (`npm run lint`:
+ESLint и проверку формата Prettier) и сборку (`npm run build`: границы зон,
+полнота словаря, типы, Vite), затем `cargo check` и `cargo test --lib`.
 
 ## Инструменты
 

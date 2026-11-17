@@ -10,14 +10,7 @@
 import { t } from "@/core/infra/i18n";
 import { statusText } from "../cell";
 import { resultKey } from "./session";
-import type {
-  DnsAnswer,
-  DnsCell,
-  DnsRow,
-  DnsSession,
-  RowVerdict,
-  ServerOption,
-} from "../types";
+import type { DnsAnswer, DnsCell, DnsRow, DnsSession, RowVerdict, ServerOption } from "../types";
 
 /** Строка CSV: кавычки удваиваются, разделитель — точка с запятой. */
 function csvField(value: string): string {
@@ -93,7 +86,7 @@ export async function saveCsv(
     URL.revokeObjectURL(url);
     downloaded = true;
   } catch {
-    downloaded = false;
+    // Окно приложения может запретить скачивание: тогда остаётся буфер.
   }
 
   // Блокировка скачивания в окне приложения не всегда даёт исключение,
@@ -103,7 +96,7 @@ export async function saveCsv(
     await navigator.clipboard.writeText(csv);
     copied = true;
   } catch {
-    copied = false;
+    // Буфер обмена может быть недоступен: тогда остаётся скачивание.
   }
 
   if (!downloaded && !copied) {

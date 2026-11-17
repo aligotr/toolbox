@@ -2,15 +2,21 @@
 
 ## Обязательные проверки
 
-Задача не завершена, пока не проходят все четыре:
+Задача не завершена, пока не проходят все пять:
 
 ```powershell
 npm run test
+npm run lint
 npm run build
 Set-Location src-tauri
 cargo check
 cargo test --lib
 ```
+
+- `npm run lint` — ESLint (неиспользуемые компоненты и переменные,
+  ошибки разметки) и проверка формата Prettier. `npm run format`
+  переформатирует дерево; отдельный `vue-tsc` не нужен.
+- Все пять проверок одной командой — `npm run verify`.
 
 - `npm run build` включает проверку границ зон, полноту русского словаря
   и типы (`vue-tsc --noEmit`); отдельный typecheck не нужен.
