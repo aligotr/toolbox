@@ -137,7 +137,7 @@ async function loadPreset(preset: Preset): Promise<void> {
   }
 
   if (result.error) {
-    note.value = result.error;
+    note.value = t(result.error.code, result.error.params);
     return;
   }
 
@@ -145,7 +145,9 @@ async function loadPreset(preset: Preset): Promise<void> {
     result.warnings.length > 0
       ? t("dnslookup.preset.loadedWarnings", {
           title: preset.title,
-          warnings: result.warnings.join("; "),
+          warnings: result.warnings
+            .map((warning) => t(warning.code, warning.params))
+            .join("; "),
         })
       : t("dnslookup.preset.loaded", { title: preset.title });
   emit("applied");

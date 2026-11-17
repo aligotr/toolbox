@@ -8,9 +8,9 @@
 // `runId` — единственная связь между событием и сеансом: после отмены или
 // загрузки пресета прежние ответы уже не принадлежат таблице и отбрасываются.
 
-import { describeError } from "@/core/infra/errors";
+import { describeError, appErrorOf } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
-import { write } from "@/core/infra/journal";
+import { write, type JournalParams } from "@/core/infra/journal";
 import { cancelDns, onDnsFinished, onDnsResult, runDns } from "../api";
 import { JOURNAL_SOURCE, QUERY_LIMIT } from "../constants";
 import { allServers } from "./servers";
@@ -34,14 +34,18 @@ export function ensureSubscriptions(): void {
   subscriptions = (async () => {
     await onDnsResult(handleResult);
     await onDnsFinished(handleFinished);
-    write(JOURNAL_SOURCE, "info", "подписка на события DNS активна");
+    write(JOURNAL_SOURCE, "info", "journal.dnslookup.subscribed");
   })().catch((error: unknown) => {
     subscriptions = null;
-    const text = `подписка на события DNS не создана: ${String(error)}`;
+    const text = t("dnslookup.run.subscribeFailed", {
+      reason: describeError(error),
+    });
     for (const session of sessions.values()) {
       session.status.run.error = text;
     }
-    write(JOURNAL_SOURCE, "error", text);
+    write(JOURNAL_SOURCE, "error", "journal.dnslookup.subscribeError", {
+      reason: error,
+    });
   });
 }
 
@@ -80,17 +84,16 @@ function handleFinished(event: DnsFinishedEvent): void {
 
     const total = session.progress.total;
     if (event.cancelled) {
-      write(
-        JOURNAL_SOURCE,
-        "info",
-        `проверка остановлена: получено ${event.completed} из ${total}`,
-      );
+      write(JOURNAL_SOURCE, "info", "journal.dnslookup.cancelled", {
+        completed: event.completed,
+        total,
+      });
     } else {
-      write(
-        JOURNAL_SOURCE,
-        "result",
-        `проверка завершена: ${event.completed} из ${total} за ${event.elapsed_ms} мс`,
-      );
+      write(JOURNAL_SOURCE, "result", "journal.dnslookup.finished", {
+        completed: event.completed,
+        total,
+        elapsed: event.elapsed_ms,
+      });
     }
   }
 }
@@ -125,7 +128,10 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
       total,
       limit: QUERY_LIMIT,
     });
-    write(JOURNAL_SOURCE, "error", session.status.run.error);
+    write(JOURNAL_SOURCE, "error", "dnslookup.run.tooMany", {
+      total,
+      limit: QUERY_LIMIT,
+    });
     return;
   }
 
@@ -169,11 +175,10 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
     }
   }
 
-  write(
-    JOURNAL_SOURCE,
-    "info",
-    `проверка запущена: ${total} запросов, ${servers.length} серверов`,
-  );
+  write(JOURNAL_SOURCE, "info", "journal.dnslookup.started", {
+    total,
+    servers: servers.length,
+  });
 
   try {
     const accepted = await runDns({
@@ -191,18 +196,38 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
         runId,
         rows,
         servers,
-        accepted.error ? describeError(accepted.error) : t("dnslookup.run.rejected"),
+        accepted.error
+          ? {
+              text: describeError(accepted.error),
+              code: "journal.dnslookup.failed",
+              params: { reason: accepted.error },
+            }
+          : {
+              text: t("dnslookup.run.rejected"),
+              code: "dnslookup.run.rejected",
+              params: {},
+            },
       );
     }
   } catch (error) {
-    failRun(
-      session,
-      runId,
-      rows,
-      servers,
-      t("dnslookup.run.notStarted", { reason: describeError(error) }),
-    );
+    failRun(session, runId, rows, servers, {
+      text: t("dnslookup.run.notStarted", { reason: describeError(error) }),
+      code: "journal.dnslookup.startFailed",
+      params: { reason: appErrorOf(error) },
+    });
   }
+}
+
+/**
+ * Отказ проверки: текст для сеанса и факт для журнала.
+ *
+ * Текст показывает текущий язык, а факт хранит код и данные: после смены
+ * языка запись журнала перерисуется, а статус сеанса будет создан заново.
+ */
+interface RunFailure {
+  text: string;
+  code: string;
+  params: JournalParams;
 }
 
 /**
@@ -216,12 +241,12 @@ function failRun(
   runId: string,
   rows: DnsRow[],
   servers: ServerOption[],
-  message: string,
+  failure: RunFailure,
 ): void {
   if (session.runId !== runId) return;
 
   session.status.run.loading = false;
-  session.status.run.error = message;
+  session.status.run.error = failure.text;
   session.runId = null;
   session.progress = { total: 0, done: 0 };
 
@@ -243,7 +268,7 @@ function failRun(
     }
   }
 
-  write(JOURNAL_SOURCE, "error", message);
+  write(JOURNAL_SOURCE, "error", failure.code, failure.params);
 }
 
 /**
@@ -273,7 +298,10 @@ export async function abortSessionRun(session: DnsSession): Promise<void> {
     }
   }
 
-  write(JOURNAL_SOURCE, "info", `проверка остановлена: получено ${done} из ${total}`);
+  write(JOURNAL_SOURCE, "info", "journal.dnslookup.stopped", {
+    done,
+    total,
+  });
 
   try {
     await cancelDns(runId);
@@ -281,7 +309,9 @@ export async function abortSessionRun(session: DnsSession): Promise<void> {
     session.status.run.error = t("dnslookup.run.stopFailed", {
       reason: describeError(error),
     });
-    write(JOURNAL_SOURCE, "error", session.status.run.error);
+    write(JOURNAL_SOURCE, "error", "journal.dnslookup.stopFailed", {
+      reason: appErrorOf(error),
+    });
   }
 }
 
@@ -300,7 +330,9 @@ export async function stopRun(session: DnsSession): Promise<void> {
     session.status.run.error = t("dnslookup.run.stopFailed", {
       reason: describeError(error),
     });
-    write(JOURNAL_SOURCE, "error", session.status.run.error);
+    write(JOURNAL_SOURCE, "error", "journal.dnslookup.stopFailed", {
+      reason: appErrorOf(error),
+    });
   }
 }
 

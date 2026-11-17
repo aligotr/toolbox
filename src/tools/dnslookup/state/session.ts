@@ -67,11 +67,9 @@ export function pruneSessions(): void {
     // некому ответить, поэтому досчитывать запросы впустую не нужно.
     if (session.runId !== null) {
       void cancelDns(session.runId).catch((error: unknown) => {
-        write(
-          JOURNAL_SOURCE,
-          "error",
-          `проверка покинутой вкладки не остановлена: ${String(error)}`,
-        );
+        write(JOURNAL_SOURCE, "error", "journal.dnslookup.leaveStopError", {
+          reason: error,
+        });
       });
     }
 

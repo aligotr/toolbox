@@ -100,11 +100,9 @@ async function readLanguages(): Promise<void> {
     languages.loaded = true;
   } catch (error) {
     status.list.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `словари не прочитаны: ${status.list.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.languages.readError", {
+      reason: error,
+    });
   } finally {
     status.list.loading = false;
   }
@@ -196,11 +194,9 @@ export async function activateLanguage(code: string | null): Promise<string> {
   const messages = cache.get(wanted);
 
   if (!entry || entry.problem !== null || !messages) {
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `словарь '${wanted}' недоступен: интерфейс показывает русский`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.languages.unavailable", {
+      code: wanted,
+    });
     setCatalog(BUILTIN_LANGUAGE, ruMessages);
     return BUILTIN_LANGUAGE;
   }
@@ -227,11 +223,9 @@ export async function exportLanguageSample(): Promise<string | null> {
     });
   } catch (error) {
     status.export.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `образец словаря не выгружен: ${status.export.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.languages.exportError", {
+      reason: error,
+    });
     return null;
   } finally {
     status.export.loading = false;

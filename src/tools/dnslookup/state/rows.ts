@@ -32,7 +32,7 @@ export async function clearSession(session: DnsSession): Promise<void> {
   session.filters.diffOnly = false;
   session.progress = { total: 0, done: 0 };
 
-  write(JOURNAL_SOURCE, "info", "таблица очищена");
+  write(JOURNAL_SOURCE, "info", "journal.dnslookup.cleared");
 }
 
 /** Сбрасывает результаты одной строки перед сменой типа. */

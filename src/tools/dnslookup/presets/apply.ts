@@ -6,6 +6,7 @@
 // снимок берётся сразу после применения, пока сеанс совпадает с файлом.
 
 import { t } from "@/core/infra/i18n";
+import type { MessageParams } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import type { Preset } from "@/core/services/presets";
 import {
@@ -24,12 +25,18 @@ import {
   snapshotOf,
 } from "./format";
 
+/** Замечание о загрузке пресета: код словаря и данные подстановки. */
+export interface PresetProblem {
+  code: string;
+  params: MessageParams;
+}
+
 /** Итог загрузки пресета: ошибка разбора или замечания о неполной загрузке. */
 export interface PresetApplyResult {
   /** Настройки не разобраны: сеанс не тронут. */
-  error: string | null;
+  error: PresetProblem | null;
   /** Что пришлось пропустить: серверы, строки, лишние колонки. */
-  warnings: string[];
+  warnings: PresetProblem[];
 }
 
 /** Итог отката изменений: причина отказа или признак перезапуска. */
@@ -93,7 +100,10 @@ export async function applyPreset(
   const parsed = parsePresetPayload(preset.payload);
   if (!parsed) {
     return {
-      error: t("dnslookup.preset.loadFailed", { title: preset.title }),
+      error: {
+        code: "dnslookup.preset.loadFailed",
+        params: { title: preset.title },
+      },
       warnings: [],
     };
   }
@@ -109,9 +119,10 @@ export async function applyPreset(
   // загрузка стёрла бы выбор, который ещё можно восстановить.
   if (missing.length > 0 && session.status.servers.error !== null) {
     return {
-      error: t("dnslookup.preset.serversUnread", {
-        reason: session.status.servers.error,
-      }),
+      error: {
+        code: "dnslookup.preset.serversUnread",
+        params: { reason: session.status.servers.error },
+      },
       warnings: [],
     };
   }
@@ -119,34 +130,38 @@ export async function applyPreset(
   const available = payload.servers.filter((id) => known.has(id));
   const servers = available.slice(0, SERVER_LIMIT);
 
-  const warnings: string[] = [];
+  const warnings: PresetProblem[] = [];
   if (droppedRows > 0) {
-    warnings.push(t("dnslookup.preset.warnRows", { count: droppedRows }));
+    warnings.push({
+      code: "dnslookup.preset.warnRows",
+      params: { count: droppedRows },
+    });
   }
   if (missing.length > 0) {
-    warnings.push(
-      t("dnslookup.preset.warnServers", { list: missing.join(", ") }),
-    );
+    warnings.push({
+      code: "dnslookup.preset.warnServers",
+      params: { list: missing.join(", ") },
+    });
   }
   if (available.length > SERVER_LIMIT) {
-    warnings.push(
-      t("dnslookup.preset.warnServerLimit", { count: SERVER_LIMIT }),
-    );
+    warnings.push({
+      code: "dnslookup.preset.warnServerLimit",
+      params: { count: SERVER_LIMIT },
+    });
   }
   if (payload.servers.length === 0) {
-    warnings.push(t("dnslookup.preset.warnNoServers"));
+    warnings.push({ code: "dnslookup.preset.warnNoServers", params: {} });
   }
 
   applyPayload(session, payload, servers);
 
   adoptPreset(session, preset, snapshotOf(session));
 
-  write(
-    JOURNAL_SOURCE,
-    "result",
-    `пресет «${preset.title}» загружен: строк ${session.rows.length}, ` +
-      `серверов ${session.servers.length}`,
-  );
+  write(JOURNAL_SOURCE, "result", "journal.dnslookup.presetLoaded", {
+    title: preset.title,
+    rows: session.rows.length,
+    servers: session.servers.length,
+  });
 
   if (session.rows.length > 0) runAllRows(session);
 
@@ -230,19 +245,17 @@ export async function revertPresetChanges(
 
   if (sameQueries(capturePresetPayload(session), payload)) {
     restoreSettings(session, payload);
-    write(JOURNAL_SOURCE, "info", "изменения настроек отменены");
+    write(JOURNAL_SOURCE, "info", "journal.dnslookup.reverted");
     return { error: null, restarted: false };
   }
 
   await abortSessionRun(session);
   applyPayload(session, payload, payload.servers);
 
-  write(
-    JOURNAL_SOURCE,
-    "info",
-    `изменения отменены: строк ${session.rows.length}, ` +
-      `серверов ${session.servers.length}`,
-  );
+  write(JOURNAL_SOURCE, "info", "journal.dnslookup.revertedRestarted", {
+    rows: session.rows.length,
+    servers: session.servers.length,
+  });
 
   if (session.rows.length === 0) return { error: null, restarted: false };
   runAllRows(session);

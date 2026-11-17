@@ -46,11 +46,9 @@ export async function loadStorageStats(): Promise<void> {
     storageStats.loaded = true;
   } catch (error) {
     status.load.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `размеры папок не прочитаны: ${status.load.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.data.readError", {
+      reason: error,
+    });
   } finally {
     status.load.loading = false;
   }
@@ -69,16 +67,16 @@ export async function pruneLogs(): Promise<number | null> {
   status.prune.error = null;
   try {
     const removed = await invoke<number>("logs_prune");
-    write(JOURNAL_CORE_SOURCE, "result", `удалено старых файлов лога: ${removed}`);
+    write(JOURNAL_CORE_SOURCE, "result", "journal.data.pruned", {
+      count: removed,
+    });
     await loadStorageStats();
     return removed;
   } catch (error) {
     status.prune.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `старые логи не удалены: ${status.prune.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.data.pruneError", {
+      reason: error,
+    });
     return null;
   } finally {
     status.prune.loading = false;
@@ -93,20 +91,18 @@ export async function clearToolData(tool: string): Promise<boolean> {
   status.clear.error = null;
   try {
     const target = await invoke<string>("tool_data_clear", { tool });
-    write(
-      JOURNAL_CORE_SOURCE,
-      "result",
-      `данные инструмента «${tool}» перемещены в «${target}»`,
-    );
+    write(JOURNAL_CORE_SOURCE, "result", "journal.data.cleared", {
+      tool,
+      target,
+    });
     await loadStorageStats();
     return true;
   } catch (error) {
     status.clear.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `данные инструмента «${tool}» не удалены: ${status.clear.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.data.clearError", {
+      tool,
+      reason: error,
+    });
     return false;
   } finally {
     status.clear.loading = false;

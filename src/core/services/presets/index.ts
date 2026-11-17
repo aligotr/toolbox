@@ -20,8 +20,7 @@ import type {
 } from "@/contracts/presets";
 import { t } from "@/core/infra/i18n";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
-import { describeError } from "../../infra/errors";
-import { write } from "../../infra/journal";
+import { write, type JournalFact, type JournalParams } from "../../infra/journal";
 import type { OperationStatus } from "../../infra/status";
 import { useAsyncAction, type AsyncAction } from "../../infra/useAsyncAction";
 
@@ -134,10 +133,16 @@ export function createPresets(tool: string): Presets {
     // Испорченный файл не мешает остальным, но причину пользователь должен
     // видеть: иначе пресет просто исчез бы из списка.
     for (const warning of list.warnings) {
-      write(JOURNAL_CORE_SOURCE, "error", describeError(warning));
+      write(JOURNAL_CORE_SOURCE, "error", "journal.presets.broken", {
+        tool,
+        reason: warning,
+      });
     }
     if (presetDefault.warning !== null) {
-      write(JOURNAL_CORE_SOURCE, "error", describeError(presetDefault.warning));
+      write(JOURNAL_CORE_SOURCE, "error", "journal.presets.defaultBroken", {
+        tool,
+        reason: presetDefault.warning,
+      });
     }
 
     state.items = list.items.map(toPreset);
@@ -152,11 +157,15 @@ export function createPresets(tool: string): Presets {
   }
 
   /** Выполнение с записью причины отказа: обёртка переводит её в статус. */
-  async function attempt<T>(failure: string, action: () => Promise<T>): Promise<T> {
+  async function attempt<T>(
+    failure: string,
+    params: JournalParams,
+    action: () => Promise<T>,
+  ): Promise<T> {
     try {
       return await action();
     } catch (error) {
-      write(JOURNAL_CORE_SOURCE, "error", `${failure}: ${describeError(error)}`);
+      write(JOURNAL_CORE_SOURCE, "error", failure, { ...params, reason: error });
       throw error;
     }
   }
@@ -170,12 +179,13 @@ export function createPresets(tool: string): Presets {
   function presetAction<TArgs extends unknown[], TResult>(
     failure: string,
     act: (...args: TArgs) => Promise<TResult>,
-    journal: (value: TResult, ...args: TArgs) => string,
+    journal: (value: TResult, ...args: TArgs) => JournalFact,
   ): AsyncAction<TArgs, TResult> {
     return useAsyncAction((...args: TArgs) =>
-      attempt(failure, async () => {
+      attempt(failure, { tool }, async () => {
         const value = await act(...args);
-        write(JOURNAL_CORE_SOURCE, "result", journal(value, ...args));
+        const fact = journal(value, ...args);
+        write(JOURNAL_CORE_SOURCE, "result", fact.code, fact.params);
         await reload();
         return value;
       }),
@@ -188,32 +198,41 @@ export function createPresets(tool: string): Presets {
    * состояние за «умолчания нет».
    */
   const listAction = useAsyncAction(() =>
-    attempt(`пресеты «${tool}» не прочитаны`, reload),
+    attempt("journal.presets.readError", { tool }, reload),
   );
 
   const createAction = presetAction(
-    "пресет не сохранён",
+    "journal.presets.createError",
     async (title: string, payload: unknown) =>
       toPreset(await invoke<StoredPreset>("preset_create", { tool, title, payload })),
-    (preset) => `сохранён пресет «${preset.title}» (${preset.id})`,
+    (preset) => ({
+      code: "journal.presets.created",
+      params: { tool, title: preset.title, id: preset.id },
+    }),
   );
 
   const updateAction = presetAction(
-    "пресет не обновлён",
+    "journal.presets.updateError",
     async (id: string, payload: unknown) =>
       toPreset(await invoke<StoredPreset>("preset_update", { tool, id, payload })),
-    (preset) => `пресет «${preset.title}» обновлён`,
+    (preset) => ({
+      code: "journal.presets.updated",
+      params: { tool, title: preset.title },
+    }),
   );
 
   const renameAction = presetAction(
-    "пресет не переименован",
+    "journal.presets.renameError",
     async (id: string, title: string) =>
       toPreset(await invoke<StoredPreset>("preset_rename", { tool, id, title })),
-    (preset, id) => `пресет «${id}» переименован в «${preset.title}»`,
+    (preset, id) => ({
+      code: "journal.presets.renamed",
+      params: { tool, id, title: preset.title },
+    }),
   );
 
   const duplicateAction = presetAction(
-    "пресет не скопирован",
+    "journal.presets.duplicateError",
     async (id: string) =>
       toPreset(
         await invoke<StoredPreset>("preset_duplicate", {
@@ -222,26 +241,38 @@ export function createPresets(tool: string): Presets {
           suffix: t("presets.copySuffix"),
         }),
       ),
-    (preset, id) => `пресет «${id}» скопирован как «${preset.title}»`,
+    (preset, id) => ({
+      code: "journal.presets.duplicated",
+      params: { tool, id, title: preset.title },
+    }),
   );
 
   const deleteAction = presetAction(
-    "пресет не удалён",
+    "journal.presets.deleteError",
     (preset: Preset) => invoke<string>("preset_delete", { tool, id: preset.id }),
-    (target, preset) => `пресет «${preset.title}» перемещён в «${target}»`,
+    (target, preset) => ({
+      code: "journal.presets.moved",
+      params: { tool, title: preset.title, target },
+    }),
   );
 
   const defaultAction = presetAction(
-    "пресет по умолчанию не изменён",
+    "journal.presets.defaultError",
     async (id: string | null) => ({
       id: await invoke<string | null>("preset_default_set", { tool, id }),
     }),
     (value) => {
       if (value.id === null) {
-        return `пресет по умолчанию для «${tool}» снят`;
+        return {
+          code: "journal.presets.defaultCleared",
+          params: { tool },
+        };
       }
       const title = state.items.find((item) => item.id === value.id)?.title ?? value.id;
-      return `пресет «${title}» выбран по умолчанию для «${tool}»`;
+      return {
+        code: "journal.presets.defaultSet",
+        params: { tool, title },
+      };
     },
   );
 

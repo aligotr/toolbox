@@ -1,4 +1,4 @@
 // Постоянные значения инфраструктуры.
 
 /** Источник записей журнала, которые сделало ядро интерфейса. */
-export const JOURNAL_CORE_SOURCE = "ядро";
+export const JOURNAL_CORE_SOURCE = "core";

@@ -64,7 +64,9 @@ onMounted(async () => {
   if (startup.value?.blocked || startup.value === null) return;
 
   unlistenError = await subscribeEvent<BusError>("core:error", (payload) => {
-    write(payload.source, "error", describeError(payload.error));
+    write(payload.source, "error", "journal.app.busError", {
+      reason: payload.error,
+    });
   });
   unlistenSettings = await startSettingsSync();
 });

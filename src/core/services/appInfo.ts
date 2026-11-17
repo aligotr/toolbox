@@ -50,11 +50,9 @@ export async function loadAppInfo(): Promise<void> {
     appInfo.loaded = true;
   } catch (error) {
     status.load.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `сведения о программе не прочитаны: ${status.load.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.app.infoError", {
+      reason: error,
+    });
   } finally {
     status.load.loading = false;
   }
@@ -71,11 +69,9 @@ export async function openFolder(kind: FolderKind): Promise<boolean> {
     return true;
   } catch (error) {
     status.folder.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `папка не открыта: ${status.folder.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.app.folderError", {
+      reason: error,
+    });
     return false;
   } finally {
     status.folder.loading = false;

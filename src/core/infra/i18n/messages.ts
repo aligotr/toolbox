@@ -159,6 +159,147 @@ export const ruMessages: Messages = {
   "journal.kind.info": "факт",
   "journal.kind.result": "ответ",
   "journal.kind.error": "ошибка",
+  "journal.source.core": "ядро",
+
+  // Записи журнала: формулировку можно менять, код — нет.
+  "journal.settings.readError": "Настройки не прочитаны: {reason}",
+  "journal.settings.saveError":
+    "Настройки не сохранены (раздел «{section}»): {reason}",
+  "journal.settings.logLevel": "Уровень лога: {level}",
+  "journal.settings.language": "Язык интерфейса: {language}",
+  "journal.settings.windowReset": "Размер и положение окна сброшены",
+  "journal.settings.windowResetError": "Геометрия окна не сброшена: {reason}",
+
+  "journal.profiles.defaultNamed": "Профиль «{id}» назван «{title}»",
+  "journal.profiles.defaultNameError": "Профиль по умолчанию не назван: {reason}",
+  "journal.profiles.readError": "Профили не прочитаны: {reason}",
+  "journal.profiles.created": "Создан профиль «{title}» ({id})",
+  "journal.profiles.createError": "Профиль не создан: {reason}",
+  "journal.profiles.renamed": "Профиль «{id}» переименован в «{title}»",
+  "journal.profiles.renameError": "Профиль не переименован: {reason}",
+  "journal.profiles.moved": "Профиль «{title}» перемещён в «{target}»",
+  "journal.profiles.deleteError": "Профиль не удалён: {reason}",
+  "journal.profiles.switching":
+    "Переключение на профиль «{title}», перезапуск приложения",
+  "journal.profiles.switchError": "Профиль не переключён: {reason}",
+
+  "journal.templates.broken": "Шаблон не прочитан: {reason}",
+  "journal.templates.readError": "Шаблоны не прочитаны: {reason}",
+  "journal.templates.created": "Сохранён шаблон «{title}» ({id})",
+  "journal.templates.createError": "Шаблон не сохранён: {reason}",
+  "journal.templates.updated": "Шаблон «{title}» обновлён из вкладки",
+  "journal.templates.updateError": "Шаблон не обновлён: {reason}",
+  "journal.templates.renamed": "Шаблон «{id}» переименован в «{title}»",
+  "journal.templates.renameError": "Шаблон не переименован: {reason}",
+  "journal.templates.duplicated": "Шаблон «{id}» скопирован как «{title}»",
+  "journal.templates.duplicateError": "Шаблон не скопирован: {reason}",
+  "journal.templates.moved": "Шаблон «{title}» перемещён в «{target}»",
+  "journal.templates.deleteError": "Шаблон не удалён: {reason}",
+
+  "journal.presets.broken": "Пресет «{tool}» не прочитан: {reason}",
+  "journal.presets.defaultBroken":
+    "Указатель пресета по умолчанию «{tool}» не прочитан: {reason}",
+  "journal.presets.readError": "Пресеты «{tool}» не прочитаны: {reason}",
+  "journal.presets.created": "Сохранён пресет «{title}» ({id}) инструмента «{tool}»",
+  "journal.presets.createError": "Пресет не сохранён: {reason}",
+  "journal.presets.updated": "Пресет «{title}» обновлён",
+  "journal.presets.updateError": "Пресет не обновлён: {reason}",
+  "journal.presets.renamed": "Пресет «{id}» переименован в «{title}»",
+  "journal.presets.renameError": "Пресет не переименован: {reason}",
+  "journal.presets.duplicated": "Пресет «{id}» скопирован как «{title}»",
+  "journal.presets.duplicateError": "Пресет не скопирован: {reason}",
+  "journal.presets.moved": "Пресет «{title}» перемещён в «{target}»",
+  "journal.presets.deleteError": "Пресет не удалён: {reason}",
+  "journal.presets.defaultCleared": "Пресет по умолчанию для «{tool}» снят",
+  "journal.presets.defaultSet":
+    "Пресет «{title}» выбран по умолчанию для «{tool}»",
+  "journal.presets.defaultError": "Пресет по умолчанию не изменён: {reason}",
+
+  "journal.workspace.notObject":
+    "Рабочее пространство не восстановлено: ожидался объект JSON; открыта пустая вкладка",
+  "journal.workspace.version":
+    "Рабочее пространство не восстановлено: версия {version}, ожидалась {expected}; открыта пустая вкладка",
+  "journal.workspace.noTabs":
+    "Рабочее пространство не восстановлено: список вкладок отсутствует; открыта пустая вкладка",
+  "journal.workspace.bindingsNotObject":
+    "Связки вкладок не прочитаны: секция связок не является объектом",
+  "journal.workspace.bindingsSkipped":
+    "Связки вкладок прочитаны не полностью: пропущено связок — {count}",
+  "journal.workspace.readError":
+    "Рабочее пространство не прочитано: {reason}; открыта пустая вкладка",
+  "journal.workspace.saveError": "Рабочее пространство не сохранено: {reason}",
+  "journal.workspace.closeSaveError":
+    "Рабочее пространство не сохранено при закрытии: {reason}",
+  "journal.workspace.closeHandlerError":
+    "Обработчик закрытия окна не установлен: {reason}",
+  "journal.workspace.restarted": "Вкладка «{title}» перезапущена",
+  "journal.workspace.restartedEmpty": "Пустая вкладка перезапущена",
+
+  "journal.app.busError": "Ошибка шины: {reason}",
+  "journal.app.infoError": "Сведения о программе не прочитаны: {reason}",
+  "journal.app.folderError": "Папка не открыта: {reason}",
+
+  "journal.data.readError": "Размеры папок не прочитаны: {reason}",
+  "journal.data.pruned": "Удалено старых файлов лога: {count}",
+  "journal.data.pruneError": "Старые логи не удалены: {reason}",
+  "journal.data.cleared":
+    "Данные инструмента «{tool}» перемещены в «{target}»",
+  "journal.data.clearError": "Данные инструмента «{tool}» не удалены: {reason}",
+
+  "journal.languages.readError": "Словари не прочитаны: {reason}",
+  "journal.languages.unavailable":
+    "Словарь «{code}» недоступен: интерфейс показывает русский",
+  "journal.languages.exportError": "Образец словаря не выгружен: {reason}",
+
+  "journal.busprobe.pingSent": "Запрос core:ping отправлен, echo=«{echo}»",
+  "journal.busprobe.pong":
+    "Ответ получен: echo=«{echo}», correlation={correlation}",
+  "journal.busprobe.pingError": "Запрос не выполнен: {reason}",
+  "journal.busprobe.traceStarted":
+    "Учебный прогон: core:ping с задержкой {delay} мс",
+  "journal.busprobe.traceError": "Прогон не выполнен: {reason}",
+  "journal.busprobe.pongObserver":
+    "Второй подписчик получил core:pong: at={at}",
+  "journal.busprobe.subscribeError": "Подписка на события не создана: {reason}",
+  "journal.busprobe.traceRecorded":
+    "Цепочка записана: этапов — {stages}, время — {elapsed} мс",
+  "journal.busprobe.traceFailed": "Прогон не завершился: {outcome}",
+
+  "journal.dnslookup.subscribed": "Подписка на события DNS активна",
+  "journal.dnslookup.subscribeError":
+    "Подписка на события DNS не создана: {reason}",
+  "journal.dnslookup.finished":
+    "Проверка завершена: {completed} из {total} за {elapsed} мс",
+  "journal.dnslookup.cancelled":
+    "Проверка остановлена: получено {completed} из {total}",
+  "journal.dnslookup.started":
+    "Проверка запущена: запросов — {total}, серверов — {servers}",
+  "journal.dnslookup.failed": "Проверка не выполнена: {reason}",
+  "journal.dnslookup.startFailed": "Проверка не запущена: {reason}",
+  "journal.dnslookup.stopped":
+    "Проверка остановлена: получено {done} из {total}",
+  "journal.dnslookup.stopFailed": "Не удалось остановить проверку: {reason}",
+  "journal.dnslookup.cleared": "Таблица очищена",
+  "journal.dnslookup.leaveStopError":
+    "Проверка покинутой вкладки не остановлена: {reason}",
+  "journal.dnslookup.systemServersFailed":
+    "Системные резолверы не прочитаны: {reason}",
+  "journal.dnslookup.customServersFailed":
+    "Свои серверы не прочитаны: {reason}",
+  "journal.dnslookup.serversSaveFailed":
+    "Свои серверы не сохранены: {reason}",
+  "journal.dnslookup.serverAdded": "Свой сервер добавлен: {address}",
+  "journal.dnslookup.serverRemoved": "Свой сервер удалён",
+  "journal.dnslookup.csvFile": "CSV выгружен: строк — {rows}, файл",
+  "journal.dnslookup.csvClipboard":
+    "CSV выгружен: строк — {rows}, буфер обмена",
+  "journal.dnslookup.defaultPresetMissing":
+    "Пресет по умолчанию «{id}» не найден: вкладка открыта пустой",
+  "journal.dnslookup.presetLoaded":
+    "Пресет «{title}» загружен: строк — {rows}, серверов — {servers}",
+  "journal.dnslookup.reverted": "Изменения настроек отменены",
+  "journal.dnslookup.revertedRestarted":
+    "Изменения отменены: строк — {rows}, серверов — {servers}",
 
   // ── Количество ───────────────────────────────────────────────────────────
   "count.tools": {
@@ -589,6 +730,8 @@ export const ruMessages: Messages = {
   "dnslookup.run.rejected": "Проверка отклонена ядром",
   "dnslookup.run.notStarted": "Проверка не запущена: {reason}",
   "dnslookup.run.stopFailed": "Не удалось остановить проверку: {reason}",
+  "dnslookup.run.subscribeFailed":
+    "Подписка на события DNS не создана: {reason}",
 
   // ── DNSlookup: CSV ───────────────────────────────────────────────────────
   "dnslookup.csv.domain": "Домен",

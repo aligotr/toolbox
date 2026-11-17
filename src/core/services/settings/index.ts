@@ -63,11 +63,9 @@ export async function loadSettings(): Promise<void> {
     settings.loaded = true;
   } catch (error) {
     status.load.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `настройки не прочитаны: ${status.load.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.settings.readError", {
+      reason: error,
+    });
   } finally {
     status.load.loading = false;
   }
@@ -95,11 +93,10 @@ async function saveSection(
     return next;
   } catch (error) {
     status[operation].error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `настройки не сохранены (${section}): ${status[operation].error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.settings.saveError", {
+      section,
+      reason: error,
+    });
     return null;
   } finally {
     status[operation].loading = false;
@@ -111,7 +108,9 @@ export async function setLogLevel(level: LogLevel): Promise<boolean> {
   const next = await saveSection("log", "log", { level });
   if (!next) return false;
 
-  write(JOURNAL_CORE_SOURCE, "result", `уровень лога: ${next.log.level}`);
+  write(JOURNAL_CORE_SOURCE, "result", "journal.settings.logLevel", {
+    level: next.log.level,
+  });
   return true;
 }
 
@@ -138,7 +137,9 @@ export async function setLanguage(language: string | null): Promise<boolean> {
   if (!next) return false;
 
   const applied = await activateLanguage(next.ui.language);
-  write(JOURNAL_CORE_SOURCE, "result", `язык интерфейса: ${applied}`);
+  write(JOURNAL_CORE_SOURCE, "result", "journal.settings.language", {
+    language: applied,
+  });
   return true;
 }
 
@@ -151,15 +152,13 @@ export async function resetWindow(): Promise<boolean> {
   try {
     settings.current = await invoke<Settings>("window_reset");
     settings.loaded = true;
-    write(JOURNAL_CORE_SOURCE, "result", "размер и положение окна сброшены");
+    write(JOURNAL_CORE_SOURCE, "result", "journal.settings.windowReset");
     return true;
   } catch (error) {
     status.window.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `геометрия окна не сброшена: ${status.window.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.settings.windowResetError", {
+      reason: error,
+    });
     return false;
   } finally {
     status.window.loading = false;

@@ -89,17 +89,14 @@ async function nameDefaultProfile(): Promise<void> {
       title: t("profiles.defaultTitle"),
     });
     await reload();
-    write(
-      JOURNAL_CORE_SOURCE,
-      "result",
-      `профиль «${profile.id}» назван «${renamed.title}»`,
-    );
+    write(JOURNAL_CORE_SOURCE, "result", "journal.profiles.defaultNamed", {
+      id: profile.id,
+      title: renamed.title,
+    });
   } catch (error) {
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `профиль по умолчанию не назван: ${describeError(error)}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.defaultNameError", {
+      reason: error,
+    });
   }
 }
 
@@ -119,11 +116,9 @@ export async function loadProfiles(): Promise<void> {
     await nameDefaultProfile();
   } catch (error) {
     status.list.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `профили не прочитаны: ${status.list.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.readError", {
+      reason: error,
+    });
   } finally {
     status.list.loading = false;
   }
@@ -137,16 +132,17 @@ export async function createProfile(title: string): Promise<boolean> {
   status.create.error = null;
   try {
     const created = await invoke<Profile>("profile_create", { title });
-    write(
-      JOURNAL_CORE_SOURCE,
-      "result",
-      `создан профиль «${created.title}» (${created.id})`,
-    );
+    write(JOURNAL_CORE_SOURCE, "result", "journal.profiles.created", {
+      title: created.title,
+      id: created.id,
+    });
     await reload();
     return true;
   } catch (error) {
     status.create.error = describeError(error);
-    write(JOURNAL_CORE_SOURCE, "error", `профиль не создан: ${status.create.error}`);
+    write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.createError", {
+      reason: error,
+    });
     return false;
   } finally {
     status.create.loading = false;
@@ -161,20 +157,17 @@ export async function renameProfile(id: string, title: string): Promise<boolean>
   status.rename.error = null;
   try {
     const renamed = await invoke<Profile>("profile_rename", { id, title });
-    write(
-      JOURNAL_CORE_SOURCE,
-      "result",
-      `профиль «${id}» переименован в «${renamed.title}»`,
-    );
+    write(JOURNAL_CORE_SOURCE, "result", "journal.profiles.renamed", {
+      id,
+      title: renamed.title,
+    });
     await reload();
     return true;
   } catch (error) {
     status.rename.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `профиль не переименован: ${status.rename.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.renameError", {
+      reason: error,
+    });
     return false;
   } finally {
     status.rename.loading = false;
@@ -189,16 +182,17 @@ export async function deleteProfile(profile: Profile): Promise<boolean> {
   status.delete.error = null;
   try {
     const target = await invoke<string>("profile_delete", { id: profile.id });
-    write(
-      JOURNAL_CORE_SOURCE,
-      "result",
-      `профиль «${profile.title}» перемещён в «${target}»`,
-    );
+    write(JOURNAL_CORE_SOURCE, "result", "journal.profiles.moved", {
+      title: profile.title,
+      target,
+    });
     await reload();
     return true;
   } catch (error) {
     status.delete.error = describeError(error);
-    write(JOURNAL_CORE_SOURCE, "error", `профиль не удалён: ${status.delete.error}`);
+    write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.deleteError", {
+      reason: error,
+    });
     return false;
   } finally {
     status.delete.loading = false;
@@ -221,19 +215,15 @@ export async function switchProfile(id: string): Promise<void> {
     const target = profiles.items.find((profile) => profile.id === id);
     await flushWorkspace();
     await invoke("profile_switch", { id });
-    write(
-      JOURNAL_CORE_SOURCE,
-      "info",
-      `переключение на профиль «${target?.title ?? id}», перезапуск приложения`,
-    );
+    write(JOURNAL_CORE_SOURCE, "info", "journal.profiles.switching", {
+      title: target?.title ?? id,
+    });
     await invoke("app_restart");
   } catch (error) {
     status.switch.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `профиль не переключён: ${status.switch.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.switchError", {
+      reason: error,
+    });
   } finally {
     status.switch.loading = false;
   }

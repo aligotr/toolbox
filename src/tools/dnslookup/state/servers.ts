@@ -13,9 +13,9 @@
 // Запись поверх повреждённого файла запрещена: пользователь сначала чинит
 // или удаляет его, иначе восстановимые данные потерялись бы.
 
-import { describeError } from "@/core/infra/errors";
+import { appErrorOf, describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
-import { write } from "@/core/infra/journal";
+import { write, type JournalFact } from "@/core/infra/journal";
 import { useAsyncAction, type AsyncAction } from "@/core/infra/useAsyncAction";
 import {
   loadCustomServers,
@@ -97,23 +97,38 @@ export function refreshServers(session: DnsSession): Promise<void> {
  */
 async function readServers(session: DnsSession): Promise<void> {
   const errors: string[] = [];
+  const facts: JournalFact[] = [];
   const [system, custom] = await Promise.allSettled([loadSystemServers(), loadCustomServers()]);
 
   if (system.status === "fulfilled") {
     session.systemAddresses = system.value.servers;
-    if (system.value.error) errors.push(describeError(system.value.error));
+    if (system.value.error) {
+      errors.push(describeError(system.value.error));
+      facts.push({
+        code: "journal.dnslookup.systemServersFailed",
+        params: { reason: system.value.error },
+      });
+    }
   } else {
     errors.push(
       t("dnslookup.servers.systemReadError", {
         reason: describeError(system.reason),
       }),
     );
+    facts.push({
+      code: "journal.dnslookup.systemServersFailed",
+      params: { reason: appErrorOf(system.reason) },
+    });
   }
 
   if (custom.status === "fulfilled") {
     session.serversBroken = custom.value.error !== null;
     if (custom.value.error) {
       errors.push(describeError(custom.value.error));
+      facts.push({
+        code: "journal.dnslookup.customServersFailed",
+        params: { reason: custom.value.error },
+      });
     } else {
       session.customServers = custom.value.servers.map((server) => ({
         ...server,
@@ -127,11 +142,17 @@ async function readServers(session: DnsSession): Promise<void> {
         reason: describeError(custom.reason),
       }),
     );
+    facts.push({
+      code: "journal.dnslookup.customServersFailed",
+      params: { reason: appErrorOf(custom.reason) },
+    });
   }
 
   if (errors.length > 0) {
     const text = errors.join("; ");
-    write(JOURNAL_SOURCE, "error", text);
+    for (const fact of facts) {
+      write(JOURNAL_SOURCE, "error", fact.code, fact.params);
+    }
     throw new Error(text);
   }
 }
@@ -147,7 +168,7 @@ async function writeServers(session: DnsSession, servers: ServerOption[]): Promi
     // Запись поверх испорченного файла потеряла бы то, что ещё можно
     // восстановить руками: сначала пользователь чинит или удаляет файл.
     const text = t("dnslookup.servers.brokenFile");
-    write(JOURNAL_SOURCE, "error", text);
+    write(JOURNAL_SOURCE, "error", "dnslookup.servers.brokenFile");
     throw new Error(text);
   }
 
@@ -162,7 +183,13 @@ async function writeServers(session: DnsSession, servers: ServerOption[]): Promi
     const text = reply.error
       ? describeError(reply.error)
       : t("dnslookup.servers.saveFailed");
-    write(JOURNAL_SOURCE, "error", text);
+    if (reply.error) {
+      write(JOURNAL_SOURCE, "error", "journal.dnslookup.serversSaveFailed", {
+        reason: reply.error,
+      });
+    } else {
+      write(JOURNAL_SOURCE, "error", "dnslookup.servers.saveFailed");
+    }
     throw new Error(text);
   }
   return true;
@@ -200,7 +227,7 @@ export async function addCustomServer(
   if (session.servers.length < SERVER_LIMIT && !session.servers.includes(server.id)) {
     session.servers.push(server.id);
   }
-  write(JOURNAL_SOURCE, "info", `свой сервер добавлен: ${address}`);
+  write(JOURNAL_SOURCE, "info", "journal.dnslookup.serverAdded", { address });
   return null;
 }
 
@@ -219,6 +246,6 @@ export async function removeCustomServer(
   for (const key of [...session.cells.keys()]) {
     if (key.endsWith(`:${serverId}`)) session.cells.delete(key);
   }
-  write(JOURNAL_SOURCE, "info", "свой сервер удалён");
+  write(JOURNAL_SOURCE, "info", "journal.dnslookup.serverRemoved");
   return null;
 }

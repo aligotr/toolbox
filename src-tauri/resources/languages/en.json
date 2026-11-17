@@ -155,6 +155,161 @@
     "journal.kind.info": "fact",
     "journal.kind.result": "result",
     "journal.kind.error": "error",
+    "journal.source.core": "core",
+
+    // Journal entries: the wording may change, the code may not.
+    "journal.settings.readError": "Could not read the settings: {reason}",
+    "journal.settings.saveError":
+      "Could not save the settings (section “{section}”): {reason}",
+    "journal.settings.logLevel": "Log level: {level}",
+    "journal.settings.language": "Interface language: {language}",
+    "journal.settings.windowReset": "Window size and position were reset",
+    "journal.settings.windowResetError":
+      "Window geometry was not reset: {reason}",
+
+    "journal.profiles.defaultNamed": "Profile “{id}” was named “{title}”",
+    "journal.profiles.defaultNameError":
+      "The default profile was not named: {reason}",
+    "journal.profiles.readError": "Could not read the profiles: {reason}",
+    "journal.profiles.created": "Profile “{title}” was created ({id})",
+    "journal.profiles.createError": "Profile was not created: {reason}",
+    "journal.profiles.renamed": "Profile “{id}” was renamed to “{title}”",
+    "journal.profiles.renameError": "Profile was not renamed: {reason}",
+    "journal.profiles.moved":
+      "Profile “{title}” was moved to “{target}”",
+    "journal.profiles.deleteError": "Profile was not deleted: {reason}",
+    "journal.profiles.switching":
+      "Switching to profile “{title}”, the app restarts",
+    "journal.profiles.switchError": "Profile was not switched: {reason}",
+
+    "journal.templates.broken": "A template was not read: {reason}",
+    "journal.templates.readError": "Could not read the templates: {reason}",
+    "journal.templates.created": "Template “{title}” was saved ({id})",
+    "journal.templates.createError": "Template was not saved: {reason}",
+    "journal.templates.updated":
+      "Template “{title}” was updated from the tab",
+    "journal.templates.updateError": "Template was not updated: {reason}",
+    "journal.templates.renamed": "Template “{id}” was renamed to “{title}”",
+    "journal.templates.renameError": "Template was not renamed: {reason}",
+    "journal.templates.duplicated":
+      "Template “{id}” was copied as “{title}”",
+    "journal.templates.duplicateError": "Template was not copied: {reason}",
+    "journal.templates.moved":
+      "Template “{title}” was moved to “{target}”",
+    "journal.templates.deleteError": "Template was not deleted: {reason}",
+
+    "journal.presets.broken": "A preset of “{tool}” was not read: {reason}",
+    "journal.presets.defaultBroken":
+      "The default preset pointer of “{tool}” was not read: {reason}",
+    "journal.presets.readError": "Could not read the presets of “{tool}”: {reason}",
+    "journal.presets.created":
+      "Preset “{title}” was saved ({id}) for “{tool}”",
+    "journal.presets.createError": "Preset was not saved: {reason}",
+    "journal.presets.updated": "Preset “{title}” was updated",
+    "journal.presets.updateError": "Preset was not updated: {reason}",
+    "journal.presets.renamed": "Preset “{id}” was renamed to “{title}”",
+    "journal.presets.renameError": "Preset was not renamed: {reason}",
+    "journal.presets.duplicated":
+      "Preset “{id}” was copied as “{title}”",
+    "journal.presets.duplicateError": "Preset was not copied: {reason}",
+    "journal.presets.moved": "Preset “{title}” was moved to “{target}”",
+    "journal.presets.deleteError": "Preset was not deleted: {reason}",
+    "journal.presets.defaultCleared":
+      "The default preset for “{tool}” was cleared",
+    "journal.presets.defaultSet":
+      "Preset “{title}” is now the default for “{tool}”",
+    "journal.presets.defaultError":
+      "The default preset was not changed: {reason}",
+
+    "journal.workspace.notObject":
+      "The workspace was not restored: a JSON object was expected; an empty tab was opened",
+    "journal.workspace.version":
+      "The workspace was not restored: version {version}, expected {expected}; an empty tab was opened",
+    "journal.workspace.noTabs":
+      "The workspace was not restored: the tab list is missing; an empty tab was opened",
+    "journal.workspace.bindingsNotObject":
+      "Tab bindings were not read: the bindings section is not an object",
+    "journal.workspace.bindingsSkipped":
+      "Tab bindings were read only partially: {count} bindings skipped",
+    "journal.workspace.readError":
+      "Could not read the workspace: {reason}; an empty tab was opened",
+    "journal.workspace.saveError": "Workspace was not saved: {reason}",
+    "journal.workspace.closeSaveError":
+      "Workspace was not saved on close: {reason}",
+    "journal.workspace.closeHandlerError":
+      "The window close handler was not installed: {reason}",
+    "journal.workspace.restarted": "Tab “{title}” was restarted",
+    "journal.workspace.restartedEmpty": "The empty tab was restarted",
+
+    "journal.app.busError": "Bus error: {reason}",
+    "journal.app.infoError":
+      "Could not read the program information: {reason}",
+    "journal.app.folderError": "The folder was not opened: {reason}",
+
+    "journal.data.readError": "Could not read the folder sizes: {reason}",
+    "journal.data.pruned": "Old log files removed: {count}",
+    "journal.data.pruneError": "Old logs were not removed: {reason}",
+    "journal.data.cleared":
+      "Data of “{tool}” was moved to “{target}”",
+    "journal.data.clearError":
+      "Data of “{tool}” was not deleted: {reason}",
+
+    "journal.languages.readError": "Could not read the dictionaries: {reason}",
+    "journal.languages.unavailable":
+      "Dictionary “{code}” is unavailable: the interface shows Russian",
+    "journal.languages.exportError":
+      "The dictionary sample was not exported: {reason}",
+
+    "journal.busprobe.pingSent": "core:ping request sent, echo=“{echo}”",
+    "journal.busprobe.pong":
+      "Reply received: echo=“{echo}”, correlation={correlation}",
+    "journal.busprobe.pingError": "The request failed: {reason}",
+    "journal.busprobe.traceStarted":
+      "Training run: core:ping with a {delay} ms delay",
+    "journal.busprobe.traceError": "The run failed: {reason}",
+    "journal.busprobe.pongObserver":
+      "The second subscriber received core:pong: at={at}",
+    "journal.busprobe.subscribeError":
+      "The event subscription was not created: {reason}",
+    "journal.busprobe.traceRecorded":
+      "Chain recorded: {stages} stages in {elapsed} ms",
+    "journal.busprobe.traceFailed": "The run did not finish: {outcome}",
+
+    "journal.dnslookup.subscribed": "The DNS event subscription is active",
+    "journal.dnslookup.subscribeError":
+      "The DNS event subscription was not created: {reason}",
+    "journal.dnslookup.finished":
+      "The check finished: {completed} of {total} in {elapsed} ms",
+    "journal.dnslookup.cancelled":
+      "The check was stopped: {completed} of {total} received",
+    "journal.dnslookup.started":
+      "The check started: {total} queries, {servers} servers",
+    "journal.dnslookup.failed": "The check failed: {reason}",
+    "journal.dnslookup.startFailed": "The check did not start: {reason}",
+    "journal.dnslookup.stopped":
+      "The check was stopped: {done} of {total} received",
+    "journal.dnslookup.stopFailed": "Could not stop the check: {reason}",
+    "journal.dnslookup.cleared": "The table was cleared",
+    "journal.dnslookup.leaveStopError":
+      "The check of an abandoned tab was not stopped: {reason}",
+    "journal.dnslookup.systemServersFailed":
+      "System resolvers were not read: {reason}",
+    "journal.dnslookup.customServersFailed":
+      "Custom servers were not read: {reason}",
+    "journal.dnslookup.serversSaveFailed":
+      "Custom servers were not saved: {reason}",
+    "journal.dnslookup.serverAdded": "Custom server added: {address}",
+    "journal.dnslookup.serverRemoved": "Custom server removed",
+    "journal.dnslookup.csvFile": "CSV exported: {rows} rows, file",
+    "journal.dnslookup.csvClipboard":
+      "CSV exported: {rows} rows, clipboard",
+    "journal.dnslookup.defaultPresetMissing":
+      "Default preset “{id}” was not found: the tab was opened empty",
+    "journal.dnslookup.presetLoaded":
+      "Preset “{title}” loaded: {rows} rows, {servers} servers",
+    "journal.dnslookup.reverted": "Settings changes were reverted",
+    "journal.dnslookup.revertedRestarted":
+      "Changes reverted: {rows} rows, {servers} servers",
 
     // ── Counts ────────────────────────────────────────────────────────────
     "count.tools": { "one": "{count} tool", "other": "{count} tools" },
@@ -562,6 +717,8 @@
     "dnslookup.run.rejected": "The core rejected the check",
     "dnslookup.run.notStarted": "The check did not start: {reason}",
     "dnslookup.run.stopFailed": "Could not stop the check: {reason}",
+    "dnslookup.run.subscribeFailed":
+      "The DNS event subscription was not created: {reason}",
 
     // ── DNSlookup: CSV ────────────────────────────────────────────────────
     "dnslookup.csv.domain": "Domain",

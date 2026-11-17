@@ -60,22 +60,19 @@ export async function applyDefaultPreset(
     write(
       JOURNAL_SOURCE,
       "error",
-      `пресет по умолчанию «${id}» не найден: вкладка открыта пустой`,
+      "journal.dnslookup.defaultPresetMissing",
+      { id },
     );
     return;
   }
 
   const result = await applyPreset(session, preset);
   if (result.error !== null) {
-    write(
-      JOURNAL_SOURCE,
-      "error",
-      `пресет по умолчанию не загружен: ${result.error}`,
-    );
+    write(JOURNAL_SOURCE, "error", result.error.code, result.error.params);
     return;
   }
   for (const warning of result.warnings) {
-    write(JOURNAL_SOURCE, "info", warning);
+    write(JOURNAL_SOURCE, "info", warning.code, warning.params);
   }
 }
 

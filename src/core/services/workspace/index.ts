@@ -28,9 +28,8 @@ import type {
 } from "@/contracts/workspace";
 import { EMPTY_TAB_ICON, SINGLETON_TABS } from "../../constants";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
-import { describeError } from "../../infra/errors";
 import { isRecord } from "../../infra/guards";
-import { write } from "../../infra/journal";
+import { write, type JournalFact } from "../../infra/journal";
 import {
   TEMPLATE_TAB_ICON,
   WORKSPACE_CLOSE_TIMEOUT_MS,
@@ -259,11 +258,10 @@ export function restartTab(id: string): void {
   forgetFreshCells(id);
   markFreshCells(next.id, next.columns);
 
-  write(
-    JOURNAL_CORE_SOURCE,
-    "info",
-    `вкладка «${next.title || "новая вкладка"}» перезапущена`,
-  );
+  const fact: JournalFact = next.title
+    ? { code: "journal.workspace.restarted", params: { title: next.title } }
+    : { code: "journal.workspace.restartedEmpty", params: {} };
+  write(JOURNAL_CORE_SOURCE, "info", fact.code, fact.params);
 }
 
 /** Гарантирует хотя бы одну вкладку — при первом показе оболочки. */
@@ -325,8 +323,14 @@ function singleTab(id: string, kind: SingletonKind): WorkspaceTab {
 /** Разобранный файл вместе с замечаниями, которые нужно показать в журнале. */
 interface ParsedWorkspace {
   file: WorkspaceFile;
-  warnings: string[];
+  warnings: JournalFact[];
 }
+
+/** Причина, по которой файл не восстановлен: код словаря и данные. */
+type WorkspaceFault = JournalFact;
+
+/** Замечание о связках: код словаря и данные подстановки. */
+type BindingsWarning = JournalFact;
 
 /**
  * Разбирает секцию связок.
@@ -337,11 +341,14 @@ interface ParsedWorkspace {
  */
 function parseBindings(value: unknown): {
   entries: Record<string, Binding>;
-  warning: string | null;
+  warning: BindingsWarning | null;
 } {
   if (value === undefined) return { entries: {}, warning: null };
   if (!isRecord(value)) {
-    return { entries: {}, warning: "секция связок не является объектом" };
+    return {
+      entries: {},
+      warning: { code: "journal.workspace.bindingsNotObject", params: {} },
+    };
   }
 
   const entries: Record<string, Binding> = {};
@@ -371,7 +378,9 @@ function parseBindings(value: unknown): {
 
   return {
     entries,
-    warning: skipped ? `пропущено связок: ${skipped}` : null,
+    warning: skipped
+      ? { code: "journal.workspace.bindingsSkipped", params: { count: skipped } }
+      : null,
   };
 }
 
@@ -382,14 +391,21 @@ function parseBindings(value: unknown): {
  * идентификаторы и вторые экземпляры журнала/настроек отбрасываются: иначе
  * полоса вкладок и правила `openSingleton` разошлись бы с файлом.
  */
-function parseFile(stored: unknown): ParsedWorkspace | string {
-  if (!isRecord(stored)) return "ожидался объект";
-
-  if (stored.version !== WORKSPACE_VERSION) {
-    return `версия ${String(stored.version)}, ожидалась ${WORKSPACE_VERSION}`;
+function parseFile(stored: unknown): ParsedWorkspace | WorkspaceFault {
+  if (!isRecord(stored)) {
+    return { code: "journal.workspace.notObject", params: {} };
   }
 
-  if (!Array.isArray(stored.tabs)) return "список вкладок отсутствует";
+  if (stored.version !== WORKSPACE_VERSION) {
+    return {
+      code: "journal.workspace.version",
+      params: { version: String(stored.version ?? ""), expected: WORKSPACE_VERSION },
+    };
+  }
+
+  if (!Array.isArray(stored.tabs)) {
+    return { code: "journal.workspace.noTabs", params: {} };
+  }
 
   const tabs: WorkspaceTab[] = [];
   const ids = new Set<string>();
@@ -414,11 +430,9 @@ function parseFile(stored: unknown): ParsedWorkspace | string {
     if (ids.has(tabId)) bindings[tabId] = binding;
   }
 
-  const warnings: string[] = [];
+  const warnings: JournalFact[] = [];
   if (parsedBindings.warning) {
-    warnings.push(
-      `связки вкладок не прочитаны полностью: ${parsedBindings.warning}`,
-    );
+    warnings.push(parsedBindings.warning);
   }
 
   return {
@@ -446,11 +460,9 @@ async function restore(): Promise<void> {
     stored = await invoke<unknown>("workspace_load");
   } catch (error) {
     templateBindings.reset({});
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `рабочее пространство не прочитано: ${describeError(error)}; открыта пустая вкладка`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.workspace.readError", {
+      reason: error,
+    });
     return;
   }
 
@@ -460,18 +472,14 @@ async function restore(): Promise<void> {
   }
 
   const parsed = parseFile(stored);
-  if (typeof parsed === "string") {
+  if (!("file" in parsed)) {
     templateBindings.reset({});
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `рабочее пространство не восстановлено: ${parsed}; открыта пустая вкладка`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", parsed.code, parsed.params);
     return;
   }
 
   for (const warning of parsed.warnings) {
-    write(JOURNAL_CORE_SOURCE, "error", warning);
+    write(JOURNAL_CORE_SOURCE, "error", warning.code, warning.params);
   }
 
   workspace.tabs = parsed.file.tabs;
@@ -517,11 +525,9 @@ async function save(): Promise<void> {
   saveChain = saveChain
     .then(() => invoke<void>("workspace_save", { data }))
     .catch((error: unknown) => {
-      write(
-        JOURNAL_CORE_SOURCE,
-        "error",
-        `рабочее пространство не сохранено: ${describeError(error)}`,
-      );
+      write(JOURNAL_CORE_SOURCE, "error", "journal.workspace.saveError", {
+        reason: error,
+      });
     });
 
   await saveChain;
@@ -571,21 +577,17 @@ export async function startWorkspace(): Promise<() => void> {
         await Promise.race([flushWorkspace(), delay(WORKSPACE_CLOSE_TIMEOUT_MS)]);
       } catch (error) {
         // Окно обязано закрыться: причина уже записана в журнал.
-        write(
-          JOURNAL_CORE_SOURCE,
-          "error",
-          `рабочее пространство не сохранено при закрытии: ${describeError(error)}`,
-        );
+        write(JOURNAL_CORE_SOURCE, "error", "journal.workspace.closeSaveError", {
+          reason: error,
+        });
       }
     });
   } catch (error) {
     // Без обработчика закрытия остаётся отложенная запись: теряется только
     // последняя правка, сделанная за мгновение до выхода.
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `обработчик закрытия окна не установлен: ${describeError(error)}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.workspace.closeHandlerError", {
+      reason: error,
+    });
   }
 
   const stopWatch = watch(workspace, scheduleSave, { deep: true });

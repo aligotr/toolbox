@@ -10,6 +10,7 @@
 
 import { computed, reactive, ref } from "vue";
 import type { UnlistenFn } from "@tauri-apps/api/event";
+import { describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import { useAsyncAction } from "@/core/infra/useAsyncAction";
@@ -41,20 +42,23 @@ export function useBusprobe() {
 
   /** Обычная самопроверка: запрос и ответ без искусственной задержки. */
   const check = useAsyncAction(async () => {
-    write(JOURNAL_SOURCE, "info", `запрос core:ping отправлен, echo=«${echo.value}»`);
+    write(JOURNAL_SOURCE, "info", "journal.busprobe.pingSent", {
+      echo: echo.value,
+    });
 
     const started = performance.now();
     try {
       const answer = await ping(echo.value);
       reply.value = answer;
       elapsedMs.value = performance.now() - started;
-      write(
-        JOURNAL_SOURCE,
-        "result",
-        `ответ получен: echo=«${answer.echo ?? "—"}», correlation=${answer.correlation_id ?? "—"}`,
-      );
+      write(JOURNAL_SOURCE, "result", "journal.busprobe.pong", {
+        echo: answer.echo ?? "—",
+        correlation: answer.correlation_id ?? "—",
+      });
     } catch (error) {
-      write(JOURNAL_SOURCE, "error", `запрос не выполнен: ${String(error)}`);
+      write(JOURNAL_SOURCE, "error", "journal.busprobe.pingError", {
+        reason: error,
+      });
       throw error;
     }
   });
@@ -63,12 +67,16 @@ export function useBusprobe() {
   const trace = useAsyncAction(async () => {
     chain.value = null;
     selected.value = null;
-    write(JOURNAL_SOURCE, "info", `учебный прогон: core:ping с задержкой ${TRACE_DELAY_MS} мс`);
+    write(JOURNAL_SOURCE, "info", "journal.busprobe.traceStarted", {
+      delay: TRACE_DELAY_MS,
+    });
 
     try {
       await tracedPing(echo.value, TRACE_DELAY_MS);
     } catch (error) {
-      write(JOURNAL_SOURCE, "error", `прогон не выполнен: ${String(error)}`);
+      write(JOURNAL_SOURCE, "error", "journal.busprobe.traceError", {
+        reason: error,
+      });
       throw error;
     }
   });
@@ -84,15 +92,19 @@ export function useBusprobe() {
   async function start(): Promise<void> {
     try {
       unlistenPong = await onPong((payload) => {
-        write(JOURNAL_SOURCE, "info", `второй подписчик получил core:pong: at=${payload.at}`);
+        write(JOURNAL_SOURCE, "info", "journal.busprobe.pongObserver", {
+          at: payload.at,
+        });
       });
       unlistenTrace = await onTrace(handleTrace);
     } catch (error) {
       stop();
       status.trace.error = t("busprobe.view.subscribeFailed", {
-        reason: String(error),
+        reason: describeError(error),
       });
-      write(JOURNAL_SOURCE, "error", `подписка на события не создана: ${String(error)}`);
+      write(JOURNAL_SOURCE, "error", "journal.busprobe.subscribeError", {
+        reason: error,
+      });
     }
   }
 
@@ -109,13 +121,14 @@ export function useBusprobe() {
     selected.value = null;
 
     if (next.outcome === "ok") {
-      write(
-        JOURNAL_SOURCE,
-        "result",
-        `цепочка записана: ${next.stages.length} этапов за ${next.elapsed_ms.toFixed(1)} мс`,
-      );
+      write(JOURNAL_SOURCE, "result", "journal.busprobe.traceRecorded", {
+        stages: next.stages.length,
+        elapsed: next.elapsed_ms,
+      });
     } else {
-      write(JOURNAL_SOURCE, "error", `прогон не завершился (${next.outcome})`);
+      write(JOURNAL_SOURCE, "error", "journal.busprobe.traceFailed", {
+        outcome: next.outcome,
+      });
     }
   }
 

@@ -13,7 +13,13 @@ import DataView from "primevue/dataview";
 import SelectButton from "primevue/selectbutton";
 import { computed, ref } from "vue";
 import { t } from "@/core/infra/i18n";
-import { clearJournal, journal, type JournalKind } from "@/core/infra/journal";
+import {
+  clearJournal,
+  journal,
+  journalSource,
+  journalText,
+  type JournalKind,
+} from "@/core/infra/journal";
 
 /** Один вариант фильтра. */
 interface KindOption {
@@ -97,8 +103,8 @@ function time(at: number): string {
               <i class="journal__dot" :class="`journal__dot--${KIND_TONE[entry.kind]}`" />
               {{ kindLabels[entry.kind] }}
             </span>
-            <span class="journal__source">{{ entry.source }}</span>
-            <span class="journal__text">{{ entry.text }}</span>
+            <span class="journal__source">{{ journalSource(entry.source) }}</span>
+            <span class="journal__text">{{ journalText(entry) }}</span>
           </li>
         </ul>
       </template>

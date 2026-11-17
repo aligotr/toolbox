@@ -12,7 +12,7 @@
 
 import { computed, watch } from "vue";
 import type { ToolCellProps } from "@/contracts/tools";
-import { write } from "@/core/infra/journal";
+import { write, type JournalFact } from "@/core/infra/journal";
 import { buildVerdicts } from "./state/compare";
 import { JOURNAL_SOURCE, STANDALONE_CELL_KEY, SYSTEM_SERVER_ID } from "./constants";
 import { buildCsv, saveCsv } from "./state/csv";
@@ -112,12 +112,17 @@ export function useDnslookup(props: ToolCellProps) {
     }> => {
       const csv = buildCsv(session, visibleRows.value, columnServers.value, verdicts.value);
       const saved = await saveCsv(csv);
-      write(
-        JOURNAL_SOURCE,
-        "result",
-        `CSV выгружен: ${visibleRows.value.length} строк, ` +
-          (saved.method === "download" ? "файл" : "буфер обмена"),
-      );
+      const fact: JournalFact =
+        saved.method === "download"
+          ? {
+              code: "journal.dnslookup.csvFile",
+              params: { rows: visibleRows.value.length },
+            }
+          : {
+              code: "journal.dnslookup.csvClipboard",
+              params: { rows: visibleRows.value.length },
+            };
+      write(JOURNAL_SOURCE, "result", fact.code, fact.params);
       return {
         method: saved.method,
         copied: saved.copied,

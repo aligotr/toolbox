@@ -68,7 +68,9 @@ async function reload(): Promise<void> {
   // Испорченный файл не мешает остальным, но причину пользователь должен
   // видеть: иначе шаблон просто исчез бы из списка.
   for (const warning of list.warnings) {
-    write(JOURNAL_CORE_SOURCE, "error", describeError(warning));
+    write(JOURNAL_CORE_SOURCE, "error", "journal.templates.broken", {
+      reason: warning,
+    });
   }
 
   templates.items = list.items.map((item: StoredTemplate) => ({
@@ -94,11 +96,9 @@ export async function loadTemplates(): Promise<void> {
     await reload();
   } catch (error) {
     status.list.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `шаблоны не прочитаны: ${status.list.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.templates.readError", {
+      reason: error,
+    });
   } finally {
     status.list.loading = false;
   }
@@ -115,16 +115,17 @@ export async function createTemplate(
   status.create.error = null;
   try {
     const created = await invoke<StoredTemplate>("template_create", { title, layout });
-    write(
-      JOURNAL_CORE_SOURCE,
-      "result",
-      `сохранён шаблон «${created.title}» (${created.id})`,
-    );
+    write(JOURNAL_CORE_SOURCE, "result", "journal.templates.created", {
+      title: created.title,
+      id: created.id,
+    });
     await reload();
     return { id: created.id, title: created.title, layout: parseColumns(created.layout) };
   } catch (error) {
     status.create.error = describeError(error);
-    write(JOURNAL_CORE_SOURCE, "error", `шаблон не сохранён: ${status.create.error}`);
+    write(JOURNAL_CORE_SOURCE, "error", "journal.templates.createError", {
+      reason: error,
+    });
     return null;
   } finally {
     status.create.loading = false;
@@ -148,11 +149,9 @@ export async function updateTemplateLayout(
   status.update.error = null;
   try {
     const updated = await invoke<StoredTemplate>("template_update", { id, layout });
-    write(
-      JOURNAL_CORE_SOURCE,
-      "result",
-      `шаблон «${updated.title}» обновлён из вкладки`,
-    );
+    write(JOURNAL_CORE_SOURCE, "result", "journal.templates.updated", {
+      title: updated.title,
+    });
     await reload();
     return {
       id: updated.id,
@@ -161,11 +160,9 @@ export async function updateTemplateLayout(
     };
   } catch (error) {
     status.update.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `шаблон не обновлён: ${status.update.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.templates.updateError", {
+      reason: error,
+    });
     return null;
   } finally {
     status.update.loading = false;
@@ -180,20 +177,17 @@ export async function renameTemplate(id: string, title: string): Promise<boolean
   status.rename.error = null;
   try {
     const renamed = await invoke<StoredTemplate>("template_rename", { id, title });
-    write(
-      JOURNAL_CORE_SOURCE,
-      "result",
-      `шаблон «${id}» переименован в «${renamed.title}»`,
-    );
+    write(JOURNAL_CORE_SOURCE, "result", "journal.templates.renamed", {
+      id,
+      title: renamed.title,
+    });
     await reload();
     return true;
   } catch (error) {
     status.rename.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `шаблон не переименован: ${status.rename.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.templates.renameError", {
+      reason: error,
+    });
     return false;
   } finally {
     status.rename.loading = false;
@@ -211,16 +205,17 @@ export async function duplicateTemplate(id: string): Promise<boolean> {
       id,
       suffix: t("templates.copySuffix"),
     });
-    write(JOURNAL_CORE_SOURCE, "result", `шаблон «${id}» скопирован как «${copy.title}»`);
+    write(JOURNAL_CORE_SOURCE, "result", "journal.templates.duplicated", {
+      id,
+      title: copy.title,
+    });
     await reload();
     return true;
   } catch (error) {
     status.duplicate.error = describeError(error);
-    write(
-      JOURNAL_CORE_SOURCE,
-      "error",
-      `шаблон не скопирован: ${status.duplicate.error}`,
-    );
+    write(JOURNAL_CORE_SOURCE, "error", "journal.templates.duplicateError", {
+      reason: error,
+    });
     return false;
   } finally {
     status.duplicate.loading = false;
@@ -235,16 +230,17 @@ export async function deleteTemplate(template: Template): Promise<boolean> {
   status.delete.error = null;
   try {
     const target = await invoke<string>("template_delete", { id: template.id });
-    write(
-      JOURNAL_CORE_SOURCE,
-      "result",
-      `шаблон «${template.title}» перемещён в «${target}»`,
-    );
+    write(JOURNAL_CORE_SOURCE, "result", "journal.templates.moved", {
+      title: template.title,
+      target,
+    });
     await reload();
     return true;
   } catch (error) {
     status.delete.error = describeError(error);
-    write(JOURNAL_CORE_SOURCE, "error", `шаблон не удалён: ${status.delete.error}`);
+    write(JOURNAL_CORE_SOURCE, "error", "journal.templates.deleteError", {
+      reason: error,
+    });
     return false;
   } finally {
     status.delete.loading = false;
