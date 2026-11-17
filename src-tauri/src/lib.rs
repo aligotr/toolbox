@@ -26,7 +26,6 @@ use core::services::logging::{self, Logger};
 use core::services::presets;
 use core::services::profiles;
 use core::services::settings::{self, Settings};
-use core::services::templates;
 use core::services::window;
 use core::services::workspace;
 use core::store;
@@ -617,86 +616,6 @@ fn app_restart(app: AppHandle) {
     app.request_restart();
 }
 
-// ─────────────────────────────── Шаблоны ─────────────────────────────────────
-
-/// Список шаблонов активного профиля.
-///
-/// Замечания о непрочитанных файлах идут вместе со списком: испорченный
-/// шаблон не мешает остальным, но пользователь должен знать, что он был.
-#[tauri::command]
-fn templates_list(runtime: State<'_, Runtime>) -> AppResult<templates::TemplateList> {
-    let storage = storage_of(&runtime)?;
-    templates::list(&storage.templates_dir())
-}
-
-/// Сохраняет геометрию вкладки шаблоном.
-#[tauri::command]
-fn template_create(
-    runtime: State<'_, Runtime>,
-    title: String,
-    layout: Value,
-) -> AppResult<templates::Template> {
-    let storage = storage_of(&runtime)?;
-    let template = templates::create(&storage.templates_dir(), &title, layout)?;
-    log::info!("Создан шаблон '{}' ({})", template.title, template.id);
-    Ok(template)
-}
-
-/// Обновляет геометрию шаблона из вкладки.
-///
-/// Название не меняется: переименование — отдельная команда и отдельный
-/// пункт меню, чтобы обновление раскладки не переписывало название.
-#[tauri::command]
-fn template_update(
-    runtime: State<'_, Runtime>,
-    id: String,
-    layout: Value,
-) -> AppResult<templates::Template> {
-    let storage = storage_of(&runtime)?;
-    let template = templates::update(&storage.templates_dir(), &id, layout)?;
-    log::info!("Шаблон '{}' обновлён из вкладки", template.title);
-    Ok(template)
-}
-
-/// Переименовывает шаблон: файл остаётся на месте.
-#[tauri::command]
-fn template_rename(
-    runtime: State<'_, Runtime>,
-    id: String,
-    title: String,
-) -> AppResult<templates::Template> {
-    let storage = storage_of(&runtime)?;
-    let template = templates::rename(&storage.templates_dir(), &id, &title)?;
-    log::info!("Шаблон '{id}' переименован в '{}'", template.title);
-    Ok(template)
-}
-
-/// Дублирует шаблон; приписку к названию копии даёт интерфейс.
-#[tauri::command]
-fn template_duplicate(
-    runtime: State<'_, Runtime>,
-    id: String,
-    suffix: String,
-) -> AppResult<templates::Template> {
-    let storage = storage_of(&runtime)?;
-    let template = templates::duplicate(&storage.templates_dir(), &id, &suffix)?;
-    log::info!("Шаблон '{id}' дублирован как '{}'", template.id);
-    Ok(template)
-}
-
-/// Удаляет шаблон в `local/trash/templates/`.
-#[tauri::command]
-fn template_delete(runtime: State<'_, Runtime>, id: String) -> AppResult<String> {
-    let storage = storage_of(&runtime)?;
-    let target = templates::delete(
-        &storage.templates_dir(),
-        &storage.templates_trash_dir(),
-        &id,
-    )?;
-    log::info!("Шаблон '{id}' перемещён в '{}'", target.display());
-    Ok(target.display().to_string())
-}
-
 // ─────────────────────────────── Пресеты ─────────────────────────────────────
 
 /// Список пресетов инструмента в активном профиле.
@@ -904,7 +823,7 @@ fn app_info(app: AppHandle, runtime: State<'_, Runtime>) -> AppInfo {
     }
 }
 
-/// Размеры логов, шаблонов и данных инструментов активного профиля.
+/// Размеры логов и данных инструментов активного профиля.
 #[tauri::command]
 fn storage_stats(runtime: State<'_, Runtime>) -> AppResult<store::stats::StorageStats> {
     let storage = storage_of(&runtime)?;
@@ -1149,12 +1068,6 @@ pub fn run() {
             profile_delete,
             profile_switch,
             app_restart,
-            templates_list,
-            template_create,
-            template_update,
-            template_rename,
-            template_duplicate,
-            template_delete,
             presets_list,
             preset_default_get,
             preset_default_set,

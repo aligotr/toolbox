@@ -3,7 +3,7 @@
 //
 // Настройки инструментов здесь не живут — у каждого инструмента свой экран
 // (правило проекта). Этот экран отвечает за приложение: журнал, окно,
-// профили, шаблоны, данные и сведения о сборке.
+// профили, данные и сведения о сборке.
 //
 // Выбранный раздел хранится вне компонента (`state.ts`): сайдбар открывает
 // ту же вкладку сразу на «Профилях», не дожидаясь монтирования.
@@ -17,7 +17,6 @@ import DataSection from "./sections/DataSection.vue";
 import LanguageSection from "./sections/LanguageSection.vue";
 import LogSection from "./sections/LogSection.vue";
 import ProfilesSection from "./sections/ProfilesSection.vue";
-import TemplatesSection from "./sections/TemplatesSection.vue";
 import WindowSection from "./sections/WindowSection.vue";
 import { activeSection, openSettingsSection } from "./navigation";
 import { SETTINGS_SECTIONS } from "./sections";
@@ -56,7 +55,6 @@ onMounted(() => {
         <LogSection v-if="activeSection === 'log'" />
         <WindowSection v-else-if="activeSection === 'window'" />
         <ProfilesSection v-else-if="activeSection === 'profiles'" />
-        <TemplatesSection v-else-if="activeSection === 'templates'" />
         <DataSection v-else-if="activeSection === 'data'" :tools="tools" />
         <LanguageSection v-else-if="activeSection === 'language'" />
         <AppSection v-else-if="activeSection === 'app'" />

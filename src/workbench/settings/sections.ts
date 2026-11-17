@@ -9,7 +9,6 @@ export type SettingsSection =
   | "log"
   | "window"
   | "profiles"
-  | "templates"
   | "data"
   | "language"
   | "app";
@@ -27,7 +26,6 @@ export const SETTINGS_SECTIONS: SettingsSectionMeta[] = [
   { id: "log", titleKey: "settings.section.log", icon: "pi pi-file" },
   { id: "window", titleKey: "settings.section.window", icon: "pi pi-window-maximize" },
   { id: "profiles", titleKey: "settings.section.profiles", icon: "pi pi-users" },
-  { id: "templates", titleKey: "settings.section.templates", icon: "pi pi-th-large" },
   { id: "data", titleKey: "settings.section.data", icon: "pi pi-database" },
   { id: "language", titleKey: "settings.section.language", icon: "pi pi-globe" },
   { id: "app", titleKey: "settings.section.app", icon: "pi pi-info-circle" },

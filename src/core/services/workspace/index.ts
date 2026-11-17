@@ -17,10 +17,8 @@ import { invoke } from "@tauri-apps/api/core";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { reactive, ref, toRaw, watch } from "vue";
-import type { Template } from "../templates";
 import type { ToolDescriptor } from "@/contracts/tools";
 import type {
-  Binding,
   SingletonKind,
   TabColumn,
   WorkspaceFile,
@@ -31,7 +29,6 @@ import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { isRecord } from "../../infra/guards";
 import { write, type JournalFact } from "../../infra/journal";
 import {
-  TEMPLATE_TAB_ICON,
   WORKSPACE_CLOSE_TIMEOUT_MS,
   WORKSPACE_SAVE_DELAY_MS,
   WORKSPACE_VERSION,
@@ -44,7 +41,6 @@ import {
   renameTab,
   resetRecentTabs,
 } from "./recentTabs";
-import * as templateBindings from "../templates/bindings";
 
 /** Состояние рабочего пространства. */
 export interface WorkspaceState {
@@ -127,7 +123,7 @@ function addTab(tab: WorkspaceTab): WorkspaceTab {
   return tab;
 }
 
-/** Создаёт пустую вкладку — ту самую «главную», с шаблонами и инструментами. */
+/** Создаёт пустую вкладку — экран запуска рабочего пространства. */
 export function openEmptyTab(): void {
   addTab({
     id: crypto.randomUUID(),
@@ -147,7 +143,7 @@ function isEmptyTab(tab: WorkspaceTab): boolean {
  * Освобождает полосу от пустых вкладок перед открытием содержимого.
  *
  * «Новая вкладка» — экран запуска, а не рабочее место: как только пользователь
- * выбирает инструмент, шаблон или одиночный экран, она уступает ему место.
+ * выбирает инструмент или одиночный экран, она уступает ему место.
  * Иначе рядом с работой остаётся окно без содержимого, из которого открывали
  * следующее (ADR 0040).
  */
@@ -162,8 +158,6 @@ function dropEmptyTabs(): void {
     forgetFreshCells(id);
     forgetTab(id);
   }
-
-  templateBindings.prune(new Set(workspace.tabs.map((tab) => tab.id)));
 }
 
 /** Вкладка содержит инструмент хотя бы в одной колонке. */
@@ -284,37 +278,6 @@ export function activateTab(id: string): void {
 }
 
 /**
- * Заполняет пустую вкладку шаблоном.
- *
- * Только пустую: заполнение занятой стёрло бы текущую работу, а вернуть её
- * было бы нечем. `false` — вкладка занята, не найдена или не рабочая.
- */
-export function applyTemplate(tabId: string, template: Template): boolean {
-  const tab = workspace.tabs.find((item) => item.id === tabId);
-  if (!tab || tab.kind !== "workspace" || tab.columns.length > 0) return false;
-
-  templateBindings.apply(tab, template);
-  // Инструменты появились вместе с вкладкой — значит, в них место пресету
-  // по умолчанию, даже если сама вкладка была открыта раньше.
-  markFreshCells(tab.id, tab.columns);
-  return true;
-}
-
-/** Открывает шаблон новой вкладкой: так его применяют из настроек. */
-export function openTemplate(template: Template): void {
-  dropEmptyTabs();
-  const tab = addTab({
-    id: crypto.randomUUID(),
-    kind: "workspace",
-    title: template.title,
-    icon: TEMPLATE_TAB_ICON,
-    columns: [],
-  });
-  templateBindings.apply(tab, template);
-  markFreshCells(tab.id, tab.columns);
-}
-
-/**
  * Закрывает вкладку.
  *
  * Закрытие последней не оставляет пустое окно: вместо неё открывается новая
@@ -336,9 +299,6 @@ export function closeTab(id: string): void {
     focusTab(next.id);
   }
 
-  // Связка закрытой вкладки больше не нужна: иначе файл копил бы записи
-  // о вкладках, которых нет.
-  templateBindings.prune(new Set(workspace.tabs.map((tab) => tab.id)));
   forgetFreshCells(id);
 }
 
@@ -348,7 +308,7 @@ export function closeTab(id: string): void {
  * Вкладка заменяется копией под новым идентификатором в той же позиции:
  * место в сетке задаёт ключ сеанса инструмента (ADR 0017), поэтому прежние
  * сеансы остаются без вкладки и следующий показ заводит их заново.
- * Раскладка, заголовок, иконка и привязка к шаблону сохраняются.
+ * Раскладка, заголовок и иконка сохраняются.
  */
 export function restartTab(id: string): void {
   const index = workspace.tabs.findIndex((tab) => tab.id === id);
@@ -357,9 +317,6 @@ export function restartTab(id: string): void {
   const tab = workspace.tabs[index];
   if (tab.kind !== "workspace") return;
 
-  // Связка принадлежит вкладке, а не её идентификатору: переносим её,
-  // иначе перезапуск молча открепил бы шаблон.
-  const binding = templateBindings.of(id);
   const next: WorkspaceTab = {
     id: crypto.randomUUID(),
     kind: tab.kind,
@@ -372,9 +329,6 @@ export function restartTab(id: string): void {
   workspace.tabs.splice(index, 1, next);
   renameTab(id, next.id);
   if (wasActive) focusTab(next.id);
-
-  templateBindings.drop(id);
-  if (binding) templateBindings.store(next.id, binding);
 
   forgetFreshCells(id);
   markFreshCells(next.id, next.columns);
@@ -441,69 +395,8 @@ function singleTab(id: string, kind: SingletonKind): WorkspaceTab {
   };
 }
 
-/** Разобранный файл вместе с замечаниями, которые нужно показать в журнале. */
-interface ParsedWorkspace {
-  file: WorkspaceFile;
-  warnings: JournalFact[];
-}
-
 /** Причина, по которой файл не восстановлен: код словаря и данные. */
 type WorkspaceFault = JournalFact;
-
-/** Замечание о связках: код словаря и данные подстановки. */
-type BindingsWarning = JournalFact;
-
-/**
- * Разбирает секцию связок.
- *
- * Одна испорченная связка не отменяет остальные: вкладки всё равно должны
- * открыться. Секции может не быть — так выглядит файл, записанный до
- * появления привязок, и это не поломка.
- */
-function parseBindings(value: unknown): {
-  entries: Record<string, Binding>;
-  warning: BindingsWarning | null;
-} {
-  if (value === undefined) return { entries: {}, warning: null };
-  if (!isRecord(value)) {
-    return {
-      entries: {},
-      warning: { code: "journal.workspace.bindingsNotObject", params: {} },
-    };
-  }
-
-  const entries: Record<string, Binding> = {};
-  let skipped = 0;
-
-  for (const [tabId, item] of Object.entries(value)) {
-    if (!isRecord(item)) {
-      skipped += 1;
-      continue;
-    }
-
-    const { templateId, templateRev, layoutRev } = item;
-    if (
-      typeof templateId !== "string" ||
-      !templateId ||
-      typeof templateRev !== "string" ||
-      !templateRev ||
-      typeof layoutRev !== "string" ||
-      !layoutRev
-    ) {
-      skipped += 1;
-      continue;
-    }
-
-    entries[tabId] = { templateId, templateRev, layoutRev };
-  }
-
-  return {
-    entries,
-    warning: skipped
-      ? { code: "journal.workspace.bindingsSkipped", params: { count: skipped } }
-      : null,
-  };
-}
 
 /**
  * Разбирает содержимое файла.
@@ -512,7 +405,7 @@ function parseBindings(value: unknown): {
  * идентификаторы и вторые экземпляры журнала/настроек отбрасываются: иначе
  * полоса вкладок и правила `openSingleton` разошлись бы с файлом.
  */
-function parseFile(stored: unknown): ParsedWorkspace | WorkspaceFault {
+function parseFile(stored: unknown): WorkspaceFile | WorkspaceFault {
   if (!isRecord(stored)) {
     return { code: "journal.workspace.notObject", params: {} };
   }
@@ -544,26 +437,10 @@ function parseFile(stored: unknown): ParsedWorkspace | WorkspaceFault {
     tabs.push(tab);
   }
 
-  const parsedBindings = parseBindings(stored.bindings);
-  const bindings: Record<string, Binding> = {};
-  for (const [tabId, binding] of Object.entries(parsedBindings.entries)) {
-    // Связка без вкладки — след падения между записью и очисткой.
-    if (ids.has(tabId)) bindings[tabId] = binding;
-  }
-
-  const warnings: JournalFact[] = [];
-  if (parsedBindings.warning) {
-    warnings.push(parsedBindings.warning);
-  }
-
   return {
-    file: {
-      version: WORKSPACE_VERSION,
-      tabs,
-      activeId: typeof stored.activeId === "string" ? stored.activeId : "",
-      bindings,
-    },
-    warnings,
+    version: WORKSPACE_VERSION,
+    tabs,
+    activeId: typeof stored.activeId === "string" ? stored.activeId : "",
   };
 }
 
@@ -584,7 +461,6 @@ async function restore(): Promise<void> {
   try {
     stored = await invoke<unknown>("workspace_load");
   } catch (error) {
-    templateBindings.reset({});
     write(JOURNAL_CORE_SOURCE, "error", "journal.workspace.readError", {
       reason: error,
     });
@@ -592,28 +468,21 @@ async function restore(): Promise<void> {
   }
 
   if (stored === null) {
-    templateBindings.reset({});
     return;
   }
 
   const parsed = parseFile(stored);
-  if (!("file" in parsed)) {
-    templateBindings.reset({});
+  if ("code" in parsed) {
     write(JOURNAL_CORE_SOURCE, "error", parsed.code, parsed.params);
     return;
   }
 
-  for (const warning of parsed.warnings) {
-    write(JOURNAL_CORE_SOURCE, "error", warning.code, warning.params);
-  }
-
-  workspace.tabs = parsed.file.tabs;
-  templateBindings.reset(parsed.file.bindings);
+  workspace.tabs = parsed.tabs;
 
   // Память начинается с активной вкладки, а если её нет — с самой левой.
-  const active = parsed.file.tabs.some((tab) => tab.id === parsed.file.activeId)
-    ? parsed.file.activeId
-    : (parsed.file.tabs[0]?.id ?? "");
+  const active = parsed.tabs.some((tab) => tab.id === parsed.activeId)
+    ? parsed.activeId
+    : (parsed.tabs[0]?.id ?? "");
 
   if (active) {
     focusTab(active);
@@ -636,7 +505,6 @@ function snapshot(): WorkspaceFile {
     version: WORKSPACE_VERSION,
     tabs,
     activeId: workspace.activeId,
-    bindings: templateBindings.snapshot(),
   };
 }
 
@@ -724,17 +592,11 @@ export async function startWorkspace(): Promise<() => void> {
   }
 
   const stopWatch = watch(workspace, scheduleSave, { deep: true });
-  // Связки — отдельное состояние: правка вкладки и смена связки пишутся
-  // одним файлом, поэтому обе подписки ведут к той же отложенной записи.
-  const stopBindingsWatch = watch(templateBindings.bindings, scheduleSave, {
-    deep: true,
-  });
   persistenceStarted = true;
 
   return () => {
     persistenceStarted = false;
     stopWatch();
-    stopBindingsWatch();
     unlisten();
   };
 }

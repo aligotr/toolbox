@@ -40,8 +40,6 @@ pub struct Profile {
     pub id: String,
     /// Название для интерфейса из `profile.json`.
     pub title: String,
-    /// Сколько шаблонов лежит в профиле: подпись строки в списке.
-    pub templates: u64,
     /// Сколько пресетов настроек лежит в профиле.
     pub presets: u64,
     /// Сколько файлов данных инструментов: подпись строки в списке.
@@ -104,7 +102,6 @@ pub fn list(dir: &Path) -> AppResult<Vec<Profile>> {
         profiles.push(Profile {
             id: id.to_owned(),
             title,
-            templates: usage.templates,
             presets: usage.presets,
             data_files: usage.data_files,
         });
@@ -143,7 +140,6 @@ pub fn create(dir: &Path, title: &str) -> AppResult<Profile> {
     Ok(Profile {
         id,
         title,
-        templates: 0,
         presets: 0,
         data_files: 0,
     })
@@ -159,7 +155,6 @@ pub fn rename(dir: &Path, id: &str, title: &str) -> AppResult<Profile> {
     Ok(Profile {
         id: id.to_owned(),
         title,
-        templates: usage.templates,
         presets: usage.presets,
         data_files: usage.data_files,
     })
@@ -202,7 +197,7 @@ pub fn delete(profiles_dir: &Path, trash_dir: &Path, id: &str) -> AppResult<Path
 /// Создаёт папку профиля по умолчанию, если профилей нет вовсе.
 ///
 /// Первый запуск обязан дать рабочую папку: без профиля некуда положить
-/// шаблоны и данные, а пустой список профилей выглядел бы поломкой.
+/// настройки и данные, а пустой список профилей выглядел бы поломкой.
 /// Файл с названием пишет интерфейс: подпись зависит от языка программы,
 /// а ядро языка не знает (ADR 0039). Пока файла нет, профиль показывается
 /// идентификатором. `Some` — папка создана, `None` — профили уже были.
@@ -233,7 +228,6 @@ pub fn ensure_default(dir: &Path) -> AppResult<Option<Profile>> {
     Ok(Some(Profile {
         id: DEFAULT_PROFILE.to_owned(),
         title: DEFAULT_PROFILE.to_owned(),
-        templates: 0,
         presets: 0,
         data_files: 0,
     }))

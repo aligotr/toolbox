@@ -17,9 +17,8 @@ export interface ToolStats {
   bytes: number;
 }
 
-/** Размеры логов, шаблонов и данных инструментов активного профиля. */
+/** Размеры логов и данных инструментов активного профиля. */
 export interface StorageStats {
   logs: DirStats;
-  templates: DirStats;
   tools: ToolStats[];
 }

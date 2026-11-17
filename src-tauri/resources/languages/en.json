@@ -25,13 +25,12 @@
     // ── Центр управления ──────────────────────────────────────────────────
     "settings.view.title": "Settings",
     "settings.view.lead":
-      "Journal, window, profiles, templates, data and program information.",
+      "Journal, window, profiles, data and program information.",
     "settings.view.nav": "Settings sections",
 
     "settings.section.log": "Log",
     "settings.section.window": "Window",
     "settings.section.profiles": "Profiles",
-    "settings.section.templates": "Templates",
     "settings.section.data": "Data",
     "settings.section.language": "Language",
     "settings.section.app": "About",
@@ -89,55 +88,18 @@
     "tabs.tab.menuTitle": "Actions for tab “{title}”",
     "tabs.tab.close": "Close tab",
     "tabs.tab.closeTitle": "Close tab “{title}”",
-    "tabs.tab.dirtyHint": "There are changes that are not in the template",
-    "tabs.tab.updateHint": "Template updated — you can apply it",
-    "tabs.menu.updateTemplate": "Update “{title}”",
-    "tabs.menu.applyUpdate": "Template updated — apply",
-    "tabs.menu.saveTemplate": "Save as template",
-    "tabs.menu.saveNewTemplate": "Save as new",
-    "tabs.menu.saveEmpty": "There is nothing to save in an empty tab",
-    "tabs.menu.renameTemplate": "Rename template",
-    "tabs.menu.detachTemplate": "Detach",
     "tabs.menu.restart": "Restart tab",
     "tabs.restart.header": "Restart the tab?",
     "tabs.restart.loss": "Unsaved rows and results will be lost.",
-    "tabs.restart.keep": "The layout and template will stay.",
+    "tabs.restart.keep": "The layout will stay.",
     "tabs.restart.presetOne": "Preset “{title}” will load.",
     "tabs.restart.presets": "Presets will load: {titles}.",
     "tabs.restart.accept": "Restart",
     "tabs.restart.reject": "Cancel",
-    "tabs.apply.header": "Apply the template update",
-    "tabs.apply.message":
-      "The layout of tab “{tab}” has changed. Applying template “{template}” will replace it — local changes will be lost.",
-    "tabs.apply.accept": "Apply",
-    "tabs.apply.reject": "Cancel",
-    "tabs.close.header": "Close the tab?",
-    "tabs.close.message":
-      "Tab “{tab}” differs from template “{template}”. Write the changes to the template?",
-    "tabs.close.missing":
-      "The template of tab “{tab}” has been deleted, so there is nowhere to save the changes. The tab can be closed without saving.",
-    "tabs.close.save": "Save",
-    "tabs.close.discard": "Do not save",
-    "tabs.close.cancel": "Cancel",
-    "tabs.title.create": "Save template",
-    "tabs.title.createNote":
-      "Only columns, tools and their widths go into the template. Entered values and query results are not saved.",
-    "tabs.title.createSubmit": "Save",
-    "tabs.title.rename": "Rename template",
-    "tabs.title.renameNote": "The template file stays where it is: only the name changes.",
-    "tabs.title.renameSubmit": "Rename",
-    "tabs.title.field": "Name",
-    "tabs.title.placeholder": "Template name",
-    "tabs.title.cancel": "Cancel",
 
     // ── Empty tab ─────────────────────────────────────────────────────────
-    "workspace.empty.title": "Start from a template",
-    "workspace.empty.lead":
-      "Pick a ready-made workspace or add a tool.",
-    "workspace.empty.templates": "Tab templates",
-    "workspace.empty.templatesError": "Templates cannot be read: {reason}",
-    "workspace.empty.templatesNone":
-      "There are no saved templates. Build a tab and choose “Save as template” in its menu.",
+    "workspace.empty.title": "New tab",
+    "workspace.empty.lead": "Add a tool to get started.",
     "workspace.empty.tools": "Tools",
     "workspace.empty.toolsNone": "No tools are registered yet.",
     "workspace.empty.coreOn": "Core is running",
@@ -184,22 +146,6 @@
       "Switching to profile “{title}”, the app restarts",
     "journal.profiles.switchError": "Profile was not switched: {reason}",
 
-    "journal.templates.broken": "A template was not read: {reason}",
-    "journal.templates.readError": "Could not read the templates: {reason}",
-    "journal.templates.created": "Template “{title}” was saved ({id})",
-    "journal.templates.createError": "Template was not saved: {reason}",
-    "journal.templates.updated":
-      "Template “{title}” was updated from the tab",
-    "journal.templates.updateError": "Template was not updated: {reason}",
-    "journal.templates.renamed": "Template “{id}” was renamed to “{title}”",
-    "journal.templates.renameError": "Template was not renamed: {reason}",
-    "journal.templates.duplicated":
-      "Template “{id}” was copied as “{title}”",
-    "journal.templates.duplicateError": "Template was not copied: {reason}",
-    "journal.templates.moved":
-      "Template “{title}” was moved to “{target}”",
-    "journal.templates.deleteError": "Template was not deleted: {reason}",
-
     "journal.presets.broken": "A preset of “{tool}” was not read: {reason}",
     "journal.presets.defaultBroken":
       "The default preset pointer of “{tool}” was not read: {reason}",
@@ -229,10 +175,6 @@
       "The workspace was not restored: version {version}, expected {expected}; an empty tab was opened",
     "journal.workspace.noTabs":
       "The workspace was not restored: the tab list is missing; an empty tab was opened",
-    "journal.workspace.bindingsNotObject":
-      "Tab bindings were not read: the bindings section is not an object",
-    "journal.workspace.bindingsSkipped":
-      "Tab bindings were read only partially: {count} bindings skipped",
     "journal.workspace.readError":
       "Could not read the workspace: {reason}; an empty tab was opened",
     "journal.workspace.saveError": "Workspace was not saved: {reason}",
@@ -314,8 +256,6 @@
       "Changes reverted: {rows} rows, {servers} servers",
 
     // ── Counts ────────────────────────────────────────────────────────────
-    "count.tools": { "one": "{count} tool", "other": "{count} tools" },
-    "count.templates": { "one": "{count} template", "other": "{count} templates" },
     "count.presets": { "one": "{count} preset", "other": "{count} presets" },
     "count.files": { "one": "{count} file", "other": "{count} files" },
 
@@ -380,7 +320,7 @@
 
     // ── Settings: data ────────────────────────────────────────────────────
     "settings.data.lead":
-      "Logs, templates and tool data of the active profile. Deleting tool data moves the folder to the trash: the files can be restored until the trash is emptied.",
+      "Logs and tool data of the active profile. Deleting tool data moves the folder to the trash: the files can be restored until the trash is emptied.",
     "settings.data.clearHeader": "Delete data",
     "settings.data.clearMessage":
       "Tool data for “{tool}” will be moved to local/trash/data. The folder can be restored until the trash is emptied.",
@@ -388,14 +328,13 @@
     "settings.data.clearReject": "Cancel",
     "settings.data.loading": "Reading sizes…",
     "settings.data.logs": "Logs",
-    "settings.data.templates": "Templates",
     "settings.data.tools": "Tool data",
     "settings.data.empty": "No data: no tool has saved files to the profile yet.",
     "settings.data.clearTool": "Delete data",
 
     // ── Settings: profiles ────────────────────────────────────────────────
     "settings.profiles.lead":
-      "A profile is a separate folder with templates and tool data. Switching restarts the program.",
+      "A profile is a separate folder with settings and tool data. Switching restarts the program.",
     "settings.profiles.create": "Create profile",
     "settings.profiles.titlePlaceholder": "Profile name",
     "settings.profiles.titleAria": "New profile name",
@@ -420,29 +359,8 @@
     "settings.profiles.deleteAccept": "Delete",
     "settings.profiles.deleteReject": "Cancel",
 
-    // ── Settings: templates ───────────────────────────────────────────────
-    "settings.templates.lead":
-      "A template stores a tab layout: columns, tools and their widths. Entered values and results are not saved.",
-    "settings.templates.listError": "Templates cannot be read: {reason}",
-    "settings.templates.loading": "Reading the template list…",
-    "settings.templates.empty":
-      "There are no templates yet. Build a tab and choose “Save as template” in the tab menu.",
-    "settings.templates.renameAria": "New name for template “{title}”",
-    "settings.templates.save": "Save",
-    "settings.templates.cancel": "Cancel",
-    "settings.templates.open": "Open",
-    "settings.templates.rename": "Rename",
-    "settings.templates.duplicate": "Duplicate",
-    "settings.templates.delete": "Delete",
-    "settings.templates.deleteHeader": "Delete template",
-    "settings.templates.deleteMessage":
-      "Template “{title}” will be moved to local/trash/templates. The file can be restored until the trash is emptied.",
-    "settings.templates.deleteAccept": "Delete",
-    "settings.templates.deleteReject": "Cancel",
-
     // ── Data defaults ─────────────────────────────────────────────────────
     "profiles.defaultTitle": "Work",
-    "templates.copySuffix": " (copy)",
     "presets.copySuffix": " (copy)",
 
     // ── Size units ────────────────────────────────────────────────────────
@@ -908,22 +826,5 @@
     "errors.presets.payload": "Preset settings must be a JSON object",
     "errors.presets.emptyTitle": "A preset name cannot be empty",
     "errors.presets.longTitle": "The preset name is longer than {limit} characters",
-    "errors.templates.read": "Could not read “{path}”: {reason}",
-    "errors.templates.create": "Could not create “{path}”: {reason}",
-    "errors.templates.move": "Could not move “{path}” to “{target}”: {reason}",
-    "errors.templates.emptyId": "The template identifier is empty",
-    "errors.templates.invalidId":
-      "A template identifier may contain Latin letters, digits, “-” and “_”",
-    "errors.templates.notFound": "Template “{id}” was not found",
-    "errors.templates.missing":
-      "The file “{path}” disappeared between reading the folder and reading the template",
-    "errors.templates.broken": "The file “{path}” was not parsed: {reason}",
-    "errors.templates.notObject": "The file “{path}” must contain a template object",
-    "errors.templates.version":
-      "The file “{path}” is written in version {version}; expected {expected}",
-    "errors.templates.serialize": "The template was not serialized: {reason}",
-    "errors.templates.layout": "Template geometry must be an array of columns",
-    "errors.templates.emptyTitle": "A template name cannot be empty",
-    "errors.templates.longTitle": "The template name is longer than {limit} characters",
   },
 }

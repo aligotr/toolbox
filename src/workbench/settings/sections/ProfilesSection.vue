@@ -17,9 +17,8 @@ import {
   renameProfile,
   status,
 } from "@/core/services/profiles";
-import { filesLabel, presetsLabel, templatesLabel } from "../../plural";
+import { filesLabel, presetsLabel } from "../../plural";
 import { useProfiles } from "../useProfiles";
-import { useRename } from "../useRename";
 
 const { requestSwitch, requestDelete } = useProfiles();
 
@@ -27,13 +26,36 @@ const { requestSwitch, requestDelete } = useProfiles();
 const creating = ref(false);
 const newTitle = ref("");
 
-const {
-  renamingId,
-  title: renameTitle,
-  start: startRename,
-  cancel: cancelRename,
-  submit: submitRename,
-} = useRename<Profile>(renameProfile, status.rename);
+/** Идентификатор профиля, который сейчас переименовывают. */
+const renamingId = ref<string | null>(null);
+
+/** Новое название; до отправки живёт в форме. */
+const renameTitle = ref("");
+
+/** Открывает форму и подставляет текущее название. */
+function startRename(profile: Profile): void {
+  renamingId.value = profile.id;
+  renameTitle.value = profile.title;
+  status.rename.error = null;
+}
+
+/** Закрывает форму, ничего не записывая. */
+function cancelRename(): void {
+  renamingId.value = null;
+  renameTitle.value = "";
+  status.rename.error = null;
+}
+
+/** Записывает название; пустое не отправляется. */
+async function submitRename(profile: Profile): Promise<void> {
+  const title = renameTitle.value.trim();
+  if (!title) return;
+
+  if (await renameProfile(profile.id, title)) {
+    renamingId.value = null;
+    renameTitle.value = "";
+  }
+}
 
 function startCreate(): void {
   creating.value = true;
@@ -127,7 +149,6 @@ onMounted(() => {
             </span>
           </div>
           <span class="profile-row__meta">
-            {{ templatesLabel(profile.templates) }} ·
             {{ presetsLabel(profile.presets) }} ·
             {{ filesLabel(profile.data_files) }}
             <span class="profile-row__id mono">{{ profile.id }}</span>

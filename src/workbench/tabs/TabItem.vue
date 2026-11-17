@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Вкладка полосы: значок, заголовок, признаки расхождения и кнопки действий.
+// Вкладка полосы: значок, заголовок и кнопки действий.
 //
 // Вкладка — не кнопка, но ведёт себя как кнопка: активация мышью и с
 // клавиатуры. Меню и закрытие здесь только сообщаются наружу: правила живут
@@ -13,16 +13,12 @@ defineProps<{
   tab: WorkspaceTab;
   /** Вкладка открыта в рабочем пространстве. */
   active: boolean;
-  /** В раскладке есть правки, которых нет в шаблоне. */
-  dirty: boolean;
-  /** Шаблон обновился после последней сверки с вкладкой. */
-  updateAvailable: boolean;
 }>();
 
 const emit = defineEmits<{
   activate: [];
   menu: [event: MouseEvent];
-  close: [event: MouseEvent];
+  close: [];
 }>();
 
 /** Активация с клавиатуры: вкладка — не кнопка, но ведёт себя как кнопка. */
@@ -47,21 +43,6 @@ function activateFromKeyboard(event: KeyboardEvent): void {
     <i class="tab__icon" :class="tab.icon" aria-hidden="true" />
     <span class="tab__title">{{ tabTitle(tab) }}</span>
 
-    <i
-      v-if="tab.kind === 'workspace' && dirty"
-      class="tab__marker tab__marker--dot pi pi-circle-fill"
-      role="img"
-      :aria-label="t('tabs.tab.dirtyHint')"
-      v-tooltip.bottom="t('tabs.tab.dirtyHint')"
-    />
-    <i
-      v-if="tab.kind === 'workspace' && updateAvailable"
-      class="tab__marker tab__marker--update pi pi-arrow-circle-up"
-      role="img"
-      :aria-label="t('tabs.tab.updateHint')"
-      v-tooltip.bottom="t('tabs.tab.updateHint')"
-    />
-
     <button
       v-if="tab.kind === 'workspace'"
       class="tab__menu"
@@ -77,7 +58,7 @@ function activateFromKeyboard(event: KeyboardEvent): void {
       type="button"
       :aria-label="t('tabs.tab.closeTitle', { title: tabTitle(tab) })"
       v-tooltip.bottom="t('tabs.tab.close')"
-      @click.stop="emit('close', $event)"
+      @click.stop="emit('close')"
     >
       <i class="pi pi-times" aria-hidden="true" />
     </button>
@@ -124,21 +105,6 @@ function activateFromKeyboard(event: KeyboardEvent): void {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* Маркеры не отнимают место у заголовка: они уже иконок. */
-.tab__marker {
-  flex-shrink: 0;
-}
-
-.tab__marker--dot {
-  color: var(--p-text-muted-color);
-  font-size: 6px;
-}
-
-.tab__marker--update {
-  color: var(--p-primary-color);
-  font-size: 12px;
 }
 
 .tab__menu,

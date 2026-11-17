@@ -7,32 +7,25 @@
 //
 // Состояние берётся из `core/services/workspace`: правила закрытия
 // и активации живут там, чтобы одинаково работать и для кнопки, и для будущих
-// горячих клавиш. Связка с шаблоном — отдельный модуль
-// `core/services/templates/bindings`: она только подсказывает, что раскладка
-// разошлась с шаблоном, и не мешает вкладке жить.
-//
-// Прокрутка, меню действий и закрытие с диалогом — в соседних композаблах;
-// компонент отвечает за раскладку полосы и связывает их с разметкой.
+// горячих клавиш. Прокрутка — в соседнем композабле, меню действий строится
+// здесь; компонент отвечает за раскладку полосы и связывает их с разметкой.
 
 import Button from "primevue/button";
 import Menu from "primevue/menu";
-import { ref } from "vue";
+import type { MenuItem } from "primevue/menuitem";
+import { computed, nextTick, ref } from "vue";
 import type { WorkspaceTab } from "@/contracts/workspace";
 import { t } from "@/core/infra/i18n";
-import { activateTab, openEmptyTab, workspace } from "@/core/services/workspace/index";
-import CloseTabDialog from "./CloseTabDialog.vue";
+import { activateTab, closeTab, openEmptyTab, workspace } from "@/core/services/workspace/index";
 import TabItem from "./TabItem.vue";
-import TemplateTitleDialog from "./TemplateTitleDialog.vue";
 import { useStripScroll } from "./useStripScroll";
-import { useTabClose } from "./useTabClose";
-import { useTabMenu } from "./useTabMenu";
 import { useTabRestart } from "./useTabRestart";
-import { useTemplateTitle } from "./useTemplateTitle";
-import { hasLocalChanges, hasUpdate } from "./templateBinding";
-import { tabTitle } from "./title";
 
 /** Меню действий; общее для всех вкладок. */
 const menu = ref<InstanceType<typeof Menu> | null>(null);
+
+/** Вкладка, для которой открыто меню действий. */
+const menuTab = ref<WorkspaceTab | null>(null);
 
 /** Полоса вкладок: по её прокрутке решается, нужны ли шевроны. */
 const listEl = ref<HTMLElement | null>(null);
@@ -47,45 +40,30 @@ const { canScrollLeft, canScrollRight, scrollTabs, updateScrollState } = useStri
   activeTabEl,
 );
 
-const templateTitle = useTemplateTitle();
 const { requestRestart } = useTabRestart();
 
-const { menuItems, selectMenuTab } = useTabMenu({
-  openTitleDialog: templateTitle.openTitleDialog,
-  requestRestart,
+const menuItems = computed<MenuItem[]>(() => {
+  const tab = menuTab.value;
+  if (!tab || tab.kind !== "workspace") return [];
+  return [
+    {
+      label: t("tabs.menu.restart"),
+      icon: "pi pi-refresh",
+      command: () => requestRestart(tab),
+    },
+  ];
 });
-
-const {
-  titleDialogVisible,
-  titleDialogHeader,
-  titleDialogSubmit,
-  titleDialogNote,
-  titleDialogSuggested,
-  titleDialogLoading,
-  titleDialogError,
-  submitTitle,
-} = templateTitle;
-
-const {
-  closingTab,
-  closeDialogVisible,
-  closeSaving,
-  closeError,
-  closingTemplateTitle,
-  requestClose,
-  discardAndClose,
-  saveAndClose,
-} = useTabClose();
 
 /**
  * Открывает меню действий у кнопки вкладки.
  *
- * Пункты строятся из выбранной вкладки, поэтому ожидание обязательно:
- * без него меню успело бы показать список предыдущей вкладки.
+ * Пункт строится из выбранной вкладки, поэтому ожидание обязательно:
+ * без него меню успело бы показать действие предыдущей вкладки.
  */
 async function openMenu(tab: WorkspaceTab, event: MouseEvent): Promise<void> {
   event.stopPropagation();
-  await selectMenuTab(tab);
+  menuTab.value = tab;
+  await nextTick();
   menu.value?.toggle(event);
 }
 </script>
@@ -104,11 +82,9 @@ async function openMenu(tab: WorkspaceTab, event: MouseEvent): Promise<void> {
           :key="tab.id"
           :tab="tab"
           :active="tab.id === workspace.activeId"
-          :dirty="hasLocalChanges(tab)"
-          :update-available="hasUpdate(tab)"
           @activate="activateTab(tab.id)"
           @menu="openMenu(tab, $event)"
-          @close="requestClose(tab, $event)"
+          @close="closeTab(tab.id)"
         />
       </div>
 
@@ -144,27 +120,6 @@ async function openMenu(tab: WorkspaceTab, event: MouseEvent): Promise<void> {
     />
 
     <Menu ref="menu" :model="menuItems" popup />
-
-    <TemplateTitleDialog
-      v-model:visible="titleDialogVisible"
-      :header="titleDialogHeader"
-      :submit-label="titleDialogSubmit"
-      :note="titleDialogNote"
-      :suggested-title="titleDialogSuggested"
-      :loading="titleDialogLoading"
-      :error="titleDialogError"
-      @save="submitTitle"
-    />
-
-    <CloseTabDialog
-      v-model:visible="closeDialogVisible"
-      :tab-title="closingTab ? tabTitle(closingTab) : ''"
-      :template-title="closingTemplateTitle"
-      :saving="closeSaving"
-      :error="closeError"
-      @save="saveAndClose"
-      @discard="discardAndClose"
-    />
   </nav>
 </template>
 

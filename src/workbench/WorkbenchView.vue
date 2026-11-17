@@ -12,7 +12,6 @@ import { onMounted, onUnmounted, ref, type Component } from "vue";
 import type { ToolDescriptor } from "@/contracts/tools";
 import { setSidebarCollapsed, settings } from "@/core/services/settings/index";
 import type { StartupStatus } from "@/core/services/startup";
-import { loadTemplates } from "@/core/services/templates/index";
 import { ensureWorkspace, startWorkspace } from "@/core/services/workspace/index";
 import Sidebar from "./Sidebar.vue";
 import TabStrip from "./tabs/TabStrip.vue";
@@ -59,10 +58,6 @@ onMounted(async () => {
   }
 
   stopWorkspace = await startWorkspace();
-
-  // Шаблоны нужны пустой вкладке и настройкам сразу, а ошибка чтения не
-  // должна задерживать показ оболочки: причина уйдёт в журнал сама.
-  void loadTemplates();
 });
 
 onUnmounted(() => {

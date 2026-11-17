@@ -26,13 +26,12 @@ export const ruMessages: Messages = {
 
   // ── Центр управления ────────────────────────────────────────────────────
   "settings.view.title": "Настройки",
-  "settings.view.lead": "Журнал, окно, профили, шаблоны, данные и сведения о программе.",
+  "settings.view.lead": "Журнал, окно, профили, данные и сведения о программе.",
   "settings.view.nav": "Разделы настроек",
 
   "settings.section.log": "Журнал",
   "settings.section.window": "Окно",
   "settings.section.profiles": "Профили",
-  "settings.section.templates": "Шаблоны",
   "settings.section.data": "Данные",
   "settings.section.language": "Язык",
   "settings.section.app": "О программе",
@@ -93,55 +92,18 @@ export const ruMessages: Messages = {
   "tabs.tab.menuTitle": "Действия с вкладкой «{title}»",
   "tabs.tab.close": "Закрыть вкладку",
   "tabs.tab.closeTitle": "Закрыть вкладку «{title}»",
-  "tabs.tab.dirtyHint": "Есть правки, которых нет в шаблоне",
-  "tabs.tab.updateHint": "Шаблон обновлён — можно применить",
-  "tabs.menu.updateTemplate": "Обновить «{title}»",
-  "tabs.menu.applyUpdate": "Шаблон обновлён — применить",
-  "tabs.menu.saveTemplate": "Сохранить как шаблон",
-  "tabs.menu.saveNewTemplate": "Сохранить как новый",
-  "tabs.menu.saveEmpty": "В пустой вкладке нечего сохранять",
-  "tabs.menu.renameTemplate": "Переименовать шаблон",
-  "tabs.menu.detachTemplate": "Открепить",
   "tabs.menu.restart": "Перезапустить вкладку",
   "tabs.restart.header": "Перезапустить вкладку?",
   "tabs.restart.loss": "Несохранённые строки и результаты пропадут.",
-  "tabs.restart.keep": "Раскладка и шаблон останутся.",
+  "tabs.restart.keep": "Раскладка останется.",
   "tabs.restart.presetOne": "Загрузится пресет «{title}».",
   "tabs.restart.presets": "Загрузятся пресеты: {titles}.",
   "tabs.restart.accept": "Перезапустить",
   "tabs.restart.reject": "Отмена",
-  "tabs.apply.header": "Применить обновление шаблона",
-  "tabs.apply.message":
-    "Раскладка вкладки «{tab}» изменена. Применение шаблона «{template}» заменит её — локальные правки будут потеряны.",
-  "tabs.apply.accept": "Применить",
-  "tabs.apply.reject": "Отмена",
-  "tabs.close.header": "Закрыть вкладку?",
-  "tabs.close.message":
-    "Вкладка «{tab}» отличается от шаблона «{template}». Записать изменения в шаблон?",
-  "tabs.close.missing":
-    "Шаблон вкладки «{tab}» удалён — сохранять изменения некуда. Вкладку можно закрыть без записи.",
-  "tabs.close.save": "Сохранить",
-  "tabs.close.discard": "Не сохранять",
-  "tabs.close.cancel": "Отмена",
-  "tabs.title.create": "Сохранить шаблон",
-  "tabs.title.createNote":
-    "В шаблон попадут только колонки, инструменты и их ширины. Введённые значения и результаты запросов не сохраняются.",
-  "tabs.title.createSubmit": "Сохранить",
-  "tabs.title.rename": "Переименовать шаблон",
-  "tabs.title.renameNote": "Файл шаблона останется на месте: изменится только название.",
-  "tabs.title.renameSubmit": "Переименовать",
-  "tabs.title.field": "Название",
-  "tabs.title.placeholder": "Название шаблона",
-  "tabs.title.cancel": "Отмена",
 
   // ── Пустая вкладка ───────────────────────────────────────────────────────
-  "workspace.empty.title": "Начать с шаблона",
-  "workspace.empty.lead":
-    "Выберите заготовку рабочего места или добавьте инструмент.",
-  "workspace.empty.templates": "Шаблоны вкладок",
-  "workspace.empty.templatesError": "Шаблоны не прочитаны: {reason}",
-  "workspace.empty.templatesNone":
-    "Сохранённых шаблонов нет. Соберите вкладку и выберите «Сохранить как шаблон» в её меню.",
+  "workspace.empty.title": "Новая вкладка",
+  "workspace.empty.lead": "Добавьте инструмент, чтобы начать работу.",
   "workspace.empty.tools": "Инструменты",
   "workspace.empty.toolsNone": "Инструменты ещё не зарегистрированы.",
   "workspace.empty.coreOn": "Ядро запущено",
@@ -185,19 +147,6 @@ export const ruMessages: Messages = {
     "Переключение на профиль «{title}», перезапуск приложения",
   "journal.profiles.switchError": "Профиль не переключён: {reason}",
 
-  "journal.templates.broken": "Шаблон не прочитан: {reason}",
-  "journal.templates.readError": "Шаблоны не прочитаны: {reason}",
-  "journal.templates.created": "Сохранён шаблон «{title}» ({id})",
-  "journal.templates.createError": "Шаблон не сохранён: {reason}",
-  "journal.templates.updated": "Шаблон «{title}» обновлён из вкладки",
-  "journal.templates.updateError": "Шаблон не обновлён: {reason}",
-  "journal.templates.renamed": "Шаблон «{id}» переименован в «{title}»",
-  "journal.templates.renameError": "Шаблон не переименован: {reason}",
-  "journal.templates.duplicated": "Шаблон «{id}» скопирован как «{title}»",
-  "journal.templates.duplicateError": "Шаблон не скопирован: {reason}",
-  "journal.templates.moved": "Шаблон «{title}» перемещён в «{target}»",
-  "journal.templates.deleteError": "Шаблон не удалён: {reason}",
-
   "journal.presets.broken": "Пресет «{tool}» не прочитан: {reason}",
   "journal.presets.defaultBroken":
     "Указатель пресета по умолчанию «{tool}» не прочитан: {reason}",
@@ -223,10 +172,6 @@ export const ruMessages: Messages = {
     "Рабочее пространство не восстановлено: версия {version}, ожидалась {expected}; открыта пустая вкладка",
   "journal.workspace.noTabs":
     "Рабочее пространство не восстановлено: список вкладок отсутствует; открыта пустая вкладка",
-  "journal.workspace.bindingsNotObject":
-    "Связки вкладок не прочитаны: секция связок не является объектом",
-  "journal.workspace.bindingsSkipped":
-    "Связки вкладок прочитаны не полностью: пропущено связок — {count}",
   "journal.workspace.readError":
     "Рабочее пространство не прочитано: {reason}; открыта пустая вкладка",
   "journal.workspace.saveError": "Рабочее пространство не сохранено: {reason}",
@@ -304,18 +249,6 @@ export const ruMessages: Messages = {
     "Изменения отменены: строк — {rows}, серверов — {servers}",
 
   // ── Количество ───────────────────────────────────────────────────────────
-  "count.tools": {
-    one: "{count} инструмент",
-    few: "{count} инструмента",
-    many: "{count} инструментов",
-    other: "{count} инструмента",
-  },
-  "count.templates": {
-    one: "{count} шаблон",
-    few: "{count} шаблона",
-    many: "{count} шаблонов",
-    other: "{count} шаблона",
-  },
   "count.presets": {
     one: "{count} пресет",
     few: "{count} пресета",
@@ -394,7 +327,7 @@ export const ruMessages: Messages = {
 
   // ── Данные ───────────────────────────────────────────────────────────────
   "settings.data.lead":
-    "Логи, шаблоны и данные инструментов активного профиля. Удаление данных инструмента переносит папку в корзину: файлы можно вернуть, пока её не почистили.",
+    "Логи и данные инструментов активного профиля. Удаление данных инструмента переносит папку в корзину: файлы можно вернуть, пока её не почистили.",
   "settings.data.clearHeader": "Удаление данных",
   "settings.data.clearMessage":
     "Данные инструмента «{tool}» будут перемещены в local/trash/data. Папку можно вернуть, пока корзину не почистили.",
@@ -402,14 +335,13 @@ export const ruMessages: Messages = {
   "settings.data.clearReject": "Отмена",
   "settings.data.loading": "Размеры читаются…",
   "settings.data.logs": "Логи",
-  "settings.data.templates": "Шаблоны",
   "settings.data.tools": "Данные инструментов",
   "settings.data.empty": "Данных нет: пока ни один инструмент не сохранил файлы в профиль.",
   "settings.data.clearTool": "Удалить данные",
 
   // ── Профили ──────────────────────────────────────────────────────────────
   "settings.profiles.lead":
-    "Профиль — отдельная папка с шаблонами и данными инструментов. Переключение перезапускает приложение.",
+    "Профиль — отдельная папка с настройками и данными инструментов. Переключение перезапускает приложение.",
   "settings.profiles.create": "Создать профиль",
   "settings.profiles.titlePlaceholder": "Название профиля",
   "settings.profiles.titleAria": "Название нового профиля",
@@ -434,29 +366,8 @@ export const ruMessages: Messages = {
   "settings.profiles.deleteAccept": "Удалить",
   "settings.profiles.deleteReject": "Отмена",
 
-  // ── Шаблоны ──────────────────────────────────────────────────────────────
-  "settings.templates.lead":
-    "Шаблон хранит раскладку вкладки: колонки, инструменты и их ширины. Введённые значения и результаты не сохраняются.",
-  "settings.templates.listError": "Шаблоны не прочитаны: {reason}",
-  "settings.templates.loading": "Список шаблонов читается…",
-  "settings.templates.empty":
-    "Шаблонов пока нет. Соберите вкладку и выберите «Сохранить как шаблон» в меню вкладки.",
-  "settings.templates.renameAria": "Новое название шаблона «{title}»",
-  "settings.templates.save": "Сохранить",
-  "settings.templates.cancel": "Отмена",
-  "settings.templates.open": "Открыть",
-  "settings.templates.rename": "Переименовать",
-  "settings.templates.duplicate": "Дублировать",
-  "settings.templates.delete": "Удалить",
-  "settings.templates.deleteHeader": "Удаление шаблона",
-  "settings.templates.deleteMessage":
-    "Шаблон «{title}» будет перемещён в local/trash/templates. Файл можно вернуть, пока корзину не почистили.",
-  "settings.templates.deleteAccept": "Удалить",
-  "settings.templates.deleteReject": "Отмена",
-
   // ── Умолчания данных ─────────────────────────────────────────────────────
   "profiles.defaultTitle": "Работа",
-  "templates.copySuffix": " (копия)",
   "presets.copySuffix": " (копия)",
 
   // ── Единицы размера ──────────────────────────────────────────────────────
@@ -919,22 +830,4 @@ export const ruMessages: Messages = {
   "errors.presets.payload": "Настройки пресета должны быть JSON-объектом",
   "errors.presets.emptyTitle": "Название пресета не может быть пустым",
   "errors.presets.longTitle": "Название пресета длиннее {limit} символов",
-  "errors.templates.read": "Не удалось прочитать «{path}»: {reason}",
-  "errors.templates.create": "Не удалось создать «{path}»: {reason}",
-  "errors.templates.move": "Не удалось перенести «{path}» в «{target}»: {reason}",
-  "errors.templates.emptyId": "Идентификатор шаблона пуст",
-  "errors.templates.invalidId":
-    "В идентификаторе шаблона допустимы латиница, цифры, «-» и «_»",
-  "errors.templates.notFound": "Шаблон «{id}» не найден",
-  "errors.templates.missing":
-    "Файл «{path}» исчез между чтением папки и чтением шаблона",
-  "errors.templates.broken": "Файл «{path}» не разобран: {reason}",
-  "errors.templates.notObject": "Файл «{path}» должен содержать объект шаблона",
-  "errors.templates.version":
-    "Файл «{path}» записан в версии {version}, ожидалась {expected}",
-  "errors.templates.serialize": "Шаблон не сериализован: {reason}",
-  "errors.templates.layout":
-    "Геометрия шаблона должна быть массивом колонок",
-  "errors.templates.emptyTitle": "Название шаблона не может быть пустым",
-  "errors.templates.longTitle": "Название шаблона длиннее {limit} символов",
 }

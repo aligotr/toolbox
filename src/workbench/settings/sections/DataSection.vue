@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Раздел «Данные»: сколько занимают лог, шаблоны и данные инструментов.
+// Раздел «Данные»: сколько занимают лог и данные инструментов.
 //
 // Удаляются только данные конкретного инструмента и только в корзину
 // (`local/trash/data/`). Логи чистит раздел «Журнал»: у них своё правило
@@ -28,7 +28,6 @@ const titles = computed(
 );
 
 const logs = computed(() => storageStats.current?.logs ?? null);
-const templates = computed(() => storageStats.current?.templates ?? null);
 const toolData = computed(() => storageStats.current?.tools ?? []);
 
 /** Подпись инструмента; удалённый инструмент показывается своим id. */
@@ -75,12 +74,6 @@ onMounted(() => {
           <dt>{{ t("settings.data.logs") }}</dt>
           <dd v-if="logs">
             {{ filesLabel(logs.files) }} · {{ formatBytes(logs.bytes) }}
-          </dd>
-        </div>
-        <div class="data__summary-row">
-          <dt>{{ t("settings.data.templates") }}</dt>
-          <dd v-if="templates">
-            {{ filesLabel(templates.files) }} · {{ formatBytes(templates.bytes) }}
           </dd>
         </div>
       </dl>

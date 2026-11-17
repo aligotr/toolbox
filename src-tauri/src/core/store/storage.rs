@@ -32,13 +32,10 @@ const LOGS_DIR: &str = "logs";
 /// Папка словарей интерфейса внутри `local/` (ADR 0039).
 const LANGUAGES_DIR: &str = "languages";
 
-/// Папка шаблонов внутри профиля.
-pub(crate) const TEMPLATES_DIR: &str = "templates";
-
 /// Папка пресетов настроек внутри профиля: `presets/<tool>/`.
 ///
 /// Пресет — пользовательская настройка, а не данные инструмента: он лежит
-/// рядом с шаблонами и не попадает под очистку `data/<tool>/`.
+/// в профиле отдельно и не попадает под очистку `data/<tool>/`.
 pub(crate) const PRESETS_DIR: &str = "presets";
 
 /// Папка данных инструментов внутри профиля: `data/<tool>/`.
@@ -144,26 +141,10 @@ impl Storage {
         self.local_dir().join(TRASH_DIR)
     }
 
-    /// Папка шаблонов активного профиля: `profiles/<id>/templates/`.
-    ///
-    /// Шаблон принадлежит профилю, а не машине: коллега, получивший папку,
-    /// должен увидеть те же заготовки рабочего места.
-    pub fn templates_dir(&self) -> PathBuf {
-        self.active_profile_dir().join(TEMPLATES_DIR)
-    }
-
-    /// Корзина шаблонов: `local/trash/templates/`.
-    ///
-    /// Отдельно от корзины профилей: шаблон и профиль — разные сущности,
-    /// и восстанавливать их по отдельности проще, когда они не смешаны.
-    pub fn templates_trash_dir(&self) -> PathBuf {
-        self.trash_dir().join(TEMPLATES_DIR)
-    }
-
     /// Папка пресетов настроек активного профиля: `profiles/<id>/presets/`.
     ///
     /// Внутри — папка инструмента: `presets/<tool>/<presetId>.json`. Пресет
-    /// принадлежит профилю, как и шаблон: коллега должен получить те же
+    /// принадлежит профилю, как и данные: коллега должен получить те же
     /// сохранённые настройки инструментов.
     pub fn presets_dir(&self) -> PathBuf {
         self.active_profile_dir().join(PRESETS_DIR)
@@ -187,7 +168,7 @@ impl Storage {
 
     /// Корзина данных инструментов: `local/trash/data/`.
     ///
-    /// Отдельно от шаблонов и профилей: восстанавливать удалённое проще,
+    /// Отдельно от пресетов и профилей: восстанавливать удалённое проще,
     /// когда в одной папке лежат однородные сущности.
     pub fn data_trash_dir(&self) -> PathBuf {
         self.trash_dir().join(DATA_DIR)
@@ -314,16 +295,6 @@ mod tests {
         assert_eq!(
             storage.active_profile_dir(),
             root.join("profiles").join(DEFAULT_PROFILE)
-        );
-        assert_eq!(
-            storage.templates_dir(),
-            root.join("profiles")
-                .join(DEFAULT_PROFILE)
-                .join("templates")
-        );
-        assert_eq!(
-            storage.templates_trash_dir(),
-            root.join("local").join("trash").join("templates")
         );
         assert_eq!(
             storage.presets_dir(),
