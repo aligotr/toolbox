@@ -10,6 +10,12 @@ export interface Profile {
   id: string;
   /** Название для интерфейса. */
   title: string;
+}
+
+/** Сколько файлов лежит в профиле. */
+export interface ProfileUsage {
+  /** Идентификатор профиля. */
+  id: string;
   /** Сколько пресетов настроек лежит в профиле. */
   presets: number;
   /** Сколько файлов данных инструментов лежит в профиле. */
@@ -20,6 +26,8 @@ export interface Profile {
 export interface ProfileList {
   /** Идентификатор активного профиля. */
   active: string;
+  /** Идентификатор профиля по умолчанию: его создаёт ядро при первом запуске. */
+  default_id: string;
   /** Профили в порядке названий. */
   items: Profile[];
 }

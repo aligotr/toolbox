@@ -6,12 +6,13 @@
 // меню сайдбара и раздел настроек показывают одно и то же.
 //
 // Переключение применяется перезапуском: сервисы читают папку профиля один
-// раз при старте. Рабочее пространство при этом лежит в `local/` и общее для
-// профилей — сохраняется перед перезапуском, иначе последняя правка терялась бы.
+// раз при старте. Рабочее пространство у каждого профиля своё
+// (`local/workspaces/<id>.json`), но машинное; перед перезапуском оно
+// сохраняется, иначе последняя правка терялась бы.
 
 import { invoke } from "@tauri-apps/api/core";
 import { computed, reactive } from "vue";
-import type { Profile, ProfileList } from "@/contracts/profiles";
+import type { Profile, ProfileList, ProfileUsage } from "@/contracts/profiles";
 import { t } from "@/core/infra/i18n";
 import { JOURNAL_CORE_SOURCE } from "../infra/constants";
 import { describeError } from "../infra/errors";
@@ -19,16 +20,15 @@ import { write } from "../infra/journal";
 import { idle, type OperationStatus } from "../infra/status";
 import { flushWorkspace } from "./workspace/index";
 
-/** Идентификатор профиля, который ядро создаёт при первом запуске (ADR 0010). */
-const DEFAULT_PROFILE_ID = "work";
-
 /** Операции, у каждой своё состояние: отказ создания не блокирует список. */
-export type ProfileOperation = "list" | "create" | "rename" | "delete" | "switch";
+export type ProfileOperation = "list" | "usage" | "create" | "rename" | "delete" | "switch";
 
 /** Состояние списка профилей. */
 export interface ProfilesState {
   /** Идентификатор активного профиля; пусто, пока список не прочитан. */
   active: string;
+  /** Идентификатор профиля по умолчанию; приходит из ядра. */
+  defaultId: string;
   items: Profile[];
   /** Прочитан ли список хотя бы раз. */
   loaded: boolean;
@@ -37,13 +37,29 @@ export interface ProfilesState {
 /** Общее состояние профилей. */
 export const profiles = reactive<ProfilesState>({
   active: "",
+  defaultId: "",
   items: [],
   loaded: false,
 });
 
+/** Счётчики профилей: нужны только разделу «Профили». */
+export interface ProfileUsageState {
+  items: Record<string, ProfileUsage>;
+  loaded: boolean;
+}
+
+/** Счётчики по идентификатору профиля. */
+export const profileUsage = reactive<ProfileUsageState>({ items: {}, loaded: false });
+
+/** Счётчики профиля или `undefined`, пока они не прочитаны. */
+export function profileUsageOf(id: string): ProfileUsage | undefined {
+  return profileUsage.items[id];
+}
+
 /** Состояния операций: `status.create.loading`, `status.delete.error` и т. д. */
 export const status = reactive<Record<ProfileOperation, OperationStatus>>({
   list: idle(),
+  usage: idle(),
   create: idle(),
   rename: idle(),
   delete: idle(),
@@ -59,8 +75,33 @@ export const activeProfile = computed<Profile | null>(
 async function reload(): Promise<void> {
   const list = await invoke<ProfileList>("profiles_list");
   profiles.active = list.active;
+  profiles.defaultId = list.default_id;
   profiles.items = list.items;
   profiles.loaded = true;
+}
+
+/** Перечитывает счётчики профилей. */
+async function reloadUsage(): Promise<void> {
+  const items = await invoke<ProfileUsage[]>("profiles_usage");
+  profileUsage.items = Object.fromEntries(items.map((item) => [item.id, item]));
+  profileUsage.loaded = true;
+}
+
+/**
+ * Обновляет счётчики, не превращая их отказ в отказ операции.
+ *
+ * Нужен после создания и удаления: профиль уже изменён, и ошибка счётчиков
+ * не должна выглядеть как неудавшееся создание.
+ */
+async function refreshUsage(): Promise<void> {
+  try {
+    await reloadUsage();
+  } catch (error) {
+    status.usage.error = describeError(error);
+    write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.usageError", {
+      reason: error,
+    });
+  }
 }
 
 /** Название профиля по умолчанию даётся один раз за сеанс. */
@@ -79,7 +120,7 @@ async function nameDefaultProfile(): Promise<void> {
   defaultNamed = true;
 
   const profile = profiles.items.find(
-    (item) => item.id === DEFAULT_PROFILE_ID && item.title === item.id,
+    (item) => item.id === profiles.defaultId && item.title === item.id,
   );
   if (!profile) return;
 
@@ -124,6 +165,30 @@ export async function loadProfiles(): Promise<void> {
   }
 }
 
+/**
+ * Читает счётчики профилей.
+ *
+ * Отдельно от списка: сайдбару они не нужны, а обход папок на сетевой шаре
+ * не должен задерживать открытие меню. Ошибка не стирает прежние числа:
+ * они могли остаться верными, а пустые счётчики выглядели бы потерей данных.
+ */
+export async function loadProfilesUsage(): Promise<void> {
+  if (status.usage.loading) return;
+
+  status.usage.loading = true;
+  status.usage.error = null;
+  try {
+    await reloadUsage();
+  } catch (error) {
+    status.usage.error = describeError(error);
+    write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.usageError", {
+      reason: error,
+    });
+  } finally {
+    status.usage.loading = false;
+  }
+}
+
 /** Создаёт профиль из названия. `true` — создан, форму можно очищать. */
 export async function createProfile(title: string): Promise<boolean> {
   if (status.create.loading) return false;
@@ -137,6 +202,7 @@ export async function createProfile(title: string): Promise<boolean> {
       id: created.id,
     });
     await reload();
+    await refreshUsage();
     return true;
   } catch (error) {
     status.create.error = describeError(error);
@@ -187,6 +253,7 @@ export async function deleteProfile(profile: Profile): Promise<boolean> {
       target,
     });
     await reload();
+    await refreshUsage();
     return true;
   } catch (error) {
     status.delete.error = describeError(error);
@@ -204,7 +271,9 @@ export async function deleteProfile(profile: Profile): Promise<boolean> {
  *
  * Сначала сбрасывается рабочее пространство: перезапуск не проходит через
  * обработчик закрытия окна, и отложенная запись иначе пропала бы вместе
- * с процессом.
+ * с процессом. Перезапуск просит сама команда ядра — отдельного шага нет,
+ * иначе окно оставалось бы с настройками нового профиля и сеансом старого.
+ * Запись журнала идёт до вызова: после перезапуска окно уже не живо.
  */
 export async function switchProfile(id: string): Promise<void> {
   if (status.switch.loading) return;
@@ -214,11 +283,10 @@ export async function switchProfile(id: string): Promise<void> {
   try {
     const target = profiles.items.find((profile) => profile.id === id);
     await flushWorkspace();
-    await invoke("profile_switch", { id });
     write(JOURNAL_CORE_SOURCE, "info", "journal.profiles.switching", {
       title: target?.title ?? id,
     });
-    await invoke("app_restart");
+    await invoke("profile_switch", { id });
   } catch (error) {
     status.switch.error = describeError(error);
     write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.switchError", {

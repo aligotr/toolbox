@@ -27,6 +27,7 @@ use core::services::languages;
 use core::services::logging;
 use core::services::profiles;
 use core::services::settings::{self, Settings};
+use core::services::workspace;
 use core::store::storage::{DEFAULT_PROFILE, Storage};
 
 /// Мост событий шины в интерфейс.
@@ -185,6 +186,21 @@ fn boot(app: &AppHandle) -> Runtime {
         log::warn!("{warning}");
     }
 
+    // Рабочие пространства удалённых профилей не нужны: профиль мог исчезнуть
+    // в проводнике или не дойти синхронизацией. Посторонние объекты в папке
+    // не трогаем, но показываем в логе (ADR 0050).
+    match workspace::prune(&storage.workspaces_dir(), &storage.profiles_dir()) {
+        Ok(report) => {
+            for name in report.removed {
+                log::debug!("Удалено рабочее пространство без профиля: {name}");
+            }
+            for name in report.foreign {
+                log::warn!("В папке рабочих пространств посторонний объект: {name}");
+            }
+        }
+        Err(error) => log::warn!("Рабочие пространства не проверены: {error}"),
+    }
+
     // Согласование могло заменить активный профиль. Файл обязан совпадать
     // с тем, с которым работаем: иначе следующий запуск снова станет искать
     // несуществующую папку.
@@ -279,11 +295,11 @@ pub fn run() {
             commands::workspace::workspace_load,
             commands::workspace::workspace_save,
             commands::profiles::profiles_list,
+            commands::profiles::profiles_usage,
             commands::profiles::profile_create,
             commands::profiles::profile_rename,
             commands::profiles::profile_delete,
             commands::profiles::profile_switch,
-            commands::lifecycle::app_restart,
             commands::presets::presets_list,
             commands::presets::preset_default_get,
             commands::presets::preset_default_set,

@@ -135,6 +135,7 @@
     "journal.profiles.defaultNameError":
       "The default profile was not named: {reason}",
     "journal.profiles.readError": "Could not read the profiles: {reason}",
+    "journal.profiles.usageError": "Could not read the profile counters: {reason}",
     "journal.profiles.created": "Profile “{title}” was created ({id})",
     "journal.profiles.createError": "Profile was not created: {reason}",
     "journal.profiles.renamed": "Profile “{id}” was renamed to “{title}”",
@@ -694,6 +695,9 @@
     "errors.storage.pathIsFile":
       "A file already exists at “{path}”, but the program needs a folder",
     "errors.storage.denied": "No permission to write to “{path}”",
+    "errors.storage.remove": "Could not delete “{path}”: {reason}",
+    "errors.storage.readFolder": "Could not read the folder “{path}”: {reason}",
+    "errors.storage.missingFolder": "The folder “{path}” was not found",
     "errors.workspace.broken": "The file “{path}” was not parsed as JSON: {reason}",
     "errors.workspace.notObject": "The file “{path}” must contain a JSON object",
     "errors.workspace.saveNotObject": "The workspace must be a JSON object",

@@ -9,12 +9,28 @@
 //!
 //! Запись атомарная и по общим правилам файлов состояния (ADR 0010).
 
+use std::collections::HashSet;
+use std::fs;
+use std::io::ErrorKind;
 use std::path::Path;
 
 use serde_json::Value;
 
 use crate::core::infra::error::{fail, AppError, AppResult};
+use crate::core::services::profiles;
 use crate::core::store::files::{read, strip_bom, write_atomic};
+
+/// Итог уборки рабочих пространств.
+///
+/// Удалённое и постороннее возвращаются именами: точка сборки пишет их
+/// в лог, а сервис не решает, что считать важным.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct WorkspacePrune {
+    /// Имена удалённых файлов.
+    pub removed: Vec<String>,
+    /// Имена каталогов и ссылок: уборка их не трогает.
+    pub foreign: Vec<String>,
+}
 
 /// Читает рабочее пространство.
 ///
@@ -84,6 +100,90 @@ fn json_kind(value: &Value) -> &'static str {
         Value::Array(_) => "массив",
         Value::Object(_) => "объект",
     }
+}
+
+/// Удаляет рабочее пространство профиля, если оно есть.
+///
+/// Отсутствие файла — не ошибка: у профиля могло не быть вкладок.
+pub fn forget(path: &Path) -> AppResult<()> {
+    match fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
+        Err(error) => fail!(
+            "errors.storage.remove",
+            format!("Не удалось удалить '{}': {error}", path.display()),
+            path = path.display(),
+            reason = error,
+        ),
+    }
+}
+
+/// Убирает рабочие пространства, у которых нет живого профиля.
+///
+/// В `local/workspaces/` остаются только `<id>.json` профилей из
+/// `profiles/`. Всё остальное — следы удалённых профилей, прерванной записи
+/// и синхронизации; каталоги и ссылки не трогаются и возвращаются
+/// вызывающему для предупреждения.
+///
+/// Список профилей читается до удаления: при недоступной папке профилей
+/// уборка не должна принять живые вкладки за чужие.
+pub fn prune(workspaces_dir: &Path, profiles_dir: &Path) -> AppResult<WorkspacePrune> {
+    // Список берётся у профилей: правило «что считать профилем» живёт там,
+    // а уборка не должна решать его заново.
+    let live: HashSet<String> = profiles::ids(profiles_dir)?.into_iter().collect();
+    let mut report = WorkspacePrune::default();
+
+    let entries = match fs::read_dir(workspaces_dir) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == ErrorKind::NotFound => return Ok(report),
+        Err(error) => return Err(read_folder_error(workspaces_dir, &error)),
+    };
+
+    for entry in entries {
+        let entry = entry.map_err(|error| read_folder_error(workspaces_dir, &error))?;
+        let path = entry.path();
+        let name = path
+            .file_name()
+            .map(|name| name.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let file_type = entry
+            .file_type()
+            .map_err(|error| read_folder_error(workspaces_dir, &error))?;
+
+        if file_type.is_dir() || file_type.is_symlink() {
+            report.foreign.push(name);
+            continue;
+        }
+        if !file_type.is_file() {
+            continue;
+        }
+
+        let belongs = path
+            .extension()
+            .is_some_and(|extension| extension == "json")
+            && path
+                .file_stem()
+                .and_then(|stem| stem.to_str())
+                .is_some_and(|id| live.contains(id));
+        if belongs {
+            continue;
+        }
+
+        forget(&path)?;
+        report.removed.push(name);
+    }
+
+    Ok(report)
+}
+
+/// Отказ прочитать папку раскладки: путь и причина словами пользователя.
+fn read_folder_error(path: &Path, error: &std::io::Error) -> AppError {
+    AppError::new(
+        "errors.storage.readFolder",
+        format!("Не удалось прочитать '{}': {error}", path.display()),
+    )
+    .with("path", path.display())
+    .with("reason", error)
 }
 
 #[cfg(test)]
@@ -193,5 +293,65 @@ mod tests {
             "причина отказа: {error}"
         );
         assert!(!path.exists(), "испорченный файл не создаётся");
+    }
+
+    #[test]
+    fn forget_removes_file_and_ignores_absence() {
+        let path = temp_dir("forget").join("work.json");
+
+        forget(&path).expect("отсутствие файла — не ошибка");
+        fs::write(&path, "{}").expect("файл");
+
+        forget(&path).expect("удаление");
+
+        assert!(!path.exists(), "файл удалён");
+    }
+
+    #[test]
+    fn prune_keeps_live_and_removes_junk() {
+        let root = temp_dir("prune");
+        let profiles = root.join("profiles");
+        let workspaces = root.join("workspaces");
+        fs::create_dir_all(profiles.join("work")).expect("живой профиль");
+        fs::create_dir_all(profiles.join("home")).expect("второй профиль");
+        fs::create_dir_all(&workspaces).expect("папка рабочих пространств");
+
+        let live = workspaces.join("work.json");
+        let second = workspaces.join("home.json");
+        fs::write(&live, "{}").expect("живой файл");
+        fs::write(&second, "{}").expect("второй живой файл");
+        fs::write(workspaces.join("gone.json"), "{}").expect("осиротевший");
+        fs::write(workspaces.join("notes.json"), "{}").expect("чужое имя");
+        fs::write(workspaces.join("work.json.tmp"), "{}").expect("временный");
+        fs::write(workspaces.join("work"), "{}").expect("без расширения");
+        let folder = workspaces.join("folder");
+        fs::create_dir_all(&folder).expect("каталог");
+
+        let report = prune(&workspaces, &profiles).expect("уборка");
+
+        assert!(live.is_file() && second.is_file(), "живые файлы остались");
+        assert!(!workspaces.join("gone.json").exists());
+        assert!(!workspaces.join("notes.json").exists());
+        assert!(!workspaces.join("work.json.tmp").exists());
+        assert!(!workspaces.join("work").exists());
+        assert!(folder.is_dir(), "каталог не тронут");
+        assert_eq!(report.foreign, ["folder"]);
+        assert_eq!(report.removed.len(), 4);
+    }
+
+    #[test]
+    fn prune_skips_when_profiles_unreadable() {
+        let root = temp_dir("prune-noprofiles");
+        let workspaces = root.join("workspaces");
+        let profiles = root.join("profiles");
+        fs::create_dir_all(&workspaces).expect("папка рабочих пространств");
+        fs::write(workspaces.join("work.json"), "{}").expect("файл");
+        fs::write(&profiles, "не папка").expect("мешающий файл");
+
+        let error =
+            prune(&workspaces, &profiles).expect_err("без списка профилей уборка запрещена");
+
+        assert_eq!(error.code, "errors.profiles.read");
+        assert!(workspaces.join("work.json").is_file(), "вкладки не тронуты");
     }
 }

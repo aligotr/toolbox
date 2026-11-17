@@ -678,7 +678,8 @@ mod tests {
     #[test]
     fn default_roundtrip_keeps_profile_title() {
         let root = temp_dir("default-preset");
-        let profile = profiles::create(&root, "Работа").expect("профиль");
+        let profile =
+            profiles::create_with(&root, "Работа", |_| Ok(())).expect("профиль");
         let dir = root.join(&profile.id);
         let presets = dir.join("presets");
         let preset = create(&presets, "dnslookup", "DNS", payload()).expect("пресет");

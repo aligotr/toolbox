@@ -14,7 +14,7 @@ import type { ToolDescriptor } from "@/contracts/tools";
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
 import { clearToolData, loadStorageStats, status, storageStats } from "@/core/services/data";
-import { loadProfiles } from "@/core/services/profiles";
+import { loadProfilesUsage } from "@/core/services/profiles";
 import { filesLabel } from "../../plural";
 import { formatBytes } from "../formatBytes";
 
@@ -45,7 +45,7 @@ function requestClear(tool: ToolStats): void {
       if (await clearToolData(tool.id)) {
         // Счётчики профилей показывает соседний раздел: обновляем и его,
         // иначе после удаления там остались бы старые числа.
-        void loadProfiles();
+        void loadProfilesUsage();
       }
     },
   });

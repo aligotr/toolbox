@@ -14,6 +14,7 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 
 use serde::Serialize;
 use serde_json::{Map, Value};
@@ -23,6 +24,28 @@ use crate::core::store::files::{read, strip_bom, write_atomic};
 use crate::core::store::names;
 use crate::core::store::stats;
 use crate::core::store::storage::DEFAULT_PROFILE;
+
+/// Идентификатор профиля по умолчанию.
+///
+/// Совпадает с [`DEFAULT_PROFILE`] хранилища: точка сборки создаёт папку
+/// `work`, а интерфейс узнаёт её из `ProfileList::default_id`, а не литералом.
+pub const DEFAULT_ID: &str = DEFAULT_PROFILE;
+
+/// Замок `profile.json` на время «прочитать → изменить → записать».
+///
+/// Файл правят два домена: профили (название) и пресеты (`defaults`).
+/// Атомарная запись защищает от половины файла, но не от потери одной
+/// правки при одновременном чтении; замок закрывает этот случай.
+/// Критическая секция — сам файл, поэтому замок держится и во время
+/// ввода-вывода: команды синхронные, диспетчер шины не ждёт.
+static DOCUMENT_LOCK: Mutex<()> = Mutex::new(());
+
+/// Замок документа; отравление после паники не блокирует запись навсегда.
+fn document_lock() -> std::sync::MutexGuard<'static, ()> {
+    DOCUMENT_LOCK
+        .lock()
+        .unwrap_or_else(|poison| poison.into_inner())
+}
 
 /// Файл с названием профиля внутри его папки.
 pub const PROFILE_FILE: &str = "profile.json";
@@ -40,9 +63,19 @@ pub struct Profile {
     pub id: String,
     /// Название для интерфейса из `profile.json`.
     pub title: String,
+}
+
+/// Сколько файлов лежит в профиле.
+///
+/// Счётчики считаются отдельным запросом: списку профилей они не нужны,
+/// а обход папок на сетевой шаре не должен тормозить сайдбар.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct ProfileUsage {
+    /// Идентификатор профиля.
+    pub id: String,
     /// Сколько пресетов настроек лежит в профиле.
     pub presets: u64,
-    /// Сколько файлов данных инструментов: подпись строки в списке.
+    /// Сколько файлов данных инструментов лежит в профиле.
     pub data_files: u64,
 }
 
@@ -53,6 +86,9 @@ pub struct Profile {
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ProfileList {
     pub active: String,
+    /// Идентификатор профиля по умолчанию: по нему интерфейс узнаёт `work`,
+    /// не повторяя константу ядра.
+    pub default_id: String,
     pub items: Vec<Profile>,
 }
 
@@ -62,6 +98,56 @@ pub struct ProfileList {
 /// Папки с недопустимым именем (чужие каталоги, служебные `*.tmp`)
 /// пропускаются: профиль в них не лежит.
 pub fn list(dir: &Path) -> AppResult<Vec<Profile>> {
+    let mut profiles = profile_dirs(dir)?
+        .into_iter()
+        .map(|(id, path)| Profile {
+            title: read_title(&path).unwrap_or_else(|| id.clone()),
+            id,
+        })
+        .collect::<Vec<_>>();
+
+    // Порядок — по названию: пользователь ищет профиль глазами, а не по id.
+    profiles.sort_by_cached_key(|profile| (profile.title.to_lowercase(), profile.id.clone()));
+    Ok(profiles)
+}
+
+/// Считает занятое место по каждому профилю.
+///
+/// Отдельный запрос от [`list`]: счётчики нужны только разделу «Профили»,
+/// а обход папок стоит дорого на сетевой шаре.
+pub fn usage(dir: &Path) -> AppResult<Vec<ProfileUsage>> {
+    let mut items = profile_dirs(dir)?
+        .into_iter()
+        .map(|(id, path)| {
+            let usage = stats::profile_usage(&path);
+            ProfileUsage {
+                id,
+                presets: usage.presets,
+                data_files: usage.data_files,
+            }
+        })
+        .collect::<Vec<_>>();
+
+    items.sort_by(|left, right| left.id.cmp(&right.id));
+    Ok(items)
+}
+
+/// Идентификаторы профилей в папке.
+///
+/// Общий обход для списка, счётчиков и уборки рабочих пространств: правило
+/// «что считать профилем» не должно расходиться между запросами.
+pub fn ids(dir: &Path) -> AppResult<Vec<String>> {
+    Ok(profile_dirs(dir)?
+        .into_iter()
+        .map(|(id, _)| id)
+        .collect())
+}
+
+/// Папки профилей с допустимыми идентификаторами.
+///
+/// Общий обход для списка, счётчиков и уборки: правило «что считать
+/// профилем» не должно расходиться между запросами.
+fn profile_dirs(dir: &Path) -> AppResult<Vec<(String, PathBuf)>> {
     let entries = match fs::read_dir(dir) {
         Ok(entries) => entries,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
@@ -75,7 +161,7 @@ pub fn list(dir: &Path) -> AppResult<Vec<Profile>> {
         }
     };
 
-    let mut profiles = Vec::new();
+    let mut items = Vec::new();
     for entry in entries {
         let entry = entry.map_err(|error| {
             AppError::new(
@@ -96,30 +182,29 @@ pub fn list(dir: &Path) -> AppResult<Vec<Profile>> {
         if validate_id(id).is_err() {
             continue;
         }
-
-        let title = read_title(&path).unwrap_or_else(|| id.to_owned());
-        let usage = stats::profile_usage(&path);
-        profiles.push(Profile {
-            id: id.to_owned(),
-            title,
-            presets: usage.presets,
-            data_files: usage.data_files,
-        });
+        items.push((id.to_owned(), path));
     }
 
-    // Порядок — по названию: пользователь ищет профиль глазами, а не по id.
-    profiles.sort_by_cached_key(|profile| (profile.title.to_lowercase(), profile.id.clone()));
-    Ok(profiles)
+    Ok(items)
 }
 
-/// Создаёт профиль из названия.
+/// Создаёт профиль из названия, дав вызывающему подготовить идентификатор.
 ///
 /// Идентификатор собирается из названия, конфликт решается суффиксом:
 /// два профиля «Работа» на разных машинах — обычное дело, а совпадать
 /// имена папок не могут.
-pub fn create(dir: &Path, title: &str) -> AppResult<Profile> {
+///
+/// `prepare` вызывается до создания папки: отказ отменяет создание.
+/// Нужен, чтобы убрать рабочее пространство, оставшееся от удалённого
+/// профиля с тем же идентификатором (ADR 0050).
+pub fn create_with(
+    dir: &Path,
+    title: &str,
+    prepare: impl FnOnce(&str) -> AppResult<()>,
+) -> AppResult<Profile> {
     let title = normalize_title(title)?;
     let id = names::unique_id(dir, &names::slug(&title, "profile"));
+    prepare(&id)?;
     let path = dir.join(&id);
 
     fs::create_dir_all(&path).map_err(|error| {
@@ -137,12 +222,7 @@ pub fn create(dir: &Path, title: &str) -> AppResult<Profile> {
         return Err(error);
     }
 
-    Ok(Profile {
-        id,
-        title,
-        presets: 0,
-        data_files: 0,
-    })
+    Ok(Profile { id, title })
 }
 
 /// Переименовывает профиль: меняется название, папка остаётся на месте.
@@ -151,12 +231,9 @@ pub fn rename(dir: &Path, id: &str, title: &str) -> AppResult<Profile> {
     let path = profile_dir(dir, id)?;
 
     write_profile(&path, &title)?;
-    let usage = stats::profile_usage(&path);
     Ok(Profile {
         id: id.to_owned(),
         title,
-        presets: usage.presets,
-        data_files: usage.data_files,
     })
 }
 
@@ -259,8 +336,6 @@ pub fn ensure_default(dir: &Path) -> AppResult<Option<Profile>> {
     Ok(Some(Profile {
         id: DEFAULT_PROFILE.to_owned(),
         title: DEFAULT_PROFILE.to_owned(),
-        presets: 0,
-        data_files: 0,
     }))
 }
 
@@ -315,6 +390,7 @@ fn read_title(dir: &Path) -> Option<String> {
 /// Испорченный файл перезаписывается: название сохранить нужно в любом
 /// случае, а исправлять документ вручную пользователь не обязан.
 fn write_profile(dir: &Path, title: &str) -> AppResult<()> {
+    let _guard = document_lock();
     let mut document = document(dir)?;
     document.insert("version".to_owned(), Value::from(VERSION));
     document.insert("title".to_owned(), Value::from(title));
@@ -347,6 +423,7 @@ pub fn update_document(
     dir: &Path,
     change: impl FnOnce(&mut Map<String, Value>) -> Result<(), String>,
 ) -> AppResult<()> {
+    let _guard = document_lock();
     let mut document = document(dir)?;
     change(&mut document)?;
     write_document(dir, &document)
@@ -418,6 +495,11 @@ mod tests {
 
     use super::*;
 
+    /// Создание без подготовки: то же, что делает ядро на первом запуске.
+    fn create(dir: &Path, title: &str) -> AppResult<Profile> {
+        create_with(dir, title, |_| Ok(()))
+    }
+
     fn temp_dir(tag: &str) -> PathBuf {
         let path =
             std::env::temp_dir().join(format!("toolbox-profiles-{tag}-{}", std::process::id()));
@@ -437,6 +519,23 @@ mod tests {
         let document = fs::read_to_string(dir.join("dom").join(PROFILE_FILE)).expect("файл");
         assert!(document.contains("\"title\": \"Дом\""), "файл: {document}");
         assert!(document.contains("\"version\": 1"), "файл: {document}");
+    }
+
+    #[test]
+    fn failed_prepare_cancels_creation() {
+        let dir = temp_dir("prepare-fail");
+
+        // Подготовка в ядре — уборка рабочего пространства, поэтому отказ
+        // приходит с кодом удаления.
+        let error = create_with(&dir, "Работа", |_| {
+            Err(AppError::new(
+                "errors.storage.remove",
+                "подготовка не удалась",
+            ))
+        });
+
+        assert!(error.is_err(), "отказ подготовки отменяет создание");
+        assert!(list(&dir).expect("список").is_empty(), "папка не создана");
     }
 
     #[test]
@@ -621,6 +720,70 @@ mod tests {
             document_warning(&dir.join(&profile.id)).expect("чтение"),
             None
         );
+    }
+
+    #[test]
+    fn usage_counts_presets_and_data_per_profile() {
+        let dir = temp_dir("usage");
+        let work = create(&dir, "Работа").expect("профиль");
+        let home = create(&dir, "Дом").expect("профиль");
+
+        let presets = dir.join(&work.id).join("presets").join("dnslookup");
+        fs::create_dir_all(&presets).expect("папка пресетов");
+        fs::write(presets.join("main.json"), "{}").expect("пресет");
+        let data = dir.join(&work.id).join("data").join("dnslookup");
+        fs::create_dir_all(&data).expect("папка данных");
+        fs::write(data.join("servers.json"), "{}").expect("данные");
+        fs::write(data.join("draft.tmp"), "{}").expect("временный файл");
+
+        let usage = usage(&dir).expect("счётчики");
+
+        assert_eq!(usage.len(), 2);
+        let work_usage = usage
+            .iter()
+            .find(|item| item.id == work.id)
+            .expect("работа");
+        assert_eq!(work_usage.presets, 1);
+        assert_eq!(work_usage.data_files, 1, "временный файл не считается");
+        let home_usage = usage.iter().find(|item| item.id == home.id).expect("дом");
+        assert_eq!(home_usage.presets, 0);
+        assert_eq!(home_usage.data_files, 0);
+    }
+
+    #[test]
+    fn concurrent_document_updates_keep_every_change() {
+        let dir = temp_dir("concurrent");
+        let profile = create(&dir, "Работа").expect("профиль");
+        let path = dir.join(&profile.id);
+
+        std::thread::scope(|scope| {
+            for thread in 0..4 {
+                let path = path.clone();
+                scope.spawn(move || {
+                    for index in 0..25 {
+                        update_document(&path, |document| {
+                            document.insert(format!("k{thread}-{index}"), Value::from(index));
+                            Ok(())
+                        })
+                        .expect("правка документа");
+                    }
+                });
+            }
+
+            let dir = dir.clone();
+            let id = profile.id.clone();
+            scope.spawn(move || {
+                for _ in 0..25 {
+                    rename(&dir, &id, "Офис").expect("переименование");
+                }
+            });
+        });
+
+        let document = document(&path).expect("документ");
+        let changes = document.keys().filter(|key| key.starts_with('k')).count();
+        assert_eq!(changes, 100, "все правки на месте");
+        assert_eq!(document.get("title"), Some(&Value::from("Офис")));
+        assert_eq!(document.get("version"), Some(&Value::from(VERSION)));
     }
 
     #[test]

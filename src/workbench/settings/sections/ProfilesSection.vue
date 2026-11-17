@@ -13,7 +13,9 @@ import { t } from "@/core/infra/i18n";
 import {
   createProfile,
   loadProfiles,
+  loadProfilesUsage,
   profiles,
+  profileUsageOf,
   renameProfile,
   status,
 } from "@/core/services/profiles";
@@ -21,6 +23,13 @@ import { filesLabel, presetsLabel } from "../../plural";
 import { useProfiles } from "../useProfiles";
 
 const { requestSwitch, requestDelete } = useProfiles();
+
+/** Подпись счётчиков профиля; пусто, пока они не прочитаны. */
+function usageLabel(id: string): string {
+  const counts = profileUsageOf(id);
+  if (!counts) return "";
+  return `${presetsLabel(counts.presets)} · ${filesLabel(counts.data_files)}`;
+}
 
 /** Создание профиля: форма и поле живут в разделе, у него один потребитель. */
 const creating = ref(false);
@@ -81,6 +90,7 @@ async function submitCreate(): Promise<void> {
 
 onMounted(() => {
   void loadProfiles();
+  void loadProfilesUsage();
 });
 </script>
 
@@ -149,8 +159,7 @@ onMounted(() => {
             </span>
           </div>
           <span class="profile-row__meta">
-            {{ presetsLabel(profile.presets) }} ·
-            {{ filesLabel(profile.data_files) }}
+            <template v-if="usageLabel(profile.id)"> {{ usageLabel(profile.id) }} · </template>
             <span class="profile-row__id mono">{{ profile.id }}</span>
           </span>
         </div>
@@ -218,6 +227,7 @@ onMounted(() => {
 
     <p v-if="status.switch.error" class="profiles__error">{{ status.switch.error }}</p>
     <p v-if="status.delete.error" class="profiles__error">{{ status.delete.error }}</p>
+    <p v-if="status.usage.error" class="profiles__error">{{ status.usage.error }}</p>
   </section>
 </template>
 

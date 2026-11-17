@@ -1,6 +1,6 @@
 // Постоянные значения домена рабочего пространства.
 
-/** Версия формата `local/workspace.json`. */
+/** Версия формата `local/workspaces/<id>.json`. */
 export const WORKSPACE_VERSION = 1;
 
 /**

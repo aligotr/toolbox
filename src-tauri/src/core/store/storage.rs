@@ -1,4 +1,5 @@
-//! Портативный корень приложения и раскладка файлов (ADR 0005, ADR 0010).
+//! Портативный корень приложения и раскладка файлов (ADR 0005, ADR 0010,
+//! ADR 0050).
 //!
 //! Всё состояние — настройки, рабочее пространство, лог, профили — лежит
 //! рядом с исполняемым файлом. Отката в системные каталоги нет: если писать
@@ -14,7 +15,7 @@ use std::fs;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
-use crate::core::infra::error::{AppError, AppResult};
+use crate::core::infra::error::{fail, AppError, AppResult};
 
 /// Имя пробного файла проверки записи. Пользователь его не видит:
 /// файл создаётся и удаляется в одной проверке.
@@ -31,6 +32,12 @@ const LOGS_DIR: &str = "logs";
 
 /// Папка словарей интерфейса внутри `local/` (ADR 0039).
 const LANGUAGES_DIR: &str = "languages";
+
+/// Папка рабочих пространств профилей внутри `local/` (ADR 0050).
+///
+/// Вкладки — частое машинное состояние: файл на профиль лежит вне
+/// синхронизируемых `profiles/`, чтобы раскладка не создавала конфликтов.
+const WORKSPACES_DIR: &str = "workspaces";
 
 /// Папка пресетов настроек внутри профиля: `presets/<tool>/`.
 ///
@@ -114,9 +121,22 @@ impl Storage {
         self.local_dir().join("settings.json")
     }
 
-    /// Файл рабочего пространства: `local/workspace.json`.
+    /// Папка рабочих пространств профилей: `local/workspaces/`.
+    pub fn workspaces_dir(&self) -> PathBuf {
+        self.local_dir().join(WORKSPACES_DIR)
+    }
+
+    /// Файл рабочего пространства активного профиля (ADR 0050).
     pub fn workspace_path(&self) -> PathBuf {
-        self.local_dir().join("workspace.json")
+        self.workspace_path_for(&self.profile)
+    }
+
+    /// Файл рабочего пространства названного профиля.
+    ///
+    /// Идентификатор приходит из настроек или из имени папки и уже проверен;
+    /// путь с разделителями сюда попасть не должен.
+    pub fn workspace_path_for(&self, profile: &str) -> PathBuf {
+        self.workspaces_dir().join(format!("{profile}.json"))
     }
 
     /// Папка логов: `local/logs/`.
@@ -197,16 +217,45 @@ impl Storage {
         let languages = self.languages_dir();
         let profiles = self.profiles_dir();
         let profile = self.active_profile_dir();
+        let workspaces = self.workspaces_dir();
 
-        for dir in [&local, &logs, &languages, &profiles, &profile] {
+        for dir in [&local, &logs, &languages, &profiles, &profile, &workspaces] {
             fs::create_dir_all(dir).map_err(|error| self.create_error(dir, &error))?;
         }
 
         for dir in [&self.root, &local, &profile] {
-            let probe = dir.join(PROBE_FILE);
-            fs::write(&probe, b"probe").map_err(|error| self.write_error(&probe, &error))?;
-            fs::remove_file(&probe).map_err(|error| self.write_error(&probe, &error))?;
+            self.probe_dir(dir)?;
         }
+        Ok(())
+    }
+
+    /// Проверяет запись в папку названного профиля.
+    ///
+    /// Папка не создаётся: переключение на исчезнувший профиль должно
+    /// отказать, а не восстановить пустую папку без данных.
+    pub fn probe_profile(&self, profile: &str) -> AppResult<()> {
+        let dir = self.profiles_dir().join(profile);
+        if !dir.is_dir() {
+            return fail!(
+                "errors.storage.missingFolder",
+                format!("Папка '{}' не найдена", dir.display()),
+                path = dir.display(),
+            );
+        }
+        self.write_probe(&dir)
+    }
+
+    /// Создаёт папку, если её нет, и проверяет запись в неё.
+    fn probe_dir(&self, dir: &Path) -> AppResult<()> {
+        fs::create_dir_all(dir).map_err(|error| self.create_error(dir, &error))?;
+        self.write_probe(dir)
+    }
+
+    /// Пишет и убирает пробный файл в существующей папке.
+    fn write_probe(&self, dir: &Path) -> AppResult<()> {
+        let probe = dir.join(PROBE_FILE);
+        fs::write(&probe, b"probe").map_err(|error| self.write_error(&probe, &error))?;
+        fs::remove_file(&probe).map_err(|error| self.write_error(&probe, &error))?;
         Ok(())
     }
 
@@ -283,7 +332,17 @@ mod tests {
         );
         assert_eq!(
             storage.workspace_path(),
-            root.join("local").join("workspace.json")
+            root.join("local")
+                .join("workspaces")
+                .join(format!("{DEFAULT_PROFILE}.json"))
+        );
+        assert_eq!(
+            storage.workspace_path_for("home"),
+            root.join("local").join("workspaces").join("home.json")
+        );
+        assert_eq!(
+            storage.workspaces_dir(),
+            root.join("local").join("workspaces")
         );
         assert_eq!(storage.logs_dir(), root.join("local").join("logs"));
         assert_eq!(
@@ -327,6 +386,7 @@ mod tests {
             storage.languages_dir(),
             storage.profiles_dir(),
             storage.active_profile_dir(),
+            storage.workspaces_dir(),
         ] {
             assert!(dir.is_dir(), "папка должна появиться: {}", dir.display());
         }
@@ -388,6 +448,36 @@ mod tests {
             "код ОС не показывается пользователю: {error}"
         );
 
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn probe_profile_creates_and_removes_probe_file() {
+        let root = temp_root("storage-profile-probe");
+        let storage = Storage::at(&root).with_profile("work");
+        let home = storage.profiles_dir().join("home");
+        fs::create_dir_all(&home).expect("папка профиля");
+
+        storage.probe_profile("home").expect("проба профиля");
+
+        assert!(!home.join(PROBE_FILE).exists(), "пробный файл убран");
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn probe_profile_reports_missing_folder() {
+        let root = temp_root("storage-profile-bad");
+        let storage = Storage::at(&root).with_profile("work");
+
+        let error = storage
+            .probe_profile("home")
+            .expect_err("исчезнувший профиль не восстанавливается");
+
+        assert_eq!(error.code, "errors.storage.missingFolder");
+        assert!(
+            !storage.profiles_dir().join("home").exists(),
+            "пустая папка не создаётся"
+        );
         let _ = fs::remove_dir_all(&root);
     }
 
