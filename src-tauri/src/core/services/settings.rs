@@ -73,6 +73,19 @@ impl Default for Settings {
     }
 }
 
+impl Settings {
+    /// Язык интерфейса.
+    ///
+    /// `None` — «как в системе»: до первого определения ядро работает
+    /// по-русски, чтобы блокирующий экран не остался без текста.
+    pub fn language(&self) -> String {
+        self.ui
+            .language
+            .clone()
+            .unwrap_or_else(|| languages::DEFAULT_CODE.to_owned())
+    }
+}
+
 /// Раздел `log`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LogSettings {

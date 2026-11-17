@@ -1,18 +1,24 @@
-//! Ядро платформы: три зоны и одно правило зависимостей.
+//! Ядро платформы: зоны и одно правило зависимостей.
 //!
 //! Зоны заданы папками, а не комментарием: [`infra`] — механизмы без знания
 //! предмета, [`store`] — доступ к файлам и профилю, [`services`] — домены
 //! с их правилами (ADR 0035).
 //!
-//! Зависимости идут только вниз: `infra ← store ← services`. Обратных стрелок
-//! нет, и это проверяет тест [`zone_tests`]: иначе зоны снова станут
-//! договором на словах.
+//! Над зонами стоит адаптер [`commands`] — команды Tauri (ADR 0048).
+//! Он вправе звать любой сервис; обратной стрелки нет: сервис не знает,
+//! что его зовут из интерфейса.
+//!
+//! Зависимости идут только вниз: `infra ← store ← services ← commands`.
+//! Обратных стрелок нет, и это проверяет тест [`zone_tests`]: иначе зоны
+//! снова станут договором на словах.
 //!
 //! Идея заимствована из образца (CQRS + loosely coupled):
 //! подсистемы не вызывают друг друга напрямую, а обмениваются
 //! **командами** (Command) и **событиями** (Event) через шину.
 
+pub mod commands;
 pub mod infra;
+pub mod runtime;
 pub mod services;
 pub mod store;
 
@@ -85,10 +91,16 @@ mod zone_tests {
             for forbidden in [
                 "crate::core::store",
                 "crate::core::services",
+                "crate::core::commands",
+                "crate::core::runtime",
                 "crate::core::{store",
                 "crate::core::{services",
+                "crate::core::{commands",
+                "crate::core::{runtime",
                 "super::super::store",
                 "super::super::services",
+                "super::super::commands",
+                "super::super::runtime",
             ] {
                 assert!(
                     !code.contains(forbidden),
@@ -106,12 +118,40 @@ mod zone_tests {
             let code = code_only(&text);
             for forbidden in [
                 "crate::core::services",
+                "crate::core::commands",
+                "crate::core::runtime",
                 "crate::core::{services",
+                "crate::core::{commands",
+                "crate::core::{runtime",
                 "super::super::services",
+                "super::super::commands",
+                "super::super::runtime",
             ] {
                 assert!(
                     !code.contains(forbidden),
                     "{}: хранилище не должно ссылаться на '{forbidden}'",
+                    path.display()
+                );
+            }
+        }
+    }
+
+    /// Домен не знает, что его зовут из Tauri, и не читает состояние запуска.
+    #[test]
+    fn services_know_no_commands() {
+        for (path, text) in sources("services") {
+            let code = code_only(&text);
+            for forbidden in [
+                "crate::core::commands",
+                "crate::core::{commands",
+                "super::commands",
+                "crate::core::runtime",
+                "crate::core::{runtime",
+                "super::runtime",
+            ] {
+                assert!(
+                    !code.contains(forbidden),
+                    "{}: сервис не должен ссылаться на '{forbidden}'",
                     path.display()
                 );
             }

@@ -160,11 +160,42 @@ pub fn rename(dir: &Path, id: &str, title: &str) -> AppResult<Profile> {
     })
 }
 
+/// Проверяет, что папка профиля существует.
+///
+/// Переключение на несуществующий профиль записало бы в настройки имя папки,
+/// которой нет: следующий запуск чинил бы это сам, но пользователь увидел бы
+/// предупреждение вместо выбранного профиля.
+pub fn require_exists(profiles_dir: &Path, id: &str) -> AppResult<()> {
+    if profiles_dir.join(id).is_dir() {
+        return Ok(());
+    }
+    Err(AppError::new(
+        "errors.profiles.notFound",
+        format!("Профиль '{id}' не найден"),
+    )
+    .with("id", id))
+}
+
 /// Удаляет профиль в корзину `local/trash/`.
 ///
 /// Удаление именно переносом: профиль — папка с данными, и промах в меню
 /// не должен стоить пользователю списков. Корзину чистят руками.
-pub fn delete(profiles_dir: &Path, trash_dir: &Path, id: &str) -> AppResult<PathBuf> {
+///
+/// Активный профиль удалить нельзя: его папка открыта прямо сейчас, и данные
+/// исчезли бы из-под работающего приложения. Сначала переключение.
+pub fn delete(
+    profiles_dir: &Path,
+    trash_dir: &Path,
+    id: &str,
+    active: &str,
+) -> AppResult<PathBuf> {
+    if id == active {
+        return Err(AppError::new(
+            "errors.profiles.active",
+            "Нельзя удалить активный профиль: сначала переключитесь на другой",
+        ));
+    }
+
     let path = profile_dir(profiles_dir, id)?;
 
     fs::create_dir_all(trash_dir).map_err(|error| {
@@ -452,7 +483,7 @@ mod tests {
         let trash = root.join("local").join("trash");
         let profile = create(&dir, "Работа").expect("профиль");
 
-        let target = delete(&dir, &trash, &profile.id).expect("удаление");
+        let target = delete(&dir, &trash, &profile.id, "other").expect("удаление");
 
         assert_eq!(target, trash.join("rabota"));
         assert!(target.is_dir(), "профиль должен лежать в корзине");
@@ -470,13 +501,31 @@ mod tests {
         let trash = root.join("local").join("trash");
 
         let first = create(&dir, "Работа").expect("первый");
-        let first_target = delete(&dir, &trash, &first.id).expect("первое удаление");
+        let first_target = delete(&dir, &trash, &first.id, "other").expect("первое удаление");
         let second = create(&dir, "Работа").expect("второй");
-        let second_target = delete(&dir, &trash, &second.id).expect("второе удаление");
+        let second_target = delete(&dir, &trash, &second.id, "other").expect("второе удаление");
 
         assert_eq!(first_target, trash.join("rabota"));
         assert_eq!(second_target, trash.join("rabota-2"));
         assert!(first_target.is_dir() && second_target.is_dir());
+    }
+
+    #[test]
+    fn active_profile_is_not_deleted() {
+        let root = temp_dir("delete-active");
+        let dir = root.join("profiles");
+        fs::create_dir_all(&dir).expect("папка профилей");
+        let trash = root.join("local").join("trash");
+        let profile = create(&dir, "Работа").expect("профиль");
+
+        let refusal = delete(&dir, &trash, &profile.id, &profile.id);
+
+        assert_eq!(
+            refusal.expect_err("активный профиль удалять нельзя").code,
+            "errors.profiles.active"
+        );
+        assert!(dir.join(&profile.id).is_dir(), "папка осталась на месте");
+        assert!(!trash.exists(), "корзина не понадобилась");
     }
 
     #[test]
