@@ -20,7 +20,7 @@
 
 1. **Шевроны у кромок.** Слева и справа появляются кнопки со стрелками
    PrimeIcons: квадрат 28×28 со скруглёнными углами (8 px), иконка 14 px.
-   В покое кнопка прозрачная, при наведении — подложка `--ag-hover`.
+   Подложки под иконкой в покое нет, при наведении — `--ag-hover`.
    Кнопка лежит поверх полосы и место у вкладок не отнимает.
 
 2. **Градиентная кромка.** Под кнопкой — градиент от `--ag-bg`
@@ -87,7 +87,7 @@
 
 ## Ссылки
 
-- код: `src/workbench/tabs/TabStrip.vue` (`updateScrollState`, `scrollTabs`,
-  `focusTick`), `src/core/services/workspace/index.ts`
+- код: `src/workbench/tabs/TabStrip.vue` (`updateScrollState`, `scrollTabs`),
+  `src/core/services/workspace/index.ts` (`focusTick`)
 - связанные решения: ADR 0011 (полоса вкладок), ADR 0040 (пустая вкладка),
-  ADR 0042 (выбор вкладки инструмента)
+  ADR 0042 (выбор вкладки инструмента), ADR 0045 (видимая зона)

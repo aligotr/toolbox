@@ -34,7 +34,14 @@ import {
   updateTemplateLayout,
 } from "@/core/services/templates/index";
 import * as templateBindings from "@/core/services/templates/bindings";
-import { activateTab, closeTab, focusTick, openEmptyTab, restartTab, workspace } from "@/core/services/workspace/index";
+import {
+  activateTab,
+  closeTab,
+  focusTick,
+  openEmptyTab,
+  restartTab,
+  workspace,
+} from "@/core/services/workspace/index";
 import CloseTabDialog from "./CloseTabDialog.vue";
 import TemplateTitleDialog from "./TemplateTitleDialog.vue";
 import { tabTitle } from "./title";
