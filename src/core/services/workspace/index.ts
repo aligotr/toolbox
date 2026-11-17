@@ -118,6 +118,31 @@ export function openEmptyTab(): void {
   });
 }
 
+/** Пустая вкладка — экран запуска без единой колонки. */
+function isEmptyTab(tab: WorkspaceTab): boolean {
+  return tab.kind === "workspace" && tab.columns.length === 0;
+}
+
+/**
+ * Освобождает полосу от пустых вкладок перед открытием содержимого.
+ *
+ * «Новая вкладка» — экран запуска, а не рабочее место: как только пользователь
+ * выбирает инструмент, шаблон или одиночный экран, она уступает ему место.
+ * Иначе рядом с работой остаётся окно без содержимого, из которого открывали
+ * следующее (ADR 0040).
+ */
+function dropEmptyTabs(): void {
+  const empty = new Set(
+    workspace.tabs.filter(isEmptyTab).map((tab) => tab.id),
+  );
+  if (empty.size === 0) return;
+
+  workspace.tabs = workspace.tabs.filter((tab) => !empty.has(tab.id));
+  for (const id of empty) forgetFreshCells(id);
+
+  templateBindings.prune(new Set(workspace.tabs.map((tab) => tab.id)));
+}
+
 /**
  * Открывает инструмент в новой вкладке.
  *
@@ -125,6 +150,7 @@ export function openEmptyTab(): void {
  * перетаскиванием, а клик в сайдбаре всегда создаёт рабочее место (ADR 0011).
  */
 export function openTool(tool: ToolDescriptor): void {
+  dropEmptyTabs();
   const columns: TabColumn[] = [{ width: 1, tools: [tool.id] }];
   addTab({
     id: crypto.randomUUID(),
@@ -142,6 +168,8 @@ export function openTool(tool: ToolDescriptor): void {
  * показывал бы те же записи и занимал место в полосе.
  */
 export function openSingleton(kind: SingletonKind): void {
+  dropEmptyTabs();
+
   const existing = workspace.tabs.find((tab) => tab.kind === kind);
   if (existing) {
     workspace.activeId = existing.id;
@@ -184,6 +212,7 @@ export function applyTemplate(tabId: string, template: Template): boolean {
 
 /** Открывает шаблон новой вкладкой: так его применяют из настроек. */
 export function openTemplate(template: Template): void {
+  dropEmptyTabs();
   const tab = addTab({
     id: crypto.randomUUID(),
     kind: "workspace",
