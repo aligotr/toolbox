@@ -3,6 +3,7 @@
 - **Статус:** принято
 - **Дата:** 2026-11-17
 - **Область:** `src/workbench/tabs/TabStrip.vue`,
+  `src/workbench/tabs/useStripScroll.ts`,
   `src/core/services/workspace/index.ts`, `src/ui/theme.ts`, словари ru/en
 
 ## Контекст
@@ -87,7 +88,7 @@
 
 ## Ссылки
 
-- код: `src/workbench/tabs/TabStrip.vue` (`updateScrollState`, `scrollTabs`),
+- код: `src/workbench/tabs/useStripScroll.ts` (`updateScrollState`, `scrollTabs`),
   `src/core/services/workspace/index.ts` (`focusTick`)
 - связанные решения: ADR 0011 (полоса вкладок), ADR 0040 (пустая вкладка),
   ADR 0042 (выбор вкладки инструмента), ADR 0045 (видимая зона)

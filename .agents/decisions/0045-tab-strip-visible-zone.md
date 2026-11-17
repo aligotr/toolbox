@@ -2,7 +2,8 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-17
-- **Область:** `src/workbench/tabs/TabStrip.vue`
+- **Область:** `src/workbench/tabs/TabStrip.vue`,
+  `src/workbench/tabs/useStripScroll.ts`
 
 ## Контекст
 
@@ -67,6 +68,6 @@
 
 ## Ссылки
 
-- код: `src/workbench/tabs/TabStrip.vue` (`revealActiveTab`,
+- код: `src/workbench/tabs/useStripScroll.ts` (`revealActiveTab`,
   `CHEVRON_REACH`)
 - связанные решения: ADR 0043 (прокрутка полосы)
