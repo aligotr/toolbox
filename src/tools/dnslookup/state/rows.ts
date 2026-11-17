@@ -7,6 +7,7 @@
 // Перестановка уважает фильтр: места меняют только видимые строки, скрытые
 // остаются на своих позициях.
 
+import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import { matchesStatus } from "./compare";
 import { HIGHLIGHT_MS, JOURNAL_SOURCE } from "../constants";
@@ -100,7 +101,7 @@ function highlightRow(session: DnsSession, rowId: string): void {
 export function addRow(session: DnsSession, input: string, type: RecordType): AddRowResult {
   const parsed = parseAddressInput(input, type);
   if (!parsed.ok) {
-    return { kind: "error", message: parsed.error };
+    return { kind: "error", message: t(parsed.code, parsed.params) };
   }
 
   const duplicate = session.rows.find(

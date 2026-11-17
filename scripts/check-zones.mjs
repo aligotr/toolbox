@@ -6,6 +6,10 @@
 //
 // Скрипт запускается перед сборкой: граница, которая держится только
 // документом, расходится с кодом за пару месяцев.
+//
+// Здесь же проверяется граница Vue (ADR 0047): в ядре фреймворк разрешён
+// только держателям наблюдаемого состояния, а модули правил не должны
+// дотягиваться до него даже через импорты.
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
@@ -100,9 +104,85 @@ const BEHAVIOUR = [
   /\bexport\s*\{(?!\s*type\b)[^}]*\}\s*from\b/,
 ];
 
+/** Держатели состояния ядра: единственные файлы, которым разрешён Vue (ADR 0047). */
+const VUE_STATE_HOLDERS = new Set([
+  "src/core/infra/journal",
+  "src/core/infra/i18n/catalog",
+  "src/core/infra/useAsyncAction",
+  "src/core/services/appInfo",
+  "src/core/services/data",
+  "src/core/services/languages",
+  "src/core/services/presets/index",
+  "src/core/services/profiles",
+  "src/core/services/settings/index",
+  "src/core/services/workspace/index",
+]);
+
+/** Модули правил: Vue и Tauri недостижимы ни прямо, ни по цепочке импортов. */
+const PURE_MODULES = new Set([
+  "src/core/infra/guards",
+  "src/core/infra/i18n/locale",
+  "src/core/infra/i18n/translate",
+  "src/core/services/workspace/layout",
+  "src/core/services/workspace/parse",
+  "src/core/services/workspace/recentTabs",
+  "src/tools/dnslookup/normalize",
+]);
+
+/** Пакеты, которых не должно быть в правилах: фреймворк и мост Tauri. */
+const FRAMEWORK_PACKAGES = ["vue", "@vue/", "@tauri-apps/"];
+
+/** Признак пакета Vue: только он запрещён ядру вне держателей состояния. */
+function isVuePackage(target) {
+  return target === "vue" || target.startsWith("@vue/");
+}
+
+/** Признак пакета, недопустимого в правилах: Vue или Tauri. */
+function isFrameworkPackage(target) {
+  return FRAMEWORK_PACKAGES.some((name) => target === name || target.startsWith(name));
+}
+
 const violations = [];
 
-for (const file of walk(src)) {
+/** Все исходники интерфейса: обход нужен и основному циклу, и проверке цепочек. */
+const files = walk(src);
+
+/** Файлы по ключу `src/...` без расширения: так цель импорта находит модуль. */
+const filesByKey = new Map(files.map((file) => [key(file), file]));
+
+/** Файл модуля по цели импорта; каталог разрешается как `index.ts`. */
+function moduleFile(target) {
+  const clean = target.replace(/\.(ts|vue)$/, "");
+  return filesByKey.get(clean) ?? filesByKey.get(`${clean}/index`) ?? null;
+}
+
+/** Цепочка импортов от модуля до Vue или Tauri; `null` — модуль чистый. */
+function frameworkChain(start) {
+  const queue = [{ module: start, chain: [start] }];
+  const seen = new Set([start]);
+
+  while (queue.length > 0) {
+    const { module, chain } = queue.shift();
+    const file = filesByKey.get(module);
+    if (!file) continue;
+
+    for (const { target } of imports(file)) {
+      if (isFrameworkPackage(target)) return [...chain, target];
+
+      const next = moduleFile(target);
+      if (!next) continue;
+
+      const nextKey = key(next);
+      if (seen.has(nextKey)) continue;
+      seen.add(nextKey);
+      queue.push({ module: nextKey, chain: [...chain, nextKey] });
+    }
+  }
+
+  return null;
+}
+
+for (const file of files) {
   const self = key(file);
   const text = readFileSync(file, "utf8");
   const selfLayer = layerOf(self);
@@ -156,11 +236,42 @@ for (const file of walk(src)) {
         }
       }
     }
+
+    // Vue в ядре — привилегия держателей наблюдаемого состояния (ADR 0047).
+    if (inZone(self, "src/core") && isVuePackage(target) && !VUE_STATE_HOLDERS.has(self)) {
+      violations.push(
+        `${self} → ${target}: Vue в ядре разрешён только держателям состояния, правило выносится в модуль без Vue (ADR 0047)`,
+      );
+    }
+  }
+}
+
+// Списки не должны гнить: переименованный модуль иначе молча выпадает
+// из-под проверки.
+for (const module of VUE_STATE_HOLDERS) {
+  if (!filesByKey.has(module)) {
+    violations.push(`${module}: держатель состояния из списка проверки не найден (ADR 0047)`);
+  }
+}
+
+// Правила не зависят от фреймворка: проверяется вся цепочка импортов,
+// а не только прямой импорт. Иначе `t` из i18n тихо вернёт Vue обратно.
+for (const module of PURE_MODULES) {
+  if (!filesByKey.has(module)) {
+    violations.push(`${module}: модуль правил из списка проверки не найден (ADR 0047)`);
+    continue;
+  }
+
+  const chain = frameworkChain(module);
+  if (chain) {
+    violations.push(
+      `${module}: правило не импортирует Vue и Tauri — ${chain.join(" → ")} (ADR 0047)`,
+    );
   }
 }
 
 if (violations.length > 0) {
-  console.error("Нарушены границы зон (ADR 0035):");
+  console.error("Нарушены границы зон (ADR 0035, ADR 0047):");
   for (const violation of violations) console.error(`  ${violation}`);
   process.exit(1);
 }

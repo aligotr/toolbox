@@ -52,7 +52,7 @@ function submit(): void {
   localError.value = null;
   const parsed = parseServerAddress(address.value);
   if (!parsed.ok) {
-    localError.value = parsed.error;
+    localError.value = t(parsed.code, parsed.params);
     return;
   }
   if (props.occupied.includes(parsed.address)) {

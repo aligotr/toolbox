@@ -8,8 +8,12 @@
 // IDN переводится в punycode через разбор URL: браузерный парсер уже умеет
 // IDNA и не тянет отдельную зависимость. Показ остаётся пользовательским,
 // запрос уходит в ASCII.
+//
+// Отказ — код словаря и данные, а не готовая строка: правило проверки
+// не зависит от механизма перевода и от Vue (ADR 0047). Текст собирает
+// вызывающий слой через `t(code, params)`.
 
-import { t } from "@/core/infra/i18n";
+import type { MessageParams } from "@/core/infra/i18n/types";
 import type { RecordType } from "./types";
 
 /** Предел длины имени и метки по RFC. */
@@ -32,7 +36,7 @@ export interface ParsedAddress {
 
 export type AddressResult =
   | { ok: true; value: ParsedAddress }
-  | { ok: false; error: string };
+  | { ok: false; code: string; params: MessageParams };
 
 /**
  * Разбирает домен или IP с учётом типа записи.
@@ -43,13 +47,13 @@ export type AddressResult =
 export function parseAddressInput(input: string, type: RecordType): AddressResult {
   const raw = input.trim();
   if (raw === "") {
-    return { ok: false, error: t("dnslookup.validate.emptyAddress") };
+    return { ok: false, code: "dnslookup.validate.emptyAddress", params: {} };
   }
 
   const ip = canonicalIp(raw);
   if (ip !== null) {
     if (type !== "PTR") {
-      return { ok: false, error: t("dnslookup.validate.ipPtrOnly") };
+      return { ok: false, code: "dnslookup.validate.ipPtrOnly", params: {} };
     }
     return { ok: true, value: { name: ip, display: raw } };
   }
@@ -57,44 +61,49 @@ export function parseAddressInput(input: string, type: RecordType): AddressResul
   if (type === "PTR" && !REVERSE_ZONE_PATTERN.test(raw)) {
     return {
       ok: false,
-      error: t("dnslookup.validate.ptrZone"),
+      code: "dnslookup.validate.ptrZone",
+      params: {},
     };
   }
 
   const display = raw.endsWith(".") ? raw.slice(0, -1) : raw;
   const name = toAscii(display);
   if (name === null) {
-    return { ok: false, error: t("dnslookup.validate.badName", { name: display }) };
+    return {
+      ok: false,
+      code: "dnslookup.validate.badName",
+      params: { name: display },
+    };
   }
 
   const wildcard = name.startsWith("*.");
   const labels = (wildcard ? name.slice(2) : name).split(".");
   if (wildcard && labels.length === 0) {
-    return { ok: false, error: t("dnslookup.validate.wildcard") };
+    return { ok: false, code: "dnslookup.validate.wildcard", params: {} };
   }
   if (name.length > MAX_NAME_LENGTH) {
     return {
       ok: false,
-      error: t("dnslookup.validate.nameTooLong", { limit: MAX_NAME_LENGTH }),
+      code: "dnslookup.validate.nameTooLong",
+      params: { limit: MAX_NAME_LENGTH },
     };
   }
   for (const label of labels) {
     if (label === "") {
-      return { ok: false, error: t("dnslookup.validate.emptyLabel") };
+      return { ok: false, code: "dnslookup.validate.emptyLabel", params: {} };
     }
     if (label.length > MAX_LABEL_LENGTH) {
       return {
         ok: false,
-        error: t("dnslookup.validate.labelTooLong", {
-          label,
-          limit: MAX_LABEL_LENGTH,
-        }),
+        code: "dnslookup.validate.labelTooLong",
+        params: { label, limit: MAX_LABEL_LENGTH },
       };
     }
     if (!LABEL_PATTERN.test(label)) {
       return {
         ok: false,
-        error: t("dnslookup.validate.badChar", { label }),
+        code: "dnslookup.validate.badChar",
+        params: { label },
       };
     }
   }
@@ -132,7 +141,7 @@ function toAscii(display: string): string | null {
 /** Результат разбора адреса сервера: всегда с явным портом. */
 export type ServerAddressResult =
   | { ok: true; address: string }
-  | { ok: false; error: string };
+  | { ok: false; code: string; params: MessageParams };
 
 /**
  * Разбирает адрес своего сервера: `IP`, `IP:порт`, `[IPv6]:порт`.
@@ -144,7 +153,7 @@ export type ServerAddressResult =
 export function parseServerAddress(input: string): ServerAddressResult {
   const text = input.trim();
   if (text === "") {
-    return { ok: false, error: t("dnslookup.validate.serverEmpty") };
+    return { ok: false, code: "dnslookup.validate.serverEmpty", params: {} };
   }
 
   // IPv6 в скобках, порт необязателен.
@@ -154,14 +163,16 @@ export function parseServerAddress(input: string): ServerAddressResult {
     if (host === null) {
       return {
         ok: false,
-        error: t("dnslookup.validate.badIpv6", { address: bracketed[1] }),
+        code: "dnslookup.validate.badIpv6",
+        params: { address: bracketed[1] },
       };
     }
     const port = bracketed[2] === undefined ? 53 : parsePort(bracketed[2]);
     if (port === null) {
       return {
         ok: false,
-        error: t("dnslookup.validate.badPort", { address: text }),
+        code: "dnslookup.validate.badPort",
+        params: { address: text },
       };
     }
     return { ok: true, address: `[${host}]:${port}` };
@@ -173,7 +184,8 @@ export function parseServerAddress(input: string): ServerAddressResult {
     if (host === null) {
       return {
         ok: false,
-        error: t("dnslookup.validate.badIpv6", { address: text }),
+        code: "dnslookup.validate.badIpv6",
+        params: { address: text },
       };
     }
     return { ok: true, address: `[${host}]:53` };
@@ -186,7 +198,8 @@ export function parseServerAddress(input: string): ServerAddressResult {
     if (address === null || port === null) {
       return {
         ok: false,
-        error: t("dnslookup.validate.badServer", { address: text }),
+        code: "dnslookup.validate.badServer",
+        params: { address: text },
       };
     }
     return { ok: true, address: `${address}:${port}` };
@@ -196,7 +209,8 @@ export function parseServerAddress(input: string): ServerAddressResult {
   if (address === null) {
     return {
       ok: false,
-      error: t("dnslookup.validate.badServer", { address: text }),
+      code: "dnslookup.validate.badServer",
+      params: { address: text },
     };
   }
   return { ok: true, address: `${address}:53` };
