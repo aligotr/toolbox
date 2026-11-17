@@ -80,8 +80,10 @@ onUnmounted(() => {
 <template>
   <div v-if="startup?.blocked" class="blocked">
     <section class="blocked__card">
-      <span class="blocked__mark">!</span>
-      <h1>{{ startup.title ? t(startup.title) : t("startup.title") }}</h1>
+      <header class="blocked__head">
+        <span class="blocked__mark">!</span>
+        <h1>{{ startup.title ? t(startup.title) : t("startup.title") }}</h1>
+      </header>
       <p class="blocked__lead">{{ t("startup.lead") }}</p>
 
       <dl class="blocked__facts">
@@ -141,8 +143,15 @@ onUnmounted(() => {
   background: var(--ag-surface);
 }
 
+.blocked__head {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-md);
+}
+
 .blocked__mark {
   display: grid;
+  flex: 0 0 auto;
   place-items: center;
   width: 40px;
   height: 40px;
@@ -154,6 +163,7 @@ onUnmounted(() => {
 }
 
 .blocked__card h1 {
+  min-width: 0;
   margin: 0;
   font-size: var(--ag-text-xl);
   line-height: 1.25;
