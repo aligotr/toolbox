@@ -45,9 +45,6 @@ export const journal = reactive<{ entries: JournalEntry[] }>({ entries: [] });
 
 let nextId = 1;
 
-/** Уже записанные «однократные» факты: их повтор ничего не добавляет. */
-const onceKeys = new Set<string>();
-
 /** Добавляет запись в журнал. */
 export function write(
   source: string,
@@ -67,26 +64,6 @@ export function write(
   if (journal.entries.length > LIMIT) {
     journal.entries.length = LIMIT;
   }
-}
-
-/**
- * Записывает факт один раз за запуск приложения.
- *
- * Нужно для фактов, которые относятся к приложению, а не к экрану:
- * например, «подписка на core:pong активна». Экран создаёт подписку заново
- * при каждом открытии, но сообщать об этом каждый раз — значит забивать
- * историю одной и той же строкой.
- */
-export function writeOnce(
-  key: string,
-  source: string,
-  kind: JournalKind,
-  code: string,
-  params: JournalParams = {},
-): void {
-  if (onceKeys.has(key)) return;
-  onceKeys.add(key);
-  write(source, kind, code, params);
 }
 
 /** Значение параметра, приведённое к тексту подстановки. */

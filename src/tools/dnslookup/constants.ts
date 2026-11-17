@@ -29,7 +29,6 @@ export const DEFAULT_RECORD_TYPE: RecordType = "A";
 /** Пределы подсистемы: те же, что проверяет Rust. */
 export const QUERY_LIMIT = 500;
 export const SERVER_LIMIT = 8;
-export const ATTEMPT_SECONDS = 3;
 
 /** Сколько выбранных серверов показывается в поле списка: остальные — счётчиком «+N». */
 export const SERVER_LABEL_LIMIT = 2;

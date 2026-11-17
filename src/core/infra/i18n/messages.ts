@@ -681,7 +681,6 @@ export const ruMessages: Messages = {
   "errors.bus.unknownCommand": "Неизвестная команда: «{topic}»",
   "errors.bus.timeout": "Таймаут ожидания ответа на «{topic}»",
   "errors.bus.duplicateHandler": "Команде «{topic}» уже назначен обработчик",
-  "errors.bus.noHandler": "Нет обработчика для команды «{topic}»",
   "errors.bus.lost": "Событие потеряно: приёмник недоступен",
   "errors.bus.handlerPanic": "Обработчик события упал",
   "errors.bus.undelivered": "Событие «{topic}» не доставлено в интерфейс",

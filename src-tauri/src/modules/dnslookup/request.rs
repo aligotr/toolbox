@@ -291,17 +291,17 @@ pub fn prepare(run: &DnsRun) -> AppResult<PreparedRun> {
             Some(address) => Target::Address(parse_server_address(address)?),
             None => Target::System,
         };
-        if let Target::Address(address) = target {
-            if targets.iter().any(|(_, existing)| match existing {
+        if let Target::Address(address) = target
+            && targets.iter().any(|(_, existing)| match existing {
                 Target::Address(other) => *other == address,
                 Target::System => false,
-            }) {
-                return fail!(
-                    "errors.dnslookup.duplicateServer",
-                    format!("Сервер {address} указан дважды"),
-                    address = address,
-                );
-            }
+            })
+        {
+            return fail!(
+                "errors.dnslookup.duplicateServer",
+                format!("Сервер {address} указан дважды"),
+                address = address,
+            );
         }
         targets.push((server.id.as_str(), target));
     }

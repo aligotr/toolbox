@@ -26,20 +26,15 @@ pub const KEEP_DAYS: i64 = 14;
 const FILE_PREFIX: &str = "toolbox-";
 
 /// Порог логирования. Уровня `trace` нет: без спанов он даёт шум.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LogLevel {
     Error,
     Warn,
+    /// Штатный режим: отказы и предупреждения видны, отладочных строк нет.
+    #[default]
     Info,
     Debug,
-}
-
-impl Default for LogLevel {
-    fn default() -> Self {
-        // Штатный режим: отказы и предупреждения видны, отладочных строк нет.
-        Self::Info
-    }
 }
 
 impl LogLevel {

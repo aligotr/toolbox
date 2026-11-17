@@ -399,10 +399,10 @@ impl Drop for GeometrySaver {
     /// ценнее, чем несколько миллисекунд ожидания.
     fn drop(&mut self) {
         let _ = self.signal.send(Signal::Flush);
-        if let Ok(mut guard) = self.worker.lock() {
-            if let Some(worker) = guard.take() {
-                let _ = worker.join();
-            }
+        if let Ok(mut guard) = self.worker.lock()
+            && let Some(worker) = guard.take()
+        {
+            let _ = worker.join();
         }
     }
 }

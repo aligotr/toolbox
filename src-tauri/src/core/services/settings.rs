@@ -364,12 +364,12 @@ where
     D: serde::Deserializer<'de>,
 {
     let value = Option::<String>::deserialize(deserializer)?;
-    if let Some(code) = value.as_deref() {
-        if !languages::is_code(code) {
-            return Err(serde::de::Error::custom(format!(
-                "недопустимый код языка '{code}'"
-            )));
-        }
+    if let Some(code) = value.as_deref()
+        && !languages::is_code(code)
+    {
+        return Err(serde::de::Error::custom(format!(
+            "недопустимый код языка '{code}'"
+        )));
     }
     Ok(value)
 }

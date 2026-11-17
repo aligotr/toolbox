@@ -163,15 +163,6 @@ impl MessageBus {
         }
     }
 
-    /// Контейнер зависимостей — обработчики достают из него нужное.
-    ///
-    /// Пока метод не вызывается внутри крейта (обработчики получают `&Deps`
-    /// напрямую), но это часть публичного API ядра — отсюда `allow`.
-    #[allow(dead_code)]
-    pub fn deps(&self) -> &Deps {
-        &self.inner.deps
-    }
-
     /// Назначает приёмник событий (обычно — мост в интерфейс).
     pub fn set_sink(&self, sink: Arc<dyn EventSink>) {
         *self.inner.sink.write().expect("sink lock") = Some(sink);
@@ -551,31 +542,6 @@ impl MessageBus {
         Ok(())
     }
 
-    /// Вызов команды из Rust-кода (синхронно).
-    ///
-    /// Из интерфейса команды приходят через [`MessageBus::dispatch_command`].
-    /// Этот вариант нужен внутренним подсистемам, когда команду инициирует
-    /// Rust, а не UI (например, будущее меню в трее).
-    #[allow(dead_code)]
-    pub fn publish_command<C: Command>(&self, command: C) -> AppResult<()> {
-        let handler = self
-            .inner
-            .command_handlers
-            .read()
-            .expect("command handlers lock")
-            .get(&TypeId::of::<C>())
-            .cloned()
-            .ok_or_else(|| {
-                AppError::new(
-                    "errors.bus.noHandler",
-                    format!("Нет обработчика для команды '{}'", C::TOPIC),
-                )
-                .with("topic", C::TOPIC)
-            })?;
-        handler(&command as &dyn Any, &self.inner.deps);
-        Ok(())
-    }
-
     /// Вызов команды по имени топика (путь из интерфейса).
     pub fn dispatch_command(&self, topic: &str, payload: Value) -> AppResult<()> {
         let route = self
@@ -754,10 +720,10 @@ fn dispatch(inner: &Inner, queued: QueuedEvent) {
             Some(detail),
         );
 
-        if is_reply {
-            if let Some(ask) = inner.pending.lock().expect("pending lock").remove(id) {
-                let _ = ask.sender.send(queued.payload.clone());
-            }
+        if is_reply
+            && let Some(ask) = inner.pending.lock().expect("pending lock").remove(id)
+        {
+            let _ = ask.sender.send(queued.payload.clone());
         }
     }
 
@@ -993,10 +959,10 @@ mod tests {
     fn wait_for_bus_error(rx: &mpsc::Receiver<(String, Value)>) -> Value {
         let deadline = Instant::now() + Duration::from_secs(2);
         while Instant::now() < deadline {
-            if let Ok((topic, payload)) = rx.recv_timeout(Duration::from_millis(100)) {
-                if topic == ERROR_TOPIC {
-                    return payload;
-                }
+            if let Ok((topic, payload)) = rx.recv_timeout(Duration::from_millis(100))
+                && topic == ERROR_TOPIC
+            {
+                return payload;
             }
         }
         panic!("отчёт '{}' не пришёл в приёмник", ERROR_TOPIC);

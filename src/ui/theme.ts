@@ -16,10 +16,6 @@
 import { definePreset } from "@primeuix/themes";
 import Aura from "@primeuix/themes/aura";
 
-/** Семейства шрифтов: интерфейс — гротеск, код — моноширинный. */
-export const FONT_UI = '"Inter", "Segoe UI", system-ui, sans-serif';
-export const FONT_MONO = '"Cascadia Code", "Consolas", monospace';
-
 /**
  * Пресет ToolBox.
  *

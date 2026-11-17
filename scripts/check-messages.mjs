@@ -39,7 +39,7 @@ const KEY_PATTERNS = [
   // Код ошибки или записи журнала, созданной в интерфейсе (ADR 0039).
   /code:\s*"((?:errors|settings|journal|dnslookup)\.[^"]+)"/g,
   // Запись журнала передаётся позиционно, а не объектом.
-  /\bwrite(?:Once)?\(\s*[^,]+,\s*"(?:info|result|error)",\s*"([^"]+)"/g,
+  /\bwrite\(\s*[^,]+,\s*"(?:info|result|error)",\s*"([^"]+)"/g,
   // Код отказа обёртки пресетов: он же ключ словаря.
   /\b(?:attempt|presetAction)\(\s*"((?:journal)\.[^"]+)"/g,
 ];

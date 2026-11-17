@@ -675,7 +675,6 @@
     "errors.bus.unknownCommand": "Unknown command: “{topic}”",
     "errors.bus.timeout": "Timed out waiting for a reply to “{topic}”",
     "errors.bus.duplicateHandler": "The command “{topic}” already has a handler",
-    "errors.bus.noHandler": "No handler for the command “{topic}”",
     "errors.bus.lost": "The event was lost: the receiver is unavailable",
     "errors.bus.handlerPanic": "The event handler crashed",
     "errors.bus.undelivered": "The event “{topic}” was not delivered to the UI",

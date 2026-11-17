@@ -50,8 +50,8 @@ impl EventSink for TauriSink {
             // Недоставка видна только в логе, поэтому пробуем сообщить о ней
             // ещё и в интерфейс: возможно, не дошло лишь это событие.
             // Отчёт об отказе самого отчёта не порождает: иначе рекурсия.
-            if topic != ERROR_TOPIC {
-                if let Ok(report) = serde_json::to_value(BusError::new(
+            if topic != ERROR_TOPIC
+                && let Ok(report) = serde_json::to_value(BusError::new(
                     topic,
                     AppError::new(
                         "errors.bus.undelivered",
@@ -59,9 +59,9 @@ impl EventSink for TauriSink {
                     )
                     .with("topic", topic)
                     .with("reason", error),
-                )) {
-                    let _ = self.app.emit(ERROR_TOPIC, report);
-                }
+                ))
+            {
+                let _ = self.app.emit(ERROR_TOPIC, report);
             }
         }
     }
@@ -259,10 +259,10 @@ fn boot(app: &AppHandle) -> Runtime {
     // Файл настроек создаём сразу: иначе непонятно, что и где править.
     // Отказ записи — провал приложения, а не замечание: настройки больше
     // негде взять, и пользователь должен найти причину в логе.
-    if !storage.settings_path().exists() {
-        if let Err(error) = settings::save(&storage.settings_path(), &loaded.settings) {
-            log::error!("{error}");
-        }
+    if !storage.settings_path().exists()
+        && let Err(error) = settings::save(&storage.settings_path(), &loaded.settings)
+    {
+        log::error!("{error}");
     }
 
     // 4. Зависимости: обработчики получают их через `Deps`.
@@ -454,10 +454,10 @@ fn commit_settings(
     let committed = settings::commit(&storage.settings_path(), &mut guard, change)?;
     drop(guard);
 
-    if committed.log_level_changed {
-        if let Some(logger) = runtime.logger.as_ref() {
-            logger.set_level(committed.settings.log.level);
-        }
+    if committed.log_level_changed
+        && let Some(logger) = runtime.logger.as_ref()
+    {
+        logger.set_level(committed.settings.log.level);
     }
 
     emit_settings_changed(app, section);
@@ -827,7 +827,7 @@ fn app_info(app: AppHandle, runtime: State<'_, Runtime>) -> AppInfo {
 #[tauri::command]
 fn storage_stats(runtime: State<'_, Runtime>) -> AppResult<store::stats::StorageStats> {
     let storage = storage_of(&runtime)?;
-    Ok(store::stats::summary(&storage))
+    Ok(store::stats::summary(storage))
 }
 
 /// Удаляет файлы лога старше срока хранения и возвращает их число.
@@ -1104,10 +1104,10 @@ pub fn run() {
                 .lock()
                 .expect("geometry lock")
                 .clone();
-            if let Some(saver) = saver {
-                if let Err(error) = saver.flush() {
-                    log::error!("{error}");
-                }
+            if let Some(saver) = saver
+                && let Err(error) = saver.flush()
+            {
+                log::error!("{error}");
             }
 
             log::info!("Шина остановлена, выход");
