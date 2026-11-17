@@ -619,7 +619,6 @@
     "dnslookup.validate.ptrZone":
       "For the PTR type, enter an IP address or a name in the in-addr.arpa / ip6.arpa zone",
     "dnslookup.validate.badName": "Invalid name “{name}”",
-    "dnslookup.validate.wildcard": "A domain name is required after “*.”",
     "dnslookup.validate.nameTooLong":
       "The name is longer than {limit} characters",
     "dnslookup.validate.emptyLabel": "The name contains an empty label",

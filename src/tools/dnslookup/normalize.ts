@@ -76,11 +76,10 @@ export function parseAddressInput(input: string, type: RecordType): AddressResul
     };
   }
 
+  // Маска `*.` допустима: проверяются метки после неё. Голый `*` меткой
+  // не является и отсеивается проверкой символов ниже.
   const wildcard = name.startsWith("*.");
   const labels = (wildcard ? name.slice(2) : name).split(".");
-  if (wildcard && labels.length === 0) {
-    return { ok: false, code: "dnslookup.validate.wildcard", params: {} };
-  }
   if (name.length > MAX_NAME_LENGTH) {
     return {
       ok: false,

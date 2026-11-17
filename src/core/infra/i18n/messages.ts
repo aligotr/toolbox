@@ -626,7 +626,6 @@ export const ruMessages: Messages = {
   "dnslookup.validate.ptrZone":
     "Для типа PTR укажите IP-адрес или имя в зоне in-addr.arpa / ip6.arpa",
   "dnslookup.validate.badName": "Некорректное имя «{name}»",
-  "dnslookup.validate.wildcard": "После «*.» нужно имя домена",
   "dnslookup.validate.nameTooLong": "Имя длиннее {limit} символов",
   "dnslookup.validate.emptyLabel": "В имени есть пустая метка",
   "dnslookup.validate.labelTooLong":

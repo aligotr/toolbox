@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node --test tests/i18n",
+    "test": "node --import ./tests/support/loader.mjs --test tests",
+    "verify": "npm run test && npm run build && cargo check --manifest-path src-tauri/Cargo.toml && cargo test --lib --manifest-path src-tauri/Cargo.toml",
     "build": "node scripts/check-zones.mjs && node scripts/check-messages.mjs && vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri"
