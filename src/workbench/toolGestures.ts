@@ -17,20 +17,14 @@ export function openToolOnClick(tool: ToolDescriptor, event: MouseEvent): void {
 }
 
 /** Средняя кнопка мыши: ещё одна вкладка вместо прокрутки. */
-export function openToolOnAuxClick(
-  tool: ToolDescriptor,
-  event: MouseEvent,
-): void {
+export function openToolOnAuxClick(tool: ToolDescriptor, event: MouseEvent): void {
   if (event.button !== MIDDLE_BUTTON) return;
   event.preventDefault();
   openTool(tool, true);
 }
 
 /** Ctrl+Enter с клавиатуры: тот же жест, что Ctrl+клик. */
-export function openToolOnKeydown(
-  tool: ToolDescriptor,
-  event: KeyboardEvent,
-): void {
+export function openToolOnKeydown(tool: ToolDescriptor, event: KeyboardEvent): void {
   // Автоповтор удержания открыл бы вкладку за вкладкой.
   if (event.repeat || event.key !== "Enter" || !event.ctrlKey) return;
   // Иначе кнопка отправила бы ещё и click — открылись бы две вкладки.

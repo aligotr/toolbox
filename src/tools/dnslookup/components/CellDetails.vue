@@ -43,11 +43,7 @@ function serverAddress(server: ServerOption): string {
         </header>
 
         <ul v-if="answersOf(entry.cell).length > 0" class="details__answers">
-          <li
-            v-for="(answer, index) in answersOf(entry.cell)"
-            :key="index"
-            class="details__answer"
-          >
+          <li v-for="(answer, index) in answersOf(entry.cell)" :key="index" class="details__answer">
             <code>{{ answer.value }}</code>
             <span v-if="answer.ttl !== null" class="details__ttl">
               {{ t("dnslookup.cell.ttl", { value: answer.ttl ?? 0 }) }}

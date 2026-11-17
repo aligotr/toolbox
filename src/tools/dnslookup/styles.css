@@ -276,13 +276,11 @@
   flex-direction: column;
   gap: var(--ag-space-xs);
   min-width: 0;
-  
+
   cursor: grab;
 }
 
-.dns-table__domain :is(span,
-small,
-button) {
+.dns-table__domain :is(span, small, button) {
   cursor: auto;
 }
 
@@ -295,7 +293,7 @@ button) {
 
 .dns-table__name {
   flex: 0 1 auto;
-  
+
   margin-right: auto;
   overflow: hidden;
   font-size: var(--ag-text-sm);

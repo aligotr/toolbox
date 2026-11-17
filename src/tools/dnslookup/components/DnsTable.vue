@@ -27,13 +27,7 @@ import {
   TYPE_COLUMN_MIN_WIDTH,
   TYPE_FIELD_WIDTH,
 } from "../constants";
-import {
-  extraAnswers,
-  firstAnswer,
-  statusClass,
-  statusLabel,
-  statusShown,
-} from "../cell";
+import { extraAnswers, firstAnswer, statusClass, statusLabel, statusShown } from "../cell";
 import CellDetails from "./CellDetails.vue";
 import type {
   CellDetailsEntry,
@@ -95,9 +89,7 @@ let resizeFrame = 0;
 
 /** Пересчёт ширины «Доменов» по шапке таблицы. */
 function syncFrozenOffset(): void {
-  const header = root.value?.querySelector<HTMLElement>(
-    "thead th.p-datatable-frozen-column",
-  );
+  const header = root.value?.querySelector<HTMLElement>("thead th.p-datatable-frozen-column");
   const width = header ? `${header.getBoundingClientRect().width}px` : "0px";
   if (width !== domainWidth.value) domainWidth.value = width;
 }
@@ -134,9 +126,7 @@ function cellLabel(server: ServerOption, cell: DnsCell | undefined): string {
 
   let text = status;
   if (value) {
-    text = extra > 0
-      ? t("dnslookup.table.cellExtra", { value, count: extra })
-      : value;
+    text = extra > 0 ? t("dnslookup.table.cellExtra", { value, count: extra }) : value;
     text = `${text} (${status})`;
   }
 
@@ -185,9 +175,7 @@ watch(
   (rowId) => {
     if (!rowId) return;
     void nextTick(() => {
-      const marker = root.value?.querySelector<HTMLElement>(
-        `[data-row-id="${rowId}"]`,
-      );
+      const marker = root.value?.querySelector<HTMLElement>(`[data-row-id="${rowId}"]`);
       marker?.closest("tr")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
   },
@@ -255,9 +243,7 @@ watch(
                 :class="{ 'dns-table__expand--open': isExpanded(data.id) }"
                 :aria-expanded="isExpanded(data.id)"
                 :aria-label="
-                  isExpanded(data.id)
-                    ? t('dnslookup.table.collapse')
-                    : t('dnslookup.table.expand')
+                  isExpanded(data.id) ? t('dnslookup.table.collapse') : t('dnslookup.table.expand')
                 "
                 @click="toggle(data.id)"
               />

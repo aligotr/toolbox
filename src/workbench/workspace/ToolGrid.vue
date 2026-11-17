@@ -47,7 +47,9 @@ function findTool(id: string): ToolDescriptor<Component> | undefined {
         />
         <div v-else class="grid__unknown">
           <i class="pi pi-question-circle" aria-hidden="true" />
-          <span>{{ t("workspace.grid.unknown") }} <code>{{ toolId }}</code></span>
+          <span
+            >{{ t("workspace.grid.unknown") }} <code>{{ toolId }}</code></span
+          >
         </div>
       </div>
     </section>

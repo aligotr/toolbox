@@ -9,21 +9,11 @@ import { t } from "@/core/infra/i18n";
 import type { MessageParams } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import type { Preset } from "@/core/services/presets";
-import {
-  DEFAULT_SERVER_IDS,
-  JOURNAL_SOURCE,
-  SERVER_LIMIT,
-  SYSTEM_SERVER_ID,
-} from "../constants";
+import { DEFAULT_SERVER_IDS, JOURNAL_SOURCE, SERVER_LIMIT, SYSTEM_SERVER_ID } from "../constants";
 import { abortSessionRun, runAllRows } from "../state/run";
 import { allServers, refreshServers } from "../state/servers";
 import type { DnsPresetPayload, DnsSession } from "../types";
-import {
-  capturePresetPayload,
-  parsePresetPayload,
-  parseSnapshot,
-  snapshotOf,
-} from "./format";
+import { capturePresetPayload, parsePresetPayload, parseSnapshot, snapshotOf } from "./format";
 
 /** Замечание о загрузке пресета: код словаря и данные подстановки. */
 export interface PresetProblem {
@@ -48,11 +38,7 @@ export interface PresetRevertResult {
 }
 
 /** Привязывает сеанс к пресету и запоминает снимок сохранённых настроек. */
-export function adoptPreset(
-  session: DnsSession,
-  preset: Preset,
-  snapshot: string,
-): void {
+export function adoptPreset(session: DnsSession, preset: Preset, snapshot: string): void {
   session.presetId = preset.id;
   session.presetTitle = preset.title;
   session.presetSnapshot = snapshot;
@@ -64,23 +50,16 @@ export function adoptPreset(
  * Таблица заменяется, результаты сбрасываются: ответы относились к прежним
  * строкам. `servers` уже проверены и ограничены вызывающим.
  */
-function applyPayload(
-  session: DnsSession,
-  payload: DnsPresetPayload,
-  servers: string[],
-): void {
+function applyPayload(session: DnsSession, payload: DnsPresetPayload, servers: string[]): void {
   session.rows = payload.rows.map((row) => ({ ...row }));
   session.cells.clear();
   session.servers = servers.length > 0 ? servers : [...DEFAULT_SERVER_IDS];
-  session.hiddenServers = payload.hiddenServers.filter((id) =>
-    session.servers.includes(id),
-  );
+  session.hiddenServers = payload.hiddenServers.filter((id) => session.servers.includes(id));
   session.filters.search = payload.filters.search;
   session.filters.status = payload.filters.status;
   // Расхождения считаются только от системного сервера: без него фильтр
   // молча не показал бы ничего.
-  session.filters.diffOnly =
-    payload.filters.diffOnly && session.servers.includes(SYSTEM_SERVER_ID);
+  session.filters.diffOnly = payload.filters.diffOnly && session.servers.includes(SYSTEM_SERVER_ID);
   session.highlightRowId = null;
   session.status.run.error = null;
   session.progress = { total: 0, done: 0 };
@@ -93,10 +72,7 @@ function applyPayload(
  * которых в таблице уже нет. Серверы, которых нет в профиле, пропускаются
  * с замечанием; если не осталось ни одного, берётся набор нового сеанса.
  */
-export async function applyPreset(
-  session: DnsSession,
-  preset: Preset,
-): Promise<PresetApplyResult> {
+export async function applyPreset(session: DnsSession, preset: Preset): Promise<PresetApplyResult> {
   const parsed = parsePresetPayload(preset.payload);
   if (!parsed) {
     return {
@@ -175,10 +151,7 @@ export async function applyPreset(
  * Совпадение позволяет откатить настройки, не теряя результаты: ответы
  * относятся к тем же запросам, поэтому ячейки и проверка остаются на месте.
  */
-function sameQueries(
-  current: DnsPresetPayload,
-  target: DnsPresetPayload,
-): boolean {
+function sameQueries(current: DnsPresetPayload, target: DnsPresetPayload): boolean {
   if (current.rows.length !== target.rows.length) return false;
 
   const rowsMatch = current.rows.every((row, index) => {
@@ -207,13 +180,10 @@ function sameQueries(
 function restoreSettings(session: DnsSession, payload: DnsPresetPayload): void {
   session.rows = payload.rows.map((row) => ({ ...row }));
   session.servers = [...payload.servers];
-  session.hiddenServers = payload.hiddenServers.filter((id) =>
-    session.servers.includes(id),
-  );
+  session.hiddenServers = payload.hiddenServers.filter((id) => session.servers.includes(id));
   session.filters.search = payload.filters.search;
   session.filters.status = payload.filters.status;
-  session.filters.diffOnly =
-    payload.filters.diffOnly && session.servers.includes(SYSTEM_SERVER_ID);
+  session.filters.diffOnly = payload.filters.diffOnly && session.servers.includes(SYSTEM_SERVER_ID);
   session.highlightRowId = null;
 }
 
@@ -225,9 +195,7 @@ function restoreSettings(session: DnsSession, payload: DnsPresetPayload): void {
  * остаются. Изменившиеся запросы обесценивают ответы: идущая проверка
  * останавливается, ячейки очищаются и проверка запускается заново.
  */
-export async function revertPresetChanges(
-  session: DnsSession,
-): Promise<PresetRevertResult> {
+export async function revertPresetChanges(session: DnsSession): Promise<PresetRevertResult> {
   if (session.presetId === null || session.presetSnapshot === null) {
     return {
       error: t("dnslookup.preset.notReverted"),

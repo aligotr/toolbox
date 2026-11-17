@@ -34,8 +34,7 @@ export function useStripScroll(
     const el = listEl.value;
     if (!el) return;
     canScrollLeft.value = el.scrollLeft > SCROLL_EPSILON;
-    canScrollRight.value =
-      el.scrollLeft + el.clientWidth < el.scrollWidth - SCROLL_EPSILON;
+    canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - SCROLL_EPSILON;
   }
 
   /** Сдвигает полосу почти на экран в заданную сторону. */

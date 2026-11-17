@@ -10,16 +10,7 @@ import type { OperationStatus } from "@/core/infra/status";
 
 /** Типы записей, которые поддерживает подсистема. */
 export type RecordType =
-  | "A"
-  | "AAAA"
-  | "CNAME"
-  | "MX"
-  | "TXT"
-  | "NS"
-  | "SOA"
-  | "SRV"
-  | "CAA"
-  | "PTR";
+  "A" | "AAAA" | "CNAME" | "MX" | "TXT" | "NS" | "SOA" | "SRV" | "CAA" | "PTR";
 
 /** Статус ячейки: проводные значения плюс два интерфейсных. */
 export type CellStatus =

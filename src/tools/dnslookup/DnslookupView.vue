@@ -19,10 +19,7 @@ import Select from "primevue/select";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted, ref, watch } from "vue";
 import type { ToolCellProps } from "@/contracts/tools";
-import {
-  CONFIRM_CALM_REJECT,
-  CONFIRM_DANGER_ACCEPT,
-} from "@/core/constants";
+import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
 import DnsTable from "./components/DnsTable.vue";
 import PresetBar from "./components/PresetBar.vue";
@@ -114,9 +111,7 @@ const systemHint = computed<string>(() => {
 
 /** Пояснение к заблокированному фильтру расхождений. */
 const compareHint = computed(() =>
-  hasSystem.value
-    ? t("dnslookup.view.needMoreServer")
-    : t("dnslookup.view.needSystemServer"),
+  hasSystem.value ? t("dnslookup.view.needMoreServer") : t("dnslookup.view.needSystemServer"),
 );
 
 /** Первые выбранные серверы в поле: остальные скрыты за многоточием. */
@@ -274,11 +269,7 @@ async function exportCsv(): Promise<void> {
 
 <template>
   <section class="dns">
-    <PresetBar
-      :session="session"
-      @open="presetsOpen = true"
-      @note="presetNote = $event"
-    />
+    <PresetBar :session="session" @open="presetsOpen = true" @note="presetNote = $event" />
 
     <div class="dns__toolbar">
       <div ref="addBox" class="dns__add">
@@ -386,11 +377,7 @@ async function exportCsv(): Promise<void> {
         :aria-label="t('dnslookup.view.statusFilter')"
       />
       <label class="dns__check">
-        <Checkbox
-          v-model="session.filters.diffOnly"
-          binary
-          :disabled="!canCompare"
-        />
+        <Checkbox v-model="session.filters.diffOnly" binary :disabled="!canCompare" />
         <span>
           {{ t("dnslookup.view.diffOnly") }}
           <template v-if="!canCompare"> ({{ compareHint }})</template>
@@ -493,10 +480,7 @@ async function exportCsv(): Promise<void> {
       :occupied="occupiedAddresses"
       :saving="session.status.serversSave.loading"
       :blocked="session.serversBroken"
-      :error="
-        serverError ??
-        (session.serversBroken ? session.status.servers.error : null)
-      "
+      :error="serverError ?? (session.serversBroken ? session.status.servers.error : null)"
       @add="submitServer"
       @remove="deleteServer"
     />

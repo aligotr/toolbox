@@ -26,11 +26,7 @@ function signature(cell: DnsCell): string {
 }
 
 /** Проверяет, попадает ли строка под фильтр статуса. */
-export function matchesStatus(
-  session: DnsSession,
-  rowId: string,
-  filter: StatusFilter,
-): boolean {
+export function matchesStatus(session: DnsSession, rowId: string, filter: StatusFilter): boolean {
   if (filter === "all") return true;
   const pool = filter === "error" ? ERROR_STATUSES : EMPTY_STATUSES;
   return session.servers.some((serverId) => {

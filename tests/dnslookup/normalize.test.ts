@@ -6,10 +6,7 @@
 
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  parseAddressInput,
-  parseServerAddress,
-} from "../../src/tools/dnslookup/normalize.ts";
+import { parseAddressInput, parseServerAddress } from "../../src/tools/dnslookup/normalize.ts";
 
 test("домен приводится к запросу, показ остаётся пользовательским", () => {
   assert.deepEqual(parseAddressInput("Example.COM.", "A"), {

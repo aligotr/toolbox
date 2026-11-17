@@ -13,11 +13,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { reactive } from "vue";
-import type {
-  StoredPreset,
-  StoredPresetDefault,
-  StoredPresetList,
-} from "@/contracts/presets";
+import type { StoredPreset, StoredPresetDefault, StoredPresetList } from "@/contracts/presets";
 import { t } from "@/core/infra/i18n";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { write, type JournalFact, type JournalParams } from "../../infra/journal";
@@ -36,13 +32,7 @@ export interface Preset {
 
 /** Операции над пресетами: отказ удаления не блокирует сохранение. */
 export type PresetOperation =
-  | "list"
-  | "create"
-  | "update"
-  | "rename"
-  | "duplicate"
-  | "delete"
-  | "default";
+  "list" | "create" | "update" | "rename" | "duplicate" | "delete" | "default";
 
 /** Список пресетов одного инструмента. */
 export interface PresetState {
@@ -149,9 +139,10 @@ export function createPresets(tool: string): Presets {
     state.defaultId = presetDefault.id;
     state.loaded = true;
 
-    const preset = presetDefault.id === null
-      ? undefined
-      : state.items.find((item) => item.id === presetDefault.id);
+    const preset =
+      presetDefault.id === null
+        ? undefined
+        : state.items.find((item) => item.id === presetDefault.id);
     if (preset) defaultTitles.set(tool, preset.title);
     else defaultTitles.delete(tool);
   }
@@ -197,9 +188,7 @@ export function createPresets(tool: string): Presets {
    * результата: автозагрузка пресета не должна принять незаполненное
    * состояние за «умолчания нет».
    */
-  const listAction = useAsyncAction(() =>
-    attempt("journal.presets.readError", { tool }, reload),
-  );
+  const listAction = useAsyncAction(() => attempt("journal.presets.readError", { tool }, reload));
 
   const createAction = presetAction(
     "journal.presets.createError",

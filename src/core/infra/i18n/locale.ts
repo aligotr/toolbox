@@ -40,8 +40,7 @@ export function pluralCategory(locale: string, count: number): PluralCategory {
  * «переведено полностью».
  */
 export function pluralCategories(locale: string): PluralCategory[] {
-  return pluralRules(locale).resolvedOptions()
-    .pluralCategories as PluralCategory[];
+  return pluralRules(locale).resolvedOptions().pluralCategories as PluralCategory[];
 }
 
 /** Число по правилам локали; битый тег откатывается на русский. */

@@ -42,16 +42,9 @@ export function rowOf(
 
 /** Есть ли под указателем текст: его мышью выделяют, а не тянут. */
 export function hasText(target: Element, row: HTMLElement): boolean {
-  for (
-    let node: Element | null = target;
-    node && node !== row;
-    node = node.parentElement
-  ) {
+  for (let node: Element | null = target; node && node !== row; node = node.parentElement) {
     for (const child of node.childNodes) {
-      if (
-        child.nodeType === Node.TEXT_NODE &&
-        (child.textContent ?? "").trim() !== ""
-      ) {
+      if (child.nodeType === Node.TEXT_NODE && (child.textContent ?? "").trim() !== "") {
         return true;
       }
     }

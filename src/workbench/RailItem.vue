@@ -74,11 +74,7 @@ const tooltip = computed(() => {
   >
     <i class="rail-item__icon" :class="icon" aria-hidden="true" />
     <span v-if="!collapsed" class="rail-item__title">{{ title }}</span>
-    <i
-      v-if="chevron && !collapsed"
-      class="pi pi-angle-up rail-item__chevron"
-      aria-hidden="true"
-    />
+    <i v-if="chevron && !collapsed" class="pi pi-angle-up rail-item__chevron" aria-hidden="true" />
   </button>
 </template>
 

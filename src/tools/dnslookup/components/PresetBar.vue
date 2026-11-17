@@ -14,12 +14,7 @@ import { computed } from "vue";
 import { describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
 import { TOOL_TITLE } from "../constants";
-import {
-  dnsPresetChanged,
-  dnsPresets,
-  revertPresetChanges,
-  savePresetToCurrent,
-} from "../presets";
+import { dnsPresetChanged, dnsPresets, revertPresetChanges, savePresetToCurrent } from "../presets";
 import type { DnsSession } from "../types";
 
 const props = defineProps<{ session: DnsSession }>();
@@ -33,9 +28,7 @@ const emit = defineEmits<{
 const changed = computed(() => dnsPresetChanged(props.session));
 
 /** Загруженный пресет называет себя сам; без пресета кнопка — вход в список. */
-const label = computed(
-  () => props.session.presetTitle ?? t("dnslookup.preset.buttonEmpty"),
-);
+const label = computed(() => props.session.presetTitle ?? t("dnslookup.preset.buttonEmpty"));
 
 function report(text: string | null): void {
   emit("note", text);
@@ -67,10 +60,7 @@ async function revertEdits(): Promise<void> {
     <h1 class="dns__title">{{ TOOL_TITLE }}</h1>
 
     <div class="dns__preset-bar">
-      <div
-        class="dns__preset-state"
-        :class="{ 'dns__preset-state--hidden': !changed }"
-      >
+      <div class="dns__preset-state" :class="{ 'dns__preset-state--hidden': !changed }">
         <span class="dns__preset-changed">{{ t("dnslookup.preset.changed") }}</span>
         <Button
           v-tooltip.top="t('dnslookup.preset.revertHint')"

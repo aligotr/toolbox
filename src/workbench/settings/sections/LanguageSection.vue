@@ -29,14 +29,10 @@ const current = computed({
 });
 
 /** Найденный внешний словарь выбранного языка. */
-const active = computed(
-  () => languages.items.find((item) => item.code === current.value) ?? null,
-);
+const active = computed(() => languages.items.find((item) => item.code === current.value) ?? null);
 
 /** Файлы, которые не прочитаны: причина показывается под списком. */
-const broken = computed(() =>
-  languages.items.filter((item) => item.problem !== null),
-);
+const broken = computed(() => languages.items.filter((item) => item.problem !== null));
 
 /** Выбранный файл пропал или не читается: интерфейс показывает русский. */
 const lost = computed(
@@ -77,21 +73,12 @@ onMounted(() => {
       {{ t("settings.language.lost") }}
     </p>
 
-    <div
-      class="language__list"
-      role="radiogroup"
-      :aria-label="t('settings.language.current')"
-    >
+    <div class="language__list" role="radiogroup" :aria-label="t('settings.language.current')">
       <label
         class="language__item"
         :class="{ 'language__item--active': current === BUILTIN_LANGUAGE }"
       >
-        <input
-          type="radio"
-          name="ui-language"
-          :value="BUILTIN_LANGUAGE"
-          v-model="current"
-        />
+        <input type="radio" name="ui-language" :value="BUILTIN_LANGUAGE" v-model="current" />
         <span class="language__name">
           {{ t("settings.language.russian") }}
           <span class="language__code">{{ BUILTIN_LANGUAGE }}</span>
@@ -118,10 +105,7 @@ onMounted(() => {
           {{ item.name }}
           <span class="language__code">{{ item.code }}</span>
         </span>
-        <span
-          v-if="item.problem !== null"
-          class="language__badge language__badge--bad"
-        >
+        <span v-if="item.problem !== null" class="language__badge language__badge--bad">
           {{ t("settings.language.broken") }}
         </span>
         <span v-else-if="item.missing > 0" class="language__badge">
@@ -133,18 +117,11 @@ onMounted(() => {
       </label>
     </div>
 
-    <p
-      v-if="languages.items.length === 0 && languages.loaded"
-      class="language__hint"
-    >
+    <p v-if="languages.items.length === 0 && languages.loaded" class="language__hint">
       {{ t("settings.language.empty") }}
     </p>
 
-    <p
-      v-for="item in broken"
-      :key="`problem-${item.code}`"
-      class="language__error"
-    >
+    <p v-for="item in broken" :key="`problem-${item.code}`" class="language__error">
       {{ item.problem ? describeError(item.problem) : "" }}
     </p>
 

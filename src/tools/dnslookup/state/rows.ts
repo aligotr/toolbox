@@ -56,12 +56,7 @@ export function removeRow(session: DnsSession, rowId: string): void {
  * Строки, скрытые фильтром, остаются на своих местах: меняются только места
  * видимых, поэтому фильтр не перетасовывает то, чего пользователь не видит.
  */
-export function moveRow(
-  session: DnsSession,
-  visible: DnsRow[],
-  from: number,
-  to: number,
-): void {
+export function moveRow(session: DnsSession, visible: DnsRow[], from: number, to: number): void {
   if (from === to) return;
   const ordered = [...visible];
   const moved = ordered.splice(from, 1)[0];
@@ -105,8 +100,7 @@ export function addRow(session: DnsSession, input: string, type: RecordType): Ad
   }
 
   const duplicate = session.rows.find(
-    (row) =>
-      row.type === type && row.name.toLowerCase() === parsed.value.name.toLowerCase(),
+    (row) => row.type === type && row.name.toLowerCase() === parsed.value.name.toLowerCase(),
   );
   if (duplicate) {
     highlightRow(session, duplicate.id);
@@ -126,10 +120,7 @@ export function addRow(session: DnsSession, input: string, type: RecordType): Ad
 }
 
 /** Строки, которые видит пользователь: поиск, статус и расхождения. */
-export function filterRows(
-  session: DnsSession,
-  verdicts: Map<string, RowVerdict>,
-): DnsRow[] {
+export function filterRows(session: DnsSession, verdicts: Map<string, RowVerdict>): DnsRow[] {
   const search = session.filters.search.trim().toLowerCase();
   return session.rows.filter((row) => {
     if (search !== "") {

@@ -233,7 +233,8 @@ function checkDictionary(file) {
     // Формы нужны там, где эталон склоняется: язык обязан покрыть категории,
     // которые требуют его правила. Набор берётся из `Intl`, а не из числа
     // форм в русском тексте.
-    const forms = typeof ruMessages[key] === "object" ? missingForms(messages[key], categories) : [];
+    const forms =
+      typeof ruMessages[key] === "object" ? missingForms(messages[key], categories) : [];
     if (lost.length > 0 || added.length > 0 || forms.length > 0) {
       broken.push({ key, lost, added, forms });
     }

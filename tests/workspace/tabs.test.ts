@@ -239,9 +239,7 @@ test("перезапуск записывает факт в журнал", () =>
 
 test("перезапуск одиночной вкладки ничего не меняет", () => {
   reset();
-  workspace.tabs = [
-    { id: "j", kind: "journal", title: "", icon: "pi pi-history", columns: [] },
-  ];
+  workspace.tabs = [{ id: "j", kind: "journal", title: "", icon: "pi pi-history", columns: [] }];
   workspace.activeId = "j";
 
   restartTab("j");

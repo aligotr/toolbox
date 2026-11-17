@@ -73,9 +73,7 @@ test("пустой список — валидное состояние без �
 });
 
 test("битые вкладки отброшены, целые остались", () => {
-  const result = parsed(
-    fileOf([5, { kind: "workspace" }, { id: "a", kind: "other" }, tabOf("b")]),
-  );
+  const result = parsed(fileOf([5, { kind: "workspace" }, { id: "a", kind: "other" }, tabOf("b")]));
 
   assert.deepEqual(
     result.tabs.map((tab) => tab.id),
@@ -92,7 +90,12 @@ test("повтор идентификатора оставляет первую 
 
 test("второй журнал и вторые настройки отброшены", () => {
   const result = parsed(
-    fileOf([{ id: "j1", kind: "journal" }, { id: "j2", kind: "journal" }, { id: "s1", kind: "settings" }, { id: "s2", kind: "settings" }]),
+    fileOf([
+      { id: "j1", kind: "journal" },
+      { id: "j2", kind: "journal" },
+      { id: "s1", kind: "settings" },
+      { id: "s2", kind: "settings" },
+    ]),
   );
 
   assert.deepEqual(
@@ -102,9 +105,9 @@ test("второй журнал и вторые настройки отброш�
 });
 
 test("пустая вкладка теряет подпись и получает иконку по умолчанию", () => {
-  const result = parsed(fileOf([
-    { id: "a", kind: "workspace", title: "Новая вкладка", icon: "", columns: [] },
-  ]));
+  const result = parsed(
+    fileOf([{ id: "a", kind: "workspace", title: "Новая вкладка", icon: "", columns: [] }]),
+  );
 
   assert.deepEqual(result.tabs[0], {
     id: "a",
@@ -123,7 +126,12 @@ test("вкладка с колонками сохраняет подпись и 
 });
 
 test("одиночная вкладка получает иконку из констант и пустые колонки", () => {
-  const result = parsed(fileOf([{ id: "j", kind: "journal" }, { id: "s", kind: "settings" }]));
+  const result = parsed(
+    fileOf([
+      { id: "j", kind: "journal" },
+      { id: "s", kind: "settings" },
+    ]),
+  );
 
   assert.deepEqual(result.tabs[0], {
     id: "j",

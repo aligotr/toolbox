@@ -19,9 +19,7 @@ export function answersOf(cell: DnsCell | undefined): DnsAnswer[] {
 /** Время ответа из текущего или прошлого результата. */
 export function elapsedOf(cell: DnsCell | undefined): number | null {
   if (!cell) return null;
-  return cell.status === "pending"
-    ? (cell.previous?.elapsedMs ?? null)
-    : cell.elapsedMs;
+  return cell.status === "pending" ? (cell.previous?.elapsedMs ?? null) : cell.elapsedMs;
 }
 
 /** Первая запись: остальные показываются в подробностях строки. */

@@ -23,9 +23,7 @@ const props = defineProps<{ tools: ToolDescriptor[] }>();
 const confirm = useConfirm();
 
 /** Названия инструментов: папка называется идентификатором, человек — нет. */
-const titles = computed(
-  () => new Map(props.tools.map((tool) => [tool.id, tool.title])),
-);
+const titles = computed(() => new Map(props.tools.map((tool) => [tool.id, tool.title])));
 
 const logs = computed(() => storageStats.current?.logs ?? null);
 const toolData = computed(() => storageStats.current?.tools ?? []);
@@ -72,9 +70,7 @@ onMounted(() => {
       <dl class="data__summary">
         <div class="data__summary-row">
           <dt>{{ t("settings.data.logs") }}</dt>
-          <dd v-if="logs">
-            {{ filesLabel(logs.files) }} · {{ formatBytes(logs.bytes) }}
-          </dd>
+          <dd v-if="logs">{{ filesLabel(logs.files) }} · {{ formatBytes(logs.bytes) }}</dd>
         </div>
       </dl>
 

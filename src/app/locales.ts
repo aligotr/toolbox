@@ -12,11 +12,7 @@ import {
   languages,
   loadLanguages,
 } from "@/core/services/languages";
-import {
-  loadSettings,
-  setLanguage,
-  settings,
-} from "@/core/services/settings/index";
+import { loadSettings, setLanguage, settings } from "@/core/services/settings/index";
 import { loadStartupStatus } from "@/core/services/startup";
 
 /**

@@ -18,12 +18,7 @@ import type { UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { reactive, ref, toRaw, watch } from "vue";
 import type { ToolDescriptor } from "@/contracts/tools";
-import type {
-  SingletonKind,
-  TabColumn,
-  WorkspaceFile,
-  WorkspaceTab,
-} from "@/contracts/workspace";
+import type { SingletonKind, TabColumn, WorkspaceFile, WorkspaceTab } from "@/contracts/workspace";
 import { EMPTY_TAB_ICON, SINGLETON_TABS } from "../../constants";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { write, type JournalFact } from "../../infra/journal";
@@ -34,13 +29,7 @@ import {
 } from "./constants";
 import { copyColumns } from "./layout";
 import { parseWorkspaceFile } from "./parse";
-import {
-  forgetTab,
-  recentTabIds,
-  rememberTab,
-  renameTab,
-  resetRecentTabs,
-} from "./recentTabs";
+import { forgetTab, recentTabIds, rememberTab, renameTab, resetRecentTabs } from "./recentTabs";
 
 /** Состояние рабочего пространства. */
 export interface WorkspaceState {
@@ -71,11 +60,7 @@ function focusTab(id: string): void {
  * Формат один на всё приложение (ADR 0017): им пользуются и сетка, и оболочка,
  * помечающая свежие ячейки. Смена формата не должна расходиться между ними.
  */
-export function cellKey(
-  tabId: string,
-  columnIndex: number,
-  toolIndex: number,
-): string {
+export function cellKey(tabId: string, columnIndex: number, toolIndex: number): string {
   return `${tabId}:${columnIndex}:${toolIndex}`;
 }
 
@@ -148,9 +133,7 @@ function isEmptyTab(tab: WorkspaceTab): boolean {
  * следующее (ADR 0040).
  */
 function dropEmptyTabs(): void {
-  const empty = new Set(
-    workspace.tabs.filter(isEmptyTab).map((tab) => tab.id),
-  );
+  const empty = new Set(workspace.tabs.filter(isEmptyTab).map((tab) => tab.id));
   if (empty.size === 0) return;
 
   workspace.tabs = workspace.tabs.filter((tab) => !empty.has(tab.id));
@@ -162,10 +145,7 @@ function dropEmptyTabs(): void {
 
 /** Вкладка содержит инструмент хотя бы в одной колонке. */
 function tabHasTool(tab: WorkspaceTab, toolId: string): boolean {
-  return (
-    tab.kind === "workspace" &&
-    tab.columns.some((column) => column.tools.includes(toolId))
-  );
+  return tab.kind === "workspace" && tab.columns.some((column) => column.tools.includes(toolId));
 }
 
 /**
@@ -175,17 +155,13 @@ function tabHasTool(tab: WorkspaceTab, toolId: string): boolean {
  * Тогда порядок прежний: активная, затем слева направо. Он же действует
  * после перезапуска, пока пользователь ничего не выбрал (ADR 0042).
  */
-function lastActiveMatching(
-  match: (tab: WorkspaceTab) => boolean,
-): WorkspaceTab | undefined {
+function lastActiveMatching(match: (tab: WorkspaceTab) => boolean): WorkspaceTab | undefined {
   for (const id of recentTabIds()) {
     const tab = workspace.tabs.find((item) => item.id === id);
     if (tab && match(tab)) return tab;
   }
 
-  const active = workspace.tabs.find(
-    (tab) => tab.id === workspace.activeId && match(tab),
-  );
+  const active = workspace.tabs.find((tab) => tab.id === workspace.activeId && match(tab));
   return active ?? workspace.tabs.find(match);
 }
 
@@ -197,10 +173,7 @@ function lastActiveMatching(
  * иначе создаём. Пустые вкладки уступают место содержимому в обоих случаях
  * (ADR 0040).
  */
-function openUniqueTab(
-  match: (tab: WorkspaceTab) => boolean,
-  create: () => void,
-): void {
+function openUniqueTab(match: (tab: WorkspaceTab) => boolean, create: () => void): void {
   dropEmptyTabs();
 
   const existing = lastActiveMatching(match);

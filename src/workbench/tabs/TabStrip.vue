@@ -71,12 +71,7 @@ async function openMenu(tab: WorkspaceTab, event: MouseEvent): Promise<void> {
 <template>
   <nav class="tabs" :aria-label="t('tabs.strip.label')">
     <div class="tabs__viewport">
-      <div
-        ref="listEl"
-        class="tabs__list"
-        role="tablist"
-        @scroll.passive="updateScrollState"
-      >
+      <div ref="listEl" class="tabs__list" role="tablist" @scroll.passive="updateScrollState">
         <TabItem
           v-for="tab in workspace.tabs"
           :key="tab.id"

@@ -5,13 +5,7 @@
 // его меняет ещё и сайдбар. Порядок — от ежедневного к редкому.
 
 /** Идентификаторы разделов: они же ключи списка. */
-export type SettingsSection =
-  | "log"
-  | "window"
-  | "profiles"
-  | "data"
-  | "language"
-  | "app";
+export type SettingsSection = "log" | "window" | "profiles" | "data" | "language" | "app";
 
 /** Пункт вертикального списка разделов. */
 export interface SettingsSectionMeta {

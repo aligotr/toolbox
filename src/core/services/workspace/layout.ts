@@ -25,9 +25,7 @@ export function parseColumns(value: unknown): TabColumn[] {
       typeof item.width === "number" && Number.isFinite(item.width) && item.width > 0
         ? item.width
         : 1;
-    const tools = item.tools.filter(
-      (id): id is string => typeof id === "string" && id.length > 0,
-    );
+    const tools = item.tools.filter((id): id is string => typeof id === "string" && id.length > 0);
     columns.push({ width, tools });
   }
   return columns;

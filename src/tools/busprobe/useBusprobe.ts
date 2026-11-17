@@ -14,7 +14,15 @@ import { describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import { useAsyncAction } from "@/core/infra/useAsyncAction";
-import { onPong, onTrace, ping, tracedPing, type Pong, type TraceChain, type TraceStage } from "./api";
+import {
+  onPong,
+  onTrace,
+  ping,
+  tracedPing,
+  type Pong,
+  type TraceChain,
+  type TraceStage,
+} from "./api";
 import { DEFAULT_ECHO, JOURNAL_SOURCE, TRACE_DELAY_MS } from "./constants";
 
 /** Строка маршрута: этап, граница сообщения или настоящее ожидание. */

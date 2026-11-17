@@ -4,11 +4,7 @@
 // можно разобрать без Vue и Tauri. Поэтому битый документ проверяется тестом,
 // а не запуском приложения (ADR 0047).
 
-import type {
-  SingletonKind,
-  WorkspaceFile,
-  WorkspaceTab,
-} from "@/contracts/workspace";
+import type { SingletonKind, WorkspaceFile, WorkspaceTab } from "@/contracts/workspace";
 import { EMPTY_TAB_ICON, SINGLETON_TABS } from "../../constants";
 import { isRecord } from "../../infra/guards";
 import { WORKSPACE_VERSION } from "./constants";
@@ -42,8 +38,7 @@ function parseTab(value: unknown): WorkspaceTab | null {
   const columns = parseColumns(value.columns);
   // Старый файл хранил «Новая вкладка»: у пустой вкладки подпись больше
   // не читается из файла, иначе она пережила бы смену языка.
-  const title =
-    columns.length === 0 || typeof value.title !== "string" ? "" : value.title;
+  const title = columns.length === 0 || typeof value.title !== "string" ? "" : value.title;
   const icon = typeof value.icon === "string" && value.icon ? value.icon : EMPTY_TAB_ICON;
 
   return {

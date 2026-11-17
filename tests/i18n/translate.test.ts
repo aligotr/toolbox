@@ -10,22 +10,22 @@ import type { Messages } from "../../src/core/infra/i18n/types.ts";
 
 /** Эталон: русский встроенный словарь. */
 const RU: Messages = {
-  "title": "Настройки",
-  "greeting": "Профиль {name}",
-  "counted": {
+  title: "Настройки",
+  greeting: "Профиль {name}",
+  counted: {
     one: "{count} файл",
     few: "{count} файла",
     many: "{count} файлов",
     other: "{count} файла",
   },
-  "empty": "",
+  empty: "",
 };
 
 /** Выбранный словарь: английский. */
 const EN: Messages = {
-  "title": "Settings",
-  "greeting": "Profile {name}",
-  "counted": {
+  title: "Settings",
+  greeting: "Profile {name}",
+  counted: {
     one: "{count} file",
     other: "{count} files",
   },
@@ -74,9 +74,9 @@ test("битая локаль откатывает формы на русски�
 test("пропущенная форма берётся из эталона, а не из чужой категории", () => {
   // В файле только `one`: для пяти файлов русская форма `many`, а не `one`.
   const partial: Messages = {
-    "title": "x",
-    "greeting": "y",
-    "counted": { one: "{count} file" },
+    title: "x",
+    greeting: "y",
+    counted: { one: "{count} file" },
   };
   assert.equal(translate(partial, RU, "en", "counted", { count: 5 }), "5 файлов");
 });
@@ -86,5 +86,5 @@ test("набор форм без числа показывает other, а не 
 });
 
 test("пустая строка — это перевод, а не пропуск", () => {
-  assert.equal(translate({ "title": "" }, RU, "en", "title"), "");
+  assert.equal(translate({ title: "" }, RU, "en", "title"), "");
 });

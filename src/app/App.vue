@@ -105,12 +105,7 @@ onUnmounted(() => {
         </ul>
       </div>
 
-      <Button
-        class="blocked__exit"
-        :label="t('startup.exit')"
-        severity="danger"
-        @click="exitApp"
-      />
+      <Button class="blocked__exit" :label="t('startup.exit')" severity="danger" @click="exitApp" />
     </section>
   </div>
 

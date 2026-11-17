@@ -210,10 +210,7 @@ onMounted(() => {
           />
         </div>
 
-        <p
-          v-if="renamingId === profile.id && status.rename.error"
-          class="profile-row__error"
-        >
+        <p v-if="renamingId === profile.id && status.rename.error" class="profile-row__error">
           {{ status.rename.error }}
         </p>
       </li>

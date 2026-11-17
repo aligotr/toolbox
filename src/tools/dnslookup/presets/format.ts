@@ -10,13 +10,7 @@
 // загружаться.
 
 import { RECORD_TYPES } from "../constants";
-import type {
-  DnsPresetPayload,
-  DnsRow,
-  DnsSession,
-  RecordType,
-  StatusFilter,
-} from "../types";
+import type { DnsPresetPayload, DnsRow, DnsSession, RecordType, StatusFilter } from "../types";
 
 /** Разобранные настройки и число отброшенных неполных строк. */
 export interface ParsedPreset {
@@ -64,21 +58,15 @@ export function parsePresetPayload(payload: unknown): ParsedPreset | null {
       ? (source.filters as Record<string, unknown>)
       : {};
 
-  const rows = source.rows
-    .map(parseRow)
-    .filter((row): row is DnsRow => row !== null);
+  const rows = source.rows.map(parseRow).filter((row): row is DnsRow => row !== null);
 
   return {
     droppedRows: source.rows.length - rows.length,
     payload: {
       rows,
-      servers: source.servers.filter(
-        (id): id is string => typeof id === "string" && id !== "",
-      ),
+      servers: source.servers.filter((id): id is string => typeof id === "string" && id !== ""),
       hiddenServers: Array.isArray(source.hiddenServers)
-        ? source.hiddenServers.filter(
-            (id): id is string => typeof id === "string" && id !== "",
-          )
+        ? source.hiddenServers.filter((id): id is string => typeof id === "string" && id !== "")
         : [],
       filters: {
         search: typeof filters.search === "string" ? filters.search : "",

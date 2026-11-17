@@ -1,0 +1,11 @@
+# Сгенерированное и внешнее: формат задаёт не Prettier.
+dist/
+node_modules/
+# Rust и его ресурсы — не зона Prettier.
+src-tauri/
+assets/
+# Документация проекта: таблицы и переносы значимы.
+*.md
+.agents/
+.scratch/
+docs/

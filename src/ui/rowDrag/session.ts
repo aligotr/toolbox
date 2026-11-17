@@ -8,14 +8,7 @@
 import { ref, type Ref } from "vue";
 import { DRAG_THRESHOLD_PX, INTERACTIVE_SELECTOR } from "./constants";
 import { clearSource, markSource, showLine } from "./feedback";
-import {
-  boundaryAt,
-  boundaryInSpace,
-  hasText,
-  rowIndex,
-  rowOf,
-  targetIndex,
-} from "./geometry";
+import { boundaryAt, boundaryInSpace, hasText, rowIndex, rowOf, targetIndex } from "./geometry";
 import { autoScroll, scrollParentOf } from "./scroll";
 
 /** Параметры переноса: их задаёт таблица. */

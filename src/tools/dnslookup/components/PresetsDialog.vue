@@ -15,10 +15,7 @@ import Dialog from "primevue/dialog";
 import InputText from "primevue/inputtext";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, ref, watch } from "vue";
-import {
-  CONFIRM_CALM_REJECT,
-  CONFIRM_DANGER_ACCEPT,
-} from "@/core/constants";
+import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
 import { describeError } from "@/core/infra/errors";
 import { catalog, t } from "@/core/infra/i18n";
 import { PRESET_TITLE_MAX_LENGTH } from "@/core/services/presets/constants";
@@ -71,9 +68,7 @@ function isDefault(preset: Preset): boolean {
 
 /** Действие со звёздочкой: подпись зависит от текущей отметки. */
 function defaultActionLabel(preset: Preset): string {
-  return isDefault(preset)
-    ? t("dnslookup.preset.clearDefault")
-    : t("dnslookup.preset.makeDefault");
+  return isDefault(preset) ? t("dnslookup.preset.clearDefault") : t("dnslookup.preset.makeDefault");
 }
 
 /**
@@ -145,9 +140,7 @@ async function loadPreset(preset: Preset): Promise<void> {
     result.warnings.length > 0
       ? t("dnslookup.preset.loadedWarnings", {
           title: preset.title,
-          warnings: result.warnings
-            .map((warning) => t(warning.code, warning.params))
-            .join("; "),
+          warnings: result.warnings.map((warning) => t(warning.code, warning.params)).join("; "),
         })
       : t("dnslookup.preset.loaded", { title: preset.title });
   emit("applied");
@@ -161,9 +154,7 @@ function requestLoad(preset: Preset): void {
     return;
   }
 
-  const parts = [
-    t("dnslookup.preset.replaceMessage", { title: preset.title }),
-  ];
+  const parts = [t("dnslookup.preset.replaceMessage", { title: preset.title })];
   if (props.session.status.run.loading) {
     parts.push(t("dnslookup.preset.replaceRunning"));
   }
@@ -315,10 +306,7 @@ async function remove(preset: Preset): Promise<void> {
         <div class="presets__current-text">
           <template v-if="bound">
             <span class="presets__current-title">{{ session.presetTitle }}</span>
-            <small
-              v-if="changed"
-              class="presets__current-state presets__current-state--changed"
-            >
+            <small v-if="changed" class="presets__current-state presets__current-state--changed">
               {{ t("dnslookup.preset.currentChanged") }}
             </small>
           </template>
@@ -362,11 +350,7 @@ async function remove(preset: Preset): Promise<void> {
         {{ t("dnslookup.preset.listEmpty") }}
       </p>
       <ul v-else-if="dnsPresets.state.items.length > 0" class="presets__list">
-        <li
-          v-for="preset in dnsPresets.state.items"
-          :key="preset.id"
-          class="presets__item"
-        >
+        <li v-for="preset in dnsPresets.state.items" :key="preset.id" class="presets__item">
           <template v-if="renamingId === preset.id">
             <InputText
               v-model="renameTitle"
@@ -492,11 +476,7 @@ async function remove(preset: Preset): Promise<void> {
     </div>
 
     <template #footer>
-      <Button
-        :label="t('dnslookup.preset.close')"
-        text
-        @click="emit('update:visible', false)"
-      />
+      <Button :label="t('dnslookup.preset.close')" text @click="emit('update:visible', false)" />
     </template>
   </Dialog>
 </template>

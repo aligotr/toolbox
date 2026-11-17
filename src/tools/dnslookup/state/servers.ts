@@ -17,12 +17,7 @@ import { appErrorOf, describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
 import { write, type JournalFact } from "@/core/infra/journal";
 import { useAsyncAction, type AsyncAction } from "@/core/infra/useAsyncAction";
-import {
-  loadCustomServers,
-  loadSystemServers,
-  saveCustomServers,
-  type StoredServer,
-} from "../api";
+import { loadCustomServers, loadSystemServers, saveCustomServers, type StoredServer } from "../api";
 import { JOURNAL_SOURCE, presetServers, SERVER_LIMIT } from "../constants";
 import { parseServerAddress } from "../normalize";
 import type { DnsSession, ServerOption } from "../types";
@@ -180,9 +175,7 @@ async function writeServers(session: DnsSession, servers: ServerOption[]): Promi
 
   const reply = await saveCustomServers(payload);
   if (!reply.saved || reply.error) {
-    const text = reply.error
-      ? describeError(reply.error)
-      : t("dnslookup.servers.saveFailed");
+    const text = reply.error ? describeError(reply.error) : t("dnslookup.servers.saveFailed");
     if (reply.error) {
       write(JOURNAL_SOURCE, "error", "journal.dnslookup.serversSaveFailed", {
         reason: reply.error,

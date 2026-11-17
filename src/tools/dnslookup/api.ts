@@ -34,26 +34,18 @@ export async function cancelDns(runId: string): Promise<void> {
 }
 
 /** Подписка на результаты отдельных ячеек. */
-export function onDnsResult(
-  handler: (event: DnsResultEvent) => void,
-): Promise<UnlistenFn> {
+export function onDnsResult(handler: (event: DnsResultEvent) => void): Promise<UnlistenFn> {
   return subscribeEvent<DnsResultEvent>("dnslookup:result", handler);
 }
 
 /** Подписка на завершение проверки. */
-export function onDnsFinished(
-  handler: (event: DnsFinishedEvent) => void,
-): Promise<UnlistenFn> {
+export function onDnsFinished(handler: (event: DnsFinishedEvent) => void): Promise<UnlistenFn> {
   return subscribeEvent<DnsFinishedEvent>("dnslookup:finished", handler);
 }
 
 /** Запрашивает у ядра адреса системных резолверов. */
 export async function loadSystemServers(): Promise<SystemServersReply> {
-  return ask<SystemServersReply>(
-    "dnslookup:system:servers",
-    "dnslookup:system:servers:reply",
-    {},
-  );
+  return ask<SystemServersReply>("dnslookup:system:servers", "dnslookup:system:servers:reply", {});
 }
 
 /** Свой сервер в формате файла профиля. */
@@ -77,20 +69,12 @@ export interface ServersSaveReply {
 
 /** Читает свои серверы из профиля. */
 export async function loadCustomServers(): Promise<ServersLoadReply> {
-  return ask<ServersLoadReply>(
-    "dnslookup:servers:load",
-    "dnslookup:servers:load:reply",
-    {},
-  );
+  return ask<ServersLoadReply>("dnslookup:servers:load", "dnslookup:servers:load:reply", {});
 }
 
 /** Записывает свои серверы в профиль. */
-export async function saveCustomServers(
-  servers: StoredServer[],
-): Promise<ServersSaveReply> {
-  return ask<ServersSaveReply>(
-    "dnslookup:servers:save",
-    "dnslookup:servers:save:reply",
-    { servers: servers.map((server) => ({ ...server })) },
-  );
+export async function saveCustomServers(servers: StoredServer[]): Promise<ServersSaveReply> {
+  return ask<ServersSaveReply>("dnslookup:servers:save", "dnslookup:servers:save:reply", {
+    servers: servers.map((server) => ({ ...server })),
+  });
 }

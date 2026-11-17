@@ -7,7 +7,7 @@
 // Ключ — контракт `область.сущность.поле`: формулировку менять можно,
 // ключ — нет.
 
-import type { Messages } from "./types.ts"
+import type { Messages } from "./types.ts";
 
 /** Русский встроенный словарь. */
 export const ruMessages: Messages = {
@@ -18,10 +18,8 @@ export const ruMessages: Messages = {
   "startup.folder": "Папка программы",
   "startup.reason": "Причина",
   "startup.hint": "Что сделать:",
-  "startup.move":
-    "перенесите папку с программой в доступное место — например, в «Документы»;",
-  "startup.permissions":
-    "или проверьте права на папку и уберите файлы, которые мешают.",
+  "startup.move": "перенесите папку с программой в доступное место — например, в «Документы»;",
+  "startup.permissions": "или проверьте права на папку и уберите файлы, которые мешают.",
   "startup.exit": "Выйти",
 
   // ── Центр управления ────────────────────────────────────────────────────
@@ -52,13 +50,13 @@ export const ruMessages: Messages = {
     one: "Не хватает одной строки перевода — вместо неё показывается русский текст.",
     few: "Не хватает {count} строк перевода — вместо них показывается русский текст.",
     many: "Не хватает {count} строк перевода — вместо них показывается русский текст.",
-    other: "Не хватает {count} строки перевода — вместо них показывается русский текст."
+    other: "Не хватает {count} строки перевода — вместо них показывается русский текст.",
   },
   "settings.language.extra": {
     one: "В словаре {count} лишняя строка — программа её не использует.",
     few: "В словаре {count} лишние строки — программа их не использует.",
     many: "В словаре {count} лишних строк — программа их не использует.",
-    other: "В словаре {count} лишней строки — программа их не использует."
+    other: "В словаре {count} лишней строки — программа их не использует.",
   },
   "settings.language.empty": "В папке словарей пока пусто: доступен только русский.",
   "settings.language.badCode": "Код «{code}» не является тегом языка",
@@ -127,8 +125,7 @@ export const ruMessages: Messages = {
 
   // Записи журнала: формулировку можно менять, код — нет.
   "journal.settings.readError": "Настройки не прочитаны: {reason}",
-  "journal.settings.saveError":
-    "Настройки не сохранены (раздел «{section}»): {reason}",
+  "journal.settings.saveError": "Настройки не сохранены (раздел «{section}»): {reason}",
   "journal.settings.logLevel": "Уровень лога: {level}",
   "journal.settings.language": "Язык интерфейса: {language}",
   "journal.settings.windowReset": "Размер и положение окна сброшены",
@@ -143,13 +140,11 @@ export const ruMessages: Messages = {
   "journal.profiles.renameError": "Профиль не переименован: {reason}",
   "journal.profiles.moved": "Профиль «{title}» перемещён в «{target}»",
   "journal.profiles.deleteError": "Профиль не удалён: {reason}",
-  "journal.profiles.switching":
-    "Переключение на профиль «{title}», перезапуск приложения",
+  "journal.profiles.switching": "Переключение на профиль «{title}», перезапуск приложения",
   "journal.profiles.switchError": "Профиль не переключён: {reason}",
 
   "journal.presets.broken": "Пресет «{tool}» не прочитан: {reason}",
-  "journal.presets.defaultBroken":
-    "Указатель пресета по умолчанию «{tool}» не прочитан: {reason}",
+  "journal.presets.defaultBroken": "Указатель пресета по умолчанию «{tool}» не прочитан: {reason}",
   "journal.presets.readError": "Пресеты «{tool}» не прочитаны: {reason}",
   "journal.presets.created": "Сохранён пресет «{title}» ({id}) инструмента «{tool}»",
   "journal.presets.createError": "Пресет не сохранён: {reason}",
@@ -162,8 +157,7 @@ export const ruMessages: Messages = {
   "journal.presets.moved": "Пресет «{title}» перемещён в «{target}»",
   "journal.presets.deleteError": "Пресет не удалён: {reason}",
   "journal.presets.defaultCleared": "Пресет по умолчанию для «{tool}» снят",
-  "journal.presets.defaultSet":
-    "Пресет «{title}» выбран по умолчанию для «{tool}»",
+  "journal.presets.defaultSet": "Пресет «{title}» выбран по умолчанию для «{tool}»",
   "journal.presets.defaultError": "Пресет по умолчанию не изменён: {reason}",
 
   "journal.workspace.notObject":
@@ -175,10 +169,8 @@ export const ruMessages: Messages = {
   "journal.workspace.readError":
     "Рабочее пространство не прочитано: {reason}; открыта пустая вкладка",
   "journal.workspace.saveError": "Рабочее пространство не сохранено: {reason}",
-  "journal.workspace.closeSaveError":
-    "Рабочее пространство не сохранено при закрытии: {reason}",
-  "journal.workspace.closeHandlerError":
-    "Обработчик закрытия окна не установлен: {reason}",
+  "journal.workspace.closeSaveError": "Рабочее пространство не сохранено при закрытии: {reason}",
+  "journal.workspace.closeHandlerError": "Обработчик закрытия окна не установлен: {reason}",
   "journal.workspace.restarted": "Вкладка «{title}» перезапущена",
   "journal.workspace.restartedEmpty": "Пустая вкладка перезапущена",
 
@@ -189,64 +181,47 @@ export const ruMessages: Messages = {
   "journal.data.readError": "Размеры папок не прочитаны: {reason}",
   "journal.data.pruned": "Удалено старых файлов лога: {count}",
   "journal.data.pruneError": "Старые логи не удалены: {reason}",
-  "journal.data.cleared":
-    "Данные инструмента «{tool}» перемещены в «{target}»",
+  "journal.data.cleared": "Данные инструмента «{tool}» перемещены в «{target}»",
   "journal.data.clearError": "Данные инструмента «{tool}» не удалены: {reason}",
 
   "journal.languages.readError": "Словари не прочитаны: {reason}",
-  "journal.languages.unavailable":
-    "Словарь «{code}» недоступен: интерфейс показывает русский",
+  "journal.languages.unavailable": "Словарь «{code}» недоступен: интерфейс показывает русский",
   "journal.languages.exportError": "Образец словаря не выгружен: {reason}",
 
   "journal.busprobe.pingSent": "Запрос core:ping отправлен, echo=«{echo}»",
-  "journal.busprobe.pong":
-    "Ответ получен: echo=«{echo}», correlation={correlation}",
+  "journal.busprobe.pong": "Ответ получен: echo=«{echo}», correlation={correlation}",
   "journal.busprobe.pingError": "Запрос не выполнен: {reason}",
-  "journal.busprobe.traceStarted":
-    "Учебный прогон: core:ping с задержкой {delay} мс",
+  "journal.busprobe.traceStarted": "Учебный прогон: core:ping с задержкой {delay} мс",
   "journal.busprobe.traceError": "Прогон не выполнен: {reason}",
-  "journal.busprobe.pongObserver":
-    "Второй подписчик получил core:pong: at={at}",
+  "journal.busprobe.pongObserver": "Второй подписчик получил core:pong: at={at}",
   "journal.busprobe.subscribeError": "Подписка на события не создана: {reason}",
-  "journal.busprobe.traceRecorded":
-    "Цепочка записана: этапов — {stages}, время — {elapsed} мс",
+  "journal.busprobe.traceRecorded": "Цепочка записана: этапов — {stages}, время — {elapsed} мс",
   "journal.busprobe.traceFailed": "Прогон не завершился: {outcome}",
 
   "journal.dnslookup.subscribed": "Подписка на события DNS активна",
-  "journal.dnslookup.subscribeError":
-    "Подписка на события DNS не создана: {reason}",
-  "journal.dnslookup.finished":
-    "Проверка завершена: {completed} из {total} за {elapsed} мс",
-  "journal.dnslookup.cancelled":
-    "Проверка остановлена: получено {completed} из {total}",
-  "journal.dnslookup.started":
-    "Проверка запущена: запросов — {total}, серверов — {servers}",
+  "journal.dnslookup.subscribeError": "Подписка на события DNS не создана: {reason}",
+  "journal.dnslookup.finished": "Проверка завершена: {completed} из {total} за {elapsed} мс",
+  "journal.dnslookup.cancelled": "Проверка остановлена: получено {completed} из {total}",
+  "journal.dnslookup.started": "Проверка запущена: запросов — {total}, серверов — {servers}",
   "journal.dnslookup.failed": "Проверка не выполнена: {reason}",
   "journal.dnslookup.startFailed": "Проверка не запущена: {reason}",
-  "journal.dnslookup.stopped":
-    "Проверка остановлена: получено {done} из {total}",
+  "journal.dnslookup.stopped": "Проверка остановлена: получено {done} из {total}",
   "journal.dnslookup.stopFailed": "Не удалось остановить проверку: {reason}",
   "journal.dnslookup.cleared": "Таблица очищена",
-  "journal.dnslookup.leaveStopError":
-    "Проверка покинутой вкладки не остановлена: {reason}",
-  "journal.dnslookup.systemServersFailed":
-    "Системные резолверы не прочитаны: {reason}",
-  "journal.dnslookup.customServersFailed":
-    "Свои серверы не прочитаны: {reason}",
-  "journal.dnslookup.serversSaveFailed":
-    "Свои серверы не сохранены: {reason}",
+  "journal.dnslookup.leaveStopError": "Проверка покинутой вкладки не остановлена: {reason}",
+  "journal.dnslookup.systemServersFailed": "Системные резолверы не прочитаны: {reason}",
+  "journal.dnslookup.customServersFailed": "Свои серверы не прочитаны: {reason}",
+  "journal.dnslookup.serversSaveFailed": "Свои серверы не сохранены: {reason}",
   "journal.dnslookup.serverAdded": "Свой сервер добавлен: {address}",
   "journal.dnslookup.serverRemoved": "Свой сервер удалён",
   "journal.dnslookup.csvFile": "CSV выгружен: строк — {rows}, файл",
-  "journal.dnslookup.csvClipboard":
-    "CSV выгружен: строк — {rows}, буфер обмена",
+  "journal.dnslookup.csvClipboard": "CSV выгружен: строк — {rows}, буфер обмена",
   "journal.dnslookup.defaultPresetMissing":
     "Пресет по умолчанию «{id}» не найден: вкладка открыта пустой",
   "journal.dnslookup.presetLoaded":
     "Пресет «{title}» загружен: строк — {rows}, серверов — {servers}",
   "journal.dnslookup.reverted": "Изменения настроек отменены",
-  "journal.dnslookup.revertedRestarted":
-    "Изменения отменены: строк — {rows}, серверов — {servers}",
+  "journal.dnslookup.revertedRestarted": "Изменения отменены: строк — {rows}, серверов — {servers}",
 
   // ── Количество ───────────────────────────────────────────────────────────
   "count.presets": {
@@ -291,7 +266,8 @@ export const ruMessages: Messages = {
     one: "Файлы лога старше {count} дня будут удалены. Свежие записи останутся: по ним ещё можно разбирать поломки.",
     few: "Файлы лога старше {count} дней будут удалены. Свежие записи останутся: по ним ещё можно разбирать поломки.",
     many: "Файлы лога старше {count} дней будут удалены. Свежие записи останутся: по ним ещё можно разбирать поломки.",
-    other: "Файлы лога старше {count} дня будут удалены. Свежие записи останутся: по ним ещё можно разбирать поломки.",
+    other:
+      "Файлы лога старше {count} дня будут удалены. Свежие записи останутся: по ним ещё можно разбирать поломки.",
   },
   "settings.log.pruneAccept": "Очистить",
   "settings.log.pruneReject": "Отмена",
@@ -384,8 +360,7 @@ export const ruMessages: Messages = {
   "tools.dnslookup.description": "Проверка и сравнение ответов DNS-серверов",
 
   // ── Busprobe ─────────────────────────────────────────────────────────────
-  "busprobe.view.lead":
-    "Самопроверка шины: настоящий запрос core:ping и ответ core:pong.",
+  "busprobe.view.lead": "Самопроверка шины: настоящий запрос core:ping и ответ core:pong.",
   "busprobe.view.badgePing": "идёт запрос",
   "busprobe.view.badgeTrace": "идёт прогон",
   "busprobe.view.badgeTraced": "путь записан",
@@ -468,8 +443,7 @@ export const ruMessages: Messages = {
   "dnslookup.view.systemLoading": "Системные резолверы: загрузка…",
   "dnslookup.view.systemMissing": "Системные резолверы не найдены",
   "dnslookup.view.systemList": "Системные резолверы: {list}",
-  "dnslookup.view.exportClipboard":
-    "Скачивание недоступно: CSV скопирован в буфер, строк: {count}",
+  "dnslookup.view.exportClipboard": "Скачивание недоступно: CSV скопирован в буфер, строк: {count}",
   "dnslookup.view.exportWithCopy": "Экспортировано строк: {count} (копия в буфере)",
   "dnslookup.view.exportDone": "Экспортировано строк: {count}",
   "dnslookup.view.exportFailed": "Не удалось выгрузить CSV: {reason}",
@@ -521,8 +495,7 @@ export const ruMessages: Messages = {
   "dnslookup.servers.name": "Название (необязательно)",
   "dnslookup.servers.namePlaceholder": "Локальный DNS",
   "dnslookup.servers.nameAria": "Название DNS-сервера",
-  "dnslookup.servers.hint":
-    "Формат: IPv4, IPv4:порт, [IPv6]:порт. Порт по умолчанию — 53.",
+  "dnslookup.servers.hint": "Формат: IPv4, IPv4:порт, [IPv6]:порт. Порт по умолчанию — 53.",
   "dnslookup.servers.blocked":
     "Сохранение запрещено: исправьте или удалите файл своих серверов в профиле.",
   "dnslookup.servers.duplicate": "Адрес уже добавлен",
@@ -546,12 +519,9 @@ export const ruMessages: Messages = {
   "dnslookup.preset.badgeDefault": "по умолчанию",
   "dnslookup.preset.unknownSavedAt": "время не указано",
   "dnslookup.preset.defaultError": "Пресет по умолчанию не изменён.",
-  "dnslookup.preset.defaultCleared":
-    "Пресет по умолчанию снят: новые вкладки открываются пустыми.",
-  "dnslookup.preset.defaultSet":
-    "Пресет «{title}» будет загружаться в новых вкладках.",
-  "dnslookup.preset.loadFailed":
-    "Пресет «{title}» не загружен: настройки не разобраны.",
+  "dnslookup.preset.defaultCleared": "Пресет по умолчанию снят: новые вкладки открываются пустыми.",
+  "dnslookup.preset.defaultSet": "Пресет «{title}» будет загружаться в новых вкладках.",
+  "dnslookup.preset.loadFailed": "Пресет «{title}» не загружен: настройки не разобраны.",
   "dnslookup.preset.loadError": "Пресет «{title}» не загружен: {reason}",
   "dnslookup.preset.loaded": "Загружен пресет «{title}».",
   "dnslookup.preset.loadedWarnings": "Загружен пресет «{title}». {warnings}.",
@@ -562,8 +532,7 @@ export const ruMessages: Messages = {
     "Изменения отменены. Таблица запросов изменилась: результаты очищены, проверка запущена заново.",
   "dnslookup.preset.revertFailed": "Изменения не отменены: {reason}",
   "dnslookup.preset.notReverted": "Нет открытого пресета: отменять нечего.",
-  "dnslookup.preset.snapshotBroken":
-    "Настройки открытого пресета не разобраны: откат невозможен.",
+  "dnslookup.preset.snapshotBroken": "Настройки открытого пресета не разобраны: откат невозможен.",
   "dnslookup.preset.created": "Сохранён пресет «{title}».",
   "dnslookup.preset.notCreated": "Пресет не сохранён.",
   "dnslookup.preset.renamed": "Пресет переименован: «{title}».",
@@ -586,8 +555,7 @@ export const ruMessages: Messages = {
   "dnslookup.preset.dialogTitle": "Пресеты настроек",
   "dnslookup.preset.currentChanged": "настройки изменены",
   "dnslookup.preset.none": "Пресет не выбран",
-  "dnslookup.preset.noneHint":
-    "Сохраните текущие настройки отдельным пресетом.",
+  "dnslookup.preset.noneHint": "Сохраните текущие настройки отдельным пресетом.",
   "dnslookup.preset.listLoading": "Список пресетов читается…",
   "dnslookup.preset.listEmpty":
     "Пресетов пока нет. Настройте инструмент и сохраните настройки первым пресетом.",
@@ -615,8 +583,7 @@ export const ruMessages: Messages = {
     many: "выбраны только {count} серверов",
     other: "выбраны только {count} сервера",
   },
-  "dnslookup.preset.warnNoServers":
-    "в пресете не было серверов: взят набор по умолчанию",
+  "dnslookup.preset.warnNoServers": "в пресете не было серверов: взят набор по умолчанию",
   "dnslookup.preset.serversUnread":
     "Пресет не загружен: свои серверы не прочитаны ({reason}). Исправьте файл и повторите.",
 
@@ -628,8 +595,7 @@ export const ruMessages: Messages = {
   "dnslookup.validate.badName": "Некорректное имя «{name}»",
   "dnslookup.validate.nameTooLong": "Имя длиннее {limit} символов",
   "dnslookup.validate.emptyLabel": "В имени есть пустая метка",
-  "dnslookup.validate.labelTooLong":
-    "Метка «{label}» длиннее {limit} символов",
+  "dnslookup.validate.labelTooLong": "Метка «{label}» длиннее {limit} символов",
   "dnslookup.validate.badChar":
     "Недопустимый символ в «{label}»: разрешены буквы, цифры, «-» и «_»",
   "dnslookup.validate.serverEmpty": "Введите адрес сервера",
@@ -645,8 +611,7 @@ export const ruMessages: Messages = {
   "dnslookup.run.rejected": "Проверка отклонена ядром",
   "dnslookup.run.notStarted": "Проверка не запущена: {reason}",
   "dnslookup.run.stopFailed": "Не удалось остановить проверку: {reason}",
-  "dnslookup.run.subscribeFailed":
-    "Подписка на события DNS не создана: {reason}",
+  "dnslookup.run.subscribeFailed": "Подписка на события DNS не создана: {reason}",
 
   // ── DNSlookup: CSV ───────────────────────────────────────────────────────
   "dnslookup.csv.domain": "Домен",
@@ -697,34 +662,28 @@ export const ruMessages: Messages = {
   "errors.storage.noFolder": "У пути к программе нет папки: {path}",
   "errors.storage.create": "Не удалось создать папку «{path}»: {reason}",
   "errors.storage.write": "Не удалось записать «{path}»: {reason}",
-  "errors.storage.pathIsFile":
-    "По пути «{path}» уже лежит файл, а программа ожидает папку",
+  "errors.storage.pathIsFile": "По пути «{path}» уже лежит файл, а программа ожидает папку",
   "errors.storage.denied": "Нет прав на запись в «{path}»",
   "errors.workspace.broken": "Файл «{path}» не разобран как JSON: {reason}",
   "errors.workspace.notObject": "Файл «{path}» должен содержать объект JSON",
-  "errors.workspace.saveNotObject":
-    "Рабочее пространство должно быть объектом JSON",
+  "errors.workspace.saveNotObject": "Рабочее пространство должно быть объектом JSON",
   "errors.workspace.serialize": "Рабочее пространство не сериализовано: {reason}",
-  "errors.settings.read":
-    "Не удалось прочитать «{path}»: {reason}; взяты значения по умолчанию",
+  "errors.settings.read": "Не удалось прочитать «{path}»: {reason}; взяты значения по умолчанию",
   "errors.settings.broken":
     "Файл «{path}» не разобран как JSON: {reason}; взяты значения по умолчанию",
-  "errors.settings.notObject":
-    "Файл «{path}» должен содержать объект; взяты значения по умолчанию",
+  "errors.settings.notObject": "Файл «{path}» должен содержать объект; взяты значения по умолчанию",
   "errors.settings.version":
     "В файле «{path}» версия схемы {version}, программа знает {expected}; файл прочитан как есть",
   "errors.settings.versionType":
     "Поле version в «{path}» должно быть числом; взята версия {expected}",
   "errors.settings.profileType":
     "Поле active_profile в «{path}» должно быть строкой; взято «{profile}»",
-  "errors.settings.profileInvalid":
-    "Поле active_profile в «{path}» не годится; взято «{profile}»",
+  "errors.settings.profileInvalid": "Поле active_profile в «{path}» не годится; взято «{profile}»",
   "errors.settings.section":
     "Раздел «{section}» в «{path}» не прочитан: {reason}; взяты значения по умолчанию",
   "errors.settings.serialize": "Настройки не сериализованы: {reason}",
   "errors.settings.unknownSection": "Неизвестный раздел настроек: «{section}»",
-  "errors.settings.sectionSerialize":
-    "Раздел «{section}» не сериализован: {reason}",
+  "errors.settings.sectionSerialize": "Раздел «{section}» не сериализован: {reason}",
   "errors.settings.sectionNotObject": "Раздел «{section}» не является объектом",
   "errors.settings.sectionPatch": "Раздел «{section}» должен быть объектом",
   "errors.settings.sectionRejected": "Раздел «{section}» не принят: {reason}",
@@ -732,20 +691,17 @@ export const ruMessages: Messages = {
   "errors.languages.read": "Не удалось прочитать «{path}»: {reason}",
   "errors.languages.invalidCode": "Недопустимый код языка «{code}»",
   "errors.languages.sampleNotObject": "Образец словаря должен быть объектом",
-  "errors.languages.exists":
-    "Файл «{path}» уже существует: образец не перезаписывается",
+  "errors.languages.exists": "Файл «{path}» уже существует: образец не перезаписывается",
   "errors.languages.serialize": "Образец словаря не сериализован: {reason}",
   "errors.languages.parse": "Строка {line}, столбец {column}: {reason}",
   "errors.languages.parsePlain": "{reason}",
-  "errors.languages.notObject":
-    "Ожидался объект с полями «name» и «messages»",
+  "errors.languages.notObject": "Ожидался объект с полями «name» и «messages»",
   "errors.languages.messagesType": "Поле «messages» должно быть объектом",
   "errors.languages.messagesMissing": "Нет поля «messages»",
   "errors.languages.category":
     "Ключ «{key}»: неизвестная категория склонения «{category}»; допустимы zero, one, two, few, many, other",
   "errors.languages.forms": "Ключ «{key}»: формы должны быть строками",
-  "errors.languages.message":
-    "Ключ «{key}» должен быть строкой или набором форм",
+  "errors.languages.message": "Ключ «{key}» должен быть строкой или набором форм",
   "errors.data.invalidTool": "Недопустимый идентификатор инструмента",
   "errors.data.missing": "Данных инструмента «{tool}» нет",
   "errors.data.move": "Не удалось перенести «{path}» в «{target}»: {reason}",
@@ -757,17 +713,14 @@ export const ruMessages: Messages = {
   "errors.dnslookup.noStorage": "Хранилище профиля недоступно",
   "errors.dnslookup.noResolvers": "Системные резолверы не найдены",
   "errors.dnslookup.emptyQueries": "Список запросов пуст",
-  "errors.dnslookup.tooManyQueries":
-    "Слишком много запросов: {count}, предел {limit}",
+  "errors.dnslookup.tooManyQueries": "Слишком много запросов: {count}, предел {limit}",
   "errors.dnslookup.noServers": "Не выбран ни один сервер",
-  "errors.dnslookup.tooManyServers":
-    "Слишком много серверов: {count}, предел {limit}",
+  "errors.dnslookup.tooManyServers": "Слишком много серверов: {count}, предел {limit}",
   "errors.dnslookup.duplicateServer": "Сервер {address} указан дважды",
   "errors.dnslookup.unknownServer": "Неизвестный сервер «{id}»",
   "errors.dnslookup.recordType": "Неизвестный тип записи «{value}»",
   "errors.dnslookup.emptyName": "Имя домена пустое",
-  "errors.dnslookup.ipForType":
-    "Для типа {recordType} укажите доменное имя, а не IP-адрес",
+  "errors.dnslookup.ipForType": "Для типа {recordType} укажите доменное имя, а не IP-адрес",
   "errors.dnslookup.badName": "Некорректное имя «{name}»: {reason}",
   "errors.dnslookup.reverse": "Не удалось построить reverse-имя: {reason}",
   "errors.dnslookup.emptyAddress": "Адрес сервера пустой",
@@ -787,45 +740,36 @@ export const ruMessages: Messages = {
     "Неподдерживаемая версия файла «{path}»: {version}; ожидалась {expected}",
   "errors.dnslookup.servers.serialize": "Свои серверы не сериализованы: {reason}",
   "errors.dnslookup.servers.emptyId": "У своего сервера пустой идентификатор",
-  "errors.dnslookup.servers.duplicateId":
-    "Идентификатор сервера «{id}» повторяется",
+  "errors.dnslookup.servers.duplicateId": "Идентификатор сервера «{id}» повторяется",
   "errors.dnslookup.servers.duplicateAddress": "Сервер {address} указан дважды",
-  "errors.dnslookup.servers.system":
-    "Не удалось прочитать сетевые адаптеры: {reason}",
+  "errors.dnslookup.servers.system": "Не удалось прочитать сетевые адаптеры: {reason}",
   "errors.profiles.read": "Не удалось прочитать «{path}»: {reason}",
   "errors.profiles.create": "Не удалось создать «{path}»: {reason}",
   "errors.profiles.move": "Не удалось перенести «{path}» в «{target}»: {reason}",
   "errors.profiles.notFound": "Профиль «{id}» не найден",
-  "errors.profiles.active":
-    "Нельзя удалить активный профиль: сначала переключитесь на другой",
+  "errors.profiles.active": "Нельзя удалить активный профиль: сначала переключитесь на другой",
   "errors.profiles.emptyId": "Идентификатор профиля пуст",
-  "errors.profiles.invalidId":
-    "В идентификаторе профиля допустимы латиница, цифры, «-» и «_»",
+  "errors.profiles.invalidId": "В идентификаторе профиля допустимы латиница, цифры, «-» и «_»",
   "errors.profiles.emptyTitle": "Название профиля не может быть пустым",
   "errors.profiles.longTitle": "Название профиля длиннее {limit} символов",
   "errors.profiles.serialize": "Профиль не сериализован: {reason}",
-  "errors.profiles.broken":
-    "Файл профиля «{path}» не разобран: {reason}; умолчания скрыты",
+  "errors.profiles.broken": "Файл профиля «{path}» не разобран: {reason}; умолчания скрыты",
   "errors.presets.read": "Не удалось прочитать «{path}»: {reason}",
   "errors.presets.create": "Не удалось создать «{path}»: {reason}",
   "errors.presets.move": "Не удалось перенести «{path}» в «{target}»: {reason}",
   "errors.presets.invalidTool": "Недопустимый идентификатор инструмента",
   "errors.presets.notFound": "Пресет «{id}» не найден",
   "errors.presets.emptyId": "Идентификатор пресета пуст",
-  "errors.presets.invalidId":
-    "В идентификаторе пресета допустимы латиница, цифры, «-» и «_»",
-  "errors.presets.missing":
-    "Файл «{path}» исчез между чтением папки и чтением пресета",
+  "errors.presets.invalidId": "В идентификаторе пресета допустимы латиница, цифры, «-» и «_»",
+  "errors.presets.missing": "Файл «{path}» исчез между чтением папки и чтением пресета",
   "errors.presets.broken": "Файл «{path}» не разобран: {reason}",
   "errors.presets.notObject": "Файл «{path}» должен содержать объект пресета",
-  "errors.presets.version":
-    "Пресет «{path}» записан в версии {version}, ожидалась {expected}",
-  "errors.presets.tool":
-    "Пресет «{path}» относится к инструменту «{tool}», а не к «{expected}»",
+  "errors.presets.version": "Пресет «{path}» записан в версии {version}, ожидалась {expected}",
+  "errors.presets.tool": "Пресет «{path}» относится к инструменту «{tool}», а не к «{expected}»",
   "errors.presets.payloadFile":
     "Пресет «{path}» не содержит настроек: payload должен быть JSON-объектом",
   "errors.presets.serialize": "Пресет не сериализован: {reason}",
   "errors.presets.payload": "Настройки пресета должны быть JSON-объектом",
   "errors.presets.emptyTitle": "Название пресета не может быть пустым",
   "errors.presets.longTitle": "Название пресета длиннее {limit} символов",
-}
+};

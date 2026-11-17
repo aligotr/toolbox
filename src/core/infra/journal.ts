@@ -86,9 +86,7 @@ function messageParams(params: JournalParams): MessageParams {
 
 /** Непереведённая запись: код и данные, а не пустая строка. */
 function fallbackText(entry: JournalEntry): string {
-  const pairs = Object.entries(entry.params).map(
-    ([name, value]) => `${name}=${paramText(value)}`,
-  );
+  const pairs = Object.entries(entry.params).map(([name, value]) => `${name}=${paramText(value)}`);
   return pairs.length > 0 ? `${entry.code} (${pairs.join(", ")})` : entry.code;
 }
 

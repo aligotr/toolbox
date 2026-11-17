@@ -81,8 +81,7 @@ export function useDnslookup(props: ToolCellProps) {
   );
 
   const canRun = computed(
-    () =>
-      session.rows.length > 0 && session.servers.length > 0 && !session.status.run.loading,
+    () => session.rows.length > 0 && session.servers.length > 0 && !session.status.run.loading,
   );
 
   const running = computed(() => session.status.run.loading);
@@ -145,8 +144,7 @@ export function useDnslookup(props: ToolCellProps) {
       void runRows(session, [rowId]);
     },
     removeRow: (rowId: string): void => removeRow(session, rowId),
-    moveRow: (from: number, to: number): void =>
-      moveRow(session, visibleRows.value, from, to),
+    moveRow: (from: number, to: number): void => moveRow(session, visibleRows.value, from, to),
     refreshServers: (): void => {
       void refreshServers(session);
     },

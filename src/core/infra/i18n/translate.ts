@@ -24,9 +24,7 @@ export function translate(
 ): string {
   // Эталон читается по своим правилам: русская форма `many` нужна и тогда,
   // когда интерфейс переключён на язык с другой системой склонений.
-  const text =
-    pick(messages[key], locale, params) ??
-    pick(fallback[key], FALLBACK_LOCALE, params);
+  const text = pick(messages[key], locale, params) ?? pick(fallback[key], FALLBACK_LOCALE, params);
 
   if (text === undefined) return key;
   return interpolate(text, params, locale);

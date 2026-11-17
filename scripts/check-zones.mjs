@@ -41,18 +41,13 @@ function key(file) {
  * `@/` указывает на `src/`, поэтому межслойный импорт не должен проскакивать
  * мимо стража. Пакеты нужны контрактам: им запрещён стек Vue и Tauri.
  */
-const SPECIFIERS = [
-  /\b(?:from|import)\s+"([^"]+)"/g,
-  /\bimport\s*\(\s*"([^"]+)"\s*\)/g,
-];
+const SPECIFIERS = [/\b(?:from|import)\s+"([^"]+)"/g, /\bimport\s*\(\s*"([^"]+)"\s*\)/g];
 
 /** Путь цели импорта в терминах `src/...`; пакет остаётся своим именем. */
 function resolveSpecifier(file, specifier) {
   if (specifier.startsWith("@/")) return `src/${specifier.slice(2)}`;
   if (!specifier.startsWith(".")) return specifier;
-  return path
-    .relative(root, path.resolve(path.dirname(file), specifier))
-    .replaceAll("\\", "/");
+  return path.relative(root, path.resolve(path.dirname(file), specifier)).replaceAll("\\", "/");
 }
 
 function imports(file) {

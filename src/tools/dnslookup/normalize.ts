@@ -35,8 +35,7 @@ export interface ParsedAddress {
 }
 
 export type AddressResult =
-  | { ok: true; value: ParsedAddress }
-  | { ok: false; code: string; params: MessageParams };
+  { ok: true; value: ParsedAddress } | { ok: false; code: string; params: MessageParams };
 
 /**
  * Разбирает домен или IP с учётом типа записи.
@@ -132,15 +131,12 @@ function toAscii(display: string): string | null {
   }
 
   // Хост URL уже в нижнем регистре и punycode; завершающая точка остаётся.
-  return url.hostname.endsWith(".")
-    ? url.hostname.slice(0, -1)
-    : url.hostname;
+  return url.hostname.endsWith(".") ? url.hostname.slice(0, -1) : url.hostname;
 }
 
 /** Результат разбора адреса сервера: всегда с явным портом. */
 export type ServerAddressResult =
-  | { ok: true; address: string }
-  | { ok: false; code: string; params: MessageParams };
+  { ok: true; address: string } | { ok: false; code: string; params: MessageParams };
 
 /**
  * Разбирает адрес своего сервера: `IP`, `IP:порт`, `[IPv6]:порт`.

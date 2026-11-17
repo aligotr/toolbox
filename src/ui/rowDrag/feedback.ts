@@ -3,12 +3,7 @@
 // Классы не собираются в разметке: помощник сам ставит и снимает их, поэтому
 // таблица не дублирует имена и не зависит от внутреннего устройства переноса.
 
-import {
-  ACTIVE_CLASS,
-  LINE_BOTTOM_CLASS,
-  LINE_TOP_CLASS,
-  SOURCE_CLASS,
-} from "./constants";
+import { ACTIVE_CLASS, LINE_BOTTOM_CLASS, LINE_TOP_CLASS, SOURCE_CLASS } from "./constants";
 import { dataRows } from "./geometry";
 
 /** Начало переноса: курсор, запрет выделения и приглушённая строка. */
@@ -19,10 +14,7 @@ export function markSource(container: HTMLElement, source: HTMLElement): void {
 }
 
 /** Снятие подсветки: контейнер и строка возвращаются в обычный вид. */
-export function clearSource(
-  container: HTMLElement | null,
-  source: HTMLElement | null,
-): void {
+export function clearSource(container: HTMLElement | null, source: HTMLElement | null): void {
   container?.classList.remove(ACTIVE_CLASS);
   source?.classList.remove(SOURCE_CLASS);
   document.body.style.cursor = "";
@@ -41,9 +33,7 @@ export function showLine(
 ): void {
   if (!container) return;
 
-  for (const node of container.querySelectorAll(
-    `.${LINE_TOP_CLASS}, .${LINE_BOTTOM_CLASS}`,
-  )) {
+  for (const node of container.querySelectorAll(`.${LINE_TOP_CLASS}, .${LINE_BOTTOM_CLASS}`)) {
     node.classList.remove(LINE_TOP_CLASS, LINE_BOTTOM_CLASS);
   }
   if (boundary === null) return;

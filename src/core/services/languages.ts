@@ -6,11 +6,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { reactive } from "vue";
-import type {
-  DictionaryMessage,
-  LanguageDocument,
-  LanguageSummary,
-} from "@/contracts/languages";
+import type { DictionaryMessage, LanguageDocument, LanguageSummary } from "@/contracts/languages";
 import type { AppError } from "@/contracts/errors";
 import { JOURNAL_CORE_SOURCE } from "../infra/constants";
 import { appErrorOf, describeError } from "../infra/errors";
@@ -138,9 +134,7 @@ async function readEntry(summary: LanguageSummary): Promise<LanguageEntry> {
     return {
       ...summary,
       name: file.name,
-      missing: referenceKeys.filter(
-        (key) => !isTranslated(key, file.messages, categories),
-      ).length,
+      missing: referenceKeys.filter((key) => !isTranslated(key, file.messages, categories)).length,
       extra: keys.filter((key) => !referenceSet.has(key)).length,
     };
   } catch (error) {

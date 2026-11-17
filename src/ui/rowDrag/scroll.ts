@@ -13,10 +13,7 @@ export function scrollParentOf(element: HTMLElement): HTMLElement | null {
     node = node.parentElement
   ) {
     const overflow = getComputedStyle(node).overflowY;
-    if (
-      (overflow === "auto" || overflow === "scroll") &&
-      node.scrollHeight > node.clientHeight
-    ) {
+    if ((overflow === "auto" || overflow === "scroll") && node.scrollHeight > node.clientHeight) {
       return node;
     }
   }

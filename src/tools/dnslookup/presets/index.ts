@@ -44,10 +44,7 @@ export function dnsPresetChanged(session: DnsSession): boolean {
  * загрузку. Пропавший или неразобранный пресет оставляет вкладку пустой,
  * а причину пишет в журнал — тихо подменять настройки нельзя.
  */
-export async function applyDefaultPreset(
-  session: DnsSession,
-  cellKey: string,
-): Promise<void> {
+export async function applyDefaultPreset(session: DnsSession, cellKey: string): Promise<void> {
   if (!takeFreshCell(cellKey)) return;
 
   if (!dnsPresets.state.loaded) await dnsPresets.load();
@@ -57,12 +54,7 @@ export async function applyDefaultPreset(
 
   const preset = dnsPresets.state.items.find((item) => item.id === id);
   if (!preset) {
-    write(
-      JOURNAL_SOURCE,
-      "error",
-      "journal.dnslookup.defaultPresetMissing",
-      { id },
-    );
+    write(JOURNAL_SOURCE, "error", "journal.dnslookup.defaultPresetMissing", { id });
     return;
   }
 
@@ -77,9 +69,7 @@ export async function applyDefaultPreset(
 }
 
 /** Сохраняет текущие настройки в пресет, к которому привязан сеанс. */
-export async function savePresetToCurrent(
-  session: DnsSession,
-): Promise<Preset | null> {
+export async function savePresetToCurrent(session: DnsSession): Promise<Preset | null> {
   if (session.presetId === null) return null;
 
   // Снимок снимается до записи: правка во время сохранения не должна
@@ -114,10 +104,7 @@ export function adoptPresetTitle(session: DnsSession, preset: Preset): void {
  * Снимок при этом теряется: сохранение после удаления создаст новый пресет,
  * а не перезапишет чужой файл.
  */
-export function releaseDeletedPreset(
-  session: DnsSession,
-  presetId: string,
-): void {
+export function releaseDeletedPreset(session: DnsSession, presetId: string): void {
   if (session.presetId !== presetId) return;
   session.presetId = null;
   session.presetTitle = null;

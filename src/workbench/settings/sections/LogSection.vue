@@ -10,16 +10,17 @@ import Select from "primevue/select";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted, ref } from "vue";
 import type { LogLevel } from "@/contracts/settings";
-import {
-  appInfo,
-  loadAppInfo,
-  openFolder,
-  status as appStatus,
-} from "@/core/services/appInfo";
+import { appInfo, loadAppInfo, openFolder, status as appStatus } from "@/core/services/appInfo";
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
 import { pruneLogs, status as dataStatus } from "@/core/services/data";
-import { loadSettings, logLevel, setLogLevel, settings, status } from "@/core/services/settings/index";
+import {
+  loadSettings,
+  logLevel,
+  setLogLevel,
+  settings,
+  status,
+} from "@/core/services/settings/index";
 import { logLevelOptions } from "../logLevels";
 
 const confirm = useConfirm();

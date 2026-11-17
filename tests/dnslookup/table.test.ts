@@ -7,7 +7,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { CellStatus, DnsCell, DnsSession, DnsRow } from "../../src/tools/dnslookup/types.ts";
-import { buildVerdicts, cellsMatch, matchesStatus } from "../../src/tools/dnslookup/state/compare.ts";
+import {
+  buildVerdicts,
+  cellsMatch,
+  matchesStatus,
+} from "../../src/tools/dnslookup/state/compare.ts";
 import { moveRow, removeRow } from "../../src/tools/dnslookup/state/rows.ts";
 
 /** Ячейка с ответом: статус и значения задаёт тест. */

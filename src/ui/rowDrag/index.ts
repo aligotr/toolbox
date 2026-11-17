@@ -16,10 +16,7 @@ import "./rowDrag.css";
 export type { RowDragOptions } from "./session";
 
 /** Подключение переноса строк к контейнеру таблицы. */
-export function useRowDrag(
-  container: Ref<HTMLElement | null>,
-  options: RowDragOptions,
-) {
+export function useRowDrag(container: Ref<HTMLElement | null>, options: RowDragOptions) {
   const session = createDragSession(container, options);
 
   onMounted(() => {
