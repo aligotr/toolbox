@@ -13,6 +13,7 @@ use std::str::FromStr;
 use hickory_proto::rr::{Name, RecordType};
 use serde::{Deserialize, Serialize};
 
+use crate::core::infra::error::{fail, AppError, AppResult};
 use crate::core::infra::message::{Command, Event, Message};
 
 use super::servers::StoredServer;
@@ -66,7 +67,7 @@ pub struct DnsRunAccepted {
     pub run_id: String,
     pub accepted: bool,
     pub query_count: usize,
-    pub error: Option<String>,
+    pub error: Option<AppError>,
     pub correlation_id: Option<String>,
 }
 
@@ -87,7 +88,7 @@ pub struct DnsResult {
     pub status: &'static str,
     pub answers: Vec<Answer>,
     pub elapsed_ms: Option<u64>,
-    pub error: Option<String>,
+    pub error: Option<AppError>,
 }
 
 impl Message for DnsResult {
@@ -140,7 +141,7 @@ impl Event for SystemServersRequest {}
 #[derive(Debug, Serialize)]
 pub struct SystemServersReply {
     pub servers: Vec<String>,
-    pub error: Option<String>,
+    pub error: Option<AppError>,
     pub correlation_id: Option<String>,
 }
 
@@ -167,7 +168,7 @@ impl Event for ServersLoad {}
 #[derive(Debug, Serialize)]
 pub struct ServersLoadReply {
     pub servers: Vec<StoredServer>,
-    pub error: Option<String>,
+    pub error: Option<AppError>,
     pub correlation_id: Option<String>,
 }
 
@@ -198,7 +199,7 @@ impl Event for ServersSave {}
 #[derive(Debug, Serialize)]
 pub struct ServersSaveReply {
     pub saved: bool,
-    pub error: Option<String>,
+    pub error: Option<AppError>,
     pub correlation_id: Option<String>,
 }
 
@@ -241,31 +242,47 @@ pub struct PreparedRun {
     /// Адреса системных резолверов, если среди серверов есть «Системный».
     pub system_addresses: Vec<SocketAddr>,
     /// Причина, по которой системные адреса не получены.
-    pub system_error: Option<String>,
+    pub system_error: Option<AppError>,
 }
 
 /// Проверяет запрос и превращает его в план выполнения.
-pub fn prepare(run: &DnsRun) -> Result<PreparedRun, String> {
+pub fn prepare(run: &DnsRun) -> AppResult<PreparedRun> {
     if run.run_id.trim().is_empty() {
-        return Err("Не указан идентификатор проверки".to_owned());
+        return fail!(
+            "errors.dnslookup.runId",
+            "Не указан идентификатор проверки"
+        );
     }
     if run.queries.is_empty() {
-        return Err("Список запросов пуст".to_owned());
+        return fail!("errors.dnslookup.emptyQueries", "Список запросов пуст");
     }
     if run.queries.len() > MAX_QUERIES {
-        return Err(format!(
-            "Слишком много запросов: {}, предел {MAX_QUERIES}",
-            run.queries.len()
-        ));
+        return fail!(
+            "errors.dnslookup.tooManyQueries",
+            format!(
+                "Слишком много запросов: {}, предел {MAX_QUERIES}",
+                run.queries.len()
+            ),
+            count = run.queries.len(),
+            limit = MAX_QUERIES,
+        );
     }
     if run.servers.is_empty() {
-        return Err("Не выбран ни один сервер".to_owned());
+        return fail!(
+            "errors.dnslookup.noServers",
+            "Не выбран ни один сервер"
+        );
     }
     if run.servers.len() > MAX_SERVERS {
-        return Err(format!(
-            "Слишком много серверов: {}, предел {MAX_SERVERS}",
-            run.servers.len()
-        ));
+        return fail!(
+            "errors.dnslookup.tooManyServers",
+            format!(
+                "Слишком много серверов: {}, предел {MAX_SERVERS}",
+                run.servers.len()
+            ),
+            count = run.servers.len(),
+            limit = MAX_SERVERS,
+        );
     }
 
     let mut targets = Vec::with_capacity(run.servers.len());
@@ -279,7 +296,11 @@ pub fn prepare(run: &DnsRun) -> Result<PreparedRun, String> {
                 Target::Address(other) => *other == address,
                 Target::System => false,
             }) {
-                return Err(format!("Сервер {address} указан дважды"));
+                return fail!(
+                    "errors.dnslookup.duplicateServer",
+                    format!("Сервер {address} указан дважды"),
+                    address = address,
+                );
             }
         }
         targets.push((server.id.as_str(), target));
@@ -291,7 +312,13 @@ pub fn prepare(run: &DnsRun) -> Result<PreparedRun, String> {
             .iter()
             .find(|(id, _)| *id == query.server_id)
             .map(|(_, target)| *target)
-            .ok_or_else(|| format!("Неизвестный сервер '{}'", query.server_id))?;
+            .ok_or_else(|| {
+                AppError::new(
+                    "errors.dnslookup.unknownServer",
+                    format!("Неизвестный сервер '{}'", query.server_id),
+                )
+                .with("id", &query.server_id)
+            })?;
         let record_type = parse_record_type(&query.record_type)?;
         let name = normalize_name(&query.name, record_type)?;
         queries.push(PreparedQuery {
@@ -313,7 +340,7 @@ pub fn prepare(run: &DnsRun) -> Result<PreparedRun, String> {
 }
 
 /// Разбирает тип записи из проводного значения.
-pub fn parse_record_type(value: &str) -> Result<RecordType, String> {
+pub fn parse_record_type(value: &str) -> AppResult<RecordType> {
     match value.trim().to_ascii_uppercase().as_str() {
         "A" => Ok(RecordType::A),
         "AAAA" => Ok(RecordType::AAAA),
@@ -325,15 +352,19 @@ pub fn parse_record_type(value: &str) -> Result<RecordType, String> {
         "SRV" => Ok(RecordType::SRV),
         "CAA" => Ok(RecordType::CAA),
         "PTR" => Ok(RecordType::PTR),
-        other => Err(format!("Неизвестный тип записи '{other}'")),
+        other => fail!(
+            "errors.dnslookup.recordType",
+            format!("Неизвестный тип записи '{other}'"),
+            value = other,
+        ),
     }
 }
 
 /// Нормализует имя домена; для `PTR` разворачивает IP в reverse-имя.
-pub fn normalize_name(input: &str, record_type: RecordType) -> Result<Name, String> {
+pub fn normalize_name(input: &str, record_type: RecordType) -> AppResult<Name> {
     let text = input.trim();
     if text.is_empty() {
-        return Err("Имя домена пустое".to_owned());
+        return fail!("errors.dnslookup.emptyName", "Имя домена пустое");
     }
 
     if record_type == RecordType::PTR {
@@ -341,19 +372,27 @@ pub fn normalize_name(input: &str, record_type: RecordType) -> Result<Name, Stri
             return reverse_name(ip);
         }
     } else if IpAddr::from_str(text).is_ok() {
-        return Err(format!(
-            "Для типа {record_type} укажите доменное имя, а не IP-адрес"
-        ));
+        return fail!(
+            "errors.dnslookup.ipForType",
+            format!("Для типа {record_type} укажите доменное имя, а не IP-адрес"),
+            recordType = record_type.to_string(),
+        );
     }
 
-    let mut name =
-        Name::from_utf8(text).map_err(|error| format!("Некорректное имя '{text}': {error}"))?;
+    let mut name = Name::from_utf8(text).map_err(|error| {
+        AppError::new(
+            "errors.dnslookup.badName",
+            format!("Некорректное имя '{text}': {error}"),
+        )
+        .with("name", text)
+        .with("reason", error)
+    })?;
     name.set_fqdn(true);
     Ok(name)
 }
 
 /// Строит reverse-имя для адреса: `in-addr.arpa` или `ip6.arpa`.
-fn reverse_name(ip: IpAddr) -> Result<Name, String> {
+fn reverse_name(ip: IpAddr) -> AppResult<Name> {
     let text = match ip {
         IpAddr::V4(address) => {
             let mut labels: Vec<String> =
@@ -373,15 +412,23 @@ fn reverse_name(ip: IpAddr) -> Result<Name, String> {
             labels.join(".")
         }
     };
-    Name::from_ascii(format!("{text}."))
-        .map_err(|error| format!("Не удалось построить reverse-имя: {error}"))
+    Name::from_ascii(format!("{text}.")).map_err(|error| {
+        AppError::new(
+            "errors.dnslookup.reverse",
+            format!("Не удалось построить reverse-имя: {error}"),
+        )
+        .with("reason", error)
+    })
 }
 
 /// Разбирает адрес сервера: `IP`, `IP:порт`, `[IPv6]:порт`.
-pub fn parse_server_address(input: &str) -> Result<SocketAddr, String> {
+pub fn parse_server_address(input: &str) -> AppResult<SocketAddr> {
     let text = input.trim();
     if text.is_empty() {
-        return Err("Адрес сервера пустой".to_owned());
+        return fail!(
+            "errors.dnslookup.emptyAddress",
+            "Адрес сервера пустой"
+        );
     }
 
     let address = if let Ok(address) = SocketAddr::from_str(text) {
@@ -389,11 +436,19 @@ pub fn parse_server_address(input: &str) -> Result<SocketAddr, String> {
     } else if let Ok(ip) = IpAddr::from_str(text) {
         SocketAddr::new(ip, DEFAULT_PORT)
     } else {
-        return Err(format!("Некорректный адрес сервера '{text}'"));
+        return fail!(
+            "errors.dnslookup.badAddress",
+            format!("Некорректный адрес сервера '{text}'"),
+            address = text,
+        );
     };
 
     if address.port() == 0 {
-        return Err(format!("Некорректный порт в адресе '{text}'"));
+        return fail!(
+            "errors.dnslookup.badPort",
+            format!("Некорректный порт в адресе '{text}'"),
+            address = text,
+        );
     }
     Ok(address)
 }
@@ -453,7 +508,10 @@ mod tests {
     #[test]
     fn ip_with_regular_type_is_rejected() {
         let error = normalize_name("93.184.216.34", RecordType::A).expect_err("IP не домен");
-        assert!(error.contains("доменное имя"), "текст ошибки: {error}");
+        assert!(
+            error.to_string().contains("доменное имя"),
+            "текст ошибки: {error}"
+        );
     }
 
     #[test]
@@ -485,7 +543,10 @@ mod tests {
             .collect();
         let error = prepare(&run(queries, vec![server("google", Some("8.8.8.8"))]))
             .expect_err("предел должен сработать");
-        assert!(error.contains("Слишком много запросов"), "текст: {error}");
+        assert!(
+            error.to_string().contains("Слишком много запросов"),
+            "текст: {error}"
+        );
     }
 
     #[test]
@@ -498,7 +559,10 @@ mod tests {
             ],
         ))
         .expect_err("дубликат адреса");
-        assert!(error.contains("указан дважды"), "текст: {error}");
+        assert!(
+            error.to_string().contains("указан дважды"),
+            "текст: {error}"
+        );
     }
 
     #[test]
@@ -508,7 +572,10 @@ mod tests {
             vec![server("google", Some("8.8.8.8"))],
         ))
         .expect_err("неизвестный сервер");
-        assert!(error.contains("Неизвестный сервер"), "текст: {error}");
+        assert!(
+            error.to_string().contains("Неизвестный сервер"),
+            "текст: {error}"
+        );
     }
 
     #[test]
@@ -528,6 +595,9 @@ mod tests {
             vec![server("google", Some("8.8.8.8"))],
         ))
         .expect_err("неизвестный тип");
-        assert!(error.contains("Неизвестный тип"), "текст: {error}");
+        assert!(
+            error.to_string().contains("Неизвестный тип"),
+            "текст: {error}"
+        );
     }
 }

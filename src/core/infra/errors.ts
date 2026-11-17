@@ -9,7 +9,7 @@ import type { AppError } from "@/contracts/errors";
 import { hasMessage, t } from "./i18n/index.ts";
 
 /** Распознаёт структурный отказ среди того, что пришло из Tauri. */
-function asCodedError(error: unknown): AppError | null {
+export function asAppError(error: unknown): AppError | null {
   if (typeof error !== "object" || error === null) return null;
 
   const value = error as Partial<AppError>;
@@ -23,11 +23,22 @@ function asCodedError(error: unknown): AppError | null {
   return { code: value.code, params, fallback: value.fallback };
 }
 
-/** Текст ошибки: исключение отдаёт сообщение, строка остаётся собой. */
+/**
+ * Приводит отказ к структуре.
+ *
+ * Строка не несёт кода, поэтому становится запасным текстом без перевода:
+ * так замечание можно хранить одинаково и показать через `describeError`.
+ */
+export function appErrorOf(error: unknown): AppError {
+  const coded = asAppError(error);
+  if (coded) return coded;
+
+  const text = error instanceof Error ? error.message : String(error);
+  return { code: "errors.core.unexpected", params: { reason: text }, fallback: text };
+}
+
+/** Текст ошибки: структурный отказ переводится, остальное — как есть. */
 export function describeError(error: unknown): string {
-  const coded = asCodedError(error);
-  if (coded) {
-    return hasMessage(coded.code) ? t(coded.code, coded.params) : coded.fallback;
-  }
-  return error instanceof Error ? error.message : String(error);
+  const coded = asAppError(error) ?? appErrorOf(error);
+  return hasMessage(coded.code) ? t(coded.code, coded.params) : coded.fallback;
 }

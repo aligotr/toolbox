@@ -7,6 +7,7 @@
 
 import Button from "primevue/button";
 import { computed, onMounted, ref } from "vue";
+import { describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
 import { openFolder, status as appStatus } from "@/core/services/appInfo";
 import {
@@ -144,12 +145,7 @@ onMounted(() => {
       :key="`problem-${item.code}`"
       class="language__error"
     >
-      {{
-        t("settings.language.problem", {
-          code: item.code,
-          reason: item.problem ?? "",
-        })
-      }}
+      {{ item.problem ? describeError(item.problem) : "" }}
     </p>
 
     <p v-if="active !== null && active.missing > 0" class="language__hint">

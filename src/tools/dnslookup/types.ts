@@ -5,6 +5,7 @@
 // `pending`/`cancelled`, а события ядра — только проводные значения.
 // Разделение не даёт интерфейсу «протечь» в контракт Rust и наоборот.
 
+import type { AppError } from "@/contracts/errors";
 import type { OperationStatus } from "@/core/infra/status";
 
 /** Типы записей, которые поддерживает подсистема. */
@@ -197,7 +198,7 @@ export interface RunAccepted {
   run_id: string;
   accepted: boolean;
   query_count: number;
-  error: string | null;
+  error: AppError | null;
   correlation_id: string | null;
 }
 
@@ -210,7 +211,7 @@ export interface DnsResultEvent {
   status: CellStatus;
   answers: DnsAnswer[];
   elapsed_ms: number | null;
-  error: string | null;
+  error: AppError | null;
 }
 
 /** Событие завершения проверки. */
@@ -224,5 +225,5 @@ export interface DnsFinishedEvent {
 /** Ответ ядра со списком системных резолверов. */
 export interface SystemServersReply {
   servers: string[];
-  error: string | null;
+  error: AppError | null;
 }

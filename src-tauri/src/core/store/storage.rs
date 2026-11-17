@@ -13,6 +13,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::core::infra::error::{AppError, AppResult};
+
 /// Имя пробного файла проверки записи. Пользователь его не видит:
 /// файл создаётся и удаляется в одной проверке.
 const PROBE_FILE: &str = ".write-probe";
@@ -66,12 +68,21 @@ impl Storage {
     ///
     /// Это единственный способ узнать, где живёт программа: рабочий каталог
     /// зависит от того, откуда её запустили, и для переносимости не годится.
-    pub fn detect() -> Result<Self, String> {
-        let exe = std::env::current_exe()
-            .map_err(|error| format!("Не удалось определить путь к программе: {error}"))?;
-        let root = exe
-            .parent()
-            .ok_or_else(|| format!("У пути к программе нет папки: {}", exe.display()))?;
+    pub fn detect() -> AppResult<Self> {
+        let exe = std::env::current_exe().map_err(|error| {
+            AppError::new(
+                "errors.storage.exe",
+                format!("Не удалось определить путь к программе: {error}"),
+            )
+            .with("reason", error)
+        })?;
+        let root = exe.parent().ok_or_else(|| {
+            AppError::new(
+                "errors.storage.noFolder",
+                format!("У пути к программе нет папки: {}", exe.display()),
+            )
+            .with("path", exe.display())
+        })?;
         Ok(Self::at(root))
     }
 
@@ -198,7 +209,7 @@ impl Storage {
     /// записать. Проверяются три места, потому что каждое может отказать
     /// отдельно: корень, `local/` и папка активного профиля. Лог и профили
     /// создаются заодно: без них приложение всё равно не сможет работать.
-    pub fn probe(&self) -> Result<(), String> {
+    pub fn probe(&self) -> AppResult<()> {
         let local = self.local_dir();
         let logs = self.logs_dir();
         let languages = self.languages_dir();
@@ -206,20 +217,35 @@ impl Storage {
         let profile = self.active_profile_dir();
 
         for dir in [&local, &logs, &languages, &profiles, &profile] {
-            fs::create_dir_all(dir).map_err(|error| self.reason(dir, &error))?;
+            fs::create_dir_all(dir).map_err(|error| self.create_error(dir, &error))?;
         }
 
         for dir in [&self.root, &local, &profile] {
             let probe = dir.join(PROBE_FILE);
-            fs::write(&probe, b"probe").map_err(|error| self.reason(&probe, &error))?;
-            fs::remove_file(&probe).map_err(|error| self.reason(&probe, &error))?;
+            fs::write(&probe, b"probe").map_err(|error| self.write_error(&probe, &error))?;
+            fs::remove_file(&probe).map_err(|error| self.write_error(&probe, &error))?;
         }
         Ok(())
     }
 
-    /// Человеческое объяснение отказа: путь важнее кода ошибки.
-    fn reason(&self, path: &Path, error: &std::io::Error) -> String {
-        format!("Не удалось записать '{}': {error}", path.display())
+    /// Отказ создать папку раскладки: путь важнее кода ошибки.
+    fn create_error(&self, path: &Path, error: &std::io::Error) -> AppError {
+        AppError::new(
+            "errors.storage.create",
+            format!("Не удалось создать '{}': {error}", path.display()),
+        )
+        .with("path", path.display())
+        .with("reason", error)
+    }
+
+    /// Отказ записать или удалить пробный файл.
+    fn write_error(&self, path: &Path, error: &std::io::Error) -> AppError {
+        AppError::new(
+            "errors.storage.write",
+            format!("Не удалось записать '{}': {error}", path.display()),
+        )
+        .with("path", path.display())
+        .with("reason", error)
     }
 }
 
@@ -332,7 +358,7 @@ mod tests {
         let error = storage.probe().expect_err("проба обязана провалиться");
 
         assert!(
-            error.contains("storage-bad-root"),
+            error.to_string().contains("storage-bad-root"),
             "в объяснении должен быть путь: {error}"
         );
 
@@ -351,7 +377,7 @@ mod tests {
         let error = storage.probe().expect_err("проба обязана провалиться");
 
         assert!(
-            error.contains("local"),
+            error.to_string().contains("local"),
             "в объяснении должен быть путь: {error}"
         );
 
@@ -370,7 +396,7 @@ mod tests {
         let error = storage.probe().expect_err("проба обязана провалиться");
 
         assert!(
-            error.contains(DEFAULT_PROFILE),
+            error.to_string().contains(DEFAULT_PROFILE),
             "в объяснении должен быть путь профиля: {error}"
         );
 

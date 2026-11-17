@@ -7,6 +7,8 @@
 // Категории склонения — строки, а не союз из `core`: контракты лежат ниже
 // ядра и не могут его импортировать. Проверка категорий остаётся за ядром.
 
+import type { AppError } from "./errors";
+
 /** Формы склонения в файле словаря: `one`, `few`, `many`, `other`. */
 export type DictionaryForms = Record<string, string>;
 
@@ -20,7 +22,7 @@ export interface LanguageSummary {
   /** Название для списка: поле `name`, иначе код. */
   name: string;
   /** Причина, по которой файл не прочитан; `null` — словарь годен. */
-  problem: string | null;
+  problem: AppError | null;
 }
 
 /** Прочитанный словарь из `language_load`. */

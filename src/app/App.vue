@@ -15,6 +15,9 @@ import type { UnlistenFn } from "@tauri-apps/api/event";
 import Button from "primevue/button";
 import ConfirmDialog from "primevue/confirmdialog";
 import { subscribeEvent } from "@/core/infra/bus";
+import type { AppError } from "@/contracts/errors";
+import { describeError } from "@/core/infra/errors";
+import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import { loadSettings, startSettingsSync } from "@/core/services/settings/index";
 import { loadStartupStatus, type StartupStatus } from "@/core/services/startup";
@@ -28,7 +31,7 @@ import { tools } from "./tools";
  */
 interface BusError {
   source: string;
-  text: string;
+  error: AppError;
 }
 
 const startup = ref<StartupStatus | null>(null);
@@ -61,7 +64,7 @@ onMounted(async () => {
   if (startup.value?.blocked || startup.value === null) return;
 
   unlistenError = await subscribeEvent<BusError>("core:error", (payload) => {
-    write(payload.source, "error", payload.text);
+    write(payload.source, "error", describeError(payload.error));
   });
   unlistenSettings = await startSettingsSync();
 });
@@ -76,33 +79,34 @@ onUnmounted(() => {
   <div v-if="startup?.blocked" class="blocked">
     <section class="blocked__card">
       <span class="blocked__mark">!</span>
-      <h1>{{ startup.title ?? "Не могу начать работу" }}</h1>
-      <p class="blocked__lead">
-        ToolBox хранит настройки и лог рядом с исполняемым файлом — в этом смысл
-        переносимости. Без записи приложение не работает правильно, поэтому
-        модули не запущены.
-      </p>
+      <h1>{{ startup.title ? t(startup.title) : t("startup.title") }}</h1>
+      <p class="blocked__lead">{{ t("startup.lead") }}</p>
 
       <dl class="blocked__facts">
         <div>
-          <dt>Папка программы</dt>
+          <dt>{{ t("startup.folder") }}</dt>
           <dd class="mono">{{ startup.root }}</dd>
         </div>
         <div>
-          <dt>Что именно не удалось</dt>
-          <dd>{{ startup.reason }}</dd>
+          <dt>{{ t("startup.reason") }}</dt>
+          <dd>{{ startup.reason ? describeError(startup.reason) : "" }}</dd>
         </div>
       </dl>
 
       <div class="blocked__hint">
-        <p>Что сделать:</p>
+        <p>{{ t("startup.hint") }}</p>
         <ul>
-          <li>перенесите папку с программой в доступное место — например, в «Документы»;</li>
-          <li>или снимите атрибут «только чтение» и проверьте права на папку.</li>
+          <li>{{ t("startup.move") }}</li>
+          <li>{{ t("startup.permissions") }}</li>
         </ul>
       </div>
 
-      <Button class="blocked__exit" label="Выйти" severity="danger" @click="exitApp" />
+      <Button
+        class="blocked__exit"
+        :label="t('startup.exit')"
+        severity="danger"
+        @click="exitApp"
+      />
     </section>
   </div>
 

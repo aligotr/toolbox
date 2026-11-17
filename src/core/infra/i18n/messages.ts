@@ -11,6 +11,19 @@ import type { Messages } from "./types.ts"
 
 /** Русский встроенный словарь. */
 export const ruMessages: Messages = {
+  // ── Блокирующий экран ───────────────────────────────────────────────────
+  "startup.title": "Не могу начать работу",
+  "startup.lead":
+    "ToolBox хранит настройки и лог рядом с исполняемым файлом — в этом смысл переносимости. Без записи приложение не работает правильно, поэтому модули не запущены.",
+  "startup.folder": "Папка программы",
+  "startup.reason": "Что именно не удалось",
+  "startup.hint": "Что сделать:",
+  "startup.move":
+    "перенесите папку с программой в доступное место — например, в «Документы»;",
+  "startup.permissions":
+    "или снимите атрибут «только чтение» и проверьте права на папку.",
+  "startup.exit": "Выйти",
+
   // ── Центр управления ────────────────────────────────────────────────────
   "settings.view.title": "Настройки",
   "settings.view.lead": "Журнал, окно, профили, шаблоны, данные и сведения о программе.",
@@ -49,7 +62,7 @@ export const ruMessages: Messages = {
     other: "В словаре {count} лишней строки — программа их не использует."
   },
   "settings.language.empty": "В папке словарей пока пусто: доступен только русский.",
-  "settings.language.problem": "Не удалось прочитать файл {code}: {reason}",
+  "settings.language.badCode": "Код «{code}» не является тегом языка",
   "settings.language.refresh": "Обновить",
   "settings.language.open_folder": "Открыть папку словарей",
   "settings.language.export": "Сохранить образец",
@@ -589,6 +602,136 @@ export const ruMessages: Messages = {
   // Код ошибки — контракт с Rust: ядро присылает код и подстановки, а текст
   // живёт здесь. Неизвестный код показывает русский `fallback` из ядра.
   "errors.core.unexpected": "{reason}",
+  "errors.core.noStorage": "Хранилище не запущено: приложение заблокировано",
+  "errors.core.folder": "Неизвестная папка: «{folder}»",
+  "errors.core.openFolder": "Не удалось открыть «{path}»: {reason}",
+
+  // ── Ошибки запуска ───────────────────────────────────────────────────────
+  // Заголовок блокирующего экрана — тоже код: причина отказа у каждого своя.
+  "errors.startup.storage": "Не удалось определить папку программы",
+  "errors.startup.write": "Не удалось писать в папку программы",
+  "errors.startup.logging": "Не удалось запустить файловый лог",
+  "errors.startup.profileMissing":
+    "Активный профиль «{profile}» не найден среди папок «{path}»; выбран «{chosen}»",
+
+  // ── Ошибки шины ──────────────────────────────────────────────────────────
+  "errors.bus.badEvent": "Некорректное событие «{topic}»: {reason}",
+  "errors.bus.badCommand": "Некорректная команда «{topic}»: {reason}",
+  "errors.bus.notSerialized": "Событие не удалось сериализовать",
+  "errors.bus.unknownEvent": "Неизвестное событие: «{topic}»",
+  "errors.bus.unknownCommand": "Неизвестная команда: «{topic}»",
+  "errors.bus.timeout": "Таймаут ожидания ответа на «{topic}»",
+  "errors.bus.duplicateHandler": "Команде «{topic}» уже назначен обработчик",
+  "errors.bus.noHandler": "Нет обработчика для команды «{topic}»",
+  "errors.bus.lost": "Событие потеряно: приёмник недоступен",
+  "errors.bus.handlerPanic": "Обработчик события упал",
+  "errors.bus.undelivered": "Событие «{topic}» не доставлено в интерфейс",
+
+  // ── Ошибки журнала и окна ────────────────────────────────────────────────
+  "errors.logging.create": "Не удалось создать папку логов «{path}»: {reason}",
+  "errors.logging.installed": "Файловый лог уже запущен: {reason}",
+  "errors.window.flush": "Поток сохранения геометрии завершился с паникой",
+
+  "errors.files.read": "Не удалось прочитать «{path}»: {reason}",
+  "errors.files.write": "Не удалось записать «{path}»: {reason}",
+  "errors.files.rename": "Не удалось переименовать «{path}» в «{target}»: {reason}",
+  "errors.files.create": "Не удалось создать «{path}»: {reason}",
+  "errors.storage.exe": "Не удалось определить путь к программе: {reason}",
+  "errors.storage.noFolder": "У пути к программе нет папки: {path}",
+  "errors.storage.create": "Не удалось создать «{path}»: {reason}",
+  "errors.storage.write": "Не удалось записать «{path}»: {reason}",
+  "errors.workspace.broken": "Файл «{path}» не разобран как JSON: {reason}",
+  "errors.workspace.notObject": "Файл «{path}» должен содержать объект JSON",
+  "errors.workspace.saveNotObject":
+    "Рабочее пространство должно быть объектом JSON",
+  "errors.workspace.serialize": "Рабочее пространство не сериализовано: {reason}",
+  "errors.settings.read":
+    "Не удалось прочитать «{path}»: {reason}; взяты значения по умолчанию",
+  "errors.settings.broken":
+    "Файл «{path}» не разобран как JSON: {reason}; взяты значения по умолчанию",
+  "errors.settings.notObject":
+    "Файл «{path}» должен содержать объект; взяты значения по умолчанию",
+  "errors.settings.version":
+    "В файле «{path}» версия схемы {version}, программа знает {expected}; файл прочитан как есть",
+  "errors.settings.versionType":
+    "Поле version в «{path}» должно быть числом; взята версия {expected}",
+  "errors.settings.profileType":
+    "Поле active_profile в «{path}» должно быть строкой; взято «{profile}»",
+  "errors.settings.profileInvalid":
+    "Поле active_profile в «{path}» не годится; взято «{profile}»",
+  "errors.settings.section":
+    "Раздел «{section}» в «{path}» не прочитан: {reason}; взяты значения по умолчанию",
+  "errors.settings.serialize": "Настройки не сериализованы: {reason}",
+  "errors.settings.unknownSection": "Неизвестный раздел настроек: «{section}»",
+  "errors.settings.sectionSerialize":
+    "Раздел «{section}» не сериализован: {reason}",
+  "errors.settings.sectionNotObject": "Раздел «{section}» не является объектом",
+  "errors.settings.sectionPatch": "Раздел «{section}» должен быть объектом",
+  "errors.settings.sectionRejected": "Раздел «{section}» не принят: {reason}",
+  "errors.settings.profilePatch": "Раздел «{section}» должен быть строкой",
+  "errors.languages.read": "Не удалось прочитать «{path}»: {reason}",
+  "errors.languages.invalidCode": "Недопустимый код языка «{code}»",
+  "errors.languages.sampleNotObject": "Образец словаря должен быть объектом",
+  "errors.languages.exists":
+    "Файл «{path}» уже существует: образец не перезаписывается",
+  "errors.languages.serialize": "Образец словаря не сериализован: {reason}",
+  "errors.languages.parse": "Строка {line}, столбец {column}: {reason}",
+  "errors.languages.parsePlain": "{reason}",
+  "errors.languages.notObject":
+    "Ожидался объект с полями «name» и «messages»",
+  "errors.languages.messagesType": "Поле «messages» должно быть объектом",
+  "errors.languages.messagesMissing": "Нет поля «messages»",
+  "errors.languages.category":
+    "Ключ «{key}»: неизвестная категория склонения «{category}»; допустимы zero, one, two, few, many, other",
+  "errors.languages.forms": "Ключ «{key}»: формы должны быть строками",
+  "errors.languages.message":
+    "Ключ «{key}» должен быть строкой или набором форм",
+  "errors.data.invalidTool": "Недопустимый идентификатор инструмента",
+  "errors.data.missing": "Данных инструмента «{tool}» нет",
+  "errors.data.move": "Не удалось перенести «{path}» в «{target}»: {reason}",
+
+  // ── Ошибки DNSlookup ─────────────────────────────────────────────────────
+  "errors.dnslookup.runId": "Не указан идентификатор проверки",
+  "errors.dnslookup.runExists": "Проверка с этим идентификатором уже идёт",
+  "errors.dnslookup.registry": "Реестр проверок недоступен",
+  "errors.dnslookup.noStorage": "Хранилище профиля недоступно",
+  "errors.dnslookup.noResolvers": "Системные резолверы не найдены",
+  "errors.dnslookup.emptyQueries": "Список запросов пуст",
+  "errors.dnslookup.tooManyQueries":
+    "Слишком много запросов: {count}, предел {limit}",
+  "errors.dnslookup.noServers": "Не выбран ни один сервер",
+  "errors.dnslookup.tooManyServers":
+    "Слишком много серверов: {count}, предел {limit}",
+  "errors.dnslookup.duplicateServer": "Сервер {address} указан дважды",
+  "errors.dnslookup.unknownServer": "Неизвестный сервер «{id}»",
+  "errors.dnslookup.recordType": "Неизвестный тип записи «{value}»",
+  "errors.dnslookup.emptyName": "Имя домена пустое",
+  "errors.dnslookup.ipForType":
+    "Для типа {recordType} укажите доменное имя, а не IP-адрес",
+  "errors.dnslookup.badName": "Некорректное имя «{name}»: {reason}",
+  "errors.dnslookup.reverse": "Не удалось построить reverse-имя: {reason}",
+  "errors.dnslookup.emptyAddress": "Адрес сервера пустой",
+  "errors.dnslookup.badAddress": "Некорректный адрес сервера «{address}»",
+  "errors.dnslookup.badPort": "Некорректный порт в адресе «{address}»",
+  "errors.dnslookup.requestBuild": "Не удалось собрать DNS-запрос: {reason}",
+  "errors.dnslookup.socketOpen": "Не удалось открыть UDP-сокет: {reason}",
+  "errors.dnslookup.tooLarge": "DNS-запрос больше 65535 байт",
+  "errors.dnslookup.emptyReply": "Сервер вернул пустой TCP-ответ",
+  "errors.dnslookup.badReply": "Ответ не разобран: {reason}",
+  "errors.dnslookup.wrongId": "Идентификатор ответа не совпал с запросом",
+  "errors.dnslookup.notReply": "Получено не сообщение-ответ",
+  "errors.dnslookup.unexpectedCode": "Неожиданный код ответа DNS: {code}",
+  "errors.dnslookup.network": "Ошибка сети: {reason}",
+  "errors.dnslookup.servers.broken": "Не удалось разобрать «{path}»: {reason}",
+  "errors.dnslookup.servers.version":
+    "Неподдерживаемая версия файла «{path}»: {version}; ожидалась {expected}",
+  "errors.dnslookup.servers.serialize": "Свои серверы не сериализованы: {reason}",
+  "errors.dnslookup.servers.emptyId": "У своего сервера пустой идентификатор",
+  "errors.dnslookup.servers.duplicateId":
+    "Идентификатор сервера «{id}» повторяется",
+  "errors.dnslookup.servers.duplicateAddress": "Сервер {address} указан дважды",
+  "errors.dnslookup.servers.system":
+    "Не удалось прочитать сетевые адаптеры: {reason}",
   "errors.profiles.read": "Не удалось прочитать «{path}»: {reason}",
   "errors.profiles.create": "Не удалось создать «{path}»: {reason}",
   "errors.profiles.move": "Не удалось перенести «{path}» в «{target}»: {reason}",

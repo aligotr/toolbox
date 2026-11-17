@@ -17,6 +17,8 @@ use std::sync::{Arc, Mutex};
 use chrono::{Local, NaiveDate};
 use serde::{Deserialize, Serialize};
 
+use crate::core::infra::error::{AppError, AppResult};
+
 /// Сколько дней храним файлы лога.
 pub const KEEP_DAYS: i64 = 14;
 
@@ -170,12 +172,17 @@ impl Logger {
 ///
 /// Папку создаёт хранилище; здесь она проверяется ещё раз, потому что
 /// логгер обязан работать без оглядки на порядок вызовов.
-pub fn init(dir: PathBuf, level: LogLevel) -> Result<Arc<Logger>, String> {
+pub fn init(dir: PathBuf, level: LogLevel) -> AppResult<Arc<Logger>> {
     fs::create_dir_all(&dir).map_err(|error| {
-        format!(
-            "Не удалось создать папку логов '{}': {error}",
-            dir.display()
+        AppError::new(
+            "errors.logging.create",
+            format!(
+                "Не удалось создать папку логов '{}': {error}",
+                dir.display()
+            ),
         )
+        .with("path", dir.display())
+        .with("reason", error)
     })?;
     prune_older(&dir);
 
@@ -188,7 +195,13 @@ pub fn init(dir: PathBuf, level: LogLevel) -> Result<Arc<Logger>, String> {
     log::set_boxed_logger(Box::new(Global {
         logger: logger.clone(),
     }))
-    .map_err(|error| format!("Логгер уже установлен: {error}"))?;
+    .map_err(|error| {
+        AppError::new(
+            "errors.logging.installed",
+            format!("Логгер уже установлен: {error}"),
+        )
+        .with("reason", error)
+    })?;
     // Порог проверяет наш `enabled`: `log` не должен отсекать строки раньше,
     // иначе смена уровня на лету не сработает.
     log::set_max_level(log::LevelFilter::Debug);

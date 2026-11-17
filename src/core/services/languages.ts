@@ -11,8 +11,9 @@ import type {
   LanguageDocument,
   LanguageSummary,
 } from "@/contracts/languages";
+import type { AppError } from "@/contracts/errors";
 import { JOURNAL_CORE_SOURCE } from "../infra/constants";
-import { describeError } from "../infra/errors";
+import { appErrorOf, describeError } from "../infra/errors";
 import {
   DEFAULT_LOCALE,
   isLocaleTag,
@@ -41,7 +42,7 @@ export interface LanguageEntry {
   code: string;
   name: string;
   /** Причина, по которой файл не прочитан; `null` — словарь годен. */
-  problem: string | null;
+  problem: AppError | null;
   /** Ключи русского словаря, которых нет в файле или у которых нет нужной формы. */
   missing: number;
   /** Ключи файла, которых нет в русском словаре. */
@@ -117,7 +118,14 @@ async function readEntry(summary: LanguageSummary): Promise<LanguageEntry> {
   // Код — часть контракта: файл `pt_BR.json` прочитался бы, но склонения
   // для него `Intl` не знает, и текст пошёл бы с русскими формами.
   if (!isLocaleTag(summary.code)) {
-    return { ...base, problem: `код '${summary.code}' не является тегом языка` };
+    return {
+      ...base,
+      problem: {
+        code: "settings.language.badCode",
+        params: { code: summary.code },
+        fallback: `код '${summary.code}' не является тегом языка`,
+      },
+    };
   }
 
   try {
@@ -139,7 +147,7 @@ async function readEntry(summary: LanguageSummary): Promise<LanguageEntry> {
     };
   } catch (error) {
     // Файл исчез между списком и чтением: это та же недоступность словаря.
-    return { ...base, problem: describeError(error) };
+    return { ...base, problem: appErrorOf(error) };
   }
 }
 

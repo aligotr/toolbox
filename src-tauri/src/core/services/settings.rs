@@ -21,6 +21,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
+use crate::core::infra::error::{fail, AppError, AppResult};
 use crate::core::services::languages;
 use crate::core::services::logging::LogLevel;
 use crate::core::services::profiles;
@@ -152,7 +153,7 @@ impl Default for UiSettings {
 /// инициализации логгера, уже уровнем `warn`.
 pub struct LoadedSettings {
     pub settings: Settings,
-    pub warnings: Vec<String>,
+    pub warnings: Vec<AppError>,
 }
 
 /// Читает настройки. Отсутствие файла — не поломка: это первый запуск.
@@ -171,10 +172,17 @@ pub fn load(path: &Path) -> LoadedSettings {
             };
         }
         Err(error) => {
-            warnings.push(format!(
-                "не удалось прочитать '{}': {error}; взяты значения по умолчанию",
-                path.display()
-            ));
+            warnings.push(
+                AppError::new(
+                    "errors.settings.read",
+                    format!(
+                        "не удалось прочитать '{}': {error}; взяты значения по умолчанию",
+                        path.display()
+                    ),
+                )
+                .with("path", path.display())
+                .with("reason", error),
+            );
             return LoadedSettings {
                 settings: Settings::default(),
                 warnings,
@@ -185,10 +193,17 @@ pub fn load(path: &Path) -> LoadedSettings {
     let value: Value = match serde_json::from_str(strip_bom(&raw)) {
         Ok(value) => value,
         Err(error) => {
-            warnings.push(format!(
-                "'{}' не разобран как JSON: {error}; взяты значения по умолчанию",
-                path.display()
-            ));
+            warnings.push(
+                AppError::new(
+                    "errors.settings.broken",
+                    format!(
+                        "'{}' не разобран как JSON: {error}; взяты значения по умолчанию",
+                        path.display()
+                    ),
+                )
+                .with("path", path.display())
+                .with("reason", error),
+            );
             return LoadedSettings {
                 settings: Settings::default(),
                 warnings,
@@ -197,10 +212,16 @@ pub fn load(path: &Path) -> LoadedSettings {
     };
 
     let Value::Object(root) = value else {
-        warnings.push(format!(
-            "'{}' должен содержать объект; взяты значения по умолчанию",
-            path.display()
-        ));
+        warnings.push(
+            AppError::new(
+                "errors.settings.notObject",
+                format!(
+                    "'{}' должен содержать объект; взяты значения по умолчанию",
+                    path.display()
+                ),
+            )
+            .with("path", path.display()),
+        );
         return LoadedSettings {
             settings: Settings::default(),
             warnings,
@@ -240,9 +261,14 @@ pub fn load(path: &Path) -> LoadedSettings {
 
 /// Записывает настройки атомарно. Ошибка возвращается вызывающему: молча
 /// потерять настройку хуже, чем показать, что папка недоступна.
-pub fn save(path: &Path, settings: &Settings) -> Result<(), String> {
-    let text = serde_json::to_string_pretty(settings)
-        .map_err(|error| format!("Настройки не сериализованы: {error}"))?;
+pub fn save(path: &Path, settings: &Settings) -> AppResult<()> {
+    let text = serde_json::to_string_pretty(settings).map_err(|error| {
+        AppError::new(
+            "errors.settings.serialize",
+            format!("Настройки не сериализованы: {error}"),
+        )
+        .with("reason", error)
+    })?;
     write_atomic(path, &format!("{text}\n"))
 }
 
@@ -264,8 +290,8 @@ pub struct Committed {
 pub fn commit(
     path: &Path,
     current: &mut Settings,
-    change: impl FnOnce(&Settings) -> Result<Settings, String>,
-) -> Result<Committed, String> {
+    change: impl FnOnce(&Settings) -> AppResult<Settings>,
+) -> AppResult<Committed> {
     let next = change(current)?;
     save(path, &next)?;
 
@@ -283,14 +309,20 @@ pub fn commit(
 /// Неизменённые разделы копируются как есть, поэтому одновременная правка
 /// окна и профиля не конфликтует. Неизвестный раздел — ошибка, а не молчание:
 /// опечатка в имени иначе выглядела бы как успешное сохранение.
-pub fn apply_patch(current: &Settings, section: &str, patch: Value) -> Result<Settings, String> {
+pub fn apply_patch(current: &Settings, section: &str, patch: Value) -> AppResult<Settings> {
     let mut next = current.clone();
     match section {
         SECTION_LOG => next.log = merge_section(&current.log, patch, section)?,
         SECTION_WINDOW => next.window = merge_section(&current.window, patch, section)?,
         SECTION_UI => next.ui = merge_section(&current.ui, patch, section)?,
         SECTION_PROFILE => next.active_profile = profile_from_patch(patch)?,
-        other => return Err(format!("Неизвестный раздел настроек: '{other}'")),
+        other => {
+            return fail!(
+                "errors.settings.unknownSection",
+                format!("Неизвестный раздел настроек: '{other}'"),
+                section = other,
+            );
+        }
     }
     Ok(next)
 }
@@ -350,7 +382,7 @@ fn default_height() -> u32 {
     DEFAULT_HEIGHT
 }
 
-fn read_version(root: &Map<String, Value>, path: &Path, warnings: &mut Vec<String>) -> u32 {
+fn read_version(root: &Map<String, Value>, path: &Path, warnings: &mut Vec<AppError>) -> u32 {
     let Some(value) = root.get("version") else {
         // Файл без версии — старый или собранный руками; читаем как текущий.
         return VERSION;
@@ -358,41 +390,70 @@ fn read_version(root: &Map<String, Value>, path: &Path, warnings: &mut Vec<Strin
     match value.as_u64() {
         Some(version) if version == u64::from(VERSION) => VERSION,
         Some(version) => {
-            warnings.push(format!(
-                "в '{}' версия схемы {version}, программа знает {VERSION}; \
-                 файл прочитан как есть",
-                path.display()
-            ));
+            warnings.push(
+                AppError::new(
+                    "errors.settings.version",
+                    format!(
+                        "в '{}' версия схемы {version}, программа знает {VERSION}; \
+                         файл прочитан как есть",
+                        path.display()
+                    ),
+                )
+                .with("path", path.display())
+                .with("version", version)
+                .with("expected", VERSION),
+            );
             VERSION
         }
         None => {
-            warnings.push(format!(
-                "поле version в '{}' должно быть числом; взята версия {VERSION}",
-                path.display()
-            ));
+            warnings.push(
+                AppError::new(
+                    "errors.settings.versionType",
+                    format!(
+                        "поле version в '{}' должно быть числом; взята версия {VERSION}",
+                        path.display()
+                    ),
+                )
+                .with("path", path.display())
+                .with("expected", VERSION),
+            );
             VERSION
         }
     }
 }
 
-fn read_profile(root: &Map<String, Value>, path: &Path, warnings: &mut Vec<String>) -> String {
+fn read_profile(root: &Map<String, Value>, path: &Path, warnings: &mut Vec<AppError>) -> String {
     let Some(value) = root.get(SECTION_PROFILE) else {
         return default_profile();
     };
     let Some(id) = value.as_str() else {
-        warnings.push(format!(
-            "поле active_profile в '{}' должно быть строкой; взято '{}'",
-            path.display(),
-            default_profile()
-        ));
+        warnings.push(
+            AppError::new(
+                "errors.settings.profileType",
+                format!(
+                    "поле active_profile в '{}' должно быть строкой; взято '{}'",
+                    path.display(),
+                    default_profile()
+                ),
+            )
+            .with("path", path.display())
+            .with("profile", default_profile()),
+        );
         return default_profile();
     };
-    if let Err(reason) = profiles::validate_id(id) {
-        warnings.push(format!(
-            "поле active_profile в '{}' не годится: {reason}; взято '{}'",
-            path.display(),
-            default_profile()
-        ));
+    if profiles::validate_id(id).is_err() {
+        warnings.push(
+            AppError::new(
+                "errors.settings.profileInvalid",
+                format!(
+                    "поле active_profile в '{}' не годится; взято '{}'",
+                    path.display(),
+                    default_profile()
+                ),
+            )
+            .with("path", path.display())
+            .with("profile", default_profile()),
+        );
         return default_profile();
     }
     id.to_owned()
@@ -403,16 +464,24 @@ fn section_from<T: DeserializeOwned>(
     root: &Map<String, Value>,
     key: &str,
     path: &Path,
-    warnings: &mut Vec<String>,
+    warnings: &mut Vec<AppError>,
 ) -> Option<T> {
     let value = root.get(key)?;
     match serde_json::from_value(value.clone()) {
         Ok(section) => Some(section),
         Err(error) => {
-            warnings.push(format!(
-                "раздел '{key}' в '{}' не прочитан: {error}; взяты значения по умолчанию",
-                path.display()
-            ));
+            warnings.push(
+                AppError::new(
+                    "errors.settings.section",
+                    format!(
+                        "раздел '{key}' в '{}' не прочитан: {error}; взяты значения по умолчанию",
+                        path.display()
+                    ),
+                )
+                .with("section", key)
+                .with("path", path.display())
+                .with("reason", error),
+            );
             None
         }
     }
@@ -422,31 +491,56 @@ fn section_from<T: DeserializeOwned>(
 ///
 /// Слияние идёт через JSON, а не по полям структуры: так неизвестные ключи
 /// раздела сохраняются, а проверка типов остаётся у `serde`.
-fn merge_section<T>(current: &T, patch: Value, name: &str) -> Result<T, String>
+fn merge_section<T>(current: &T, patch: Value, name: &str) -> AppResult<T>
 where
     T: Serialize + DeserializeOwned,
 {
-    let mut base = serde_json::to_value(current)
-        .map_err(|error| format!("Раздел '{name}' не сериализован: {error}"))?;
+    let mut base = serde_json::to_value(current).map_err(|error| {
+        AppError::new(
+            "errors.settings.sectionSerialize",
+            format!("Раздел '{name}' не сериализован: {error}"),
+        )
+        .with("section", name)
+        .with("reason", error)
+    })?;
     let Value::Object(base_map) = &mut base else {
-        return Err(format!("Раздел '{name}' не является объектом"));
+        return fail!(
+            "errors.settings.sectionNotObject",
+            format!("Раздел '{name}' не является объектом"),
+            section = name,
+        );
     };
     let Value::Object(patch_map) = patch else {
-        return Err(format!("Раздел '{name}' должен быть объектом"));
+        return fail!(
+            "errors.settings.sectionPatch",
+            format!("Раздел '{name}' должен быть объектом"),
+            section = name,
+        );
     };
 
     for (key, value) in patch_map {
         base_map.insert(key, value);
     }
 
-    serde_json::from_value(base).map_err(|error| format!("Раздел '{name}' не принят: {error}"))
+    serde_json::from_value(base).map_err(|error| {
+        AppError::new(
+            "errors.settings.sectionRejected",
+            format!("Раздел '{name}' не принят: {error}"),
+        )
+        .with("section", name)
+        .with("reason", error)
+    })
 }
 
-fn profile_from_patch(patch: Value) -> Result<String, String> {
+fn profile_from_patch(patch: Value) -> AppResult<String> {
     let Value::String(id) = patch else {
-        return Err(format!("Раздел '{SECTION_PROFILE}' должен быть строкой"));
+        return fail!(
+            "errors.settings.profilePatch",
+            format!("Раздел '{SECTION_PROFILE}' должен быть строкой"),
+            section = SECTION_PROFILE,
+        );
     };
-    profiles::validate_id(&id).map_err(|error| error.to_string())?;
+    profiles::validate_id(&id)?;
     Ok(id)
 }
 
@@ -493,9 +587,9 @@ mod tests {
         save(&path, &current).expect("файл");
         let before = current.clone();
 
-        let error = commit(&path, &mut current, |_| Err("нет".to_owned())).expect_err("отказ");
+        let error = commit(&path, &mut current, |_| Err("нет".into())).expect_err("отказ");
 
-        assert_eq!(error, "нет");
+        assert_eq!(error.to_string(), "нет");
         assert_eq!(current, before, "память не тронута");
         assert_eq!(load(&path).settings, before, "файл не тронут");
     }
@@ -519,7 +613,7 @@ mod tests {
 
         assert_eq!(loaded.settings, Settings::default());
         assert_eq!(loaded.warnings.len(), 1, "причина должна быть записана");
-        assert!(loaded.warnings[0].contains("не разобран"));
+        assert!(loaded.warnings[0].to_string().contains("не разобран"));
 
         let _ = fs::remove_dir_all(&dir);
     }
@@ -542,7 +636,7 @@ mod tests {
             loaded
                 .warnings
                 .iter()
-                .any(|warning| warning.contains("log")),
+                .any(|warning| warning.to_string().contains("log")),
             "замечание должно называть раздел: {:?}",
             loaded.warnings
         );

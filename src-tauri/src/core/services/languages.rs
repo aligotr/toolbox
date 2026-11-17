@@ -14,6 +14,7 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use serde_json::{Map, Value};
 
+use crate::core::infra::error::{fail, AppError, AppResult};
 use crate::core::store::files::{ensure_dir, strip_bom, write_atomic};
 
 /// Язык по умолчанию, пока выбор не сделан.
@@ -50,7 +51,7 @@ pub struct LanguageSummary {
     /// Название для списка: поле `name`, иначе код.
     pub name: String,
     /// Причина, по которой файл не прочитан; `None` — словарь годен.
-    pub problem: Option<String>,
+    pub problem: Option<AppError>,
 }
 
 /// Прочитанный словарь.
@@ -62,7 +63,7 @@ pub struct Language {
 }
 
 /// Список словарей в папке. Отсутствие папки — не поломка: только русский.
-pub fn list(dir: &Path) -> Result<Vec<LanguageSummary>, String> {
+pub fn list(dir: &Path) -> AppResult<Vec<LanguageSummary>> {
     let entries = match fs::read_dir(dir) {
         Ok(entries) => entries,
         Err(error) if error.kind() == ErrorKind::NotFound => return Ok(Vec::new()),
@@ -97,7 +98,7 @@ pub fn list(dir: &Path) -> Result<Vec<LanguageSummary>, String> {
 }
 
 /// Читает словарь по коду языка.
-pub fn load(dir: &Path, code: &str) -> Result<Language, String> {
+pub fn load(dir: &Path, code: &str) -> AppResult<Language> {
     validate_code(code)?;
     read(&file_path(dir, code), code)
 }
@@ -106,7 +107,7 @@ pub fn load(dir: &Path, code: &str) -> Result<Language, String> {
 ///
 /// Маркер пишется в любом случае: если файл уже лежал, он остаётся как есть,
 /// а после удаления уже не восстанавливается.
-pub fn seed(dir: &Path) -> Result<(), String> {
+pub fn seed(dir: &Path) -> AppResult<()> {
     let marker = dir.join(SEED_MARKER);
     if marker.exists() {
         return Ok(());
@@ -125,23 +126,35 @@ pub fn seed(dir: &Path) -> Result<(), String> {
 ///
 /// Существующий файл не перезаписывается: правки пользователя важнее
 /// свежести шаблона.
-pub fn export(dir: &Path, code: &str, document: &Value) -> Result<PathBuf, String> {
+pub fn export(dir: &Path, code: &str, document: &Value) -> AppResult<PathBuf> {
     validate_code(code)?;
     if !document.is_object() {
-        return Err("Образец словаря должен быть объектом".to_owned());
+        return fail!(
+            "errors.languages.sampleNotObject",
+            "Образец словаря должен быть объектом"
+        );
     }
 
     ensure_dir(dir)?;
     let target = dir.join(format!("{code}.template.{EXTENSION}"));
     if target.exists() {
-        return Err(format!(
-            "Файл '{}' уже существует: образец не перезаписывается",
-            target.display()
-        ));
+        return fail!(
+            "errors.languages.exists",
+            format!(
+                "Файл '{}' уже существует: образец не перезаписывается",
+                target.display()
+            ),
+            path = target.display(),
+        );
     }
 
-    let body = serde_json::to_string_pretty(document)
-        .map_err(|error| format!("Образец словаря не сериализован: {error}"))?;
+    let body = serde_json::to_string_pretty(document).map_err(|error| {
+        AppError::new(
+            "errors.languages.serialize",
+            format!("Образец словаря не сериализован: {error}"),
+        )
+        .with("reason", error)
+    })?;
     let text = format!(
         "// Образец словаря ToolBox.\n\
          //\n\
@@ -176,11 +189,15 @@ pub fn is_code(code: &str) -> bool {
 }
 
 /// Проверяет код языка: он становится именем файла.
-fn validate_code(code: &str) -> Result<(), String> {
+fn validate_code(code: &str) -> AppResult<()> {
     if is_code(code) {
         Ok(())
     } else {
-        Err(format!("недопустимый код языка '{code}'"))
+        fail!(
+            "errors.languages.invalidCode",
+            format!("недопустимый код языка '{code}'"),
+            code = code,
+        )
     }
 }
 
@@ -190,14 +207,19 @@ fn file_path(dir: &Path, code: &str) -> PathBuf {
 }
 
 /// Читает и разбирает файл.
-fn read(path: &Path, code: &str) -> Result<Language, String> {
+fn read(path: &Path, code: &str) -> AppResult<Language> {
     let raw = fs::read_to_string(path).map_err(|error| read_error(path, &error))?;
     parse(code, strip_bom(&raw))
 }
 
 /// Отказ чтения с путём: без пути причину не найти.
-fn read_error(path: &Path, error: &std::io::Error) -> String {
-    format!("Не удалось прочитать '{}': {error}", path.display())
+fn read_error(path: &Path, error: &std::io::Error) -> AppError {
+    AppError::new(
+        "errors.languages.read",
+        format!("Не удалось прочитать '{}': {error}", path.display()),
+    )
+    .with("path", path.display())
+    .with("reason", error)
 }
 
 /// Причина отказа разбора с номером строки.
@@ -206,7 +228,7 @@ fn read_error(path: &Path, error: &std::io::Error) -> String {
 /// срезается: иначе номер строки стоял бы в отчёте дважды, а подпись осталась
 /// бы наполовину английской. Сама причина («expected colon») пока приходит
 /// из библиотеки: перевод ошибок разбора — отдельный этап (ADR 0039).
-fn describe_parse_error(error: json5::Error) -> String {
+fn describe_parse_error(error: json5::Error) -> AppError {
     let text = error.to_string();
     let reason = match text.rfind(" at line ") {
         Some(index) => &text[..index],
@@ -214,12 +236,19 @@ fn describe_parse_error(error: json5::Error) -> String {
     };
 
     match error.position() {
-        Some(position) => format!(
-            "строка {}, столбец {}: {reason}",
-            position.line + 1,
-            position.column + 1
-        ),
-        None => reason.to_owned(),
+        Some(position) => AppError::new(
+            "errors.languages.parse",
+            format!(
+                "строка {}, столбец {}: {reason}",
+                position.line + 1,
+                position.column + 1
+            ),
+        )
+        .with("line", position.line + 1)
+        .with("column", position.column + 1)
+        .with("reason", reason),
+        None => AppError::new("errors.languages.parsePlain", reason.to_owned())
+            .with("reason", reason),
     }
 }
 
@@ -227,11 +256,14 @@ fn describe_parse_error(error: json5::Error) -> String {
 ///
 /// Ошибка разбора называет строку и столбец: без них правка файла
 /// превращается в угадывание.
-fn parse(code: &str, text: &str) -> Result<Language, String> {
+fn parse(code: &str, text: &str) -> AppResult<Language> {
     let value: Value = json5::from_str(text).map_err(describe_parse_error)?;
 
     let Value::Object(mut root) = value else {
-        return Err("ожидался объект с полями 'name' и 'messages'".to_owned());
+        return fail!(
+            "errors.languages.notObject",
+            "ожидался объект с полями 'name' и 'messages'"
+        );
     };
 
     let name = match root.remove("name") {
@@ -241,8 +273,15 @@ fn parse(code: &str, text: &str) -> Result<Language, String> {
 
     let messages = match root.remove("messages") {
         Some(Value::Object(messages)) => messages,
-        Some(_) => return Err("поле 'messages' должно быть объектом".to_owned()),
-        None => return Err("нет поля 'messages'".to_owned()),
+        Some(_) => {
+            return fail!(
+                "errors.languages.messagesType",
+                "поле 'messages' должно быть объектом"
+            );
+        }
+        None => {
+            return fail!("errors.languages.messagesMissing", "нет поля 'messages'");
+        }
     };
 
     for (key, message) in &messages {
@@ -257,27 +296,38 @@ fn parse(code: &str, text: &str) -> Result<Language, String> {
 }
 
 /// Значение — строка или набор известных форм склонения.
-fn validate_message(key: &str, value: &Value) -> Result<(), String> {
+fn validate_message(key: &str, value: &Value) -> AppResult<()> {
     match value {
         Value::String(_) => Ok(()),
         Value::Object(forms) if !forms.is_empty() => {
             for category in forms.keys() {
                 if !CATEGORIES.contains(&category.as_str()) {
-                    return Err(format!(
-                        "ключ '{key}': неизвестная категория склонения '{category}'; \
-                         допустимы zero, one, two, few, many, other"
-                    ));
+                    return fail!(
+                        "errors.languages.category",
+                        format!(
+                            "ключ '{key}': неизвестная категория склонения '{category}'; \
+                             допустимы zero, one, two, few, many, other"
+                        ),
+                        key = key,
+                        category = category,
+                    );
                 }
             }
             if forms.values().all(Value::is_string) {
                 Ok(())
             } else {
-                Err(format!("ключ '{key}': формы должны быть строками"))
+                fail!(
+                    "errors.languages.forms",
+                    format!("ключ '{key}': формы должны быть строками"),
+                    key = key,
+                )
             }
         }
-        _ => Err(format!(
-            "ключ '{key}' должен быть строкой или набором форм"
-        )),
+        _ => fail!(
+            "errors.languages.message",
+            format!("ключ '{key}' должен быть строкой или набором форм"),
+            key = key,
+        ),
     }
 }
 
@@ -337,11 +387,11 @@ mod tests {
             .expect_err("битый словарь не должен читаться");
 
         assert!(
-            error.contains("строка"),
+            error.to_string().contains("строка"),
             "в ошибке должен быть номер строки: {error}"
         );
         assert!(
-            !error.contains("at line"),
+            !error.to_string().contains("at line"),
             "позиция не повторяется по-английски: {error}"
         );
     }
@@ -351,7 +401,10 @@ mod tests {
         let error = parse("en", r#"{"messages": {"a": {"fwe": "x"}}}"#)
             .expect_err("опечатка в категории не должна проходить");
 
-        assert!(error.contains("категория"), "причина должна быть понятна: {error}");
+        assert!(
+            error.to_string().contains("категория"),
+            "причина должна быть понятна: {error}"
+        );
     }
 
     #[test]
@@ -443,7 +496,7 @@ mod tests {
         );
 
         let error = export(&dir, "ru", &document).expect_err("второй раз — отказ");
-        assert!(error.contains("не перезаписывается"));
+        assert!(error.to_string().contains("не перезаписывается"));
     }
 
     #[test]

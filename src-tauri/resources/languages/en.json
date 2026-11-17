@@ -9,6 +9,19 @@
 {
   "name": "English",
   "messages": {
+    // ── Blocking screen ───────────────────────────────────────────────────
+    "startup.title": "Cannot start",
+    "startup.lead":
+      "ToolBox keeps its settings and log next to the executable — that is what portability means here. Without write access the program cannot work correctly, so the modules are not started.",
+    "startup.folder": "Program folder",
+    "startup.reason": "What exactly failed",
+    "startup.hint": "What to do:",
+    "startup.move":
+      "move the program folder to a writable place — for example, Documents;",
+    "startup.permissions":
+      "or clear the read-only attribute and check the folder permissions.",
+    "startup.exit": "Exit",
+
     // ── Центр управления ──────────────────────────────────────────────────
     "settings.view.title": "Settings",
     "settings.view.lead":
@@ -45,7 +58,7 @@
     },
     "settings.language.empty":
       "The dictionaries folder is empty for now: only Russian is available.",
-    "settings.language.problem": "Cannot read file {code}: {reason}",
+    "settings.language.badCode": "The code “{code}” is not a language tag",
     "settings.language.refresh": "Refresh",
     "settings.language.open_folder": "Open dictionaries folder",
     "settings.language.export": "Save sample",
@@ -563,6 +576,137 @@
     // The error code is the contract with Rust: the core sends a code and
     // substitutions, the text lives here.
     "errors.core.unexpected": "{reason}",
+    "errors.core.noStorage": "Storage is not running: the app is blocked",
+    "errors.core.folder": "Unknown folder: “{folder}”",
+    "errors.core.openFolder": "Could not open “{path}”: {reason}",
+
+    // ── Startup errors ────────────────────────────────────────────────────
+    "errors.startup.storage": "Could not determine the program folder",
+    "errors.startup.write": "Could not write to the program folder",
+    "errors.startup.logging": "Could not start the file log",
+    "errors.startup.profileMissing":
+      "The active profile “{profile}” was not found among the folders in “{path}”; “{chosen}” was selected",
+
+    // ── Bus errors ────────────────────────────────────────────────────────
+    "errors.bus.badEvent": "Invalid event “{topic}”: {reason}",
+    "errors.bus.badCommand": "Invalid command “{topic}”: {reason}",
+    "errors.bus.notSerialized": "The event could not be serialized",
+    "errors.bus.unknownEvent": "Unknown event: “{topic}”",
+    "errors.bus.unknownCommand": "Unknown command: “{topic}”",
+    "errors.bus.timeout": "Timed out waiting for a reply to “{topic}”",
+    "errors.bus.duplicateHandler": "The command “{topic}” already has a handler",
+    "errors.bus.noHandler": "No handler for the command “{topic}”",
+    "errors.bus.lost": "The event was lost: the receiver is unavailable",
+    "errors.bus.handlerPanic": "The event handler crashed",
+    "errors.bus.undelivered": "The event “{topic}” was not delivered to the UI",
+
+    // ── Log and window errors ─────────────────────────────────────────────
+    "errors.logging.create": "Could not create the log folder “{path}”: {reason}",
+    "errors.logging.installed": "The file log is already running: {reason}",
+    "errors.window.flush": "The window geometry saver crashed",
+
+    "errors.files.read": "Could not read “{path}”: {reason}",
+    "errors.files.write": "Could not write “{path}”: {reason}",
+    "errors.files.rename": "Could not rename “{path}” to “{target}”: {reason}",
+    "errors.files.create": "Could not create “{path}”: {reason}",
+    "errors.storage.exe": "Could not determine the program path: {reason}",
+    "errors.storage.noFolder": "The program path has no folder: {path}",
+    "errors.storage.create": "Could not create “{path}”: {reason}",
+    "errors.storage.write": "Could not write “{path}”: {reason}",
+    "errors.workspace.broken": "The file “{path}” was not parsed as JSON: {reason}",
+    "errors.workspace.notObject": "The file “{path}” must contain a JSON object",
+    "errors.workspace.saveNotObject": "The workspace must be a JSON object",
+    "errors.workspace.serialize": "The workspace was not serialized: {reason}",
+    "errors.settings.read":
+      "Could not read “{path}”: {reason}; defaults were used",
+    "errors.settings.broken":
+      "The file “{path}” was not parsed as JSON: {reason}; defaults were used",
+    "errors.settings.notObject":
+      "The file “{path}” must contain an object; defaults were used",
+    "errors.settings.version":
+      "The file “{path}” has schema version {version}, the program knows {expected}; the file was read as is",
+    "errors.settings.versionType":
+      "The version field in “{path}” must be a number; version {expected} was used",
+    "errors.settings.profileType":
+      "The active_profile field in “{path}” must be a string; “{profile}” was used",
+    "errors.settings.profileInvalid":
+      "The active_profile field in “{path}” is not valid; “{profile}” was used",
+    "errors.settings.section":
+      "The section “{section}” in “{path}” was not read: {reason}; defaults were used",
+    "errors.settings.serialize": "The settings were not serialized: {reason}",
+    "errors.settings.unknownSection": "Unknown settings section: “{section}”",
+    "errors.settings.sectionSerialize":
+      "The section “{section}” was not serialized: {reason}",
+    "errors.settings.sectionNotObject": "The section “{section}” is not an object",
+    "errors.settings.sectionPatch": "The section “{section}” must be an object",
+    "errors.settings.sectionRejected":
+      "The section “{section}” was not accepted: {reason}",
+    "errors.settings.profilePatch": "The section “{section}” must be a string",
+    "errors.languages.read": "Could not read “{path}”: {reason}",
+    "errors.languages.invalidCode": "Invalid language code “{code}”",
+    "errors.languages.sampleNotObject": "A dictionary sample must be an object",
+    "errors.languages.exists":
+      "The file “{path}” already exists: the sample is never overwritten",
+    "errors.languages.serialize": "The dictionary sample was not serialized: {reason}",
+    "errors.languages.parse": "Line {line}, column {column}: {reason}",
+    "errors.languages.parsePlain": "{reason}",
+    "errors.languages.notObject":
+      "An object with the “name” and “messages” fields was expected",
+    "errors.languages.messagesType": "The “messages” field must be an object",
+    "errors.languages.messagesMissing": "The “messages” field is missing",
+    "errors.languages.category":
+      "Key “{key}”: unknown plural category “{category}”; allowed are zero, one, two, few, many, other",
+    "errors.languages.forms": "Key “{key}”: the forms must be strings",
+    "errors.languages.message":
+      "Key “{key}” must be a string or a set of forms",
+    "errors.data.invalidTool": "The tool identifier is not valid",
+    "errors.data.missing": "The tool “{tool}” has no data",
+    "errors.data.move": "Could not move “{path}” to “{target}”: {reason}",
+
+    // ── DNSlookup errors ──────────────────────────────────────────────────
+    "errors.dnslookup.runId": "The check identifier is missing",
+    "errors.dnslookup.runExists": "A check with this identifier is already running",
+    "errors.dnslookup.registry": "The check registry is unavailable",
+    "errors.dnslookup.noStorage": "Profile storage is unavailable",
+    "errors.dnslookup.noResolvers": "No system resolvers were found",
+    "errors.dnslookup.emptyQueries": "The query list is empty",
+    "errors.dnslookup.tooManyQueries":
+      "Too many queries: {count}, limit {limit}",
+    "errors.dnslookup.noServers": "No server is selected",
+    "errors.dnslookup.tooManyServers":
+      "Too many servers: {count}, limit {limit}",
+    "errors.dnslookup.duplicateServer": "The server {address} is listed twice",
+    "errors.dnslookup.unknownServer": "Unknown server “{id}”",
+    "errors.dnslookup.recordType": "Unknown record type “{value}”",
+    "errors.dnslookup.emptyName": "The domain name is empty",
+    "errors.dnslookup.ipForType":
+      "For type {recordType}, enter a domain name, not an IP address",
+    "errors.dnslookup.badName": "Invalid name “{name}”: {reason}",
+    "errors.dnslookup.reverse": "Could not build the reverse name: {reason}",
+    "errors.dnslookup.emptyAddress": "The server address is empty",
+    "errors.dnslookup.badAddress": "Invalid server address “{address}”",
+    "errors.dnslookup.badPort": "Invalid port in the address “{address}”",
+    "errors.dnslookup.requestBuild": "Could not build the DNS query: {reason}",
+    "errors.dnslookup.socketOpen": "Could not open the UDP socket: {reason}",
+    "errors.dnslookup.tooLarge": "The DNS query exceeds 65535 bytes",
+    "errors.dnslookup.emptyReply": "The server returned an empty TCP reply",
+    "errors.dnslookup.badReply": "The reply was not parsed: {reason}",
+    "errors.dnslookup.wrongId": "The reply identifier does not match the query",
+    "errors.dnslookup.notReply": "The message received is not a reply",
+    "errors.dnslookup.unexpectedCode": "Unexpected DNS response code: {code}",
+    "errors.dnslookup.network": "Network error: {reason}",
+    "errors.dnslookup.servers.broken": "Could not parse “{path}”: {reason}",
+    "errors.dnslookup.servers.version":
+      "Unsupported file version in “{path}”: {version}; expected {expected}",
+    "errors.dnslookup.servers.serialize":
+      "Custom servers were not serialized: {reason}",
+    "errors.dnslookup.servers.emptyId": "A custom server has an empty identifier",
+    "errors.dnslookup.servers.duplicateId":
+      "The server identifier “{id}” is repeated",
+    "errors.dnslookup.servers.duplicateAddress":
+      "The server {address} is listed twice",
+    "errors.dnslookup.servers.system":
+      "Could not read the network adapters: {reason}",
     "errors.profiles.read": "Could not read “{path}”: {reason}",
     "errors.profiles.create": "Could not create “{path}”: {reason}",
     "errors.profiles.move": "Could not move “{path}” to “{target}”: {reason}",

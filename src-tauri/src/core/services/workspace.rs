@@ -13,43 +13,62 @@ use std::path::Path;
 
 use serde_json::Value;
 
+use crate::core::infra::error::{fail, AppError, AppResult};
 use crate::core::store::files::{read, strip_bom, write_atomic};
 
 /// Читает рабочее пространство.
 ///
 /// `Ok(None)` — файла нет: это первый запуск, вкладку создаст интерфейс.
-/// Отказ чтения или разбора возвращается текстом: интерфейс покажет причину
+/// Отказ чтения или разбора возвращается причиной: интерфейс покажет её
 /// в журнале и начнёт с одной пустой вкладки, а не с пустого окна.
-pub fn load(path: &Path) -> Result<Option<Value>, String> {
+pub fn load(path: &Path) -> AppResult<Option<Value>> {
     let Some(raw) = read(path)? else {
         return Ok(None);
     };
 
-    let value: Value = serde_json::from_str(strip_bom(&raw))
-        .map_err(|error| format!("'{}' не разобран как JSON: {error}", path.display()))?;
+    let value: Value = serde_json::from_str(strip_bom(&raw)).map_err(|error| {
+        AppError::new(
+            "errors.workspace.broken",
+            format!("'{}' не разобран как JSON: {error}", path.display()),
+        )
+        .with("path", path.display())
+        .with("reason", error)
+    })?;
 
     if !value.is_object() {
-        return Err(format!(
-            "'{}' должен содержать объект, а не {}",
-            path.display(),
-            json_kind(&value)
-        ));
+        return fail!(
+            "errors.workspace.notObject",
+            format!(
+                "'{}' должен содержать объект, а не {}",
+                path.display(),
+                json_kind(&value)
+            ),
+            path = path.display(),
+        );
     }
 
     Ok(Some(value))
 }
 
 /// Записывает рабочее пространство.
-pub fn save(path: &Path, value: &Value) -> Result<(), String> {
+pub fn save(path: &Path, value: &Value) -> AppResult<()> {
     if !value.is_object() {
-        return Err(format!(
-            "Рабочее пространство должно быть объектом, а не {}",
-            json_kind(value)
-        ));
+        return fail!(
+            "errors.workspace.saveNotObject",
+            format!(
+                "Рабочее пространство должно быть объектом, а не {}",
+                json_kind(value)
+            )
+        );
     }
 
-    let text = serde_json::to_string_pretty(value)
-        .map_err(|error| format!("Рабочее пространство не сериализовано: {error}"))?;
+    let text = serde_json::to_string_pretty(value).map_err(|error| {
+        AppError::new(
+            "errors.workspace.serialize",
+            format!("Рабочее пространство не сериализовано: {error}"),
+        )
+        .with("reason", error)
+    })?;
     write_atomic(path, &format!("{text}\n"))
 }
 
@@ -122,7 +141,7 @@ mod tests {
         let error = load(&path).expect_err("испорченный файл — ошибка");
 
         assert!(
-            error.contains("workspace.json"),
+            error.to_string().contains("workspace.json"),
             "в причине должен быть путь: {error}"
         );
     }
@@ -135,7 +154,7 @@ mod tests {
         let error = load(&path).expect_err("пустой файл — ошибка");
 
         assert!(
-            error.contains("не разобран как JSON"),
+            error.to_string().contains("не разобран как JSON"),
             "причина должна называть разбор: {error}"
         );
     }
@@ -157,7 +176,10 @@ mod tests {
 
         let error = load(&path).expect_err("массив — ошибка");
 
-        assert!(error.contains("массив"), "вид значения в причине: {error}");
+        assert!(
+            error.to_string().contains("массив"),
+            "вид значения в причине: {error}"
+        );
     }
 
     #[test]
@@ -166,7 +188,10 @@ mod tests {
 
         let error = save(&path, &json!(["вкладки"])).expect_err("массив не должен записываться");
 
-        assert!(error.contains("объектом"), "причина отказа: {error}");
+        assert!(
+            error.to_string().contains("объектом"),
+            "причина отказа: {error}"
+        );
         assert!(!path.exists(), "испорченный файл не создаётся");
     }
 }

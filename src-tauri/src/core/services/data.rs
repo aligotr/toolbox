@@ -10,6 +10,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::core::infra::error::{fail, AppError, AppResult};
 use crate::core::store::files::ensure_dir;
 use crate::core::store::{names, storage};
 
@@ -17,25 +18,38 @@ use crate::core::store::{names, storage};
 ///
 /// Папки нет — ошибка: молчаливое «удалено» скрыло бы опечатку в имени
 /// инструмента, а данные остались бы на месте.
-pub fn clear_tool(profile_dir: &Path, trash_dir: &Path, tool: &str) -> Result<PathBuf, String> {
+pub fn clear_tool(profile_dir: &Path, trash_dir: &Path, tool: &str) -> AppResult<PathBuf> {
     if !names::is_safe_id(tool) {
-        return Err("Недопустимый идентификатор инструмента".to_owned());
+        return fail!(
+            "errors.data.invalidTool",
+            "Недопустимый идентификатор инструмента"
+        );
     }
 
     let source = profile_dir.join(storage::DATA_DIR).join(tool);
     if !source.is_dir() {
-        return Err(format!("Данных инструмента '{tool}' нет"));
+        return fail!(
+            "errors.data.missing",
+            format!("Данных инструмента '{tool}' нет"),
+            tool = tool,
+        );
     }
 
     ensure_dir(trash_dir)?;
 
     let target = trash_dir.join(names::unique_id(trash_dir, tool));
     fs::rename(&source, &target).map_err(|error| {
-        format!(
-            "Не удалось перенести '{}' в '{}': {error}",
-            source.display(),
-            target.display()
+        AppError::new(
+            "errors.data.move",
+            format!(
+                "Не удалось перенести '{}' в '{}': {error}",
+                source.display(),
+                target.display()
+            ),
         )
+        .with("path", source.display())
+        .with("target", target.display())
+        .with("reason", error)
     })?;
 
     Ok(target)

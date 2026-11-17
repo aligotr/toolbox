@@ -30,6 +30,7 @@ use serde::de::DeserializeOwned;
 use serde_json::{Value, json};
 
 use crate::core::infra::deps::Deps;
+use crate::core::infra::error::{fail, AppError, AppResult};
 use crate::core::infra::message::{Command, Event};
 use crate::core::infra::sink::EventSink;
 use crate::core::infra::trace::{self, Recorder};
@@ -46,10 +47,10 @@ type CommandHandler = Arc<dyn Fn(&dyn Any, &Deps) + Send + Sync>;
 /// Маршрут события: превращает «сырой» JSON (пришедший из UI) в готовое
 /// сообщение, лежащее в очереди. Нужен, потому что UI общается строками-топиками,
 /// а шина — типами Rust.
-type EventRoute = Arc<dyn Fn(Value) -> Result<QueuedEvent, String> + Send + Sync>;
+type EventRoute = Arc<dyn Fn(Value) -> AppResult<QueuedEvent> + Send + Sync>;
 
 /// Маршрут команды: разбирает JSON в конкретный тип и вызывает обработчик.
-type CommandRoute = Arc<dyn Fn(Value, &Deps) -> Result<(), String> + Send + Sync>;
+type CommandRoute = Arc<dyn Fn(Value, &Deps) -> AppResult<()> + Send + Sync>;
 
 /// Событие, готовое к постановке в очередь.
 struct QueuedEvent {
@@ -81,7 +82,7 @@ struct PendingAsk {
 /// Слушает его журнал интерфейса. Модули этот топик не публикуют.
 pub const ERROR_TOPIC: &str = "core:error";
 
-/// Отказ шины для журнала: короткая строка без подробностей (ADR 0008).
+/// Отказ шины для журнала: код словаря и топик-источник (ADR 0008).
 ///
 /// Подробности — причина паники, текст ошибки сериализации — остаются
 /// в файловом логе: в журнале они не нужны в обычной работе.
@@ -89,15 +90,15 @@ pub const ERROR_TOPIC: &str = "core:error";
 pub struct BusError {
     /// Топик сообщения, при обработке которого случился отказ.
     pub source: String,
-    /// Что именно не удалось.
-    pub text: String,
+    /// Что именно не удалось — код и русский запасной текст.
+    pub error: AppError,
 }
 
 impl BusError {
-    pub fn new(source: impl Into<String>, text: impl Into<String>) -> Self {
+    pub fn new(source: impl Into<String>, error: AppError) -> Self {
         Self {
             source: source.into(),
-            text: text.into(),
+            error,
         }
     }
 }
@@ -123,11 +124,11 @@ struct Inner {
 
 /// Сообщает об отказе, который иначе остался бы незамеченным.
 ///
-/// Подробность пишется в файловый лог, короткая строка — в журнал событием
+/// Подробность пишется в файловый лог, код с параметрами — в журнал событием
 /// [`ERROR_TOPIC`] (ADR 0008: в журнале нет места для причины). Событие уходит
 /// напрямую в приёмник, минуя очередь: если отказала сама шина, отправлять
 /// через неё бессмысленно.
-fn report_fault(inner: &Inner, source: &str, short: impl Into<String>, detail: impl Into<String>) {
+fn report_fault(inner: &Inner, source: &str, short: AppError, detail: impl Into<String>) {
     log::error!("{}", detail.into());
     let Some(sink) = inner.sink.read().expect("sink lock").clone() else {
         return;
@@ -209,8 +210,14 @@ impl MessageBus {
         // и сильная ссылка замкнула бы владение само на себя.
         let weak = Arc::downgrade(&self.inner);
         let route: EventRoute = Arc::new(move |value: Value| {
-            let event: E = serde_json::from_value(value)
-                .map_err(|e| format!("Некорректное событие '{}': {e}", E::TOPIC))?;
+            let event: E = serde_json::from_value(value).map_err(|error| {
+                AppError::new(
+                    "errors.bus.badEvent",
+                    format!("Некорректное событие '{}': {error}", E::TOPIC),
+                )
+                .with("topic", E::TOPIC)
+                .with("reason", error)
+            })?;
             // Сериализация нужна только мосту в интерфейс: локальные
             // подписчики получают типизированное сообщение. Поэтому потеря
             // данных здесь не отменяет доставку, но обязана оставить след.
@@ -221,7 +228,10 @@ impl MessageBus {
                         report_fault(
                             &inner,
                             E::TOPIC,
-                            "событие не удалось сериализовать",
+                            AppError::new(
+                                "errors.bus.notSerialized",
+                                "событие не удалось сериализовать",
+                            ),
                             format!("событие '{}' не сериализовано: {error}", E::TOPIC),
                         );
                     }
@@ -254,7 +264,10 @@ impl MessageBus {
                 report_fault(
                     &self.inner,
                     E::TOPIC,
-                    "событие не удалось сериализовать",
+                    AppError::new(
+                        "errors.bus.notSerialized",
+                        "событие не удалось сериализовать",
+                    ),
                     format!("событие '{}' не сериализовано: {error}", E::TOPIC),
                 );
                 Value::Null
@@ -276,7 +289,7 @@ impl MessageBus {
     }
 
     /// Публикация события по имени топика (путь из интерфейса).
-    pub fn dispatch_event(&self, topic: &str, payload: Value) -> Result<(), String> {
+    pub fn dispatch_event(&self, topic: &str, payload: Value) -> AppResult<()> {
         // Идентификатор нужен до разбора: при ошибке нагрузка уже перемещена.
         let trace_id = payload
             .get("correlation_id")
@@ -302,7 +315,11 @@ impl MessageBus {
                     );
                 }
                 log::warn!("Неизвестное событие: '{topic}'");
-                return Err(format!("Неизвестное событие: '{topic}'"));
+                return fail!(
+                    "errors.bus.unknownEvent",
+                    format!("Неизвестное событие: '{topic}'"),
+                    topic = topic,
+                );
             }
         };
 
@@ -346,7 +363,7 @@ impl MessageBus {
         reply_topic: &str,
         payload: Value,
         timeout: Duration,
-    ) -> Result<Value, String> {
+    ) -> AppResult<Value> {
         self.ask_inner(topic, reply_topic, payload, timeout, false)
     }
 
@@ -360,7 +377,7 @@ impl MessageBus {
         reply_topic: &str,
         payload: Value,
         timeout: Duration,
-    ) -> Result<Value, String> {
+    ) -> AppResult<Value> {
         self.ask_inner(topic, reply_topic, payload, timeout, true)
     }
 
@@ -372,7 +389,7 @@ impl MessageBus {
         mut payload: Value,
         timeout: Duration,
         traced: bool,
-    ) -> Result<Value, String> {
+    ) -> AppResult<Value> {
         let correlation_id = new_correlation_id();
 
         // Вкладываем correlation_id в объект; если нагрузка не объект —
@@ -411,7 +428,7 @@ impl MessageBus {
                 .expect("pending lock")
                 .remove(&correlation_id);
             if traced {
-                self.finish_trace(&correlation_id, "error", reply_topic, Some(e.clone()));
+                self.finish_trace(&correlation_id, "error", reply_topic, Some(e.to_string()));
             }
             return Err(e);
         }
@@ -438,7 +455,14 @@ impl MessageBus {
             self.finish_trace(&correlation_id, outcome, reply_topic, detail);
         }
 
-        result.map_err(|_| format!("Таймаут ожидания ответа на '{topic}'"))
+        result.map_err(|_| {
+            AppError::new(
+                "errors.bus.timeout",
+                format!("Таймаут ожидания ответа на '{topic}'"),
+            )
+            .with("topic", topic)
+            .with("timeout", timeout.as_millis())
+        })
     }
 
     /// Записывает последний этап, снимает запись и отдаёт цепочку в интерфейс.
@@ -475,7 +499,7 @@ impl MessageBus {
     pub fn subscribe_command<C>(
         &self,
         handler: impl Fn(&C, &Deps) + Send + Sync + 'static,
-    ) -> Result<(), String>
+    ) -> AppResult<()>
     where
         C: Command + DeserializeOwned,
     {
@@ -485,7 +509,11 @@ impl MessageBus {
             .write()
             .expect("command handlers lock");
         if handlers.contains_key(&TypeId::of::<C>()) {
-            return Err(format!("Команде '{}' уже назначен обработчик", C::TOPIC));
+            return fail!(
+                "errors.bus.duplicateHandler",
+                format!("Команде '{}' уже назначен обработчик", C::TOPIC),
+                topic = C::TOPIC,
+            );
         }
 
         // Один и тот же обработчик нужен в двух местах: для прямого вызова
@@ -504,8 +532,14 @@ impl MessageBus {
         drop(handlers);
 
         let route: CommandRoute = Arc::new(move |value: Value, deps: &Deps| {
-            let command: C = serde_json::from_value(value)
-                .map_err(|e| format!("Некорректная команда '{}': {e}", C::TOPIC))?;
+            let command: C = serde_json::from_value(value).map_err(|error| {
+                AppError::new(
+                    "errors.bus.badCommand",
+                    format!("Некорректная команда '{}': {error}", C::TOPIC),
+                )
+                .with("topic", C::TOPIC)
+                .with("reason", error)
+            })?;
             handler(&command, deps);
             Ok(())
         });
@@ -523,7 +557,7 @@ impl MessageBus {
     /// Этот вариант нужен внутренним подсистемам, когда команду инициирует
     /// Rust, а не UI (например, будущее меню в трее).
     #[allow(dead_code)]
-    pub fn publish_command<C: Command>(&self, command: C) -> Result<(), String> {
+    pub fn publish_command<C: Command>(&self, command: C) -> AppResult<()> {
         let handler = self
             .inner
             .command_handlers
@@ -531,13 +565,19 @@ impl MessageBus {
             .expect("command handlers lock")
             .get(&TypeId::of::<C>())
             .cloned()
-            .ok_or_else(|| format!("Нет обработчика для команды '{}'", C::TOPIC))?;
+            .ok_or_else(|| {
+                AppError::new(
+                    "errors.bus.noHandler",
+                    format!("Нет обработчика для команды '{}'", C::TOPIC),
+                )
+                .with("topic", C::TOPIC)
+            })?;
         handler(&command as &dyn Any, &self.inner.deps);
         Ok(())
     }
 
     /// Вызов команды по имени топика (путь из интерфейса).
-    pub fn dispatch_command(&self, topic: &str, payload: Value) -> Result<(), String> {
+    pub fn dispatch_command(&self, topic: &str, payload: Value) -> AppResult<()> {
         let route = self
             .inner
             .command_routes
@@ -548,7 +588,11 @@ impl MessageBus {
 
         let Some(route) = route else {
             log::warn!("Неизвестная команда: '{topic}'");
-            return Err(format!("Неизвестная команда: '{topic}'"));
+            return fail!(
+                "errors.bus.unknownCommand",
+                format!("Неизвестная команда: '{topic}'"),
+                topic = topic,
+            );
         };
         route(payload, &self.inner.deps)
     }
@@ -604,7 +648,7 @@ impl MessageBus {
                     report_fault(
                         &self.inner,
                         topic,
-                        "потеряно: приёмник недоступен",
+                        AppError::new("errors.bus.lost", "потеряно: приёмник недоступен"),
                         format!("событие '{topic}' не встало в очередь: диспетчер завершился"),
                     );
                 }
@@ -663,7 +707,7 @@ fn dispatch(inner: &Inner, queued: QueuedEvent) {
             report_fault(
                 inner,
                 queued.topic,
-                "обработчик упал",
+                AppError::new("errors.bus.handlerPanic", "обработчик упал"),
                 format!("обработчик события '{}' завершился паникой", queued.topic),
             );
         }
@@ -908,8 +952,9 @@ mod tests {
         bus.stop();
 
         assert_eq!(report["source"], TestRequest::TOPIC);
-        // В журнал идёт короткая строка: подробности остаются в файловом логе.
-        assert_eq!(report["text"], "обработчик упал");
+        // В журнал идёт короткая запись с кодом: подробности остаются в файловом логе.
+        assert_eq!(report["error"]["code"], "errors.bus.handlerPanic");
+        assert_eq!(report["error"]["fallback"], "обработчик упал");
     }
 
     /// Событие, которое не сериализуется, тоже оставляет след в журнале.
@@ -926,7 +971,7 @@ mod tests {
 
         let report = wait_for_bus_error(&rx);
         assert_eq!(report["source"], BadEvent::TOPIC);
-        assert_eq!(report["text"], "событие не удалось сериализовать");
+        assert_eq!(report["error"]["code"], "errors.bus.notSerialized");
     }
 
     /// Событие, сериализация которого заведомо не удаётся.

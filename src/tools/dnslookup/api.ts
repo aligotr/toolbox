@@ -9,6 +9,7 @@
 // и `RunServer` уже описаны в `types.ts`, дублировать их в сигнатуре незачем.
 
 import type { UnlistenFn } from "@tauri-apps/api/event";
+import type { AppError } from "@/contracts/errors";
 import { ask, invokeCommand, subscribeEvent } from "@/core/infra/bus";
 import type {
   DnsFinishedEvent,
@@ -65,13 +66,13 @@ export interface StoredServer {
 /** Ответ на чтение своих серверов. */
 export interface ServersLoadReply {
   servers: StoredServer[];
-  error: string | null;
+  error: AppError | null;
 }
 
 /** Ответ на запись своих серверов. */
 export interface ServersSaveReply {
   saved: boolean;
-  error: string | null;
+  error: AppError | null;
 }
 
 /** Читает свои серверы из профиля. */

@@ -11,18 +11,22 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::core::infra::error::{fail, AppError, AppResult};
+
 /// Читает текстовый файл состояния.
 ///
 /// `Ok(None)` — файла ещё нет: это первый запуск, а не поломка. Остальные
-/// отказы возвращаются текстом с путём: без него причину не найти.
-pub fn read(path: &Path) -> Result<Option<String>, String> {
+/// отказы возвращаются с путём: без него причину не найти.
+pub fn read(path: &Path) -> AppResult<Option<String>> {
     match fs::read_to_string(path) {
         Ok(raw) => Ok(Some(raw)),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        Err(error) => Err(format!(
-            "Не удалось прочитать '{}': {error}",
-            path.display()
-        )),
+        Err(error) => fail!(
+            "errors.files.read",
+            format!("Не удалось прочитать '{}': {error}", path.display()),
+            path = path.display(),
+            reason = error,
+        ),
     }
 }
 
@@ -35,20 +39,32 @@ pub fn strip_bom(raw: &str) -> &str {
 ///
 /// Переименование в пределах одной папки атомарно, поэтому читатель видит
 /// либо прежнее содержимое, либо новое, но никогда — половину.
-pub fn write_atomic(path: &Path, contents: &str) -> Result<(), String> {
+pub fn write_atomic(path: &Path, contents: &str) -> AppResult<()> {
     let temporary = temporary_path(path);
-    fs::write(&temporary, contents)
-        .map_err(|error| format!("Не удалось записать '{}': {error}", temporary.display()))?;
+    fs::write(&temporary, contents).map_err(|error| {
+        AppError::new(
+            "errors.files.write",
+            format!("Не удалось записать '{}': {error}", temporary.display()),
+        )
+        .with("path", temporary.display())
+        .with("reason", error)
+    })?;
 
     if let Err(error) = fs::rename(&temporary, path) {
         // Временный файл при отказе удаляем: мусор в папке программы
         // остаётся навсегда и путает при разборе.
         let _ = fs::remove_file(&temporary);
-        return Err(format!(
-            "Не удалось переименовать '{}' в '{}': {error}",
-            temporary.display(),
-            path.display()
-        ));
+        return fail!(
+            "errors.files.rename",
+            format!(
+                "Не удалось переименовать '{}' в '{}': {error}",
+                temporary.display(),
+                path.display()
+            ),
+            path = temporary.display(),
+            target = path.display(),
+            reason = error,
+        );
     }
     Ok(())
 }
@@ -57,9 +73,15 @@ pub fn write_atomic(path: &Path, contents: &str) -> Result<(), String> {
 ///
 /// Ошибка возвращается с путём: без него причину отказа не найти, а папки
 /// создаются в том числе на сетевой шаре.
-pub fn ensure_dir(path: &Path) -> Result<(), String> {
-    fs::create_dir_all(path)
-        .map_err(|error| format!("Не удалось создать '{}': {error}", path.display()))
+pub fn ensure_dir(path: &Path) -> AppResult<()> {
+    fs::create_dir_all(path).map_err(|error| {
+        AppError::new(
+            "errors.files.create",
+            format!("Не удалось создать '{}': {error}", path.display()),
+        )
+        .with("path", path.display())
+        .with("reason", error)
+    })
 }
 
 /// Имя временного файла рядом с целевым: переименование не должно пересекать

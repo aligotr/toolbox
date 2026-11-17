@@ -20,6 +20,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
 use crate::core::infra::bus::MessageBus;
+use crate::core::infra::error::AppError;
 use crate::core::infra::module::Module;
 use crate::core::store::storage::Storage;
 
@@ -116,7 +117,13 @@ impl Module for DnsLookupModule {
                     Ok(servers) => (servers, None),
                     Err(error) => (Vec::new(), Some(error)),
                 },
-                None => (Vec::new(), Some("Хранилище профиля недоступно".to_owned())),
+                None => (
+                    Vec::new(),
+                    Some(AppError::new(
+                        "errors.dnslookup.noStorage",
+                        "Хранилище профиля недоступно",
+                    )),
+                ),
             };
             bus_for_load.publish_event(ServersLoadReply {
                 servers,
@@ -129,7 +136,10 @@ impl Module for DnsLookupModule {
         bus.subscribe_event::<ServersSave>(move |event, deps| {
             let error = match deps.get::<Arc<Storage>>() {
                 Some(storage) => servers::save(&storage.data_dir(), &event.servers).err(),
-                None => Some("Хранилище профиля недоступно".to_owned()),
+                None => Some(AppError::new(
+                    "errors.dnslookup.noStorage",
+                    "Хранилище профиля недоступно",
+                )),
             };
             bus_for_save.publish_event(ServersSaveReply {
                 saved: error.is_none(),
@@ -142,7 +152,7 @@ impl Module for DnsLookupModule {
 
 /// Проверяет запрос, ставит его в реестр и запускает выполнение.
 fn start_run(bus: &MessageBus, runs: &ActiveRuns, event: &DnsRun) -> DnsRunAccepted {
-    let accepted = |accepted: bool, query_count: usize, error: Option<String>| DnsRunAccepted {
+    let accepted = |accepted: bool, query_count: usize, error: Option<AppError>| DnsRunAccepted {
         run_id: event.run_id.clone(),
         accepted,
         query_count,
@@ -154,7 +164,10 @@ fn start_run(bus: &MessageBus, runs: &ActiveRuns, event: &DnsRun) -> DnsRunAccep
         return accepted(
             false,
             0,
-            Some("Не указан идентификатор проверки".to_owned()),
+            Some(AppError::new(
+                "errors.dnslookup.runId",
+                "Не указан идентификатор проверки",
+            )),
         );
     }
 
@@ -177,13 +190,23 @@ fn start_run(bus: &MessageBus, runs: &ActiveRuns, event: &DnsRun) -> DnsRunAccep
                 return accepted(
                     false,
                     0,
-                    Some("Проверка с этим идентификатором уже идёт".to_owned()),
+                    Some(AppError::new(
+                        "errors.dnslookup.runExists",
+                        "Проверка с этим идентификатором уже идёт",
+                    )),
                 );
             }
             active.insert(run.run_id.clone(), cancelled.clone());
         }
         Err(_) => {
-            return accepted(false, 0, Some("Реестр проверок недоступен".to_owned()));
+            return accepted(
+                false,
+                0,
+                Some(AppError::new(
+                    "errors.dnslookup.registry",
+                    "Реестр проверок недоступен",
+                )),
+            );
         }
     }
 
@@ -280,7 +303,7 @@ fn run_query(
     run_id: &str,
     query: &PreparedQuery,
     system_addresses: &[SocketAddr],
-    system_error: &Option<String>,
+    system_error: &Option<AppError>,
     cancelled: &AtomicBool,
 ) -> Option<DnsResult> {
     let addresses: Vec<SocketAddr> = match query.target {
@@ -290,11 +313,12 @@ fn run_query(
 
     let started = Instant::now();
     let outcome = if matches!(query.target, Target::System) && addresses.is_empty() {
-        transport::Outcome::bad(
-            system_error
-                .clone()
-                .unwrap_or_else(|| "Системные резолверы не найдены".to_owned()),
-        )
+        transport::Outcome::bad(system_error.clone().unwrap_or_else(|| {
+            AppError::new(
+                "errors.dnslookup.noResolvers",
+                "Системные резолверы не найдены",
+            )
+        }))
     } else {
         transport::resolve(&addresses, &query.name, query.record_type)
     };
@@ -442,8 +466,8 @@ mod tests {
 
         assert_eq!(accepted["accepted"], false);
         assert!(
-            accepted["error"].as_str().is_some(),
-            "текст ошибки обязателен"
+            accepted["error"]["code"].is_string(),
+            "код ошибки обязателен"
         );
         bus.stop();
     }

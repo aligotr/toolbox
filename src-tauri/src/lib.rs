@@ -54,7 +54,12 @@ impl EventSink for TauriSink {
             if topic != ERROR_TOPIC {
                 if let Ok(report) = serde_json::to_value(BusError::new(
                     topic,
-                    format!("событие не доставлено в интерфейс: {error}"),
+                    AppError::new(
+                        "errors.bus.undelivered",
+                        format!("событие не доставлено в интерфейс: {error}"),
+                    )
+                    .with("topic", topic)
+                    .with("reason", error),
                 )) {
                     let _ = self.app.emit(ERROR_TOPIC, report);
                 }
@@ -69,10 +74,10 @@ impl EventSink for TauriSink {
 /// запустился» требуют разных действий, а общий заголовок заставил бы
 /// пользователя выискивать различие в тексте причины.
 struct StartupError {
-    /// Заголовок блокирующего экрана.
+    /// Код заголовка блокирующего экрана.
     title: &'static str,
-    /// Что именно не удалось — с путями и текстом ошибки.
-    reason: String,
+    /// Что именно не удалось — код, данные и русский запасной текст.
+    reason: AppError,
 }
 
 /// Состояние, которое читают команды интерфейса после запуска.
@@ -96,10 +101,10 @@ struct Runtime {
 #[derive(Serialize)]
 struct StartupStatus {
     blocked: bool,
-    /// Заголовок блокирующего экрана; `None`, если запуск удался.
+    /// Код заголовка блокирующего экрана; `None`, если запуск удался.
     title: Option<&'static str>,
     root: String,
-    reason: Option<String>,
+    reason: Option<AppError>,
     log_path: String,
     log_level: String,
     /// Язык блокирующего экрана и интерфейса (ADR 0039).
@@ -131,7 +136,7 @@ fn boot(app: &AppHandle) -> Runtime {
                 app,
                 "неизвестна",
                 languages::DEFAULT_CODE,
-                "Не удалось определить папку программы",
+                "errors.startup.storage",
                 reason,
             );
         }
@@ -163,19 +168,27 @@ fn boot(app: &AppHandle) -> Runtime {
                     .find(|profile| profile.id == DEFAULT_PROFILE)
                     .unwrap_or(&items[0])
                     .clone();
-                loaded.warnings.push(format!(
-                    "активный профиль '{}' не найден среди папок '{}'; выбран '{}'",
-                    configured,
-                    storage.profiles_dir().display(),
-                    fallback.id
-                ));
+                loaded.warnings.push(
+                    AppError::new(
+                        "errors.startup.profileMissing",
+                        format!(
+                            "активный профиль '{}' не найден среди папок '{}'; выбран '{}'",
+                            configured,
+                            storage.profiles_dir().display(),
+                            fallback.id
+                        ),
+                    )
+                    .with("profile", &configured)
+                    .with("path", storage.profiles_dir().display())
+                    .with("chosen", &fallback.id),
+                );
                 fallback.id
             }
         },
         Err(reason) => {
             // Список не прочитан: причину покажет проба записи, а профиль
             // остаётся тем, что записан в настройках.
-            loaded.warnings.push(reason.to_string());
+            loaded.warnings.push(reason);
             configured.clone()
         }
     };
@@ -186,24 +199,12 @@ fn boot(app: &AppHandle) -> Runtime {
     // профиля пустой, и после неё отличить первый запуск от готового профиля
     // без названия было бы нельзя.
     if let Err(reason) = profiles::ensure_default(&storage.profiles_dir()) {
-        return blocked(
-            app,
-            &root,
-            &language,
-            "Не могу писать в папку программы",
-            reason.to_string(),
-        );
+        return blocked(app, &root, &language, "errors.startup.write", reason);
     }
 
     // Проверка записи делом — до всего остального.
     if let Err(reason) = storage.probe() {
-        return blocked(
-            app,
-            &root,
-            &language,
-            "Не могу писать в папку программы",
-            reason,
-        );
+        return blocked(app, &root, &language, "errors.startup.write", reason);
     }
     let storage = Arc::new(storage);
 
@@ -211,13 +212,7 @@ fn boot(app: &AppHandle) -> Runtime {
     let logger = match logging::init(storage.logs_dir(), loaded.settings.log.level) {
         Ok(logger) => logger,
         Err(reason) => {
-            return blocked(
-                app,
-                &root,
-                &language,
-                "Не удалось запустить файловый лог",
-                reason,
-            );
+            return blocked(app, &root, &language, "errors.startup.logging", reason);
         }
     };
     logging::install_panic_hook(logger.clone());
@@ -306,7 +301,7 @@ fn blocked(
     root: &str,
     language: &str,
     title: &'static str,
-    reason: String,
+    reason: AppError,
 ) -> Runtime {
     app.manage(MessageBus::new(Deps::new()));
 
@@ -328,14 +323,14 @@ fn blocked(
 
 /// Публикация события из интерфейса («выстрелил и забыл»).
 #[tauri::command]
-fn send_event(bus: State<'_, MessageBus>, topic: String, payload: Value) -> Result<(), String> {
+fn send_event(bus: State<'_, MessageBus>, topic: String, payload: Value) -> AppResult<()> {
     log::debug!("IPC send_event: '{topic}'");
     bus.dispatch_event(&topic, payload)
 }
 
 /// Синхронная команда из интерфейса. Ошибка вернётся в UI как отклонённый вызов.
 #[tauri::command]
-fn invoke_command(bus: State<'_, MessageBus>, topic: String, payload: Value) -> Result<(), String> {
+fn invoke_command(bus: State<'_, MessageBus>, topic: String, payload: Value) -> AppResult<()> {
     log::debug!("IPC invoke_command: '{topic}'");
     bus.dispatch_command(&topic, payload)
 }
@@ -348,7 +343,7 @@ fn ask(
     reply_topic: String,
     payload: Value,
     timeout_ms: Option<u64>,
-) -> Result<Value, String> {
+) -> AppResult<Value> {
     log::debug!("IPC ask: '{topic}' → '{reply_topic}'");
     let timeout = Duration::from_millis(timeout_ms.unwrap_or(5000));
     bus.ask(&topic, &reply_topic, payload, timeout)
@@ -363,7 +358,7 @@ fn ask_traced(
     reply_topic: String,
     payload: Value,
     timeout_ms: Option<u64>,
-) -> Result<Value, String> {
+) -> AppResult<Value> {
     log::debug!("IPC ask_traced: '{topic}' → '{reply_topic}'");
     let timeout = Duration::from_millis(timeout_ms.unwrap_or(5000));
     bus.ask_traced(&topic, &reply_topic, payload, timeout)
@@ -375,11 +370,13 @@ fn ask_traced(
 ///
 /// При блокировке запуска хранилища нет вовсе; без этой проверки каждая
 /// команда повторяла бы один и тот же разбор `Option`.
-fn storage_of(runtime: &Runtime) -> Result<&Storage, String> {
-    runtime
-        .storage
-        .as_deref()
-        .ok_or_else(|| "Хранилище не запущено".to_owned())
+fn storage_of(runtime: &Runtime) -> AppResult<&Storage> {
+    runtime.storage.as_deref().ok_or_else(|| {
+        AppError::new(
+            "errors.core.noStorage",
+            "Хранилище не запущено: приложение заблокировано",
+        )
+    })
 }
 
 /// Состояние запуска: экран блокировки и подпись к файлу лога.
@@ -417,7 +414,7 @@ fn settings_set(
     runtime: State<'_, Runtime>,
     section: String,
     value: Value,
-) -> Result<Settings, String> {
+) -> AppResult<Settings> {
     let updated = commit_settings(&app, &runtime, &section, |current| {
         settings::apply_patch(current, &section, value)
     })?;
@@ -427,7 +424,7 @@ fn settings_set(
 
 /// Сбрасывает геометрию окна: остальные разделы не трогаются.
 #[tauri::command]
-fn window_reset(app: AppHandle, runtime: State<'_, Runtime>) -> Result<Settings, String> {
+fn window_reset(app: AppHandle, runtime: State<'_, Runtime>) -> AppResult<Settings> {
     let updated = commit_settings(&app, &runtime, settings::SECTION_WINDOW, |current| {
         Ok(settings::reset_window(current))
     })?;
@@ -450,11 +447,9 @@ fn commit_settings(
     app: &AppHandle,
     runtime: &Runtime,
     section: &str,
-    change: impl FnOnce(&Settings) -> Result<Settings, String>,
-) -> Result<Settings, String> {
-    let Some(storage) = runtime.storage.as_ref() else {
-        return Err("Хранилище не запущено".to_owned());
-    };
+    change: impl FnOnce(&Settings) -> AppResult<Settings>,
+) -> AppResult<Settings> {
+    let storage = storage_of(runtime)?;
 
     let mut guard = runtime.settings.lock().expect("settings lock");
     let committed = settings::commit(&storage.settings_path(), &mut guard, change)?;
@@ -496,7 +491,7 @@ fn emit_settings_changed(app: &AppHandle, section: &str) {
 /// Остальные отказы возвращаются текстом: интерфейс запишет причину
 /// в журнал и начнёт с одной пустой вкладки.
 #[tauri::command]
-fn workspace_load(runtime: State<'_, Runtime>) -> Result<Option<Value>, String> {
+fn workspace_load(runtime: State<'_, Runtime>) -> AppResult<Option<Value>> {
     let storage = storage_of(&runtime)?;
     workspace::load(&storage.workspace_path())
 }
@@ -506,7 +501,7 @@ fn workspace_load(runtime: State<'_, Runtime>) -> Result<Option<Value>, String> 
 /// Содержимое непрозрачно: ядро проверяет только «это объект». Формат
 /// принадлежит интерфейсу, поэтому правка раскладки не требует правки Rust.
 #[tauri::command]
-fn workspace_save(runtime: State<'_, Runtime>, data: Value) -> Result<(), String> {
+fn workspace_save(runtime: State<'_, Runtime>, data: Value) -> AppResult<()> {
     let storage = storage_of(&runtime)?;
     workspace::save(&storage.workspace_path(), &data)?;
     log::debug!("Рабочее пространство сохранено");
@@ -825,7 +820,7 @@ fn preset_delete(runtime: State<'_, Runtime>, tool: String, id: String) -> AppRe
 ///
 /// Отсутствие папки или файлов — норма: остаётся встроенный русский.
 #[tauri::command]
-fn languages_list(runtime: State<'_, Runtime>) -> Result<Vec<languages::LanguageSummary>, String> {
+fn languages_list(runtime: State<'_, Runtime>) -> AppResult<Vec<languages::LanguageSummary>> {
     let storage = storage_of(&runtime)?;
     languages::list(&storage.languages_dir())
 }
@@ -835,7 +830,7 @@ fn languages_list(runtime: State<'_, Runtime>) -> Result<Vec<languages::Language
 /// Разбор — на стороне Rust: один диалект JSONC на обе стороны, а ошибка
 /// приходит с номером строки.
 #[tauri::command]
-fn language_load(runtime: State<'_, Runtime>, code: String) -> Result<languages::Language, String> {
+fn language_load(runtime: State<'_, Runtime>, code: String) -> AppResult<languages::Language> {
     let storage = storage_of(&runtime)?;
     languages::load(&storage.languages_dir(), &code)
 }
@@ -846,7 +841,7 @@ fn language_export(
     runtime: State<'_, Runtime>,
     code: String,
     document: Value,
-) -> Result<String, String> {
+) -> AppResult<String> {
     let storage = storage_of(&runtime)?;
     let path = languages::export(&storage.languages_dir(), &code, &document)?;
     Ok(path.display().to_string())
@@ -911,7 +906,7 @@ fn app_info(app: AppHandle, runtime: State<'_, Runtime>) -> AppInfo {
 
 /// Размеры логов, шаблонов и данных инструментов активного профиля.
 #[tauri::command]
-fn storage_stats(runtime: State<'_, Runtime>) -> Result<store::stats::StorageStats, String> {
+fn storage_stats(runtime: State<'_, Runtime>) -> AppResult<store::stats::StorageStats> {
     let storage = storage_of(&runtime)?;
     Ok(store::stats::summary(&storage))
 }
@@ -921,7 +916,7 @@ fn storage_stats(runtime: State<'_, Runtime>) -> Result<store::stats::StorageSta
 /// Срок задан ядром, а не интерфейсом: иначе кнопка говорила бы «старше
 /// 14 дней», а удаляла бы другой промежуток.
 #[tauri::command]
-fn logs_prune(runtime: State<'_, Runtime>) -> Result<usize, String> {
+fn logs_prune(runtime: State<'_, Runtime>) -> AppResult<usize> {
     let storage = storage_of(&runtime)?;
     let removed = logging::prune_older(&storage.logs_dir());
     log::info!("Удалено старых файлов лога: {removed}");
@@ -930,7 +925,7 @@ fn logs_prune(runtime: State<'_, Runtime>) -> Result<usize, String> {
 
 /// Переносит данные инструмента в `local/trash/data/`.
 #[tauri::command]
-fn tool_data_clear(runtime: State<'_, Runtime>, tool: String) -> Result<String, String> {
+fn tool_data_clear(runtime: State<'_, Runtime>, tool: String) -> AppResult<String> {
     let storage = storage_of(&runtime)?;
     let target = data::clear_tool(
         &storage.active_profile_dir(),
@@ -949,18 +944,31 @@ fn tool_data_clear(runtime: State<'_, Runtime>, tool: String) -> Result<String, 
 /// Путь выбирает ядро по имени, а не интерфейс: иначе окно могло бы
 /// попросить открыть любой каталог на диске.
 #[tauri::command]
-fn open_folder(app: AppHandle, runtime: State<'_, Runtime>, kind: String) -> Result<(), String> {
+fn open_folder(app: AppHandle, runtime: State<'_, Runtime>, kind: String) -> AppResult<()> {
     let storage = storage_of(&runtime)?;
     let path = match kind.as_str() {
         "logs" => storage.logs_dir(),
         "languages" => storage.languages_dir(),
         "root" => storage.root().to_path_buf(),
-        other => return Err(format!("Неизвестная папка: '{other}'")),
+        other => {
+            return Err(AppError::new(
+                "errors.core.folder",
+                format!("Неизвестная папка: '{other}'"),
+            )
+            .with("folder", other));
+        }
     };
 
     app.opener()
         .open_path(path.display().to_string(), None::<&str>)
-        .map_err(|error| format!("Не удалось открыть '{}': {error}", path.display()))
+        .map_err(|error| {
+            AppError::new(
+                "errors.core.openFolder",
+                format!("Не удалось открыть '{}': {error}", path.display()),
+            )
+            .with("path", path.display())
+            .with("reason", error)
+        })
 }
 
 // ─────────────────────────────── Окно ────────────────────────────────────────

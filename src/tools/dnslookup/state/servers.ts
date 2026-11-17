@@ -13,6 +13,7 @@
 // Запись поверх повреждённого файла запрещена: пользователь сначала чинит
 // или удаляет его, иначе восстановимые данные потерялись бы.
 
+import { describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import { useAsyncAction, type AsyncAction } from "@/core/infra/useAsyncAction";
@@ -100,17 +101,19 @@ async function readServers(session: DnsSession): Promise<void> {
 
   if (system.status === "fulfilled") {
     session.systemAddresses = system.value.servers;
-    if (system.value.error) errors.push(system.value.error);
+    if (system.value.error) errors.push(describeError(system.value.error));
   } else {
     errors.push(
-      t("dnslookup.servers.systemReadError", { reason: String(system.reason) }),
+      t("dnslookup.servers.systemReadError", {
+        reason: describeError(system.reason),
+      }),
     );
   }
 
   if (custom.status === "fulfilled") {
     session.serversBroken = custom.value.error !== null;
     if (custom.value.error) {
-      errors.push(custom.value.error);
+      errors.push(describeError(custom.value.error));
     } else {
       session.customServers = custom.value.servers.map((server) => ({
         ...server,
@@ -120,7 +123,9 @@ async function readServers(session: DnsSession): Promise<void> {
   } else {
     session.serversBroken = false;
     errors.push(
-      t("dnslookup.servers.customReadError", { reason: String(custom.reason) }),
+      t("dnslookup.servers.customReadError", {
+        reason: describeError(custom.reason),
+      }),
     );
   }
 
@@ -154,7 +159,9 @@ async function writeServers(session: DnsSession, servers: ServerOption[]): Promi
 
   const reply = await saveCustomServers(payload);
   if (!reply.saved || reply.error) {
-    const text = reply.error ?? t("dnslookup.servers.saveFailed");
+    const text = reply.error
+      ? describeError(reply.error)
+      : t("dnslookup.servers.saveFailed");
     write(JOURNAL_SOURCE, "error", text);
     throw new Error(text);
   }

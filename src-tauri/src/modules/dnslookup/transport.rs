@@ -17,6 +17,8 @@ use std::time::Duration;
 use hickory_proto::op::{Message, MessageType, OpCode, Query, ResponseCode};
 use hickory_proto::rr::{Name, RecordType};
 
+use crate::core::infra::error::AppError;
+
 use super::records;
 use super::request::Answer;
 
@@ -34,16 +36,16 @@ pub struct Outcome {
     /// Проводное значение статуса.
     pub status: &'static str,
     pub answers: Vec<Answer>,
-    pub error: Option<String>,
+    pub error: Option<AppError>,
 }
 
 impl Outcome {
     /// Ошибка разбора или несовпадение ответа.
-    pub fn bad(error: impl Into<String>) -> Self {
+    pub fn bad(error: AppError) -> Self {
         Self {
             status: "bad_response",
             answers: Vec::new(),
-            error: Some(error.into()),
+            error: Some(error),
         }
     }
 
@@ -57,11 +59,11 @@ impl Outcome {
     }
 
     /// Сеть недоступна: сокет вернул ошибку, кроме таймаута.
-    pub fn offline(error: impl Into<String>) -> Self {
+    pub fn offline(error: AppError) -> Self {
         Self {
             status: "offline",
             answers: Vec::new(),
-            error: Some(error.into()),
+            error: Some(error),
         }
     }
 
@@ -78,7 +80,10 @@ impl Outcome {
 /// Если ответа нет ни от кого, показывается первая ошибка.
 pub fn resolve(addresses: &[SocketAddr], name: &Name, record_type: RecordType) -> Outcome {
     if addresses.is_empty() {
-        return Outcome::bad("Системные резолверы не найдены");
+        return Outcome::bad(AppError::new(
+            "errors.dnslookup.noResolvers",
+            "Системные резолверы не найдены",
+        ));
     }
     if addresses.len() == 1 {
         return query_once(addresses[0], name, record_type);
@@ -133,7 +138,15 @@ fn query_once(address: SocketAddr, name: &Name, record_type: RecordType) -> Outc
 
     let request = match message.to_vec() {
         Ok(request) => request,
-        Err(error) => return Outcome::bad(format!("Не удалось собрать DNS-запрос: {error}")),
+        Err(error) => {
+            return Outcome::bad(
+                AppError::new(
+                    "errors.dnslookup.requestBuild",
+                    format!("Не удалось собрать DNS-запрос: {error}"),
+                )
+                .with("reason", error),
+            );
+        }
     };
 
     let response = match exchange_udp(address, &request, id) {
@@ -156,8 +169,15 @@ fn exchange_udp(address: SocketAddr, request: &[u8], id: u16) -> Result<Message,
         IpAddr::V4(_) => SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), 0),
         IpAddr::V6(_) => SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), 0),
     };
-    let socket = UdpSocket::bind(bind)
-        .map_err(|error| Outcome::offline(format!("Не удалось открыть UDP-сокет: {error}")))?;
+    let socket = UdpSocket::bind(bind).map_err(|error| {
+        Outcome::offline(
+            AppError::new(
+                "errors.dnslookup.socketOpen",
+                format!("Не удалось открыть UDP-сокет: {error}"),
+            )
+            .with("reason", error),
+        )
+    })?;
     socket
         .set_read_timeout(Some(ATTEMPT_TIMEOUT))
         .map_err(io_outcome)?;
@@ -184,8 +204,12 @@ fn exchange_tcp(address: SocketAddr, request: &[u8], id: u16) -> Result<Message,
         .set_write_timeout(Some(ATTEMPT_TIMEOUT))
         .map_err(io_outcome)?;
 
-    let length =
-        u16::try_from(request.len()).map_err(|_| Outcome::bad("DNS-запрос больше 65535 байт"))?;
+    let length = u16::try_from(request.len()).map_err(|_| {
+        Outcome::bad(AppError::new(
+            "errors.dnslookup.tooLarge",
+            "DNS-запрос больше 65535 байт",
+        ))
+    })?;
     stream
         .write_all(&length.to_be_bytes())
         .map_err(io_outcome)?;
@@ -195,7 +219,10 @@ fn exchange_tcp(address: SocketAddr, request: &[u8], id: u16) -> Result<Message,
     stream.read_exact(&mut length_buffer).map_err(io_outcome)?;
     let size = u16::from_be_bytes(length_buffer) as usize;
     if size == 0 {
-        return Err(Outcome::bad("Сервер вернул пустой TCP-ответ"));
+        return Err(Outcome::bad(AppError::new(
+            "errors.dnslookup.emptyReply",
+            "Сервер вернул пустой TCP-ответ",
+        )));
     }
 
     let mut buffer = vec![0u8; size];
@@ -205,13 +232,26 @@ fn exchange_tcp(address: SocketAddr, request: &[u8], id: u16) -> Result<Message,
 
 /// Разбирает ответ и проверяет, что это ответ на наш запрос.
 fn decode_response(bytes: &[u8], expected_id: u16) -> Result<Message, Outcome> {
-    let message = Message::from_vec(bytes)
-        .map_err(|error| Outcome::bad(format!("Ответ не разобран: {error}")))?;
+    let message = Message::from_vec(bytes).map_err(|error| {
+        Outcome::bad(
+            AppError::new(
+                "errors.dnslookup.badReply",
+                format!("Ответ не разобран: {error}"),
+            )
+            .with("reason", error),
+        )
+    })?;
     if message.metadata.id != expected_id {
-        return Err(Outcome::bad("Идентификатор ответа не совпал с запросом"));
+        return Err(Outcome::bad(AppError::new(
+            "errors.dnslookup.wrongId",
+            "Идентификатор ответа не совпал с запросом",
+        )));
     }
     if message.metadata.message_type != MessageType::Response {
-        return Err(Outcome::bad("Получено не сообщение-ответ"));
+        return Err(Outcome::bad(AppError::new(
+            "errors.dnslookup.notReply",
+            "Получено не сообщение-ответ",
+        )));
     }
     Ok(message)
 }
@@ -240,7 +280,13 @@ fn classify(message: Message, record_type: RecordType) -> Outcome {
         ResponseCode::FormErr => "formerr",
         ResponseCode::NotImp => "notimp",
         other => {
-            return Outcome::bad(format!("Неожиданный код ответа DNS: {other:?}"));
+            return Outcome::bad(
+                AppError::new(
+                    "errors.dnslookup.unexpectedCode",
+                    format!("Неожиданный код ответа DNS: {other:?}"),
+                )
+                .with("code", format!("{other:?}")),
+            );
         }
     };
     Outcome {
@@ -255,7 +301,10 @@ fn io_outcome(error: std::io::Error) -> Outcome {
     use std::io::ErrorKind;
     match error.kind() {
         ErrorKind::TimedOut | ErrorKind::WouldBlock => Outcome::timeout(),
-        _ => Outcome::offline(format!("Ошибка сети: {error}")),
+        _ => Outcome::offline(
+            AppError::new("errors.dnslookup.network", format!("Ошибка сети: {error}"))
+                .with("reason", error),
+        ),
     }
 }
 

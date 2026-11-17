@@ -18,6 +18,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
+use crate::core::infra::error::{fail, AppError, AppResult};
 use crate::core::store::files;
 
 use super::request::parse_server_address;
@@ -57,31 +58,43 @@ pub fn servers_path(data_dir: &Path) -> PathBuf {
 /// Отсутствие файла — пустой список: своих серверов ещё не заводили.
 /// Битый файл — ошибка с путём: молча начать с пустого списка значило бы
 /// потерять настройки при первой же записи.
-pub fn load(data_dir: &Path) -> Result<Vec<StoredServer>, String> {
+pub fn load(data_dir: &Path) -> AppResult<Vec<StoredServer>> {
     let path = servers_path(data_dir);
     let Some(raw) = files::read(&path)? else {
         return Ok(Vec::new());
     };
 
-    let file: ServersFile = serde_json::from_str(files::strip_bom(&raw))
-        .map_err(|error| format!("Не удалось разобрать '{}': {error}", path.display()))?;
+    let file: ServersFile = serde_json::from_str(files::strip_bom(&raw)).map_err(|error| {
+        AppError::new(
+            "errors.dnslookup.servers.broken",
+            format!("Не удалось разобрать '{}': {error}", path.display()),
+        )
+        .with("path", path.display())
+        .with("reason", error)
+    })?;
 
     if file.version != FILE_VERSION {
-        return Err(format!(
-            "Неподдерживаемая версия файла '{}': {}",
-            path.display(),
-            file.version
-        ));
+        return fail!(
+            "errors.dnslookup.servers.version",
+            format!(
+                "Неподдерживаемая версия файла '{}': {}",
+                path.display(),
+                file.version
+            ),
+            path = path.display(),
+            version = file.version,
+            expected = FILE_VERSION,
+        );
     }
 
-    normalize(&file.servers).map_err(|error| format!("'{}': {error}", path.display()))
+    normalize(&file.servers)
 }
 
 /// Записывает свои серверы профиля атомарно.
 ///
 /// Ошибка проверки возвращается до создания папки и файла: неверный список
 /// не должен затирать прежний рабочий.
-pub fn save(data_dir: &Path, servers: &[StoredServer]) -> Result<(), String> {
+pub fn save(data_dir: &Path, servers: &[StoredServer]) -> AppResult<()> {
     let normalized = normalize(servers)?;
     let path = servers_path(data_dir);
 
@@ -93,8 +106,13 @@ pub fn save(data_dir: &Path, servers: &[StoredServer]) -> Result<(), String> {
         version: FILE_VERSION,
         servers: normalized,
     };
-    let text = serde_json::to_string_pretty(&file)
-        .map_err(|error| format!("Свои серверы не сериализованы: {error}"))?;
+    let text = serde_json::to_string_pretty(&file).map_err(|error| {
+        AppError::new(
+            "errors.dnslookup.servers.serialize",
+            format!("Свои серверы не сериализованы: {error}"),
+        )
+        .with("reason", error)
+    })?;
 
     files::write_atomic(&path, &format!("{text}\n"))
 }
@@ -103,22 +121,33 @@ pub fn save(data_dir: &Path, servers: &[StoredServer]) -> Result<(), String> {
 ///
 /// Пустое название заменяется адресом: сервер без подписи в списке
 /// не отличить от соседнего.
-fn normalize(servers: &[StoredServer]) -> Result<Vec<StoredServer>, String> {
+fn normalize(servers: &[StoredServer]) -> AppResult<Vec<StoredServer>> {
     let mut normalized: Vec<StoredServer> = Vec::with_capacity(servers.len());
     let mut addresses: Vec<SocketAddr> = Vec::with_capacity(servers.len());
 
     for server in servers {
         let id = server.id.trim();
         if id.is_empty() {
-            return Err("У своего сервера пустой идентификатор".to_owned());
+            return fail!(
+                "errors.dnslookup.servers.emptyId",
+                "У своего сервера пустой идентификатор"
+            );
         }
         if normalized.iter().any(|existing| existing.id == id) {
-            return Err(format!("Идентификатор сервера '{id}' повторяется"));
+            return fail!(
+                "errors.dnslookup.servers.duplicateId",
+                format!("Идентификатор сервера '{id}' повторяется"),
+                id = id,
+            );
         }
 
         let address = parse_server_address(&server.address)?;
         if addresses.contains(&address) {
-            return Err(format!("Сервер {address} указан дважды"));
+            return fail!(
+                "errors.dnslookup.servers.duplicateAddress",
+                format!("Сервер {address} указан дважды"),
+                address = address,
+            );
         }
         addresses.push(address);
 
@@ -139,11 +168,16 @@ fn normalize(servers: &[StoredServer]) -> Result<Vec<StoredServer>, String> {
 
 /// Возвращает DNS-серверы активных адаптеров без повторов.
 #[cfg(windows)]
-pub fn system_addresses() -> Result<Vec<IpAddr>, String> {
+pub fn system_addresses() -> AppResult<Vec<IpAddr>> {
     use ipconfig::OperStatus;
 
-    let adapters = ipconfig::get_adapters()
-        .map_err(|error| format!("Не удалось прочитать сетевые адаптеры: {error}"))?;
+    let adapters = ipconfig::get_adapters().map_err(|error| {
+        AppError::new(
+            "errors.dnslookup.servers.system",
+            format!("Не удалось прочитать сетевые адаптеры: {error}"),
+        )
+        .with("reason", error)
+    })?;
 
     let mut servers = Vec::new();
     for adapter in adapters {
@@ -161,7 +195,7 @@ pub fn system_addresses() -> Result<Vec<IpAddr>, String> {
 
 /// На других платформах системные резолверы не поддерживаются.
 #[cfg(not(windows))]
-pub fn system_addresses() -> Result<Vec<IpAddr>, String> {
+pub fn system_addresses() -> AppResult<Vec<IpAddr>> {
     Ok(Vec::new())
 }
 
@@ -229,7 +263,7 @@ mod tests {
 
         let error = load(&dir).expect_err("битый файл");
         assert!(
-            error.contains(&path.display().to_string()),
+            error.to_string().contains(&path.display().to_string()),
             "текст: {error}"
         );
         assert_eq!(fs::read_to_string(&path).expect("файл"), "{ не json");
@@ -243,7 +277,10 @@ mod tests {
         fs::write(&path, r#"{ "version": 2, "servers": [] }"#).expect("файл");
 
         let error = load(&dir).expect_err("версия не та");
-        assert!(error.contains("версия"), "текст: {error}");
+        assert!(
+            error.to_string().contains("версия"),
+            "текст: {error}"
+        );
     }
 
     #[test]
@@ -252,7 +289,7 @@ mod tests {
         let servers = vec![server("Первый", "1.1.1.1"), server("Второй", "1.1.1.1:53")];
 
         let error = save(&dir, &servers).expect_err("дубликат адреса");
-        assert!(error.contains("дважды"), "текст: {error}");
+        assert!(error.to_string().contains("дважды"), "текст: {error}");
         assert!(
             !servers_path(&dir).exists(),
             "неверный список не должен создавать файл"
@@ -263,7 +300,7 @@ mod tests {
     fn invalid_address_is_rejected() {
         let dir = temp_dir("invalid");
         let error = save(&dir, &[server("Сломанный", "999.1.1.1")]).expect_err("адрес не тот");
-        assert!(error.contains("адрес"), "текст: {error}");
+        assert!(error.to_string().contains("адрес"), "текст: {error}");
     }
 
     #[test]
@@ -273,6 +310,9 @@ mod tests {
         second.id = "id-Первый".to_owned();
 
         let error = save(&dir, &[server("Первый", "8.8.8.8"), second]).expect_err("id повторяется");
-        assert!(error.contains("Идентификатор"), "текст: {error}");
+        assert!(
+            error.to_string().contains("Идентификатор"),
+            "текст: {error}"
+        );
     }
 }

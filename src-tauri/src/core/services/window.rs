@@ -22,6 +22,7 @@ use std::time::Duration;
 use serde_json::{Map, Value};
 use tauri::{LogicalSize, Monitor, PhysicalPosition, Position, Size, WebviewWindow};
 
+use crate::core::infra::error::{AppError, AppResult};
 use crate::core::services::settings::WindowSettings;
 
 /// Минимальный размер окна. Совпадает с `minWidth`/`minHeight`
@@ -376,14 +377,17 @@ impl GeometrySaver {
     ///
     /// Ожидание важно при закрытии: без него процесс может завершиться
     /// раньше, чем файл дописан.
-    pub fn flush(&self) -> Result<(), String> {
+    pub fn flush(&self) -> AppResult<()> {
         let _ = self.signal.send(Signal::Flush);
 
         let worker = self.worker.lock().expect("geometry lock").take();
         match worker {
-            Some(worker) => worker
-                .join()
-                .map_err(|_| "Поток сохранения геометрии завершился с паникой".to_owned()),
+            Some(worker) => worker.join().map_err(|_| {
+                AppError::new(
+                    "errors.window.flush",
+                    "Поток сохранения геометрии завершился с паникой",
+                )
+            }),
             // Повторный сброс: поток уже записал всё и завершился.
             None => Ok(()),
         }

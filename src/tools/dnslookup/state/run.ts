@@ -8,6 +8,7 @@
 // `runId` — единственная связь между событием и сеансом: после отмены или
 // загрузки пресета прежние ответы уже не принадлежат таблице и отбрасываются.
 
+import { describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import { cancelDns, onDnsFinished, onDnsResult, runDns } from "../api";
@@ -52,7 +53,7 @@ function handleResult(event: DnsResultEvent): void {
       status: event.status,
       answers: event.answers,
       elapsedMs: event.elapsed_ms,
-      error: event.error,
+      error: event.error ? describeError(event.error) : null,
     });
     session.progress.done = Math.min(session.progress.total, session.progress.done + 1);
   }
@@ -185,7 +186,13 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
     });
 
     if (!accepted.accepted) {
-      failRun(session, runId, rows, servers, accepted.error ?? t("dnslookup.run.rejected"));
+      failRun(
+        session,
+        runId,
+        rows,
+        servers,
+        accepted.error ? describeError(accepted.error) : t("dnslookup.run.rejected"),
+      );
     }
   } catch (error) {
     failRun(
@@ -193,7 +200,7 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
       runId,
       rows,
       servers,
-      t("dnslookup.run.notStarted", { reason: String(error) }),
+      t("dnslookup.run.notStarted", { reason: describeError(error) }),
     );
   }
 }
@@ -272,7 +279,7 @@ export async function abortSessionRun(session: DnsSession): Promise<void> {
     await cancelDns(runId);
   } catch (error) {
     session.status.run.error = t("dnslookup.run.stopFailed", {
-      reason: String(error),
+      reason: describeError(error),
     });
     write(JOURNAL_SOURCE, "error", session.status.run.error);
   }
@@ -291,7 +298,7 @@ export async function stopRun(session: DnsSession): Promise<void> {
     await cancelDns(session.runId);
   } catch (error) {
     session.status.run.error = t("dnslookup.run.stopFailed", {
-      reason: String(error),
+      reason: describeError(error),
     });
     write(JOURNAL_SOURCE, "error", session.status.run.error);
   }
