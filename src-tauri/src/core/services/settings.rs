@@ -446,7 +446,7 @@ fn profile_from_patch(patch: Value) -> Result<String, String> {
     let Value::String(id) = patch else {
         return Err(format!("Раздел '{SECTION_PROFILE}' должен быть строкой"));
     };
-    profiles::validate_id(&id)?;
+    profiles::validate_id(&id).map_err(|error| error.to_string())?;
     Ok(id)
 }
 

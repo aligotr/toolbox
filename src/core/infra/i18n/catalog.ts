@@ -43,3 +43,13 @@ export function setCatalog(locale: string, messages: Messages): void {
 export function t(key: string, params?: MessageParams): string {
   return translate(catalog.messages, catalog.fallback, catalog.locale, key, params);
 }
+
+/**
+ * Есть ли у ключа сообщение в выбранном или встроенном словаре.
+ *
+ * Нужно кодам ошибок: известный код переводится, а неизвестный показывается
+ * запасным русским текстом из ядра, а не самим кодом.
+ */
+export function hasMessage(key: string): boolean {
+  return key in catalog.messages || key in catalog.fallback;
+}

@@ -1,6 +1,6 @@
 // Публичный фасад механизма перевода (ADR 0039).
 
-export { catalog, DEFAULT_LOCALE, installBuiltin, setCatalog, t } from "./catalog.ts";
+export { catalog, DEFAULT_LOCALE, hasMessage, installBuiltin, setCatalog, t } from "./catalog.ts";
 export {
   formatNumber,
   isLocaleTag,

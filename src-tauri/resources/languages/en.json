@@ -558,5 +558,24 @@
     "dnslookup.csv.matches": "matches on {count} of {total}",
     "dnslookup.csv.saveFailed":
       "Could not save the CSV or copy it to the clipboard",
+
+    // ── Core errors ───────────────────────────────────────────────────────
+    // The error code is the contract with Rust: the core sends a code and
+    // substitutions, the text lives here.
+    "errors.core.unexpected": "{reason}",
+    "errors.profiles.read": "Could not read “{path}”: {reason}",
+    "errors.profiles.create": "Could not create “{path}”: {reason}",
+    "errors.profiles.move": "Could not move “{path}” to “{target}”: {reason}",
+    "errors.profiles.notFound": "Profile “{id}” was not found",
+    "errors.profiles.active":
+      "The active profile cannot be deleted: switch to another one first",
+    "errors.profiles.emptyId": "The profile identifier is empty",
+    "errors.profiles.invalidId":
+      "A profile identifier may contain Latin letters, digits, “-” and “_”",
+    "errors.profiles.emptyTitle": "A profile name cannot be empty",
+    "errors.profiles.longTitle": "The profile name is longer than {limit} characters",
+    "errors.profiles.serialize": "The profile was not serialized: {reason}",
+    "errors.profiles.broken":
+      "The profile file “{path}” was not parsed: {reason}; defaults are hidden",
   },
 }

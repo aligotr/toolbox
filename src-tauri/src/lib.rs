@@ -18,6 +18,7 @@ use tauri_plugin_opener::OpenerExt;
 
 use core::infra::bus::{BusError, ERROR_TOPIC, MessageBus};
 use core::infra::deps::Deps;
+use core::infra::error::{AppError, AppResult};
 use core::infra::sink::EventSink;
 use core::services::data;
 use core::services::languages;
@@ -174,7 +175,7 @@ fn boot(app: &AppHandle) -> Runtime {
         Err(reason) => {
             // Список не прочитан: причину покажет проба записи, а профиль
             // остаётся тем, что записан в настройках.
-            loaded.warnings.push(reason);
+            loaded.warnings.push(reason.to_string());
             configured.clone()
         }
     };
@@ -190,7 +191,7 @@ fn boot(app: &AppHandle) -> Runtime {
             &root,
             &language,
             "Не могу писать в папку программы",
-            reason,
+            reason.to_string(),
         );
     }
 
@@ -519,7 +520,7 @@ fn workspace_save(runtime: State<'_, Runtime>, data: Value) -> Result<(), String
 /// Активный отдаётся здесь же: интерфейсу он нужен всегда вместе со списком,
 /// а два отдельных вызова могли бы разойтись между собой.
 #[tauri::command]
-fn profiles_list(runtime: State<'_, Runtime>) -> Result<profiles::ProfileList, String> {
+fn profiles_list(runtime: State<'_, Runtime>) -> AppResult<profiles::ProfileList> {
     let storage = storage_of(&runtime)?;
     Ok(profiles::ProfileList {
         active: runtime
@@ -534,7 +535,7 @@ fn profiles_list(runtime: State<'_, Runtime>) -> Result<profiles::ProfileList, S
 
 /// Создаёт профиль из названия: папка получает латинский идентификатор.
 #[tauri::command]
-fn profile_create(runtime: State<'_, Runtime>, title: String) -> Result<profiles::Profile, String> {
+fn profile_create(runtime: State<'_, Runtime>, title: String) -> AppResult<profiles::Profile> {
     let storage = storage_of(&runtime)?;
     let profile = profiles::create(&storage.profiles_dir(), &title)?;
     log::info!("Создан профиль '{}' ({})", profile.title, profile.id);
@@ -547,7 +548,7 @@ fn profile_rename(
     runtime: State<'_, Runtime>,
     id: String,
     title: String,
-) -> Result<profiles::Profile, String> {
+) -> AppResult<profiles::Profile> {
     let storage = storage_of(&runtime)?;
     let profile = profiles::rename(&storage.profiles_dir(), &id, &title)?;
     log::info!("Профиль '{id}' переименован в '{}'", profile.title);
@@ -559,7 +560,7 @@ fn profile_rename(
 /// Активный профиль удалить нельзя: его папка открыта прямо сейчас, и данные
 /// исчезли бы из-под работающего приложения. Сначала переключение.
 #[tauri::command]
-fn profile_delete(runtime: State<'_, Runtime>, id: String) -> Result<String, String> {
+fn profile_delete(runtime: State<'_, Runtime>, id: String) -> AppResult<String> {
     let storage = storage_of(&runtime)?;
     let active = runtime
         .settings
@@ -568,7 +569,10 @@ fn profile_delete(runtime: State<'_, Runtime>, id: String) -> Result<String, Str
         .active_profile
         .clone();
     if id == active {
-        return Err("Нельзя удалить активный профиль: сначала переключитесь на другой".to_owned());
+        return Err(AppError::new(
+            "errors.profiles.active",
+            "Нельзя удалить активный профиль: сначала переключитесь на другой",
+        ));
     }
 
     let target = profiles::delete(&storage.profiles_dir(), &storage.trash_dir(), &id)?;
@@ -587,11 +591,14 @@ fn profile_switch(
     app: AppHandle,
     runtime: State<'_, Runtime>,
     id: String,
-) -> Result<Settings, String> {
+) -> AppResult<Settings> {
     let storage = storage_of(&runtime)?;
     profiles::validate_id(&id)?;
     if !storage.profiles_dir().join(&id).is_dir() {
-        return Err(format!("Профиль '{id}' не найден"));
+        return Err(
+            AppError::new("errors.profiles.notFound", format!("Профиль '{id}' не найден"))
+                .with("id", &id),
+        );
     }
 
     let updated = commit_settings(&app, &runtime, settings::SECTION_PROFILE, |current| {

@@ -278,7 +278,9 @@ pub struct PresetDefault {
 pub fn default_for(profile_dir: &Path, tool: &str) -> Result<PresetDefault, String> {
     validate_tool(tool)?;
 
-    let document = profiles::document(profile_dir)?;
+    // Пресеты пока возвращают русский текст: коды ошибок дойдут до них
+    // следующим этапом (ADR 0039).
+    let document = profiles::document(profile_dir).map_err(|error| error.to_string())?;
     let id = document
         .get(DEFAULTS_KEY)
         .and_then(Value::as_object)
@@ -290,7 +292,9 @@ pub fn default_for(profile_dir: &Path, tool: &str) -> Result<PresetDefault, Stri
 
     Ok(PresetDefault {
         id,
-        warning: profiles::document_warning(profile_dir)?,
+        warning: profiles::document_warning(profile_dir)
+            .map_err(|error| error.to_string())?
+            .map(|error| error.to_string()),
     })
 }
 
@@ -363,6 +367,7 @@ fn write_default(profile_dir: &Path, tool: &str, id: Option<&str>) -> Result<(),
         }
         Ok(())
     })
+    .map_err(|error| error.to_string())
 }
 
 /// Проверяет идентификатор пресета: он становится именем файла.

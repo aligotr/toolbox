@@ -584,4 +584,23 @@ export const ruMessages: Messages = {
   "dnslookup.csv.differs": "расходится у {count} из {total}",
   "dnslookup.csv.matches": "совпадает у {count} из {total}",
   "dnslookup.csv.saveFailed": "Не удалось сохранить CSV и скопировать его в буфер",
+
+  // ── Ошибки ядра ──────────────────────────────────────────────────────────
+  // Код ошибки — контракт с Rust: ядро присылает код и подстановки, а текст
+  // живёт здесь. Неизвестный код показывает русский `fallback` из ядра.
+  "errors.core.unexpected": "{reason}",
+  "errors.profiles.read": "Не удалось прочитать «{path}»: {reason}",
+  "errors.profiles.create": "Не удалось создать «{path}»: {reason}",
+  "errors.profiles.move": "Не удалось перенести «{path}» в «{target}»: {reason}",
+  "errors.profiles.notFound": "Профиль «{id}» не найден",
+  "errors.profiles.active":
+    "Нельзя удалить активный профиль: сначала переключитесь на другой",
+  "errors.profiles.emptyId": "Идентификатор профиля пуст",
+  "errors.profiles.invalidId":
+    "В идентификаторе профиля допустимы латиница, цифры, «-» и «_»",
+  "errors.profiles.emptyTitle": "Название профиля не может быть пустым",
+  "errors.profiles.longTitle": "Название профиля длиннее {limit} символов",
+  "errors.profiles.serialize": "Профиль не сериализован: {reason}",
+  "errors.profiles.broken":
+    "Файл профиля «{path}» не разобран: {reason}; умолчания скрыты",
 }

@@ -18,6 +18,7 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use serde_json::{Map, Value};
 
+use crate::core::infra::error::{fail, AppError, AppResult};
 use crate::core::store::files::{read, strip_bom, write_atomic};
 use crate::core::store::names;
 use crate::core::store::stats;
@@ -62,19 +63,30 @@ pub struct ProfileList {
 /// Отсутствие папки — не поломка: приложение ещё не создало её, профилей нет.
 /// Папки с недопустимым именем (чужие каталоги, служебные `*.tmp`)
 /// пропускаются: профиль в них не лежит.
-pub fn list(dir: &Path) -> Result<Vec<Profile>, String> {
+pub fn list(dir: &Path) -> AppResult<Vec<Profile>> {
     let entries = match fs::read_dir(dir) {
         Ok(entries) => entries,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(error) => {
-            return Err(format!("Не удалось прочитать '{}': {error}", dir.display()));
+            return fail!(
+                "errors.profiles.read",
+                format!("Не удалось прочитать '{}': {error}", dir.display()),
+                path = dir.display(),
+                reason = error,
+            );
         }
     };
 
     let mut profiles = Vec::new();
     for entry in entries {
-        let entry =
-            entry.map_err(|error| format!("Не удалось прочитать '{}': {error}", dir.display()))?;
+        let entry = entry.map_err(|error| {
+            AppError::new(
+                "errors.profiles.read",
+                format!("Не удалось прочитать '{}': {error}", dir.display()),
+            )
+            .with("path", dir.display())
+            .with("reason", error)
+        })?;
         let path = entry.path();
         if !path.is_dir() {
             continue;
@@ -108,13 +120,19 @@ pub fn list(dir: &Path) -> Result<Vec<Profile>, String> {
 /// Идентификатор собирается из названия, конфликт решается суффиксом:
 /// два профиля «Работа» на разных машинах — обычное дело, а совпадать
 /// имена папок не могут.
-pub fn create(dir: &Path, title: &str) -> Result<Profile, String> {
+pub fn create(dir: &Path, title: &str) -> AppResult<Profile> {
     let title = normalize_title(title)?;
     let id = names::unique_id(dir, &names::slug(&title, "profile"));
     let path = dir.join(&id);
 
-    fs::create_dir_all(&path)
-        .map_err(|error| format!("Не удалось создать '{}': {error}", path.display()))?;
+    fs::create_dir_all(&path).map_err(|error| {
+        AppError::new(
+            "errors.profiles.create",
+            format!("Не удалось создать '{}': {error}", path.display()),
+        )
+        .with("path", path.display())
+        .with("reason", error)
+    })?;
 
     if let Err(error) = write_profile(&path, &title) {
         // Пустая папка после отказа выглядела бы профилем без названия.
@@ -132,7 +150,7 @@ pub fn create(dir: &Path, title: &str) -> Result<Profile, String> {
 }
 
 /// Переименовывает профиль: меняется название, папка остаётся на месте.
-pub fn rename(dir: &Path, id: &str, title: &str) -> Result<Profile, String> {
+pub fn rename(dir: &Path, id: &str, title: &str) -> AppResult<Profile> {
     let title = normalize_title(title)?;
     let path = profile_dir(dir, id)?;
 
@@ -151,19 +169,31 @@ pub fn rename(dir: &Path, id: &str, title: &str) -> Result<Profile, String> {
 ///
 /// Удаление именно переносом: профиль — папка с данными, и промах в меню
 /// не должен стоить пользователю списков. Корзину чистят руками.
-pub fn delete(profiles_dir: &Path, trash_dir: &Path, id: &str) -> Result<PathBuf, String> {
+pub fn delete(profiles_dir: &Path, trash_dir: &Path, id: &str) -> AppResult<PathBuf> {
     let path = profile_dir(profiles_dir, id)?;
 
-    fs::create_dir_all(trash_dir)
-        .map_err(|error| format!("Не удалось создать '{}': {error}", trash_dir.display()))?;
+    fs::create_dir_all(trash_dir).map_err(|error| {
+        AppError::new(
+            "errors.profiles.create",
+            format!("Не удалось создать '{}': {error}", trash_dir.display()),
+        )
+        .with("path", trash_dir.display())
+        .with("reason", error)
+    })?;
 
     let target = trash_dir.join(names::unique_id(trash_dir, id));
     fs::rename(&path, &target).map_err(|error| {
-        format!(
-            "Не удалось перенести '{}' в '{}': {error}",
-            path.display(),
-            target.display()
+        AppError::new(
+            "errors.profiles.move",
+            format!(
+                "Не удалось перенести '{}' в '{}': {error}",
+                path.display(),
+                target.display()
+            ),
         )
+        .with("path", path.display())
+        .with("target", target.display())
+        .with("reason", error)
     })?;
 
     Ok(target)
@@ -176,17 +206,29 @@ pub fn delete(profiles_dir: &Path, trash_dir: &Path, id: &str) -> Result<PathBuf
 /// Файл с названием пишет интерфейс: подпись зависит от языка программы,
 /// а ядро языка не знает (ADR 0039). Пока файла нет, профиль показывается
 /// идентификатором. `Some` — папка создана, `None` — профили уже были.
-pub fn ensure_default(dir: &Path) -> Result<Option<Profile>, String> {
-    fs::create_dir_all(dir)
-        .map_err(|error| format!("Не удалось создать '{}': {error}", dir.display()))?;
+pub fn ensure_default(dir: &Path) -> AppResult<Option<Profile>> {
+    fs::create_dir_all(dir).map_err(|error| {
+        AppError::new(
+            "errors.profiles.create",
+            format!("Не удалось создать '{}': {error}", dir.display()),
+        )
+        .with("path", dir.display())
+        .with("reason", error)
+    })?;
 
     if !list(dir)?.is_empty() {
         return Ok(None);
     }
 
     let path = dir.join(DEFAULT_PROFILE);
-    fs::create_dir_all(&path)
-        .map_err(|error| format!("Не удалось создать '{}': {error}", path.display()))?;
+    fs::create_dir_all(&path).map_err(|error| {
+        AppError::new(
+            "errors.profiles.create",
+            format!("Не удалось создать '{}': {error}", path.display()),
+        )
+        .with("path", path.display())
+        .with("reason", error)
+    })?;
 
     Ok(Some(Profile {
         id: DEFAULT_PROFILE.to_owned(),
@@ -201,22 +243,29 @@ pub fn ensure_default(dir: &Path) -> Result<Option<Profile>, String> {
 ///
 /// Идентификатор — имя папки, поэтому в нём допустимы только символы,
 /// одинаково понятные файловой системе, архиву и синхронизации.
-pub fn validate_id(id: &str) -> Result<(), String> {
+pub fn validate_id(id: &str) -> AppResult<()> {
     if id.is_empty() {
-        return Err("Идентификатор профиля пуст".to_owned());
+        return fail!("errors.profiles.emptyId", "Идентификатор профиля пуст");
     }
     if !names::is_safe_id(id) {
-        return Err("В идентификаторе профиля допустимы латиница, цифры, '-' и '_'".to_owned());
+        return fail!(
+            "errors.profiles.invalidId",
+            "В идентификаторе профиля допустимы латиница, цифры, '-' и '_'"
+        );
     }
     Ok(())
 }
 
 /// Папка профиля, проверенная на существование.
-fn profile_dir(dir: &Path, id: &str) -> Result<PathBuf, String> {
+fn profile_dir(dir: &Path, id: &str) -> AppResult<PathBuf> {
     validate_id(id)?;
     let path = dir.join(id);
     if !path.is_dir() {
-        return Err(format!("Профиль '{id}' не найден"));
+        return fail!(
+            "errors.profiles.notFound",
+            format!("Профиль '{id}' не найден"),
+            id = id,
+        );
     }
     Ok(path)
 }
@@ -240,7 +289,7 @@ fn read_title(dir: &Path) -> Option<String> {
 /// Файл правят руками, и терять чужие поля при переименовании нельзя.
 /// Испорченный файл перезаписывается: название сохранить нужно в любом
 /// случае, а исправлять документ вручную пользователь не обязан.
-fn write_profile(dir: &Path, title: &str) -> Result<(), String> {
+fn write_profile(dir: &Path, title: &str) -> AppResult<()> {
     let mut document = document(dir)?;
     document.insert("version".to_owned(), Value::from(VERSION));
     document.insert("title".to_owned(), Value::from(title));
@@ -253,7 +302,7 @@ fn write_profile(dir: &Path, title: &str) -> Result<(), String> {
 /// документ: название и умолчания неизвестны, но профиль остаётся видимым.
 /// Ошибка чтения возвращается вызывающему: иначе запись стёрла бы файл,
 /// который всего лишь не удалось прочитать.
-pub fn document(dir: &Path) -> Result<Map<String, Value>, String> {
+pub fn document(dir: &Path) -> AppResult<Map<String, Value>> {
     let path = dir.join(PROFILE_FILE);
     let Some(raw) = read(&path)? else {
         return Ok(Map::new());
@@ -272,7 +321,7 @@ pub fn document(dir: &Path) -> Result<Map<String, Value>, String> {
 pub fn update_document(
     dir: &Path,
     change: impl FnOnce(&mut Map<String, Value>) -> Result<(), String>,
-) -> Result<(), String> {
+) -> AppResult<()> {
     let mut document = document(dir)?;
     change(&mut document)?;
     write_document(dir, &document)
@@ -282,36 +331,56 @@ pub fn update_document(
 ///
 /// Проверка отдельная: читатель умолчаний обязан отдать пустое значение,
 /// а пользователь — узнать, почему умолчание пропало.
-pub fn document_warning(dir: &Path) -> Result<Option<String>, String> {
+pub fn document_warning(dir: &Path) -> AppResult<Option<AppError>> {
     let path = dir.join(PROFILE_FILE);
     let Some(raw) = read(&path)? else {
         return Ok(None);
     };
     match serde_json::from_str::<Value>(strip_bom(&raw)) {
         Ok(_) => Ok(None),
-        Err(error) => Ok(Some(format!(
-            "файл профиля '{}' не разобран: {error}; умолчания скрыты",
-            path.display()
-        ))),
+        Err(error) => Ok(Some(
+            AppError::new(
+                "errors.profiles.broken",
+                format!(
+                    "файл профиля '{}' не разобран: {error}; умолчания скрыты",
+                    path.display()
+                ),
+            )
+            .with("path", path.display())
+            .with("reason", error),
+        )),
     }
 }
 
 /// Перезаписывает `profile.json` атомарно: папка может лежать на сетевой шаре.
-fn write_document(dir: &Path, document: &Map<String, Value>) -> Result<(), String> {
+fn write_document(dir: &Path, document: &Map<String, Value>) -> AppResult<()> {
     let path = dir.join(PROFILE_FILE);
-    let text = serde_json::to_string_pretty(&Value::Object(document.clone()))
-        .map_err(|error| format!("Профиль не сериализован: {error}"))?;
-    write_atomic(&path, &format!("{text}\n"))
+    let text = serde_json::to_string_pretty(&Value::Object(document.clone())).map_err(|error| {
+        AppError::new(
+            "errors.profiles.serialize",
+            format!("Профиль не сериализован: {error}"),
+        )
+        .with("reason", error)
+    })?;
+    write_atomic(&path, &format!("{text}\n"))?;
+    Ok(())
 }
 
 /// Проверяет и обрезает название.
-fn normalize_title(title: &str) -> Result<String, String> {
+fn normalize_title(title: &str) -> AppResult<String> {
     let title = title.trim();
     if title.is_empty() {
-        return Err("Название профиля не может быть пустым".to_owned());
+        return fail!(
+            "errors.profiles.emptyTitle",
+            "Название профиля не может быть пустым"
+        );
     }
     if title.chars().count() > MAX_TITLE_LEN {
-        return Err(format!("Название профиля длиннее {MAX_TITLE_LEN} символов"));
+        return fail!(
+            "errors.profiles.longTitle",
+            format!("Название профиля длиннее {MAX_TITLE_LEN} символов"),
+            limit = MAX_TITLE_LEN,
+        );
     }
     Ok(title.to_owned())
 }
@@ -482,7 +551,7 @@ mod tests {
         let dir = temp_dir("empty-title");
         let error = create(&dir, "   ").expect_err("пустое название");
 
-        assert!(error.contains("пустым"), "причина: {error}");
+        assert!(error.to_string().contains("пустым"), "причина: {error}");
         assert!(list(&dir).expect("список").is_empty(), "папка не создана");
     }
 
@@ -494,7 +563,10 @@ mod tests {
         fs::write(path.join(PROFILE_FILE), "{ \"defaults\": ").expect("битый файл");
 
         let warning = document_warning(&path).expect("чтение").expect("причина");
-        assert!(warning.contains("не разобран"), "причина: {warning}");
+        assert!(
+            warning.to_string().contains("не разобран"),
+            "причина: {warning}"
+        );
     }
 
     #[test]

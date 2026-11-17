@@ -33,6 +33,16 @@ function walk(dir, out = []) {
   return out;
 }
 
+/** Коды ошибок ядра: Rust присылает код, интерфейс переводит его по словарю. */
+function walkRust(dir, out = []) {
+  for (const entry of readdirSync(dir)) {
+    const full = path.join(dir, entry);
+    if (statSync(full).isDirectory()) walkRust(full, out);
+    else if (entry.endsWith(".rs")) out.push(full);
+  }
+  return out;
+}
+
 /** Ключ → файл, в котором он используется. */
 const used = new Map();
 
@@ -44,6 +54,18 @@ for (const file of walk(src)) {
     for (const match of text.matchAll(pattern)) {
       if (!used.has(match[1])) used.set(match[1], relative);
     }
+  }
+}
+
+// Код ошибки передаётся переменной, поэтому в `t("…")` его не видно:
+// источник — строковый литерал `errors.…` в ядре.
+for (const file of walkRust(path.join(root, "src-tauri", "src"))) {
+  const text = readFileSync(file, "utf8");
+  const relative = path.relative(root, file).replaceAll("\\", "/");
+
+  for (const match of text.matchAll(/"errors\.[\w.]+"/g)) {
+    const key = match[0].slice(1, -1);
+    if (!used.has(key)) used.set(key, relative);
   }
 }
 
