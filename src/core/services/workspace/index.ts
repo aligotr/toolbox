@@ -16,7 +16,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { reactive, toRaw, watch } from "vue";
+import { reactive, ref, toRaw, watch } from "vue";
 import type { Template } from "../templates";
 import type { ToolDescriptor } from "@/contracts/tools";
 import type {
@@ -56,9 +56,16 @@ export interface WorkspaceState {
 /** Общее состояние рабочего пространства. */
 export const workspace = reactive<WorkspaceState>({ tabs: [], activeId: "" });
 
+/**
+ * Счётчик фокусировок: полоса вкладок по нему понимает, что активную нужно
+ * показать, даже если она уже была активной. В файл не попадает.
+ */
+export const focusTick = ref(0);
+
 /** Делает вкладку активной и отмечает её свежей в памяти активаций. */
 function focusTab(id: string): void {
   workspace.activeId = id;
+  focusTick.value += 1;
   rememberTab(id);
 }
 

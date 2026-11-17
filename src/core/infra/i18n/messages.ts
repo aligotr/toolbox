@@ -87,6 +87,8 @@ export const ruMessages: Messages = {
   "tab.settings.title": "Настройки",
   "tab.empty.title": "Новая вкладка",
   "tabs.strip.label": "Вкладки",
+  "tabs.scroll.left": "Прокрутить вкладки влево",
+  "tabs.scroll.right": "Прокрутить вкладки вправо",
   "tabs.tab.menu": "Действия с вкладкой",
   "tabs.tab.menuTitle": "Действия с вкладкой «{title}»",
   "tabs.tab.close": "Закрыть вкладку",

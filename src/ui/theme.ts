@@ -237,6 +237,16 @@ export const toolboxPreset = definePreset(Aura, {
       font-size: 13px;
     }
 
+    /* Подсказка не переносится сама: строки задаёт владелец, и каждая
+       остаётся целой. Свёрнутый рейл добавляет название отдельной строкой. */
+    html .p-tooltip {
+      max-width: none;
+    }
+
+    html .p-tooltip-text {
+      white-space: pre;
+    }
+
     /* Подтверждения задают сообщение несколькими строками: перенос значим. */
     html .p-confirmdialog-message {
       white-space: pre-line;

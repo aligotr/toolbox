@@ -83,6 +83,8 @@
     "tab.settings.title": "Settings",
     "tab.empty.title": "New tab",
     "tabs.strip.label": "Tabs",
+    "tabs.scroll.left": "Scroll tabs left",
+    "tabs.scroll.right": "Scroll tabs right",
     "tabs.tab.menu": "Tab actions",
     "tabs.tab.menuTitle": "Actions for tab “{title}”",
     "tabs.tab.close": "Close tab",

@@ -19,7 +19,7 @@ import Button from "primevue/button";
 import Menu from "primevue/menu";
 import type { MenuItem } from "primevue/menuitem";
 import { useConfirm } from "primevue/useconfirm";
-import { computed, nextTick, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { Template } from "@/core/services/templates";
 import type { WorkspaceTab } from "@/contracts/workspace";
 import { CONFIRM_CALM_REJECT } from "@/core/constants";
@@ -34,7 +34,7 @@ import {
   updateTemplateLayout,
 } from "@/core/services/templates/index";
 import * as templateBindings from "@/core/services/templates/bindings";
-import { activateTab, closeTab, openEmptyTab, restartTab, workspace } from "@/core/services/workspace/index";
+import { activateTab, closeTab, focusTick, openEmptyTab, restartTab, workspace } from "@/core/services/workspace/index";
 import CloseTabDialog from "./CloseTabDialog.vue";
 import TemplateTitleDialog from "./TemplateTitleDialog.vue";
 import { tabTitle } from "./title";
@@ -150,6 +150,75 @@ function hasLocalChanges(tab: WorkspaceTab): boolean {
 function hasUpdate(tab: WorkspaceTab): boolean {
   return templateBindings.hasUpdate(templateBindings.status(tab));
 }
+
+// ─────────────────────────────── Прокрутка полосы ────────────────────────────
+
+/** Полоса вкладок: по её прокрутке решается, нужны ли шевроны. */
+const listEl = ref<HTMLElement | null>(null);
+
+/** Есть ли скрытые вкладки слева и справа. */
+const canScrollLeft = ref(false);
+const canScrollRight = ref(false);
+
+/** Допуск в пикселях: дробная прокрутка не должна гасить шеврон раньше времени. */
+const SCROLL_EPSILON = 1;
+
+/** Доля ширины полосы, на которую сдвигает клик по шеврону. */
+const SCROLL_PAGE = 0.8;
+
+/** Пересчитывает доступность шевронов по текущей прокрутке. */
+function updateScrollState(): void {
+  const el = listEl.value;
+  if (!el) return;
+  canScrollLeft.value = el.scrollLeft > SCROLL_EPSILON;
+  canScrollRight.value =
+    el.scrollLeft + el.clientWidth < el.scrollWidth - SCROLL_EPSILON;
+}
+
+/** Сдвигает полосу почти на экран в заданную сторону. */
+function scrollTabs(direction: -1 | 1): void {
+  const el = listEl.value;
+  if (!el) return;
+  el.scrollBy({
+    left: direction * el.clientWidth * SCROLL_PAGE,
+    behavior: "smooth",
+  });
+}
+
+/** Ширина полосы меняется от окна и сайдбара, а не только от прокрутки. */
+let listResize: ResizeObserver | null = null;
+
+onMounted(() => {
+  updateScrollState();
+  if (!listEl.value) return;
+  listResize = new ResizeObserver(() => updateScrollState());
+  listResize.observe(listEl.value);
+});
+
+onBeforeUnmount(() => {
+  listResize?.disconnect();
+  listResize = null;
+});
+
+// Число вкладок меняет ширину содержимого, но не ширину самой полосы.
+watch(
+  () => workspace.tabs.length,
+  async () => {
+    await nextTick();
+    updateScrollState();
+  },
+);
+
+// Активная вкладка не должна оставаться за кромкой: иначе выбор инструмента
+// в сайдбаре выглядел бы как «ничего не произошло». Сигнал срабатывает и на
+// повторный выбор уже активной вкладки.
+watch(focusTick, async () => {
+  await nextTick();
+  listEl.value
+    ?.querySelector(".tab--active")
+    ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  updateScrollState();
+});
 
 // ─────────────────────────────── Меню вкладки ────────────────────────────────
 
@@ -410,56 +479,82 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
 
 <template>
   <nav class="tabs" :aria-label="t('tabs.strip.label')">
-    <div class="tabs__list" role="tablist">
+    <div class="tabs__viewport">
       <div
-        v-for="tab in workspace.tabs"
-        :key="tab.id"
-        class="tab"
-        :class="{ 'tab--active': tab.id === workspace.activeId }"
-        role="tab"
-        :aria-selected="tab.id === workspace.activeId"
-        tabindex="0"
-        @click="activateTab(tab.id)"
-        @keydown="activateFromKeyboard(tab.id, $event)"
+        ref="listEl"
+        class="tabs__list"
+        role="tablist"
+        @scroll.passive="updateScrollState"
       >
-        <i class="tab__icon" :class="tab.icon" aria-hidden="true" />
-        <span class="tab__title">{{ tabTitle(tab) }}</span>
-
-        <i
-          v-if="tab.kind === 'workspace' && hasLocalChanges(tab)"
-          class="tab__marker tab__marker--dot pi pi-circle-fill"
-          role="img"
-          :aria-label="t('tabs.tab.dirtyHint')"
-          v-tooltip.bottom="t('tabs.tab.dirtyHint')"
-        />
-        <i
-          v-if="tab.kind === 'workspace' && hasUpdate(tab)"
-          class="tab__marker tab__marker--update pi pi-arrow-circle-up"
-          role="img"
-          :aria-label="t('tabs.tab.updateHint')"
-          v-tooltip.bottom="t('tabs.tab.updateHint')"
-        />
-
-        <button
-          v-if="tab.kind === 'workspace'"
-          class="tab__menu"
-          type="button"
-          :aria-label="t('tabs.tab.menuTitle', { title: tabTitle(tab) })"
-          v-tooltip.bottom="t('tabs.tab.menu')"
-          @click="openMenu(tab, $event)"
+        <div
+          v-for="tab in workspace.tabs"
+          :key="tab.id"
+          class="tab"
+          :class="{ 'tab--active': tab.id === workspace.activeId }"
+          role="tab"
+          :aria-selected="tab.id === workspace.activeId"
+          tabindex="0"
+          @click="activateTab(tab.id)"
+          @keydown="activateFromKeyboard(tab.id, $event)"
         >
-          <i class="pi pi-ellipsis-v" aria-hidden="true" />
-        </button>
-        <button
-          class="tab__close"
-          type="button"
-          :aria-label="t('tabs.tab.closeTitle', { title: tabTitle(tab) })"
-          v-tooltip.bottom="t('tabs.tab.close')"
-          @click="requestClose(tab, $event)"
-        >
-          <i class="pi pi-times" aria-hidden="true" />
-        </button>
+          <i class="tab__icon" :class="tab.icon" aria-hidden="true" />
+          <span class="tab__title">{{ tabTitle(tab) }}</span>
+
+          <i
+            v-if="tab.kind === 'workspace' && hasLocalChanges(tab)"
+            class="tab__marker tab__marker--dot pi pi-circle-fill"
+            role="img"
+            :aria-label="t('tabs.tab.dirtyHint')"
+            v-tooltip.bottom="t('tabs.tab.dirtyHint')"
+          />
+          <i
+            v-if="tab.kind === 'workspace' && hasUpdate(tab)"
+            class="tab__marker tab__marker--update pi pi-arrow-circle-up"
+            role="img"
+            :aria-label="t('tabs.tab.updateHint')"
+            v-tooltip.bottom="t('tabs.tab.updateHint')"
+          />
+
+          <button
+            v-if="tab.kind === 'workspace'"
+            class="tab__menu"
+            type="button"
+            :aria-label="t('tabs.tab.menuTitle', { title: tabTitle(tab) })"
+            v-tooltip.bottom="t('tabs.tab.menu')"
+            @click="openMenu(tab, $event)"
+          >
+            <i class="pi pi-ellipsis-v" aria-hidden="true" />
+          </button>
+          <button
+            class="tab__close"
+            type="button"
+            :aria-label="t('tabs.tab.closeTitle', { title: tabTitle(tab) })"
+            v-tooltip.bottom="t('tabs.tab.close')"
+            @click="requestClose(tab, $event)"
+          >
+            <i class="pi pi-times" aria-hidden="true" />
+          </button>
+        </div>
       </div>
+
+      <button
+        v-show="canScrollLeft"
+        class="tabs__scroll tabs__scroll--left"
+        type="button"
+        :aria-label="t('tabs.scroll.left')"
+        @click="scrollTabs(-1)"
+      >
+        <i class="pi pi-angle-left" aria-hidden="true" />
+      </button>
+      <button
+        v-show="canScrollRight"
+        class="tabs__scroll tabs__scroll--right"
+        type="button"
+        :aria-label="t('tabs.scroll.right')"
+        @click="scrollTabs(1)"
+      >
+        <i class="pi pi-angle-right" aria-hidden="true" />
+      </button>
     </div>
 
     <Button
@@ -510,9 +605,16 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
   border-bottom: 1px solid var(--ag-border);
 }
 
-.tabs__list {
+.tabs__viewport {
+  position: relative;
   display: flex;
   flex: 0 1 auto;
+  min-width: 0;
+}
+
+.tabs__list {
+  display: flex;
+  flex: 1 1 auto;
   gap: var(--ag-space-sm);
   min-width: 0;
   overflow-x: auto;
@@ -521,6 +623,55 @@ function activateFromKeyboard(tabId: string, event: KeyboardEvent): void {
 
 .tabs__list::-webkit-scrollbar {
   display: none;
+}
+
+/* Шеврон лежит поверх полосы: место у вкладок не отнимается. Градиент
+   под ним показывает, что за кромкой есть продолжение. */
+.tabs__scroll {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  display: grid;
+  align-items: center;
+  width: 44px;
+  padding: 0;
+  border: 0;
+  color: var(--p-text-muted-color);
+  cursor: pointer;
+}
+
+.tabs__scroll--left {
+  left: 0;
+  justify-items: start;
+  padding-left: var(--ag-space-xs);
+  background: linear-gradient(to right, var(--ag-bg) 60%, transparent);
+}
+
+.tabs__scroll--right {
+  right: calc(-1 * var(--ag-space-xs));
+  justify-items: end;
+  padding-right: 0;
+  background: linear-gradient(to left, var(--ag-bg) 60%, transparent);
+}
+
+.tabs__scroll i {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--ag-radius-md);
+  font-size: 14px;
+}
+
+.tabs__scroll:hover i {
+  background: var(--ag-hover);
+  color: var(--p-text-color);
+}
+
+.tabs__scroll:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: -2px;
 }
 
 .tab {
