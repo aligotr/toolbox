@@ -29,9 +29,6 @@ pub const PROFILE_FILE: &str = "profile.json";
 /// Версия схемы `profile.json`.
 pub const VERSION: u32 = 1;
 
-/// Название профиля по умолчанию: он создаётся при первом запуске.
-pub const DEFAULT_TITLE: &str = "Работа";
-
 /// Предел длины названия: длиннее в подписи сайдбара всё равно не влезет.
 const MAX_TITLE_LEN: usize = 60;
 
@@ -172,41 +169,28 @@ pub fn delete(profiles_dir: &Path, trash_dir: &Path, id: &str) -> Result<PathBuf
     Ok(target)
 }
 
-/// Создаёт профиль по умолчанию, если профилей нет вовсе.
+/// Создаёт папку профиля по умолчанию, если профилей нет вовсе.
 ///
 /// Первый запуск обязан дать рабочую папку: без профиля некуда положить
 /// шаблоны и данные, а пустой список профилей выглядел бы поломкой.
-/// `Some` — профиль создан, `None` — профили уже были.
+/// Файл с названием пишет интерфейс: подпись зависит от языка программы,
+/// а ядро языка не знает (ADR 0039). Пока файла нет, профиль показывается
+/// идентификатором. `Some` — папка создана, `None` — профили уже были.
 pub fn ensure_default(dir: &Path) -> Result<Option<Profile>, String> {
     fs::create_dir_all(dir)
         .map_err(|error| format!("Не удалось создать '{}': {error}", dir.display()))?;
 
-    let path = dir.join(DEFAULT_PROFILE);
-
-    // Папка `work` могла остаться от проверки записи прежней версии: тогда
-    // файла с названием в ней нет, и профиль показывался бы как «work».
-    // Название дописывается, данные при этом не трогаются.
     if !list(dir)?.is_empty() {
-        if path.is_dir() && !path.join(PROFILE_FILE).is_file() {
-            write_profile(&path, DEFAULT_TITLE)?;
-            return Ok(Some(Profile {
-                id: DEFAULT_PROFILE.to_owned(),
-                title: DEFAULT_TITLE.to_owned(),
-                templates: 0,
-                presets: 0,
-                data_files: 0,
-            }));
-        }
         return Ok(None);
     }
 
+    let path = dir.join(DEFAULT_PROFILE);
     fs::create_dir_all(&path)
         .map_err(|error| format!("Не удалось создать '{}': {error}", path.display()))?;
-    write_profile(&path, DEFAULT_TITLE)?;
 
     Ok(Some(Profile {
         id: DEFAULT_PROFILE.to_owned(),
-        title: DEFAULT_TITLE.to_owned(),
+        title: DEFAULT_PROFILE.to_owned(),
         templates: 0,
         presets: 0,
         data_files: 0,
@@ -470,22 +454,27 @@ mod tests {
         let again = ensure_default(&dir).expect("повтор").is_none();
 
         assert_eq!(created.id, DEFAULT_PROFILE);
-        assert_eq!(created.title, DEFAULT_TITLE);
+        assert_eq!(created.title, DEFAULT_PROFILE, "подпись — идентификатор");
         assert!(again, "второй профиль сам не появляется");
-        assert!(dir.join(DEFAULT_PROFILE).join(PROFILE_FILE).is_file());
+        assert!(
+            !dir.join(DEFAULT_PROFILE).join(PROFILE_FILE).is_file(),
+            "название пишет интерфейс"
+        );
     }
 
     #[test]
-    fn empty_default_folder_gets_title() {
+    fn empty_default_folder_is_left_alone() {
         // Проверка записи прежней версии создавала `profiles/work` без файла.
         let dir = temp_dir("default-leftover");
         fs::create_dir_all(dir.join(DEFAULT_PROFILE)).expect("папка от пробы");
 
-        let created = ensure_default(&dir).expect("создание").expect("профиль");
+        let created = ensure_default(&dir).expect("создание");
 
-        assert_eq!(created.id, DEFAULT_PROFILE);
-        assert_eq!(created.title, DEFAULT_TITLE);
-        assert!(dir.join(DEFAULT_PROFILE).join(PROFILE_FILE).is_file());
+        assert!(created.is_none(), "профиль уже есть");
+        assert!(
+            !dir.join(DEFAULT_PROFILE).join(PROFILE_FILE).is_file(),
+            "пустая папка не получает название"
+        );
     }
 
     #[test]

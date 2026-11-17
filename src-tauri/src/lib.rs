@@ -669,15 +669,15 @@ fn template_rename(
     Ok(template)
 }
 
-/// Дублирует шаблон; без названия копия получает приписку «(копия)».
+/// Дублирует шаблон; приписку к названию копии даёт интерфейс.
 #[tauri::command]
 fn template_duplicate(
     runtime: State<'_, Runtime>,
     id: String,
-    title: Option<String>,
+    suffix: String,
 ) -> Result<templates::Template, String> {
     let storage = storage_of(&runtime)?;
-    let template = templates::duplicate(&storage.templates_dir(), &id, title.as_deref())?;
+    let template = templates::duplicate(&storage.templates_dir(), &id, &suffix)?;
     log::info!("Шаблон '{id}' дублирован как '{}'", template.id);
     Ok(template)
 }
@@ -785,16 +785,16 @@ fn preset_rename(
     Ok(preset)
 }
 
-/// Дублирует пресет; без названия копия получает приписку «(копия)».
+/// Дублирует пресет; приписку к названию копии даёт интерфейс.
 #[tauri::command]
 fn preset_duplicate(
     runtime: State<'_, Runtime>,
     tool: String,
     id: String,
-    title: Option<String>,
+    suffix: String,
 ) -> Result<presets::Preset, String> {
     let storage = storage_of(&runtime)?;
-    let preset = presets::duplicate(&storage.presets_dir(), &tool, &id, title.as_deref())?;
+    let preset = presets::duplicate(&storage.presets_dir(), &tool, &id, &suffix)?;
     Ok(preset)
 }
 

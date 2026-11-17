@@ -17,6 +17,7 @@ import type {
   StoredTemplateList,
 } from "@/contracts/templates";
 import type { TabColumn } from "@/contracts/workspace";
+import { t } from "@/core/infra/i18n";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { describeError } from "../../infra/errors";
 import { write } from "../../infra/journal";
@@ -199,14 +200,17 @@ export async function renameTemplate(id: string, title: string): Promise<boolean
   }
 }
 
-/** Дублирует шаблон: копия получает приписку «(копия)». */
+/** Дублирует шаблон: копия получает приписку из словаря. */
 export async function duplicateTemplate(id: string): Promise<boolean> {
   if (status.duplicate.loading) return false;
 
   status.duplicate.loading = true;
   status.duplicate.error = null;
   try {
-    const copy = await invoke<StoredTemplate>("template_duplicate", { id });
+    const copy = await invoke<StoredTemplate>("template_duplicate", {
+      id,
+      suffix: t("templates.copySuffix"),
+    });
     write(JOURNAL_CORE_SOURCE, "result", `шаблон «${id}» скопирован как «${copy.title}»`);
     await reload();
     return true;

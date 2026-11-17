@@ -18,6 +18,7 @@ import type {
   StoredPresetDefault,
   StoredPresetList,
 } from "@/contracts/presets";
+import { t } from "@/core/infra/i18n";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { describeError } from "../../infra/errors";
 import { write } from "../../infra/journal";
@@ -214,7 +215,13 @@ export function createPresets(tool: string): Presets {
   const duplicateAction = presetAction(
     "пресет не скопирован",
     async (id: string) =>
-      toPreset(await invoke<StoredPreset>("preset_duplicate", { tool, id })),
+      toPreset(
+        await invoke<StoredPreset>("preset_duplicate", {
+          tool,
+          id,
+          suffix: t("presets.copySuffix"),
+        }),
+      ),
     (preset, id) => `пресет «${id}» скопирован как «${preset.title}»`,
   );
 

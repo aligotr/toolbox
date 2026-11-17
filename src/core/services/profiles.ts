@@ -12,11 +12,15 @@
 import { invoke } from "@tauri-apps/api/core";
 import { computed, reactive } from "vue";
 import type { Profile, ProfileList } from "@/contracts/profiles";
+import { t } from "@/core/infra/i18n";
 import { JOURNAL_CORE_SOURCE } from "../infra/constants";
 import { describeError } from "../infra/errors";
 import { write } from "../infra/journal";
 import { idle, type OperationStatus } from "../infra/status";
 import { flushWorkspace } from "./workspace/index";
+
+/** Идентификатор профиля, который ядро создаёт при первом запуске (ADR 0010). */
+const DEFAULT_PROFILE_ID = "work";
 
 /** Операции, у каждой своё состояние: отказ создания не блокирует список. */
 export type ProfileOperation = "list" | "create" | "rename" | "delete" | "switch";
@@ -59,6 +63,46 @@ async function reload(): Promise<void> {
   profiles.loaded = true;
 }
 
+/** Название профиля по умолчанию даётся один раз за сеанс. */
+let defaultNamed = false;
+
+/**
+ * Даёт профилю по умолчанию название на языке интерфейса.
+ *
+ * Ядро при первом запуске создаёт только папку: подпись зависит от языка,
+ * которого ядро не знает (ADR 0039). Нетронутым считается профиль, чьё
+ * название совпадает с идентификатором; переименованный пользователем
+ * не трогается. Отказ не мешает работе: остаётся подпись «work».
+ */
+async function nameDefaultProfile(): Promise<void> {
+  if (defaultNamed) return;
+  defaultNamed = true;
+
+  const profile = profiles.items.find(
+    (item) => item.id === DEFAULT_PROFILE_ID && item.title === item.id,
+  );
+  if (!profile) return;
+
+  try {
+    const renamed = await invoke<Profile>("profile_rename", {
+      id: profile.id,
+      title: t("profiles.defaultTitle"),
+    });
+    await reload();
+    write(
+      JOURNAL_CORE_SOURCE,
+      "result",
+      `профиль «${profile.id}» назван «${renamed.title}»`,
+    );
+  } catch (error) {
+    write(
+      JOURNAL_CORE_SOURCE,
+      "error",
+      `профиль по умолчанию не назван: ${describeError(error)}`,
+    );
+  }
+}
+
 /**
  * Читает профили для интерфейса.
  *
@@ -72,6 +116,7 @@ export async function loadProfiles(): Promise<void> {
   status.list.error = null;
   try {
     await reload();
+    await nameDefaultProfile();
   } catch (error) {
     status.list.error = describeError(error);
     write(

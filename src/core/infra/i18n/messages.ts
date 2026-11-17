@@ -298,6 +298,11 @@ export const ruMessages: Messages = {
   "settings.templates.deleteAccept": "Удалить",
   "settings.templates.deleteReject": "Отмена",
 
+  // ── Умолчания данных ─────────────────────────────────────────────────────
+  "profiles.defaultTitle": "Работа",
+  "templates.copySuffix": " (копия)",
+  "presets.copySuffix": " (копия)",
+
   // ── Единицы размера ──────────────────────────────────────────────────────
   "units.bytes": "Б",
   "units.kilobytes": "КБ",

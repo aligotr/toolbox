@@ -38,12 +38,6 @@ const DEFAULTS_KEY: &str = "defaults";
 /// Предел длины названия: длиннее строка списка всё равно не покажет.
 const MAX_TITLE_LEN: usize = 60;
 
-/// Приписка к названию копии.
-const COPY_SUFFIX: &str = " (копия)";
-
-/// Запасное название копии, если в файле его не оказалось.
-const COPY_FALLBACK: &str = "Пресет";
-
 /// Пресет для интерфейса.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Preset {
@@ -208,19 +202,15 @@ pub fn rename(root: &Path, tool: &str, id: &str, title: &str) -> Result<Preset, 
 
 /// Дублирует пресет.
 ///
-/// Без названия копия получает приписку «(копия)»: пользователь нажал одну
-/// кнопку и ждёт второй такой же пресет, а не диалог.
-pub fn duplicate(root: &Path, tool: &str, id: &str, title: Option<&str>) -> Result<Preset, String> {
+/// Приписку к названию даёт интерфейс: она зависит от языка программы,
+/// а ядро языка не знает (ADR 0039). Пользователь нажал одну кнопку
+/// и ждёт второй такой же пресет, а не диалог.
+pub fn duplicate(root: &Path, tool: &str, id: &str, suffix: &str) -> Result<Preset, String> {
     validate_tool(tool)?;
     let path = preset_path(root, tool, id)?;
     let document = read_current_document(&path, tool)?;
 
-    let title = match title {
-        Some(title) => normalize_title(title)?,
-        None => copy_title(&document),
-    };
-
-    create(root, tool, &title, payload_of(&document))
+    create(root, tool, &copy_title(&document, id, suffix), payload_of(&document))
 }
 
 /// Удаляет пресет в корзину: `local/trash/presets/<tool>/`.
@@ -561,16 +551,20 @@ fn normalize_title(title: &str) -> Result<String, String> {
 }
 
 /// Название копии с припиской; приписка обязана влезть в предел длины.
-fn copy_title(document: &Map<String, Value>) -> String {
+///
+/// Основа — название исходного пресета; если его в файле нет, берётся
+/// идентификатор: копия всё равно получает понятную подпись.
+fn copy_title(document: &Map<String, Value>, fallback: &str, suffix: &str) -> String {
     let base = document
         .get("title")
         .and_then(Value::as_str)
         .map(str::trim)
         .filter(|title| !title.is_empty())
-        .unwrap_or(COPY_FALLBACK);
-    let room = MAX_TITLE_LEN.saturating_sub(COPY_SUFFIX.chars().count());
+        .unwrap_or(fallback);
+    let suffix: String = suffix.chars().take(MAX_TITLE_LEN).collect();
+    let room = MAX_TITLE_LEN.saturating_sub(suffix.chars().count());
     let base: String = base.chars().take(room).collect();
-    format!("{base}{COPY_SUFFIX}")
+    format!("{base}{suffix}")
 }
 
 /// Текущее время в UTC: одинаковый вид на любой машине и часовом поясе.
@@ -744,7 +738,7 @@ mod tests {
         let root = temp_dir("duplicate");
         let source = create(&root, "dnslookup", "DNS", payload()).expect("пресет");
 
-        let copy = duplicate(&root, "dnslookup", &source.id, None).expect("копия");
+        let copy = duplicate(&root, "dnslookup", &source.id, " (копия)").expect("копия");
 
         assert_ne!(copy.id, source.id);
         assert_eq!(copy.title, "DNS (копия)");
@@ -1007,13 +1001,28 @@ mod tests {
         );
         fs::write(&path, document).expect("длинное название");
 
-        let copy = duplicate(&root, "dnslookup", &preset.id, None).expect("копия");
+        let copy = duplicate(&root, "dnslookup", &preset.id, " (копия)").expect("копия");
 
         assert_eq!(copy.title.chars().count(), MAX_TITLE_LEN);
         assert!(
-            copy.title.ends_with(COPY_SUFFIX),
+            copy.title.ends_with(" (копия)"),
             "название: {}",
             copy.title
         );
+    }
+
+    #[test]
+    fn copy_without_title_falls_back_to_id() {
+        // Названия в файле нет: копия всё равно получает подпись.
+        let root = temp_dir("copy-no-title");
+        let preset = create(&root, "dnslookup", "DNS", payload()).expect("пресет");
+        let path = root.join("dnslookup").join(file_name(&preset.id));
+        let document = "{ \"version\": 1, \"tool\": \"dnslookup\", \"saved_at\": \
+             \"2026-01-01T00:00:00Z\", \"payload\": {} }";
+        fs::write(&path, document).expect("файл без названия");
+
+        let copy = duplicate(&root, "dnslookup", &preset.id, " (копия)").expect("копия");
+
+        assert_eq!(copy.title, format!("{id} (копия)", id = preset.id));
     }
 }

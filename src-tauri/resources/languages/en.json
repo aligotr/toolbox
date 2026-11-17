@@ -270,6 +270,11 @@
     "settings.templates.deleteAccept": "Delete",
     "settings.templates.deleteReject": "Cancel",
 
+    // ── Data defaults ─────────────────────────────────────────────────────
+    "profiles.defaultTitle": "Work",
+    "templates.copySuffix": " (copy)",
+    "presets.copySuffix": " (copy)",
+
     // ── Size units ────────────────────────────────────────────────────────
     "units.bytes": "B",
     "units.kilobytes": "KB",

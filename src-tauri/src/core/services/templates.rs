@@ -31,9 +31,6 @@ pub const VERSION: u32 = 1;
 /// Предел длины названия: длиннее карточка всё равно не покажет.
 const MAX_TITLE_LEN: usize = 60;
 
-/// Приписка к названию копии.
-const COPY_SUFFIX: &str = " (копия)";
-
 /// Шаблон для интерфейса.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Template {
@@ -189,18 +186,14 @@ pub fn update(dir: &Path, id: &str, layout: Value) -> Result<Template, String> {
 
 /// Дублирует шаблон.
 ///
-/// Без названия копия получает приписку «(копия)»: пользователь нажал одну
-/// кнопку и ждёт второй такой же шаблон, а не диалог.
-pub fn duplicate(dir: &Path, id: &str, title: Option<&str>) -> Result<Template, String> {
+/// Приписку к названию даёт интерфейс: она зависит от языка программы,
+/// а ядро языка не знает (ADR 0039). Пользователь нажал одну кнопку
+/// и ждёт второй такой же шаблон, а не диалог.
+pub fn duplicate(dir: &Path, id: &str, suffix: &str) -> Result<Template, String> {
     let path = template_path(dir, id)?;
     let document = read_current_document(&path)?;
 
-    let title = match title {
-        Some(title) => normalize_title(title)?,
-        None => copy_title(&document),
-    };
-
-    create(dir, &title, layout_of(&document))
+    create(dir, &copy_title(&document, id, suffix), layout_of(&document))
 }
 
 /// Удаляет шаблон в корзину: `local/trash/templates/`.
@@ -371,16 +364,20 @@ fn normalize_title(title: &str) -> Result<String, String> {
 }
 
 /// Название копии с припиской; приписка обязана влезть в предел длины.
-fn copy_title(document: &Map<String, Value>) -> String {
+///
+/// Основа — название исходного шаблона; если его в файле нет, берётся
+/// идентификатор: копия всё равно получает понятную подпись.
+fn copy_title(document: &Map<String, Value>, fallback: &str, suffix: &str) -> String {
     let base = document
         .get("title")
         .and_then(Value::as_str)
         .map(str::trim)
         .filter(|title| !title.is_empty())
-        .unwrap_or("Шаблон");
-    let room = MAX_TITLE_LEN.saturating_sub(COPY_SUFFIX.chars().count());
+        .unwrap_or(fallback);
+    let suffix: String = suffix.chars().take(MAX_TITLE_LEN).collect();
+    let room = MAX_TITLE_LEN.saturating_sub(suffix.chars().count());
     let base: String = base.chars().take(room).collect();
-    format!("{base}{COPY_SUFFIX}")
+    format!("{base}{suffix}")
 }
 
 #[cfg(test)]
@@ -433,7 +430,7 @@ mod tests {
         let dir = temp_dir("copy");
         let source = create(&dir, "DNS", layout()).expect("шаблон");
 
-        let copy = duplicate(&dir, &source.id, None).expect("копия");
+        let copy = duplicate(&dir, &source.id, " (копия)").expect("копия");
 
         assert_eq!(copy.title, "DNS (копия)");
         assert_ne!(copy.id, source.id);
