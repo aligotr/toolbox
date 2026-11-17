@@ -108,7 +108,7 @@ onUnmounted(() => {
       <Button
         class="blocked__exit"
         :label="t('startup.exit')"
-        severity="danger"
+        severity="secondary"
         @click="exitApp"
       />
     </section>
@@ -217,7 +217,7 @@ onUnmounted(() => {
 }
 
 .blocked__exit {
-  align-self: flex-start;
+  align-self: flex-end;
 }
 
 .mono {
