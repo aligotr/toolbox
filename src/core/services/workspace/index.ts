@@ -143,47 +143,89 @@ function dropEmptyTabs(): void {
   templateBindings.prune(new Set(workspace.tabs.map((tab) => tab.id)));
 }
 
-/**
- * Открывает инструмент в новой вкладке.
- *
- * Колонка одна на всю ширину: добавление в существующую вкладку делается
- * перетаскиванием, а клик в сайдбаре всегда создаёт рабочее место (ADR 0011).
- */
-export function openTool(tool: ToolDescriptor): void {
-  dropEmptyTabs();
-  const columns: TabColumn[] = [{ width: 1, tools: [tool.id] }];
-  addTab({
-    id: crypto.randomUUID(),
-    kind: "workspace",
-    title: tool.title,
-    icon: tool.icon,
-    columns,
-  });
+/** Вкладка содержит инструмент хотя бы в одной колонке. */
+function tabHasTool(tab: WorkspaceTab, toolId: string): boolean {
+  return (
+    tab.kind === "workspace" &&
+    tab.columns.some((column) => column.tools.includes(toolId))
+  );
 }
 
 /**
- * Открывает одиночную вкладку — журнал или настройки.
+ * Открывает вкладку, которая существует в единственном экземпляре.
  *
- * Повторный клик переключает на уже открытую: второй экземпляр журнала
- * показывал бы те же записи и занимал место в полосе.
+ * Совпадение задаёт вызывающий: журнал и настройки ищутся по виду вкладки,
+ * инструмент — по месту в колонках. Нашлась — активируем, иначе создаём.
+ * Пустые вкладки уступают место содержимому в обоих случаях (ADR 0040).
  */
-export function openSingleton(kind: SingletonKind): void {
+function openUniqueTab(
+  match: (tab: WorkspaceTab) => boolean,
+  create: () => void,
+): void {
   dropEmptyTabs();
 
-  const existing = workspace.tabs.find((tab) => tab.kind === kind);
+  const existing = workspace.tabs.find(match);
   if (existing) {
     workspace.activeId = existing.id;
     return;
   }
 
-  const meta = SINGLETON_TABS[kind];
-  addTab({
-    id: crypto.randomUUID(),
-    kind,
-    title: "",
-    icon: meta.icon,
-    columns: [],
-  });
+  create();
+}
+
+/**
+ * Открывает инструмент в новой вкладке.
+ *
+ * Колонка одна на всю ширину: добавление в существующую вкладку делается
+ * перетаскиванием, а клик в сайдбаре всегда создаёт рабочее место (ADR 0011).
+ *
+ * Инструмент с `singleInstance` второй вкладки не заводит: повторный выбор
+ * активирует уже открытую, где бы она ни стояла (ADR 0041). Вкладку с другими
+ * инструментами не разбираем: пользователь собирал рабочее место целиком.
+ */
+export function openTool(tool: ToolDescriptor): void {
+  const create = (): void => {
+    const columns: TabColumn[] = [{ width: 1, tools: [tool.id] }];
+    addTab({
+      id: crypto.randomUUID(),
+      kind: "workspace",
+      title: tool.title,
+      icon: tool.icon,
+      columns,
+    });
+  };
+
+  if (tool.singleInstance) {
+    openUniqueTab((tab) => tabHasTool(tab, tool.id), create);
+    return;
+  }
+
+  dropEmptyTabs();
+  create();
+}
+
+/**
+ * Открывает журнал или настройки — вкладку, которая существует в одном
+ * экземпляре.
+ *
+ * Повторный клик переключает на уже открытую: второй экземпляр журнала
+ * показывал бы те же записи и занимал место в полосе. Правило то же, что
+ * у инструментов с `singleInstance` (ADR 0041).
+ */
+export function openSingleton(kind: SingletonKind): void {
+  openUniqueTab(
+    (tab) => tab.kind === kind,
+    () => {
+      const meta = SINGLETON_TABS[kind];
+      addTab({
+        id: crypto.randomUUID(),
+        kind,
+        title: "",
+        icon: meta.icon,
+        columns: [],
+      });
+    },
+  );
 }
 
 /** Делает вкладку активной, если она ещё существует. */

@@ -21,6 +21,11 @@ export interface ToolDescriptor<TComponent = unknown> {
   icon: string;
   /** Порядок в сайдбаре; меньше — выше. */
   order?: number;
+  /**
+   * Держать инструмент в единственной вкладке: повторный выбор активирует
+   * уже открытую, а не заводит вторую (ADR 0041).
+   */
+  singleInstance?: boolean;
   /** Компонент, который отображается в ячейке вкладки. */
   component: TComponent;
 }

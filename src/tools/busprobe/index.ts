@@ -14,5 +14,9 @@ export const busprobeTool: ToolDescriptor<typeof BusprobeView> = {
   descriptionKey: "tools.busprobe.description",
   icon: "pi pi-bolt",
   order: 10,
+  // Самопроверка шины: второй экземпляр показывает те же топики и сбивает
+  // с толку — непонятно, какая вкладка рабочая. Повторный выбор активирует
+  // открытую (ADR 0041).
+  singleInstance: true,
   component: BusprobeView,
 };
