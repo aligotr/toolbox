@@ -182,21 +182,13 @@
   font-size: var(--ag-text-sm);
 }
 
-.dns__error,
 .dns__hint {
   display: flex;
   align-items: flex-start;
   gap: var(--ag-space-sm);
   margin: 0;
-  font-size: var(--ag-text-sm);
-}
-
-.dns__error {
-  color: var(--ag-danger);
-}
-
-.dns__hint {
   color: var(--p-text-muted-color);
+  font-size: var(--ag-text-sm);
 }
 
 .dns-table {
@@ -211,6 +203,27 @@
 
 .dns-table--empty {
   min-height: 200px;
+}
+
+.dns-table__notices {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--ag-space-xs);
+  padding: var(--ag-space-sm) var(--ag-space-md);
+  border-bottom: 1px solid var(--ag-border);
+  background: color-mix(in srgb, var(--ag-danger) 7%, transparent);
+}
+
+.dns-table__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ag-space-sm);
+  margin: 0;
+  color: var(--ag-danger);
+  font-size: var(--ag-text-sm);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .dns-table .p-datatable {

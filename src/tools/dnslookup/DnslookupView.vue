@@ -127,6 +127,43 @@ const overflowServerCount = computed(() =>
   Math.max(session.servers.length - SERVER_LABEL_LIMIT, 0),
 );
 
+/** Сообщение о состоянии данных: причина отказа или заметка о пресете. */
+interface DataNotice {
+  /** Источник сообщения: он же ключ списка. */
+  source: "servers" | "run" | "preset";
+  text: string;
+  /** Отказ прерывает работу и объявляется сразу; заметка — мягко. */
+  urgent: boolean;
+}
+
+/**
+ * Собирает сообщения в один список.
+ *
+ * Полоса стоит в шапке карточки данных, а не между рядами полей: причина
+ * отказа относится к результатам проверки, а не к самим фильтрам.
+ */
+const notices = computed<DataNotice[]>(() => {
+  const list: DataNotice[] = [];
+  const serversError = session.status.servers.error;
+  const runError = session.status.run.error;
+
+  if (serversError) {
+    list.push({
+      source: "servers",
+      text: t("dnslookup.view.serversError", { reason: serversError }),
+      urgent: true,
+    });
+  }
+  if (runError) {
+    list.push({ source: "run", text: runError, urgent: true });
+  }
+  if (presetNote.value) {
+    list.push({ source: "preset", text: presetNote.value, urgent: false });
+  }
+
+  return list;
+});
+
 /** Подпись сервера по идентификатору: своего сервера может уже не быть. */
 function serverLabel(serverId: string): string {
   return availableServers.value.find((server) => server.id === serverId)?.label ?? serverId;
@@ -331,16 +368,6 @@ async function exportCsv(): Promise<void> {
       </div>
     </div>
 
-    <p v-if="session.status.servers.error" class="dns__error" role="alert">
-      <i class="pi pi-exclamation-circle" aria-hidden="true" />
-      {{ t("dnslookup.view.serversError", { reason: session.status.servers.error }) }}
-    </p>
-
-    <p v-if="session.status.run.error" class="dns__error" role="alert">
-      <i class="pi pi-exclamation-circle" aria-hidden="true" />
-      {{ session.status.run.error }}
-    </p>
-
     <div class="dns__filters">
       <InputText
         v-model="session.filters.search"
@@ -422,11 +449,6 @@ async function exportCsv(): Promise<void> {
       </Popover>
     </div>
 
-    <p v-if="presetNote" class="dns__error" aria-live="polite">
-      <i class="pi pi-exclamation-circle" aria-hidden="true" />
-      {{ presetNote }}
-    </p>
-
     <DnsTable
       class="dns__table"
       :rows="visibleRows"
@@ -443,7 +465,22 @@ async function exportCsv(): Promise<void> {
       @repeat="runRow"
       @delete="removeRow"
       @reorder="moveRow"
-    />
+    >
+      <template #notice>
+        <div v-if="notices.length > 0" class="dns-table__notices">
+          <p
+            v-for="notice in notices"
+            :key="notice.source"
+            class="dns-table__notice"
+            :role="notice.urgent ? 'alert' : undefined"
+            :aria-live="notice.urgent ? undefined : 'polite'"
+          >
+            <i class="pi pi-exclamation-circle" aria-hidden="true" />
+            <span>{{ notice.text }}</span>
+          </p>
+        </div>
+      </template>
+    </DnsTable>
 
     <p v-if="exportNote" class="dns__hint" aria-live="polite">
       <i class="pi pi-file" aria-hidden="true" />

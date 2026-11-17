@@ -204,6 +204,7 @@ watch(
     :class="{ 'dns-table--empty': rows.length === 0 }"
     :style="{ '--dns-domain-width': domainWidth }"
   >
+    <slot name="notice" />
     <DataTable
       v-model:expanded-rows="expandedRows"
       :value="rows"
