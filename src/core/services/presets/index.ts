@@ -66,39 +66,6 @@ export interface Presets {
   setDefault(id: string | null): Promise<boolean>;
 }
 
-/**
- * Названия пресетов по умолчанию по инструментам.
- *
- * Оболочке нужно только название: «Перезапустить вкладку» подсказывает,
- * какой пресет загрузится, но не лезет в состояние инструмента. Пока список
- * не прочитан, названия нет — подсказка просто не упоминает пресет.
- */
-const defaultTitles = new Map<string, string>();
-
-/** Название пресета по умолчанию для инструмента; `null` — не задан. */
-export function defaultPresetTitle(tool: string): string | null {
-  return defaultTitles.get(tool) ?? null;
-}
-
-/**
- * Созданные состояния пресетов по инструментам.
- *
- * Оболочке нужно название пресета по умолчанию, а оно известно только после
- * чтения списка. Реестр позволяет прочитать списки не зная, какие инструменты
- * существуют: модуль сам сообщает о себе при создании состояния.
- */
-const byTool = new Map<string, Presets>();
-
-/**
- * Читает списки пресетов всех созданных инструментов.
- *
- * Отказ не мешает работе: подсказка просто не упомянет пресет, а загрузка
- * при открытии вкладки напишет причину в журнал.
- */
-export async function loadPresetDefaults(): Promise<void> {
-  await Promise.all([...byTool.values()].map((presets) => presets.load()));
-}
-
 /** Переносит документ ядра в форму интерфейса. */
 function toPreset(stored: StoredPreset): Preset {
   return {
@@ -138,13 +105,6 @@ export function createPresets(tool: string): Presets {
     state.items = list.items.map(toPreset);
     state.defaultId = presetDefault.id;
     state.loaded = true;
-
-    const preset =
-      presetDefault.id === null
-        ? undefined
-        : state.items.find((item) => item.id === presetDefault.id);
-    if (preset) defaultTitles.set(tool, preset.title);
-    else defaultTitles.delete(tool);
   }
 
   /** Выполнение с записью причины отказа: обёртка переводит её в статус. */
@@ -341,6 +301,5 @@ export function createPresets(tool: string): Presets {
     remove,
     setDefault,
   };
-  byTool.set(tool, presets);
   return presets;
 }

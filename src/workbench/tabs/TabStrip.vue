@@ -7,25 +7,15 @@
 //
 // Состояние берётся из `core/services/workspace`: правила закрытия
 // и активации живут там, чтобы одинаково работать и для кнопки, и для будущих
-// горячих клавиш. Прокрутка — в соседнем композабле, меню действий строится
-// здесь; компонент отвечает за раскладку полосы и связывает их с разметкой.
+// горячих клавиш. Прокрутка живёт в соседнем композабле; компонент отвечает
+// за раскладку полосы и связывает состояние с разметкой.
 
 import Button from "primevue/button";
-import Menu from "primevue/menu";
-import type { MenuItem } from "primevue/menuitem";
-import { computed, nextTick, ref } from "vue";
-import type { WorkspaceTab } from "@/contracts/workspace";
+import { ref } from "vue";
 import { t } from "@/core/infra/i18n";
 import { activateTab, closeTab, openEmptyTab, workspace } from "@/core/services/workspace/index";
 import TabItem from "./TabItem.vue";
 import { useStripScroll } from "./useStripScroll";
-import { useTabRestart } from "./useTabRestart";
-
-/** Меню действий; общее для всех вкладок. */
-const menu = ref<InstanceType<typeof Menu> | null>(null);
-
-/** Вкладка, для которой открыто меню действий. */
-const menuTab = ref<WorkspaceTab | null>(null);
 
 /** Полоса вкладок: по её прокрутке решается, нужны ли шевроны. */
 const listEl = ref<HTMLElement | null>(null);
@@ -39,33 +29,6 @@ const { canScrollLeft, canScrollRight, scrollTabs, updateScrollState } = useStri
   listEl,
   activeTabEl,
 );
-
-const { requestRestart } = useTabRestart();
-
-const menuItems = computed<MenuItem[]>(() => {
-  const tab = menuTab.value;
-  if (!tab || tab.kind !== "workspace") return [];
-  return [
-    {
-      label: t("tabs.menu.restart"),
-      icon: "pi pi-refresh",
-      command: () => requestRestart(tab),
-    },
-  ];
-});
-
-/**
- * Открывает меню действий у кнопки вкладки.
- *
- * Пункт строится из выбранной вкладки, поэтому ожидание обязательно:
- * без него меню успело бы показать действие предыдущей вкладки.
- */
-async function openMenu(tab: WorkspaceTab, event: MouseEvent): Promise<void> {
-  event.stopPropagation();
-  menuTab.value = tab;
-  await nextTick();
-  menu.value?.toggle(event);
-}
 </script>
 
 <template>
@@ -78,7 +41,6 @@ async function openMenu(tab: WorkspaceTab, event: MouseEvent): Promise<void> {
           :tab="tab"
           :active="tab.id === workspace.activeId"
           @activate="activateTab(tab.id)"
-          @menu="openMenu(tab, $event)"
           @close="closeTab(tab.id)"
         />
       </div>
@@ -113,8 +75,6 @@ async function openMenu(tab: WorkspaceTab, event: MouseEvent): Promise<void> {
       v-tooltip.bottom="t('tab.empty.title')"
       @click="openEmptyTab"
     />
-
-    <Menu ref="menu" :model="menuItems" popup />
   </nav>
 </template>
 

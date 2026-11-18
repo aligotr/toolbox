@@ -84,18 +84,8 @@
     "tabs.strip.label": "Tabs",
     "tabs.scroll.left": "Scroll tabs left",
     "tabs.scroll.right": "Scroll tabs right",
-    "tabs.tab.menu": "Tab actions",
-    "tabs.tab.menuTitle": "Actions for tab “{title}”",
     "tabs.tab.close": "Close tab",
     "tabs.tab.closeTitle": "Close tab “{title}”",
-    "tabs.menu.restart": "Restart tab",
-    "tabs.restart.header": "Restart the tab?",
-    "tabs.restart.loss": "Unsaved rows and results will be lost.",
-    "tabs.restart.keep": "The layout will stay.",
-    "tabs.restart.presetOne": "Preset “{title}” will load.",
-    "tabs.restart.presets": "Presets will load: {titles}.",
-    "tabs.restart.accept": "Restart",
-    "tabs.restart.reject": "Cancel",
 
     // ── Empty tab ─────────────────────────────────────────────────────────
     "workspace.empty.title": "New tab",
@@ -183,8 +173,6 @@
       "Workspace was not saved on close: {reason}",
     "journal.workspace.closeHandlerError":
       "The window close handler was not installed: {reason}",
-    "journal.workspace.restarted": "Tab “{title}” was restarted",
-    "journal.workspace.restartedEmpty": "The empty tab was restarted",
 
     "journal.app.busError": "Bus error: {reason}",
     "journal.app.infoError":

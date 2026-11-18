@@ -20,7 +20,6 @@ import {
   openEmptyTab,
   openSingleton,
   openTool,
-  restartTab,
   takeFreshCell,
   workspace,
 } from "../../src/core/services/workspace/index.ts";
@@ -194,56 +193,11 @@ test("активация неизвестной вкладки игнориру�
   assert.equal(workspace.activeId, "a");
 });
 
-test("перезапуск вкладки заменяет её копией на том же месте", () => {
+test("новая вкладка помечает ячейку свежей ровно один раз", () => {
   reset();
-  setTabs(["a", "b"], "b");
-  const before = workspace.tabs[0];
-
-  restartTab("a");
-
-  const restarted = workspace.tabs[0];
-  assert.notEqual(restarted.id, "a");
-  assert.deepEqual(ids(), [restarted.id, "b"]);
-  assert.equal(restarted.title, before.title);
-  assert.deepEqual(restarted.columns, before.columns);
-  assert.equal(workspace.activeId, "b");
-});
-
-test("перезапуск активной вкладки оставляет её активной", () => {
-  reset();
-  setTabs(["a", "b"], "a");
-
-  restartTab("a");
-
-  assert.equal(workspace.activeId, workspace.tabs[0].id);
-});
-
-test("перезапуск помечает ячейки копии свежими ровно один раз", () => {
-  reset();
-  setTabs(["a"], "a");
-  restartTab("a");
+  openTool(toolOf("dnslookup"));
   const key = cellKey(workspace.activeId, 0, 0);
 
   assert.equal(takeFreshCell(key), true);
   assert.equal(takeFreshCell(key), false);
-});
-
-test("перезапуск записывает факт в журнал", () => {
-  reset();
-  setTabs(["a"], "a");
-  restartTab("a");
-
-  assert.equal(journal.entries[0].code, "journal.workspace.restarted");
-  assert.deepEqual(journal.entries[0].params, { title: "a" });
-});
-
-test("перезапуск одиночной вкладки ничего не меняет", () => {
-  reset();
-  workspace.tabs = [{ id: "j", kind: "journal", title: "", icon: "pi pi-history", columns: [] }];
-  workspace.activeId = "j";
-
-  restartTab("j");
-
-  assert.deepEqual(ids(), ["j"]);
-  assert.equal(journal.entries.length, 0);
 });

@@ -13,11 +13,7 @@ import type { StoredPreset } from "../../src/contracts/presets.ts";
 import { installBuiltin } from "../../src/core/infra/i18n/index.ts";
 import { ruMessages } from "../../src/core/infra/i18n/messages.ts";
 import { journal } from "../../src/core/infra/journal.ts";
-import {
-  createPresets,
-  defaultPresetTitle,
-  type Preset,
-} from "../../src/core/services/presets/index.ts";
+import { createPresets, type Preset } from "../../src/core/services/presets/index.ts";
 import { setInvokeHandler } from "../support/fakes/core.mjs";
 
 // `t("presets.copySuffix")` без словаря вернул бы ключ: механизм пресетов
@@ -161,17 +157,15 @@ test("удаление убирает пресет из списка", async () 
   assert.deepEqual(codes(), ["journal.presets.moved", "journal.presets.created"]);
 });
 
-test("пресет по умолчанию даёт подсказку, снятие убирает её", async () => {
+test("пресет по умолчанию запоминается и снимается", async () => {
   const { presets } = fresh();
   const created = await presets.create("Основной", { rows: [] });
 
   assert.equal(await presets.setDefault(created!.id), true);
   assert.equal(presets.state.defaultId, created!.id);
-  assert.equal(defaultPresetTitle(TOOL), "Основной");
 
   assert.equal(await presets.setDefault(null), true);
   assert.equal(presets.state.defaultId, null);
-  assert.equal(defaultPresetTitle(TOOL), null);
 });
 
 test("отказ команды остаётся в статусе и журнале, список не тронут", async () => {

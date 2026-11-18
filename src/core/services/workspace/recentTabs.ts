@@ -23,13 +23,7 @@ export function forgetTab(id: string): void {
   if (index >= 0) recent.splice(index, 1);
 }
 
-/** Переносит память на новый идентификатор перезапущенной вкладки. */
-export function renameTab(from: string, to: string): void {
-  const index = recent.indexOf(from);
-  if (index >= 0) recent.splice(index, 1, to);
-}
-
-/** Начинает историю заново: после перезапуска помним только активную. */
+/** Начинает историю заново: после запуска приложения помним только активную. */
 export function resetRecentTabs(): void {
   recent.length = 0;
 }

@@ -21,7 +21,7 @@ import type { ToolDescriptor } from "@/contracts/tools";
 import type { SingletonKind, TabColumn, WorkspaceFile, WorkspaceTab } from "@/contracts/workspace";
 import { EMPTY_TAB_ICON, SINGLETON_TABS } from "../../constants";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
-import { write, type JournalFact } from "../../infra/journal";
+import { write } from "../../infra/journal";
 import {
   WORKSPACE_CLOSE_TIMEOUT_MS,
   WORKSPACE_SAVE_DELAY_MS,
@@ -29,7 +29,7 @@ import {
 } from "./constants";
 import { copyColumns } from "./layout";
 import { parseWorkspaceFile } from "./parse";
-import { forgetTab, recentTabIds, rememberTab, renameTab, resetRecentTabs } from "./recentTabs";
+import { forgetTab, recentTabIds, rememberTab, resetRecentTabs } from "./recentTabs";
 
 /** Состояние рабочего пространства. */
 export interface WorkspaceState {
@@ -273,43 +273,6 @@ export function closeTab(id: string): void {
   }
 
   forgetFreshCells(id);
-}
-
-/**
- * Перезапускает вкладку: инструменты возвращаются к состоянию нового окна.
- *
- * Вкладка заменяется копией под новым идентификатором в той же позиции:
- * место в сетке задаёт ключ сеанса инструмента (ADR 0017), поэтому прежние
- * сеансы остаются без вкладки и следующий показ заводит их заново.
- * Раскладка, заголовок и иконка сохраняются.
- */
-export function restartTab(id: string): void {
-  const index = workspace.tabs.findIndex((tab) => tab.id === id);
-  if (index < 0) return;
-
-  const tab = workspace.tabs[index];
-  if (tab.kind !== "workspace") return;
-
-  const next: WorkspaceTab = {
-    id: crypto.randomUUID(),
-    kind: tab.kind,
-    title: tab.title,
-    icon: tab.icon,
-    columns: copyColumns(tab.columns),
-  };
-
-  const wasActive = workspace.activeId === id;
-  workspace.tabs.splice(index, 1, next);
-  renameTab(id, next.id);
-  if (wasActive) focusTab(next.id);
-
-  forgetFreshCells(id);
-  markFreshCells(next.id, next.columns);
-
-  const fact: JournalFact = next.title
-    ? { code: "journal.workspace.restarted", params: { title: next.title } }
-    : { code: "journal.workspace.restartedEmpty", params: {} };
-  write(JOURNAL_CORE_SOURCE, "info", fact.code, fact.params);
 }
 
 /** Гарантирует хотя бы одну вкладку — при первом показе оболочки. */

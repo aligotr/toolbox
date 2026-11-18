@@ -1,6 +1,6 @@
 # ADR 0031: Перезапуск вкладки
 
-- **Статус:** принято
+- **Статус:** заменено (ADR 0051)
 - **Дата:** 2026-11-13
 - **Область:** `src/core/workspace.ts`, `src/shell/TabStrip.vue`,
   `src/shell/constants.ts`, `src/tools/dnslookup/useDnslookup.ts`,

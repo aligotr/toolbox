@@ -86,18 +86,8 @@ export const ruMessages: Messages = {
   "tabs.strip.label": "Вкладки",
   "tabs.scroll.left": "Прокрутить вкладки влево",
   "tabs.scroll.right": "Прокрутить вкладки вправо",
-  "tabs.tab.menu": "Действия с вкладкой",
-  "tabs.tab.menuTitle": "Действия с вкладкой «{title}»",
   "tabs.tab.close": "Закрыть вкладку",
   "tabs.tab.closeTitle": "Закрыть вкладку «{title}»",
-  "tabs.menu.restart": "Перезапустить вкладку",
-  "tabs.restart.header": "Перезапустить вкладку?",
-  "tabs.restart.loss": "Несохранённые строки и результаты пропадут.",
-  "tabs.restart.keep": "Раскладка останется.",
-  "tabs.restart.presetOne": "Загрузится пресет «{title}».",
-  "tabs.restart.presets": "Загрузятся пресеты: {titles}.",
-  "tabs.restart.accept": "Перезапустить",
-  "tabs.restart.reject": "Отмена",
 
   // ── Пустая вкладка ───────────────────────────────────────────────────────
   "workspace.empty.title": "Новая вкладка",
@@ -172,8 +162,6 @@ export const ruMessages: Messages = {
   "journal.workspace.saveError": "Рабочее пространство не сохранено: {reason}",
   "journal.workspace.closeSaveError": "Рабочее пространство не сохранено при закрытии: {reason}",
   "journal.workspace.closeHandlerError": "Обработчик закрытия окна не установлен: {reason}",
-  "journal.workspace.restarted": "Вкладка «{title}» перезапущена",
-  "journal.workspace.restartedEmpty": "Пустая вкладка перезапущена",
 
   "journal.app.busError": "Ошибка шины: {reason}",
   "journal.app.infoError": "Сведения о программе не прочитаны: {reason}",

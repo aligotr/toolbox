@@ -1,8 +1,8 @@
 <script setup lang="ts">
-// Вкладка полосы: значок, заголовок и кнопки действий.
+// Вкладка полосы: значок, заголовок и кнопка закрытия.
 //
 // Вкладка — не кнопка, но ведёт себя как кнопка: активация мышью и с
-// клавиатуры. Меню и закрытие здесь только сообщаются наружу: правила живут
+// клавиатуры. Закрытие здесь только сообщается наружу: правило живёт
 // в полосе, а вкладка остаётся представлением.
 
 import type { WorkspaceTab } from "@/contracts/workspace";
@@ -17,7 +17,6 @@ defineProps<{
 
 const emit = defineEmits<{
   activate: [];
-  menu: [event: MouseEvent];
   close: [];
 }>();
 
@@ -43,16 +42,6 @@ function activateFromKeyboard(event: KeyboardEvent): void {
     <i class="tab__icon" :class="tab.icon" aria-hidden="true" />
     <span class="tab__title">{{ tabTitle(tab) }}</span>
 
-    <button
-      v-if="tab.kind === 'workspace'"
-      class="tab__menu"
-      type="button"
-      :aria-label="t('tabs.tab.menuTitle', { title: tabTitle(tab) })"
-      v-tooltip.bottom="t('tabs.tab.menu')"
-      @click.stop="emit('menu', $event)"
-    >
-      <i class="pi pi-ellipsis-v" aria-hidden="true" />
-    </button>
     <button
       class="tab__close"
       type="button"
@@ -107,7 +96,6 @@ function activateFromKeyboard(event: KeyboardEvent): void {
   white-space: nowrap;
 }
 
-.tab__menu,
 .tab__close {
   display: grid;
   flex-shrink: 0;
@@ -123,12 +111,10 @@ function activateFromKeyboard(event: KeyboardEvent): void {
   cursor: pointer;
 }
 
-.tab__menu:hover,
 .tab__close:hover {
   background: var(--ag-hover);
 }
 
-.tab__menu:focus-visible,
 .tab__close:focus-visible {
   outline: 2px solid var(--p-primary-color);
   outline-offset: 2px;
