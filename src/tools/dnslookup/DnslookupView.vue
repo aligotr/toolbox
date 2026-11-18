@@ -198,17 +198,12 @@ function toggleRun(): void {
   }
 }
 
-/** Очистка во время проверки сначала останавливает её (с подтверждением). */
-function requestClear(): void {
-  if (!session.status.run.loading) {
-    void clear();
-    return;
-  }
-
+/** Спрашивает подтверждение очистки всплывающим блоком у кнопки. */
+function requestClear(event: MouseEvent): void {
   confirm.require({
-    header: t("dnslookup.view.clearHeader"),
+    group: "popup",
+    target: event.currentTarget as HTMLElement,
     message: t("dnslookup.view.clearMessage"),
-    icon: "pi pi-exclamation-triangle",
     acceptLabel: t("dnslookup.view.clearAccept"),
     rejectLabel: t("dnslookup.view.cancel"),
     acceptProps: CONFIRM_DANGER_ACCEPT,

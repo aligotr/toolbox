@@ -136,7 +136,6 @@ function requestClear(event: MouseEvent): void {
           class="journal__clear"
           :label="t('journal.view.clear')"
           icon="pi pi-trash"
-          icon-pos="right"
           severity="danger"
           text
           size="small"

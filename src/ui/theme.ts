@@ -247,5 +247,17 @@ export const toolboxPreset = definePreset(Aura, {
     html .p-confirmdialog-message {
       white-space: pre-line;
     }
+
+    /* Всплывающее подтверждение: кнопки стоят по центру блока, а не
+       у правого края. Минимальная ширина не даёт короткому вопросу
+       сжаться до ширины кнопок. */
+    html .p-confirmpopup {
+      min-width: 260px;
+    }
+
+    html .p-confirmpopup-footer {
+      justify-content: center;
+      gap: var(--ag-space-sm);
+    }
   `,
 });

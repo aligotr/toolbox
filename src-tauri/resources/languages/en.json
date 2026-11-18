@@ -124,7 +124,7 @@
     "journal.day.yesterday": "Yesterday",
     "journal.kind.error": "Error",
     "journal.source.core": "core",
-    "journal.clear.message": "Clear the journal? Entries will be lost.",
+    "journal.clear.message": "Clear entries?",
     "journal.clear.accept": "Clear",
     "journal.clear.reject": "Cancel",
 
@@ -456,9 +456,7 @@
     "dnslookup.view.columns": "Visible columns",
     "dnslookup.view.export": "CSV export",
     "dnslookup.view.clear": "Clear",
-    "dnslookup.view.clearHeader": "Clear the table",
-    "dnslookup.view.clearMessage":
-      "A check is running. Stop it and clear the table?",
+    "dnslookup.view.clearMessage": "Clear entries?",
     "dnslookup.view.clearAccept": "Clear",
     "dnslookup.view.cancel": "Cancel",
     "dnslookup.view.systemLoading": "System resolvers: loading…",

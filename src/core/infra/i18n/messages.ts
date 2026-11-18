@@ -130,7 +130,7 @@ export const ruMessages: Messages = {
   "journal.day.yesterday": "Вчера",
   "journal.kind.error": "Ошибка",
   "journal.source.core": "ядро",
-  "journal.clear.message": "Очистить журнал? Записи исчезнут.",
+  "journal.clear.message": "Очистить записи?",
   "journal.clear.accept": "Очистить",
   "journal.clear.reject": "Отмена",
 
@@ -443,8 +443,7 @@ export const ruMessages: Messages = {
   "dnslookup.view.columns": "Отображаемые колонки",
   "dnslookup.view.export": "Экспорт CSV",
   "dnslookup.view.clear": "Очистить",
-  "dnslookup.view.clearHeader": "Очистить таблицу",
-  "dnslookup.view.clearMessage": "Проверка идёт. Остановить её и очистить таблицу?",
+  "dnslookup.view.clearMessage": "Очистить записи?",
   "dnslookup.view.clearAccept": "Очистить",
   "dnslookup.view.cancel": "Отмена",
   "dnslookup.view.systemLoading": "Системные резолверы: загрузка…",

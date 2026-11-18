@@ -99,7 +99,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--ag-space-sm);
+  gap: var(--ag-space-md);
 }
 
 .dns__add {
@@ -173,11 +173,12 @@
   color: var(--p-text-muted-color);
 }
 
+/* Ритм фильтров один со строкой добавления: общий шаг 12 px. */
 .dns__filters {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--ag-space-sm) var(--ag-space-lg);
+  gap: var(--ag-space-md);
 }
 
 .dns__preset-changed {
