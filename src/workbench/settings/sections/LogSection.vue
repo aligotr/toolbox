@@ -76,7 +76,15 @@ onMounted(() => {
     </header>
 
     <div class="log__field">
-      <label class="log__label" for="log-level">{{ t("settings.log.level") }}</label>
+      <div class="log__label-line">
+        <label class="log__label" for="log-level">{{ t("settings.log.level") }}</label>
+        <i
+          v-tooltip.top="levelHint"
+          class="pi pi-circle-fill log__dot"
+          :aria-label="levelHint"
+          tabindex="0"
+        />
+      </div>
       <Select
         v-model="level"
         input-id="log-level"
@@ -87,7 +95,6 @@ onMounted(() => {
         :loading="status.load.loading"
         :disabled="status.load.loading || !settings.loaded"
       />
-      <p class="log__hint">{{ levelHint }}</p>
       <p v-if="status.log.error" class="log__error">{{ status.log.error }}</p>
     </div>
 
@@ -160,20 +167,33 @@ onMounted(() => {
   background: var(--ag-surface);
 }
 
+.log__label-line {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-sm);
+}
+
 .log__label {
   font-size: var(--ag-text-sm);
   font-weight: 600;
 }
 
+/* Точка у заголовка: подсказка о выбранном уровне записи. Знак, а не
+   действие, но доступна с клавиатуры и читается экранным диктором. */
+.log__dot {
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
+  cursor: help;
+}
+
+.log__dot:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 2px;
+}
+
 .log__select {
   width: 100%;
   max-width: 320px;
-}
-
-.log__hint {
-  margin: 0;
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-xs);
 }
 
 .log__facts {

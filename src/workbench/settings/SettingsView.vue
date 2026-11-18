@@ -32,7 +32,6 @@ onMounted(() => {
   <section class="settings wb-screen">
     <header class="wb-screen__head">
       <h1 class="wb-screen__title">{{ t("settings.view.title") }}</h1>
-      <p class="wb-screen__lead">{{ t("settings.view.lead") }}</p>
     </header>
 
     <div class="settings__body">

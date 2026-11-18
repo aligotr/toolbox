@@ -104,6 +104,7 @@ onMounted(() => {
 
       <Button
         v-if="!creating"
+        class="profiles__create"
         :label="t('settings.profiles.create')"
         icon="pi pi-plus"
         size="small"
@@ -215,7 +216,7 @@ onMounted(() => {
             severity="danger"
             text
             :disabled="status.delete.loading"
-            @click="requestDelete(profile)"
+            @click="requestDelete(profile, $event)"
           />
         </div>
 
@@ -237,6 +238,17 @@ onMounted(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--ag-space-lg);
+}
+
+/* Заголовок с пояснением занимает свободное место, а кнопка сохраняет
+   свою ширину: иначе длинное пояснение сжимает её до узкого столбца. */
+.profiles__head .wb-section__head {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.profiles__create {
+  flex-shrink: 0;
 }
 
 .profiles__form,

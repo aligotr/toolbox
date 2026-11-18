@@ -14,5 +14,8 @@ export const busprobeTool: ToolDescriptor<typeof BusprobeView> = {
   descriptionKey: "tools.busprobe.description",
   icon: "pi pi-bolt",
   order: 10,
+  // Busprobe стоит в меню рядом с журналом и настройками, первым: это
+  // приложение целиком, а не инструмент с данными.
+  group: "app",
   component: BusprobeView,
 };

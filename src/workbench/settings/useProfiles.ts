@@ -6,9 +6,10 @@
 
 import { useConfirm } from "primevue/useconfirm";
 import type { Profile } from "@/contracts/profiles";
-import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
+import { CONFIRM_CALM_REJECT } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
 import { deleteProfile, switchProfile } from "@/core/services/profiles";
+import { requireConfirm } from "@/ui/confirmPopup";
 
 export function useProfiles() {
   const confirm = useConfirm();
@@ -25,15 +26,21 @@ export function useProfiles() {
     });
   }
 
-  /** Удаление в корзину: данные возвращаемы, пока корзину не почистили. */
-  function requestDelete(profile: Profile): void {
-    confirm.require({
-      header: t("settings.profiles.deleteHeader"),
+  /**
+   * Удаление в корзину: спрашиваем у самой кнопки, как у очистки записей.
+   *
+   * Данные возвращаемы, пока корзину не почистили, поэтому вопрос короткий:
+   * называет профиль и не пугает подробностями, которые и так видны в списке.
+   */
+  function requestDelete(profile: Profile, event: MouseEvent): void {
+    const target = event.currentTarget;
+    if (!(target instanceof HTMLElement)) return;
+
+    requireConfirm(confirm, {
+      target,
       message: t("settings.profiles.deleteMessage", { title: profile.title }),
       acceptLabel: t("settings.profiles.deleteAccept"),
       rejectLabel: t("settings.profiles.deleteReject"),
-      acceptProps: CONFIRM_DANGER_ACCEPT,
-      rejectProps: CONFIRM_CALM_REJECT,
       accept: () => void deleteProfile(profile),
     });
   }

@@ -25,12 +25,21 @@ import { openToolOnAuxClick, openToolOnClick, openToolOnKeydown } from "./toolGe
 import { openSettingsSection } from "./settings/navigation";
 import { useProfiles } from "./settings/useProfiles";
 
-defineProps<{ tools: ToolDescriptor[]; collapsed: boolean }>();
+const props = defineProps<{ tools: ToolDescriptor[]; collapsed: boolean }>();
 
 const emit = defineEmits<{ toggle: [] }>();
 
 const profileMenu = ref<InstanceType<typeof Menu> | null>(null);
 const { requestSwitch } = useProfiles();
+
+/**
+ * Пункты рейла по группам.
+ *
+ * Инструмент сам называет свою группу в дескрипторе: оболочка имён
+ * не знает. Пункты группы `app` стоят перед журналом и настройками.
+ */
+const toolItems = computed(() => props.tools.filter((tool) => tool.group !== "app"));
+const appToolItems = computed(() => props.tools.filter((tool) => tool.group === "app"));
 
 /** Активная вкладка: по ней подсвечиваются пункты, которые уже открыты. */
 const activeTab = computed(
@@ -119,7 +128,7 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
       <span v-if="!collapsed" class="nav__label">{{ t("shell.sidebar.tools") }}</span>
 
       <RailItem
-        v-for="tool in tools"
+        v-for="tool in toolItems"
         :key="tool.id"
         :icon="tool.icon"
         :title="tool.title"
@@ -131,13 +140,26 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
         @keydown="openToolOnKeydown(tool, $event)"
       />
 
-      <p v-if="!tools.length && !collapsed" class="nav__empty">
+      <p v-if="!toolItems.length && !collapsed" class="nav__empty">
         {{ t("shell.sidebar.noTools") }}
       </p>
     </nav>
 
     <nav class="nav" :aria-label="t('shell.sidebar.app')">
       <span v-if="!collapsed" class="nav__label">{{ t("shell.sidebar.app") }}</span>
+
+      <RailItem
+        v-for="tool in appToolItems"
+        :key="tool.id"
+        :icon="tool.icon"
+        :title="tool.title"
+        :hint="tool.multipleTabs ? t('tools.open.anotherTab') : undefined"
+        :collapsed="collapsed"
+        :active="toolIsActive(tool.id)"
+        @click="openToolOnClick(tool, $event)"
+        @auxclick="openToolOnAuxClick(tool, $event)"
+        @keydown="openToolOnKeydown(tool, $event)"
+      />
 
       <RailItem
         :icon="SINGLETON_TABS.journal.icon"

@@ -24,8 +24,6 @@
 
     // ── Центр управления ──────────────────────────────────────────────────
     "settings.view.title": "Settings",
-    "settings.view.lead":
-      "Journal, window, profiles, data and program information.",
     "settings.view.nav": "Settings sections",
 
     "settings.section.log": "Log",
@@ -271,7 +269,7 @@
 
     // ── Settings: log ─────────────────────────────────────────────────────
     "settings.log.lead":
-      "The log file answers one question: why the program or a feature did not work. The level changes without a restart. Tool activity goes to the interface journal, not here.",
+      "The log file keeps only failures: why the program or one of its features did not work. Tool activity goes to the program journal - the Journal section. The recording level changes without a restart.",
     "settings.log.level": "Recording level",
     "settings.log.level.error": "Errors",
     "settings.log.level.errorHint": "only what stopped a feature from working",
@@ -302,7 +300,7 @@
 
     // ── Settings: window ──────────────────────────────────────────────────
     "settings.window.lead":
-      "Size and position are remembered between launches. If the window ends up off screen, reset returns it to the monitor working area.",
+      "The size and position are remembered between launches.\nIf the window ends up off screen, reset returns it to the monitor working area.",
     "settings.window.systemPosition": "the system chooses the position",
     "settings.window.maximized": "maximized",
     "settings.window.normal": "normal",
@@ -344,7 +342,7 @@
 
     // ── Settings: profiles ────────────────────────────────────────────────
     "settings.profiles.lead":
-      "A profile is a separate folder with settings and tool data. Switching restarts the program.",
+      "A profile is a separate folder with settings and tool data.\nSwitching restarts the program.",
     "settings.profiles.create": "Create profile",
     "settings.profiles.titlePlaceholder": "Profile name",
     "settings.profiles.titleAria": "New profile name",
@@ -363,9 +361,7 @@
     "settings.profiles.switchMessage": "Open profile “{title}”? The program will restart.",
     "settings.profiles.switchAccept": "Switch",
     "settings.profiles.switchReject": "Cancel",
-    "settings.profiles.deleteHeader": "Delete profile",
-    "settings.profiles.deleteMessage":
-      "Profile “{title}” will be moved to local/trash. The data can be restored until the trash is emptied.",
+    "settings.profiles.deleteMessage": "Delete profile “{title}”?",
     "settings.profiles.deleteAccept": "Delete",
     "settings.profiles.deleteReject": "Cancel",
 
