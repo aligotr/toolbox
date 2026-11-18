@@ -1,8 +1,8 @@
 //! Размеры папок профиля (ADR 0010).
 //!
 //! Считает файлы и байты там, где они лежат, и не решает, что с числами
-//! делать: показ и удаление — дело сервисов. Отсутствующая папка — ноль,
-//! а не ошибка: данных может не быть вовсе.
+//! делать: показ — дело сервисов. Отсутствующая папка — ноль, а не ошибка:
+//! данных может не быть вовсе.
 //!
 //! Обход не идёт по символическим ссылкам: ссылка на родительский каталог
 //! превратила бы подсчёт в бесконечный цикл. Временные `*.tmp` не считаются:
@@ -13,7 +13,7 @@ use std::path::Path;
 
 use serde::Serialize;
 
-use super::{names, storage};
+use super::storage;
 
 /// Сколько файлов и байт занято.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
@@ -22,26 +22,10 @@ pub struct DirStats {
     pub bytes: u64,
 }
 
-/// Данные одного инструмента.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct ToolStats {
-    /// Идентификатор инструмента: имя папки в `data/`.
-    pub id: String,
-    pub files: u64,
-    pub bytes: u64,
-}
-
-/// Размеры того, что показывает раздел «Данные».
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
-pub struct StorageStats {
-    pub logs: DirStats,
-    pub tools: Vec<ToolStats>,
-}
-
 /// Занятое место профилем: пресеты и данные инструментов.
 ///
-/// Отдельная структура, а не [`StorageStats`]: профилю не нужны размеры
-/// логов и разбивка по инструментам, а списку профилей — только счётчики.
+/// Списку профилей нужны только счётчики: разбивка по инструментам и размеры
+/// логов ему не требуются.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
 pub struct ProfileUsage {
     pub presets: u64,
@@ -98,57 +82,6 @@ pub fn profile_usage(profile_dir: &Path) -> ProfileUsage {
     }
 }
 
-/// Готовит размеры для раздела «Данные».
-///
-/// Пути берутся у хранилища: логи активного профиля и данные инструментов
-/// всегда идут вместе, и передавать их порознь значило бы позволить
-/// вызывающему собрать произвольный набор.
-pub fn summary(storage: &storage::Storage) -> StorageStats {
-    StorageStats {
-        logs: dir_stats(&storage.logs_dir()),
-        tools: tools(&storage.data_dir()),
-    }
-}
-
-/// Перечисляет данные инструментов, у которых папка непустая.
-///
-/// Чужие каталоги с недопустимым именем пропускаются: идентификатор
-/// инструмента — такое же безопасное имя, как идентификатор профиля.
-fn tools(data_dir: &Path) -> Vec<ToolStats> {
-    let Ok(entries) = fs::read_dir(data_dir) else {
-        return Vec::new();
-    };
-
-    let mut tools = Vec::new();
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if !path.is_dir() {
-            continue;
-        }
-
-        let Some(id) = path.file_name().and_then(|name| name.to_str()) else {
-            continue;
-        };
-        if !names::is_safe_id(id) {
-            continue;
-        }
-
-        let stats = dir_stats(&path);
-        if stats.files == 0 {
-            continue;
-        }
-
-        tools.push(ToolStats {
-            id: id.to_owned(),
-            files: stats.files,
-            bytes: stats.bytes,
-        });
-    }
-
-    tools.sort_by(|left, right| left.id.cmp(&right.id));
-    tools
-}
-
 #[cfg(test)]
 mod tests {
     //! Проверки касаются подсчёта: ошибка здесь показывает неверные размеры.
@@ -175,22 +108,6 @@ mod tests {
 
         assert_eq!(stats.files, 2);
         assert_eq!(stats.bytes, 6);
-    }
-
-    #[test]
-    fn tools_are_listed_and_unsafe_names_skipped() {
-        let dir = temp_dir("tools");
-        fs::write(dir.join("README.txt"), "не данные").ok();
-        fs::create_dir_all(dir.join("dns")).expect("папка инструмента");
-        fs::write(dir.join("dns").join("list.json"), "{}").expect("файл");
-        fs::create_dir_all(dir.join("пусто")).expect("папка без файлов");
-        fs::create_dir_all(dir.join("чужое имя")).expect("недопустимое имя");
-
-        let tools = tools(&dir);
-
-        assert_eq!(tools.len(), 1, "только инструменты с файлами: {tools:?}");
-        assert_eq!(tools[0].id, "dns");
-        assert_eq!(tools[0].files, 1);
     }
 
     #[test]

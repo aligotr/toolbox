@@ -312,9 +312,7 @@ pub fn run() {
             commands::languages::language_load,
             commands::languages::language_export,
             commands::info::app_info,
-            commands::info::storage_stats,
             commands::info::logs_prune,
-            commands::info::tool_data_clear,
             commands::info::open_folder,
             commands::lifecycle::log_frontend,
             commands::lifecycle::exit_app

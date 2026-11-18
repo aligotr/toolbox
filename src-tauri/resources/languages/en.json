@@ -29,7 +29,6 @@
     "settings.section.log": "Log",
     "settings.section.window": "Window",
     "settings.section.profiles": "Profiles",
-    "settings.section.data": "Data",
     "settings.section.language": "Language",
     "settings.section.app": "About",
 
@@ -194,13 +193,8 @@
       "Could not read the program information: {reason}",
     "journal.app.folderError": "The folder was not opened: {reason}",
 
-    "journal.data.readError": "Could not read the folder sizes: {reason}",
-    "journal.data.pruned": "Old log files removed: {count}",
-    "journal.data.pruneError": "Old logs were not removed: {reason}",
-    "journal.data.cleared":
-      "Data of “{tool}” was moved to “{target}”",
-    "journal.data.clearError":
-      "Data of “{tool}” was not deleted: {reason}",
+    "journal.logs.pruned": "Old log files removed: {count}",
+    "journal.logs.pruneError": "Old logs were not removed: {reason}",
 
     "journal.languages.readError": "Could not read the dictionaries: {reason}",
     "journal.languages.unavailable":
@@ -326,20 +320,6 @@
     "settings.app.openFolder": "Open program folder",
     "settings.app.loading": "Reading details…",
 
-    // ── Settings: data ────────────────────────────────────────────────────
-    "settings.data.lead":
-      "Logs and tool data of the active profile. Deleting tool data moves the folder to the trash: the files can be restored until the trash is emptied.",
-    "settings.data.clearHeader": "Delete data",
-    "settings.data.clearMessage":
-      "Tool data for “{tool}” will be moved to local/trash/data. The folder can be restored until the trash is emptied.",
-    "settings.data.clearAccept": "Delete",
-    "settings.data.clearReject": "Cancel",
-    "settings.data.loading": "Reading sizes…",
-    "settings.data.logs": "Logs",
-    "settings.data.tools": "Tool data",
-    "settings.data.empty": "No data: no tool has saved files to the profile yet.",
-    "settings.data.clearTool": "Delete data",
-
     // ── Settings: profiles ────────────────────────────────────────────────
     "settings.profiles.lead":
       "A profile is a separate folder with settings and tool data.\nSwitching restarts the program.",
@@ -368,12 +348,6 @@
     // ── Data defaults ─────────────────────────────────────────────────────
     "profiles.defaultTitle": "Work",
     "presets.copySuffix": " (copy)",
-
-    // ── Size units ────────────────────────────────────────────────────────
-    "units.bytes": "B",
-    "units.kilobytes": "KB",
-    "units.megabytes": "MB",
-    "units.gigabytes": "GB",
 
     // ── Opening tools ─────────────────────────────────────────────────────
     "tools.open.anotherTab": "Ctrl+click for another tab",
@@ -740,9 +714,6 @@
     "errors.languages.forms": "Key “{key}”: the forms must be strings",
     "errors.languages.message":
       "Key “{key}” must be a string or a set of forms",
-    "errors.data.invalidTool": "The tool identifier is not valid",
-    "errors.data.missing": "The tool “{tool}” has no data",
-    "errors.data.move": "Could not move “{path}” to “{target}”: {reason}",
 
     // ── DNSlookup errors ──────────────────────────────────────────────────
     "errors.dnslookup.runId": "The check identifier is missing",

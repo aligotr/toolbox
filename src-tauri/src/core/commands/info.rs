@@ -1,9 +1,9 @@
-//! Сведения о программе, размеры данных и папки.
+//! Сведения о программе, файлы лога и папки.
 //!
-//! Здесь ответы на вопросы экранов «Программа», «Журнал» и «Данные»:
-//! версия, режим сборки, пути, активный профиль, срок хранения лога.
-//! Одна команда на экран: по отдельным вызовам поля мигали бы, а подписи
-//! вроде «14 дней» пришлось бы держать в двух местах.
+//! Здесь ответы на вопросы экранов «Программа» и «Журнал»: версия, режим
+//! сборки, пути, активный профиль, срок хранения лога. Одна команда на экран:
+//! по отдельным вызовам поля мигали бы, а подписи вроде «14 дней» пришлось бы
+//! держать в двух местах.
 
 use serde::Serialize;
 use tauri::{AppHandle, State};
@@ -11,11 +11,8 @@ use tauri_plugin_opener::OpenerExt;
 
 use crate::core::infra::error::{AppError, AppResult};
 use crate::core::runtime::Runtime;
-use crate::core::services::data;
 use crate::core::services::logging;
 use crate::core::services::profiles;
-use crate::core::store;
-use crate::core::store::stats::StorageStats;
 
 /// Ответ на вопрос интерфейса «можно ли работать и что показывать».
 ///
@@ -105,13 +102,6 @@ pub(crate) fn app_info(app: AppHandle, runtime: State<'_, Runtime>) -> AppInfo {
     }
 }
 
-/// Размеры логов и данных инструментов активного профиля.
-#[tauri::command]
-pub(crate) fn storage_stats(runtime: State<'_, Runtime>) -> AppResult<StorageStats> {
-    let storage = runtime.require_storage()?;
-    Ok(store::stats::summary(storage))
-}
-
 /// Удаляет файлы лога старше срока хранения и возвращает их число.
 ///
 /// Срок задан ядром, а не интерфейсом: иначе кнопка говорила бы «старше
@@ -122,22 +112,6 @@ pub(crate) fn logs_prune(runtime: State<'_, Runtime>) -> AppResult<usize> {
     let removed = logging::prune_older(&storage.logs_dir());
     log::info!("Удалено старых файлов лога: {removed}");
     Ok(removed)
-}
-
-/// Переносит данные инструмента в `local/trash/data/`.
-#[tauri::command]
-pub(crate) fn tool_data_clear(runtime: State<'_, Runtime>, tool: String) -> AppResult<String> {
-    let storage = runtime.require_storage()?;
-    let target = data::clear_tool(
-        &storage.active_profile_dir(),
-        &storage.data_trash_dir(),
-        &tool,
-    )?;
-    log::info!(
-        "Данные инструмента '{tool}' перемещены в '{}'",
-        target.display()
-    );
-    Ok(target.display().to_string())
 }
 
 /// Открывает папку программы, логов или словарей в проводнике.

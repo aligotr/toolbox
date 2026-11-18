@@ -1,6 +1,6 @@
 # ADR 0028: Пресеты настроек инструментов
 
-- **Статус:** принято
+- **Статус:** принято; раздел «Данные» упразднён ADR 0056
 - **Дата:** 2026-11-13
 - **Область:** `src-tauri/src/core/presets.rs`, `profiles/<id>/presets/`,
   `src/core/presets.ts`, `src/tools/dnslookup/`

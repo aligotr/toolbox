@@ -13,7 +13,7 @@ import type { LogLevel } from "@/contracts/settings";
 import { appInfo, loadAppInfo, openFolder, status as appStatus } from "@/core/services/appInfo";
 import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
-import { pruneLogs, status as dataStatus } from "@/core/services/data";
+import { pruneLogs, status as logsStatus } from "@/core/services/logs";
 import {
   loadSettings,
   logLevel,
@@ -131,7 +131,7 @@ onMounted(() => {
         size="small"
         severity="secondary"
         text
-        :loading="dataStatus.prune.loading"
+        :loading="logsStatus.prune.loading"
         :disabled="keepDays === null"
         @click="requestPrune"
       />
@@ -145,8 +145,8 @@ onMounted(() => {
     <p v-if="appStatus.folder.error" class="log__error">
       {{ appStatus.folder.error }}
     </p>
-    <p v-if="dataStatus.prune.error" class="log__error">
-      {{ dataStatus.prune.error }}
+    <p v-if="logsStatus.prune.error" class="log__error">
+      {{ logsStatus.prune.error }}
     </p>
   </section>
 </template>

@@ -29,7 +29,6 @@ export const ruMessages: Messages = {
   "settings.section.log": "Журнал",
   "settings.section.window": "Окно",
   "settings.section.profiles": "Профили",
-  "settings.section.data": "Данные",
   "settings.section.language": "Язык",
   "settings.section.app": "О программе",
 
@@ -187,11 +186,8 @@ export const ruMessages: Messages = {
   "journal.app.infoError": "Сведения о программе не прочитаны: {reason}",
   "journal.app.folderError": "Папка не открыта: {reason}",
 
-  "journal.data.readError": "Размеры папок не прочитаны: {reason}",
-  "journal.data.pruned": "Удалено старых файлов лога: {count}",
-  "journal.data.pruneError": "Старые логи не удалены: {reason}",
-  "journal.data.cleared": "Данные инструмента «{tool}» перемещены в «{target}»",
-  "journal.data.clearError": "Данные инструмента «{tool}» не удалены: {reason}",
+  "journal.logs.pruned": "Удалено старых файлов лога: {count}",
+  "journal.logs.pruneError": "Старые логи не удалены: {reason}",
 
   "journal.languages.readError": "Словари не прочитаны: {reason}",
   "journal.languages.unavailable": "Словарь «{code}» недоступен: интерфейс показывает русский",
@@ -312,20 +308,6 @@ export const ruMessages: Messages = {
   "settings.app.openFolder": "Открыть папку программы",
   "settings.app.loading": "Сведения читаются…",
 
-  // ── Данные ───────────────────────────────────────────────────────────────
-  "settings.data.lead":
-    "Логи и данные инструментов активного профиля. Удаление данных инструмента переносит папку в корзину: файлы можно вернуть, пока её не почистили.",
-  "settings.data.clearHeader": "Удаление данных",
-  "settings.data.clearMessage":
-    "Данные инструмента «{tool}» будут перемещены в local/trash/data. Папку можно вернуть, пока корзину не почистили.",
-  "settings.data.clearAccept": "Удалить",
-  "settings.data.clearReject": "Отмена",
-  "settings.data.loading": "Размеры читаются…",
-  "settings.data.logs": "Логи",
-  "settings.data.tools": "Данные инструментов",
-  "settings.data.empty": "Данных нет: пока ни один инструмент не сохранил файлы в профиль.",
-  "settings.data.clearTool": "Удалить данные",
-
   // ── Профили ──────────────────────────────────────────────────────────────
   "settings.profiles.lead":
     "Профиль - отдельная папка с настройками и данными инструментов.\nПереключение перезапускает приложение.",
@@ -354,12 +336,6 @@ export const ruMessages: Messages = {
   // ── Умолчания данных ─────────────────────────────────────────────────────
   "profiles.defaultTitle": "Работа",
   "presets.copySuffix": " (копия)",
-
-  // ── Единицы размера ──────────────────────────────────────────────────────
-  "units.bytes": "Б",
-  "units.kilobytes": "КБ",
-  "units.megabytes": "МБ",
-  "units.gigabytes": "ГБ",
 
   // ── Открытие инструментов ────────────────────────────────────────────────
   "tools.open.anotherTab": "Ctrl+клик — ещё одна вкладка",
@@ -707,9 +683,6 @@ export const ruMessages: Messages = {
     "Ключ «{key}»: неизвестная категория склонения «{category}»; допустимы zero, one, two, few, many, other",
   "errors.languages.forms": "Ключ «{key}»: формы должны быть строками",
   "errors.languages.message": "Ключ «{key}» должен быть строкой или набором форм",
-  "errors.data.invalidTool": "Недопустимый идентификатор инструмента",
-  "errors.data.missing": "Данных инструмента «{tool}» нет",
-  "errors.data.move": "Не удалось перенести «{path}» в «{target}»: {reason}",
 
   // ── Ошибки DNSlookup ─────────────────────────────────────────────────────
   "errors.dnslookup.runId": "Не указан идентификатор проверки",

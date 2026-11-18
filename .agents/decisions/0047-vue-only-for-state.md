@@ -27,7 +27,7 @@ ADR 0039 уже зафиксировал принцип «чистые функ�
 1. **Vue в ядре разрешён только держателям состояния.** Это модули, которые
    создают наблюдаемое состояние и живут до конца сеанса:
    `core/infra/journal`, `core/infra/i18n/catalog`, `core/infra/useAsyncAction`,
-   `core/services/appInfo`, `core/services/data`, `core/services/languages`,
+   `core/services/appInfo`, `core/services/languages`, `core/services/logs`,
    `core/services/presets/index`, `core/services/profiles`,
    `core/services/settings/index`, `core/services/workspace/index`.
    Разрешённые примитивы — `reactive`, `ref`, `computed`, `watch`, `toRaw`.

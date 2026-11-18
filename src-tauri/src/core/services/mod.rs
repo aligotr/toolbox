@@ -12,7 +12,6 @@
 //! Связи между сервисами редки и видны по импортам: настройки читают
 //! профили, окно читает настройки.
 
-pub mod data;
 pub mod languages;
 pub mod logging;
 pub mod presets;

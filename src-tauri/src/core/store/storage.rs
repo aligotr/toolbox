@@ -186,14 +186,6 @@ impl Storage {
         self.active_profile_dir().join(DATA_DIR)
     }
 
-    /// Корзина данных инструментов: `local/trash/data/`.
-    ///
-    /// Отдельно от пресетов и профилей: восстанавливать удалённое проще,
-    /// когда в одной папке лежат однородные сущности.
-    pub fn data_trash_dir(&self) -> PathBuf {
-        self.trash_dir().join(DATA_DIR)
-    }
-
     /// Папка профилей: `profiles/`.
     pub fn profiles_dir(&self) -> PathBuf {
         self.root.join(PROFILES_DIR)
@@ -366,10 +358,6 @@ mod tests {
         assert_eq!(
             storage.data_dir(),
             root.join("profiles").join(DEFAULT_PROFILE).join("data")
-        );
-        assert_eq!(
-            storage.data_trash_dir(),
-            root.join("local").join("trash").join("data")
         );
     }
 

@@ -33,7 +33,7 @@ const activeTab = computed(
       </template>
 
       <JournalView v-else-if="activeTab.kind === 'journal'" />
-      <SettingsView v-else-if="activeTab.kind === 'settings'" :tools="tools" />
+      <SettingsView v-else-if="activeTab.kind === 'settings'" />
     </template>
   </main>
 </template>
