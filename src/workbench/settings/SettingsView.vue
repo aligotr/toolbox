@@ -71,7 +71,7 @@ onMounted(() => {
   height: 100%;
   max-width: var(--ag-content-settings);
   margin: 0 auto;
-  padding: var(--ag-space-2xl);
+  padding: var(--ag-space-lg);
   min-height: 0;
 }
 

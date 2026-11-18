@@ -192,7 +192,7 @@ function requestClear(event: MouseEvent): void {
 <style scoped>
 .journal {
   height: 100%;
-  padding: var(--ag-space-2xl);
+  padding: var(--ag-space-lg);
 }
 
 .journal__head {

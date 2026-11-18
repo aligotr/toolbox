@@ -67,7 +67,7 @@ defineProps<{ tools: ToolDescriptor[]; startup: StartupStatus | null }>();
   height: 100%;
   max-width: var(--ag-content-catalog);
   margin: 0 auto;
-  padding: var(--ag-space-2xl);
+  padding: var(--ag-space-lg);
   overflow: auto;
 }
 
