@@ -46,9 +46,9 @@ export const TOOL_TITLE = "DNSlookup";
 export const DOMAIN_COLUMN_MIN_WIDTH = "240px";
 /** Потолок «Доменов»: длинное имя обрезается многоточием, а не тянет колонку. */
 export const DOMAIN_COLUMN_MAX_WIDTH = "360px";
-export const TYPE_COLUMN_MIN_WIDTH = "88px";
-/** Поле типа записи: «AAAA» и стрелка влезают без сжатия. */
-export const TYPE_FIELD_WIDTH = "76px";
+export const TYPE_COLUMN_MIN_WIDTH = "104px";
+/** Поле типа записи: самый длинный тип CNAME влезает целиком вместе со стрелкой. */
+export const TYPE_FIELD_WIDTH = "92px";
 export const SERVER_COLUMN_MIN_WIDTH = "144px";
 
 /** Ширина диалогов инструмента и потолок для узкого окна. */
