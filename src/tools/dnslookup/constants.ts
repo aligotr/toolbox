@@ -46,8 +46,6 @@ export const TOOL_TITLE = "DNSlookup";
 export const DOMAIN_COLUMN_MIN_WIDTH = "240px";
 /** Потолок «Доменов»: длинное имя обрезается многоточием, а не тянет колонку. */
 export const DOMAIN_COLUMN_MAX_WIDTH = "360px";
-/** Колонка типа: поле внутри неё берёт ширину из `--dns-type-width` (styles.css). */
-export const TYPE_COLUMN_MIN_WIDTH = "104px";
 export const SERVER_COLUMN_MIN_WIDTH = "144px";
 
 /** Ширина диалогов инструмента и потолок для узкого окна. */

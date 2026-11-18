@@ -10,9 +10,9 @@
      общего поля. Поле типа - общий токен с полем типа в таблице; самый
      длинный тип CNAME влезает вместе со стрелкой. Список резолверов
      вмещает два чипа и счётчик «+N». */
-  --dns-name-width: 360px;
-  --dns-type-width: 92px;
-  --dns-servers-width: 300px;
+  --dns-name-width: 320px;
+  --dns-type-width: 104px;
+  --dns-servers-width: 290px;
 
   display: flex;
   flex-direction: column;
@@ -119,6 +119,12 @@
   min-width: var(--dns-type-width);
 }
 
+/* Стрелка уже пресетной: место отдаётся тексту типа (CNAME влезает целиком),
+   и стрелка совпадает со стрелкой поля типа в таблице. */
+.dns__add .p-select .p-select-dropdown {
+  width: 24px;
+}
+
 .dns__add .p-inputtext.p-invalid::placeholder {
   color: var(--ag-danger);
 }
@@ -151,6 +157,7 @@
 
 .dns__run {
   flex: none;
+  margin-left: auto;
   white-space: nowrap;
 }
 

@@ -24,7 +24,6 @@ import {
   RECORD_TYPES,
   SERVER_COLUMN_MIN_WIDTH,
   SYSTEM_SERVER_ID,
-  TYPE_COLUMN_MIN_WIDTH,
 } from "../constants";
 import { extraAnswers, firstAnswer, statusClass, statusLabel, statusShown } from "../cell";
 import CellDetails from "./CellDetails.vue";
@@ -281,7 +280,7 @@ watch(
         :header="t('dnslookup.table.type')"
         frozen
         align-frozen="left"
-        :style="{ minWidth: TYPE_COLUMN_MIN_WIDTH }"
+        :style="{ minWidth: 'calc(var(--dns-type-width) + 12px)' }"
       >
         <template #body="{ data }">
           <PlainSelect
