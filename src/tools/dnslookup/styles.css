@@ -151,12 +151,15 @@
 
 .dns__run {
   flex: none;
-  margin-left: auto;
   white-space: nowrap;
 }
 
+/* Чипы ниже строки поля: список резолверов одной высоты с соседними
+   полями, а не выше их на высоту чипа. */
 .dns__servers .p-chip {
+  height: 21px;
   padding: 0 var(--ag-space-xs);
+  font-size: var(--ag-text-xs);
 }
 
 .dns__servers-more {
