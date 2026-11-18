@@ -284,11 +284,8 @@ export const ruMessages: Messages = {
   "settings.window.lead":
     "Размер и положение запоминаются между запусками.\nЕсли окно оказалось за краем экрана, сброс вернёт его в пределы рабочей области монитора.",
   "settings.window.systemPosition": "положение выбирает система",
-  "settings.window.maximized": "развёрнуто на весь экран",
-  "settings.window.normal": "обычное",
   "settings.window.size": "Текущий размер",
   "settings.window.position": "Положение",
-  "settings.window.state": "Состояние",
   "settings.window.reset": "Сбросить размер и положение",
   "settings.window.resetHeader": "Сброс окна",
   "settings.window.resetMessage":

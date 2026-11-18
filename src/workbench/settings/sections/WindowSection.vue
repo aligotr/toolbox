@@ -18,7 +18,7 @@ const geometry = computed(() => settings.current?.window ?? null);
 
 /** Размер окна: ширина × высота в логических пикселях. */
 const size = computed(() =>
-  geometry.value ? `${geometry.value.width} × ${geometry.value.height}` : "—",
+  geometry.value ? `${geometry.value.width} × ${geometry.value.height}` : "-",
 );
 
 /** Положение окна; до первого перемещения его выбирает система. */
@@ -29,10 +29,6 @@ const position = computed(() => {
   }
   return `${window.x}, ${window.y}`;
 });
-
-const mode = computed(() =>
-  geometry.value?.maximized ? t("settings.window.maximized") : t("settings.window.normal"),
-);
 
 function requestReset(): void {
   confirm.require({
@@ -66,10 +62,6 @@ onMounted(() => {
         <dt>{{ t("settings.window.position") }}</dt>
         <dd class="mono">{{ position }}</dd>
       </div>
-      <div class="window__fact">
-        <dt>{{ t("settings.window.state") }}</dt>
-        <dd>{{ mode }}</dd>
-      </div>
     </dl>
 
     <div class="window__actions">
@@ -94,8 +86,8 @@ onMounted(() => {
 
 <style scoped>
 .window__facts {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: var(--ag-space-lg);
   margin: 0;
 }

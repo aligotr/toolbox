@@ -296,11 +296,8 @@
     "settings.window.lead":
       "The size and position are remembered between launches.\nIf the window ends up off screen, reset returns it to the monitor working area.",
     "settings.window.systemPosition": "the system chooses the position",
-    "settings.window.maximized": "maximized",
-    "settings.window.normal": "normal",
     "settings.window.size": "Current size",
     "settings.window.position": "Position",
-    "settings.window.state": "State",
     "settings.window.reset": "Reset size and position",
     "settings.window.resetHeader": "Reset window",
     "settings.window.resetMessage":
