@@ -427,7 +427,7 @@ export const ruMessages: Messages = {
   "dnslookup.view.placeholderPtr": "IP-адрес или reverse-имя",
   "dnslookup.view.inputAria": "Домен или IP-адрес",
   "dnslookup.view.typeAria": "Тип записи по умолчанию",
-  "dnslookup.view.add": "Добавить",
+  "dnslookup.view.addHint": "Добавить запись",
   "dnslookup.view.serversPlaceholder": "Выберите серверы",
   "dnslookup.view.serversAria": "DNS-серверы",
   "dnslookup.view.serversMore": "и ещё {count}",

@@ -293,11 +293,12 @@ async function exportCsv(): Promise<void> {
               :disabled="running"
             />
             <Button
-              :label="t('dnslookup.view.add')"
+              v-tooltip.top="t('dnslookup.view.addHint')"
               icon="pi pi-plus"
               severity="secondary"
               outlined
               size="small"
+              :aria-label="t('dnslookup.view.addHint')"
               :disabled="running"
               @click="submitRow"
             />

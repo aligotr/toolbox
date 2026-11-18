@@ -440,7 +440,7 @@
     "dnslookup.view.placeholderPtr": "IP address or reverse name",
     "dnslookup.view.inputAria": "Domain or IP address",
     "dnslookup.view.typeAria": "Default record type",
-    "dnslookup.view.add": "Add",
+    "dnslookup.view.addHint": "Add record",
     "dnslookup.view.serversPlaceholder": "Select servers",
     "dnslookup.view.serversAria": "DNS servers",
     "dnslookup.view.serversMore": "and {count} more",
