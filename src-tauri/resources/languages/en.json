@@ -466,7 +466,6 @@
     "dnslookup.cell.waiting": "waiting for the reply",
     "dnslookup.cell.cancelled": "check stopped",
     "dnslookup.cell.empty": "no records",
-    "dnslookup.cell.osAddresses": "OS addresses",
     "dnslookup.cell.elapsed": "{value} ms",
     "dnslookup.cell.ttl": "TTL {value}",
     "dnslookup.status.pending": "—",

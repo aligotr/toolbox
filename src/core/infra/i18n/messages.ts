@@ -448,7 +448,6 @@ export const ruMessages: Messages = {
   "dnslookup.cell.waiting": "ожидание ответа",
   "dnslookup.cell.cancelled": "проверка остановлена",
   "dnslookup.cell.empty": "записей нет",
-  "dnslookup.cell.osAddresses": "адреса ОС",
   "dnslookup.cell.elapsed": "{value} мс",
   "dnslookup.cell.ttl": "TTL {value}",
   "dnslookup.status.pending": "—",

@@ -10,17 +10,12 @@
 
 import { t } from "@/core/infra/i18n";
 import { answersOf, elapsedOf, noteFor, statusClass, statusLabel, statusShown } from "../cell";
-import type { CellDetailsEntry, ServerOption } from "../types";
+import type { CellDetailsEntry } from "../types";
 
 defineProps<{
   /** Серверы раскрытия и их результаты; порядок — порядок колонок. */
   entries: CellDetailsEntry[];
 }>();
-
-/** Подпись сервера: адрес или пометка «системный». */
-function serverAddress(server: ServerOption): string {
-  return server.address ?? t("dnslookup.cell.osAddresses");
-}
 </script>
 
 <template>
@@ -29,7 +24,10 @@ function serverAddress(server: ServerOption): string {
       <article v-for="entry in entries" :key="entry.server.id" class="details__card">
         <header class="details__head">
           <strong class="details__name">{{ entry.server.label }}</strong>
-          <span class="details__address">{{ serverAddress(entry.server) }}</span>
+          <!-- У системного резолвера адресов несколько: в карточке только имя. -->
+          <span v-if="entry.server.address" class="details__address">
+            {{ entry.server.address }}
+          </span>
           <span
             v-if="statusShown(entry.cell)"
             class="details__status"
