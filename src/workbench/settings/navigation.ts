@@ -6,10 +6,10 @@
 // монтирования компонента и передавать ему команду через события.
 
 import { ref } from "vue";
-import type { SettingsSection } from "./sections";
+import { SETTINGS_SECTIONS, type SettingsSection } from "./sections";
 
-/** Выбранный раздел; по умолчанию — журнал. */
-export const activeSection = ref<SettingsSection>("log");
+/** Выбранный раздел; по умолчанию - первый в списке, то есть верхний. */
+export const activeSection = ref<SettingsSection>(SETTINGS_SECTIONS[0].id);
 
 /** Открывает раздел настроек. */
 export function openSettingsSection(section: SettingsSection): void {
