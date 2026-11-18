@@ -193,9 +193,7 @@ function requestClear(event: MouseEvent): void {
 
 .journal__head {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: var(--ag-space-md);
 }
 
@@ -224,7 +222,6 @@ function requestClear(event: MouseEvent): void {
 
 .journal__meta {
   display: flex;
-  flex-basis: 100%;
   flex-wrap: wrap;
   gap: var(--ag-space-md);
   margin: 0;
