@@ -384,7 +384,6 @@ async function exportCsv(): Promise<void> {
             icon="pi pi-table"
             severity="secondary"
             text
-            rounded
             size="small"
             :aria-label="t('dnslookup.view.columns')"
             :disabled="selectedServers.length === 0"
@@ -395,7 +394,6 @@ async function exportCsv(): Promise<void> {
             icon="pi pi-download"
             severity="secondary"
             text
-            rounded
             size="small"
             :aria-label="t('dnslookup.view.export')"
             :disabled="visibleRows.length === 0"
@@ -406,7 +404,6 @@ async function exportCsv(): Promise<void> {
             icon="pi pi-trash"
             severity="danger"
             text
-            rounded
             size="small"
             :aria-label="t('dnslookup.view.clear')"
             :disabled="session.rows.length === 0 && !session.status.run.error"

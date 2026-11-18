@@ -323,7 +323,6 @@ async function remove(preset: Preset): Promise<void> {
             icon="pi pi-undo"
             severity="secondary"
             text
-            rounded
             size="small"
             :aria-label="t('dnslookup.preset.revertHint')"
             :disabled="!changed"

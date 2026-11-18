@@ -67,7 +67,6 @@ async function revertEdits(): Promise<void> {
           icon="pi pi-undo"
           severity="secondary"
           text
-          rounded
           size="small"
           :aria-label="t('dnslookup.preset.revertHint')"
           @click="revertEdits"
@@ -77,7 +76,6 @@ async function revertEdits(): Promise<void> {
           icon="pi pi-save"
           severity="secondary"
           text
-          rounded
           size="small"
           :aria-label="t('dnslookup.preset.saveHint')"
           :loading="dnsPresets.status.update.loading"

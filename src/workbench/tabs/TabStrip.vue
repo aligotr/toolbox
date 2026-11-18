@@ -69,7 +69,6 @@ const { canScrollLeft, canScrollRight, scrollTabs, updateScrollState } = useStri
       class="tabs__add"
       icon="pi pi-plus"
       text
-      rounded
       size="small"
       :aria-label="t('tab.empty.title')"
       v-tooltip.bottom="t('tab.empty.title')"

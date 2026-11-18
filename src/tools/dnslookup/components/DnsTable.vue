@@ -235,7 +235,6 @@ watch(
                 icon="pi pi-chevron-right"
                 size="small"
                 text
-                rounded
                 severity="secondary"
                 class="dns-table__expand"
                 :class="{ 'dns-table__expand--open': isExpanded(data.id) }"
@@ -250,7 +249,6 @@ watch(
                 icon="pi pi-refresh"
                 size="small"
                 text
-                rounded
                 severity="secondary"
                 :aria-label="t('dnslookup.table.repeat')"
                 :disabled="busy"
@@ -260,7 +258,6 @@ watch(
                 icon="pi pi-trash"
                 size="small"
                 text
-                rounded
                 severity="secondary"
                 class="dns-table__delete"
                 :aria-label="t('dnslookup.table.delete')"
