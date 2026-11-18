@@ -11,6 +11,7 @@
 // смена языка перерисовывает всю историю (ADR 0039).
 
 import { reactive } from "vue";
+import { JOURNAL_LIMIT } from "./constants";
 import { asAppError, describeError } from "./errors.ts";
 import { hasMessage, t, type MessageParams } from "./i18n/index.ts";
 
@@ -37,9 +38,6 @@ export interface JournalEntry extends JournalFact {
   kind: JournalKind;
 }
 
-/** Сколько записей держим в памяти. */
-const LIMIT = 200;
-
 /** Состояние журнала. Новые записи сверху: свежее важнее старого. */
 export const journal = reactive<{ entries: JournalEntry[] }>({ entries: [] });
 
@@ -61,8 +59,8 @@ export function write(
     params,
   });
   nextId += 1;
-  if (journal.entries.length > LIMIT) {
-    journal.entries.length = LIMIT;
+  if (journal.entries.length > JOURNAL_LIMIT) {
+    journal.entries.length = JOURNAL_LIMIT;
   }
 }
 
@@ -100,6 +98,23 @@ export function journalText(entry: JournalEntry): string {
 export function journalSource(source: string): string {
   if (source === "core") return t("journal.source.core");
   return source;
+}
+
+/**
+ * Текст записи для поиска: перевод, источник, код и значения параметров.
+ *
+ * Поиск идёт и по данным, а не только по видимой фразе: так по журналу
+ * находят запись по коду или адрес, которого нет в переводе.
+ */
+export function journalSearchText(entry: JournalEntry): string {
+  const values = Object.values(entry.params).map(paramText);
+  return [
+    journalText(entry),
+    journalSource(entry.source),
+    entry.source,
+    entry.code,
+    ...values,
+  ].join(" ");
 }
 
 /** Полностью очищает журнал. */

@@ -14,6 +14,7 @@ import { onMounted, onUnmounted, ref } from "vue";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import Button from "primevue/button";
 import ConfirmDialog from "primevue/confirmdialog";
+import ConfirmPopup from "primevue/confirmpopup";
 import { subscribeEvent } from "@/core/infra/bus";
 import type { AppError } from "@/contracts/errors";
 import { describeError } from "@/core/infra/errors";
@@ -114,6 +115,11 @@ onUnmounted(() => {
   <WorkbenchView v-else :tools="tools" :startup="startup" />
 
   <ConfirmDialog />
+
+  <!-- Подтверждение очистки журнала: всплывающий блок у кнопки,
+       а не модальное окно. Отдельная группа, чтобы не спорить
+       с диалогом профилей. -->
+  <ConfirmPopup group="popup" />
 </template>
 
 <style scoped>

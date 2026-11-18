@@ -128,7 +128,7 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
       total,
       limit: QUERY_LIMIT,
     });
-    write(JOURNAL_SOURCE, "error", "dnslookup.run.tooMany", {
+    write(JOURNAL_SOURCE, "error", "journal.dnslookup.runTooMany", {
       total,
       limit: QUERY_LIMIT,
     });

@@ -1,120 +1,182 @@
 <script setup lang="ts">
 // Журнал отдельной вкладкой.
 //
-// Журнал — общий поток фактов: он живёт в core и не зависит от открытой
-// вкладки или профиля. Здесь только показ; запись и предел 200 строк —
-// в `core/infra/journal.ts`.
+// Журнал - общий поток фактов: он живёт в core и не зависит от вкладки
+// или профиля. Здесь только показ; запись и потолок - в
+// `core/infra/journal.ts`, а условия показа и пауза - в `useJournalView`.
 //
-// Новые записи сверху: свежее важнее старого. Фильтр по виду — это взгляд
-// на тот же поток, а не отдельное хранилище.
+// Новые записи сверху, пока список у начала: прокрутка останавливает ленту,
+// чтобы чтение не сдвигалось.
 
 import Button from "primevue/button";
-import DataView from "primevue/dataview";
-import SelectButton from "primevue/selectbutton";
+import Checkbox from "primevue/checkbox";
+import InputText from "primevue/inputtext";
+import MultiSelect from "primevue/multiselect";
+import { useConfirm } from "primevue/useconfirm";
 import { computed, ref } from "vue";
+import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
+import { JOURNAL_LIMIT } from "@/core/infra/constants";
 import { t } from "@/core/infra/i18n";
-import {
-  clearJournal,
-  journal,
-  journalSource,
-  journalText,
-  type JournalKind,
-} from "@/core/infra/journal";
+import { clearJournal, journalText, journalSource, type JournalKind } from "@/core/infra/journal";
+import { highlightParts } from "./journalList";
+import { useJournalView } from "./useJournalView";
 
-/** Один вариант фильтра. */
-interface KindOption {
-  label: string;
-  value: JournalKind;
-}
+const confirm = useConfirm();
 
-/** Все виды записей: по умолчанию включены. */
-const ALL_KINDS: JournalKind[] = ["info", "result", "error"];
+const {
+  view,
+  pending,
+  rows,
+  shown,
+  total,
+  liveTotal,
+  truncated,
+  sourceOptions,
+  time,
+  dayLabel,
+  resume,
+  onScroll,
+  toggleOrder,
+} = useJournalView();
 
-/** Три переключателя видов; подписи читаются из словаря при показе. */
-const kindOptions = computed<KindOption[]>(() => [
-  { label: t("journal.filter.info"), value: "info" },
-  { label: t("journal.filter.result"), value: "result" },
-  { label: t("journal.filter.error"), value: "error" },
-]);
+/** Прокрутка ленты: к началу возвращает и кнопка «Продолжить». */
+const scroller = ref<HTMLElement | null>(null);
 
-/** Вид записи человеческим словом. */
-const kindLabels = computed<Record<JournalKind, string>>(() => ({
-  info: t("journal.kind.info"),
-  result: t("journal.kind.result"),
-  error: t("journal.kind.error"),
-}));
-
-/** Вид записи — только цвет точки: ошибка красная, ответ зелёный, факт серый. */
-const KIND_TONE: Record<JournalKind, "muted" | "ok" | "danger"> = {
-  info: "muted",
-  result: "ok",
-  error: "danger",
+/** Вид записи - только цвет точки: отказ красный, итог зелёный, ход серый. */
+const TONE: Record<JournalKind, string> = {
+  info: "",
+  result: "journal__dot--ok",
+  error: "journal__dot--danger",
 };
 
-const selectedKinds = ref<JournalKind[]>([...ALL_KINDS]);
-
-const entries = computed(() => journal.entries);
-
-/** Видимые записи: фильтр не меняет сам журнал. */
-const visibleEntries = computed(() =>
-  entries.value.filter((entry) => selectedKinds.value.includes(entry.kind)),
+/** Действие переключателя порядка: подпись и подсказка. */
+const orderAction = computed(() =>
+  view.order === "newest" ? t("journal.order.toOldest") : t("journal.order.toNewest"),
 );
 
-function time(at: number): string {
-  return new Date(at).toLocaleTimeString();
+/** Возвращает ленту к началу и снимает паузу. */
+function resumeToTop(): void {
+  scroller.value?.scrollTo({ top: 0 });
+  resume();
+}
+
+/** Спрашивает подтверждение очистки всплывающим блоком у кнопки. */
+function requestClear(event: MouseEvent): void {
+  confirm.require({
+    group: "popup",
+    target: event.currentTarget as HTMLElement,
+    message: t("journal.clear.message"),
+    acceptLabel: t("journal.clear.accept"),
+    rejectLabel: t("journal.clear.reject"),
+    acceptProps: CONFIRM_DANGER_ACCEPT,
+    rejectProps: CONFIRM_CALM_REJECT,
+    accept: () => {
+      clearJournal();
+      // Лента могла стоять на паузе со снимком: его тоже пора отпустить,
+      // иначе очистка оставила бы строки на экране.
+      resume();
+    },
+  });
 }
 </script>
 
 <template>
   <section class="journal wb-section">
     <header class="journal__head">
-      <div class="wb-screen__head">
-        <h1 class="wb-screen__title">{{ t("journal.view.title") }}</h1>
-        <p class="wb-screen__lead">{{ t("journal.view.lead") }}</p>
-      </div>
+      <h1 class="wb-screen__title">{{ t("journal.view.title") }}</h1>
 
-      <div class="journal__actions">
-        <SelectButton
-          v-model="selectedKinds"
-          :options="kindOptions"
-          option-label="label"
-          option-value="value"
-          multiple
+      <div class="journal__filters">
+        <InputText
+          v-model="view.query"
+          class="journal__search"
           size="small"
-          :aria-label="t('journal.view.filter')"
+          :placeholder="t('journal.view.search')"
+          :aria-label="t('journal.view.search')"
         />
+
+        <label class="journal__check">
+          <Checkbox v-model="view.onlyErrors" binary />
+          <span>{{ t("journal.view.onlyErrors") }}</span>
+        </label>
+
+        <MultiSelect
+          v-model="view.sources"
+          class="journal__sources"
+          :options="sourceOptions"
+          option-label="label"
+          option-value="source"
+          display="chip"
+          size="small"
+          :placeholder="t('journal.view.allSources')"
+          :aria-label="t('journal.view.sourceFilter')"
+        />
+
         <Button
-          :label="t('journal.view.clear')"
-          icon="pi pi-trash"
+          class="journal__order"
+          :icon="view.order === 'newest' ? 'pi pi-sort-amount-down' : 'pi pi-sort-amount-up-alt'"
+          v-tooltip.bottom="orderAction"
+          severity="secondary"
           text
           size="small"
-          :disabled="!entries.length"
-          @click="clearJournal"
+          :aria-label="orderAction"
+          @click="toggleOrder"
+        />
+
+        <Button
+          class="journal__clear"
+          :label="t('journal.view.clear')"
+          icon="pi pi-trash"
+          icon-pos="right"
+          severity="danger"
+          text
+          size="small"
+          :disabled="!liveTotal"
+          @click="requestClear"
         />
       </div>
+
+      <p v-if="total > 0" class="journal__meta">
+        <span>{{ t("journal.view.shown", { shown, total }) }}</span>
+        <span v-if="truncated">{{ t("journal.view.limit", { count: JOURNAL_LIMIT }) }}</span>
+      </p>
     </header>
 
-    <DataView class="journal__view" :value="visibleEntries" layout="list">
-      <template #list>
-        <ul class="journal__list">
-          <li v-for="entry in visibleEntries" :key="entry.id" class="journal__row">
-            <time class="journal__time">{{ time(entry.at) }}</time>
-            <span class="journal__kind">
-              <i class="journal__dot" :class="`journal__dot--${KIND_TONE[entry.kind]}`" />
-              {{ kindLabels[entry.kind] }}
-            </span>
-            <span class="journal__source">{{ journalSource(entry.source) }}</span>
-            <span class="journal__text">{{ journalText(entry) }}</span>
-          </li>
-        </ul>
-      </template>
+    <div ref="scroller" class="journal__scroll" @scroll.passive="onScroll">
+      <div v-if="pending > 0" class="journal__pending">
+        <span>{{ t("journal.view.pending", { count: pending }) }}</span>
+        <Button size="small" text :label="t('journal.view.resume')" @click="resumeToTop" />
+      </div>
 
-      <template #empty>
-        <p class="journal__empty">
-          {{ entries.length ? t("journal.view.emptyFiltered") : t("journal.view.empty") }}
-        </p>
-      </template>
-    </DataView>
+      <ul v-if="rows.length > 0" class="journal__list">
+        <template
+          v-for="row in rows"
+          :key="row.type === 'day' ? `day-${row.dayKey}` : row.entry.id"
+        >
+          <li v-if="row.type === 'day'" class="journal__day">{{ dayLabel(row.dayKey) }}</li>
+          <li v-else class="journal__row">
+            <i class="journal__dot" :class="TONE[row.entry.kind]" aria-hidden="true" />
+            <time class="journal__time">{{ time(row.entry.at) }}</time>
+            <span class="journal__source">{{ journalSource(row.entry.source) }}</span>
+            <span class="journal__text">
+              <template
+                v-for="(part, index) in highlightParts(journalText(row.entry), view.query)"
+                :key="index"
+              >
+                <mark v-if="part.match" class="journal__match">{{ part.text }}</mark>
+                <template v-else>{{ part.text }}</template>
+              </template>
+            </span>
+            <span v-if="row.entry.kind === 'error'" class="journal__kind">
+              {{ t("journal.kind.error") }}
+            </span>
+          </li>
+        </template>
+      </ul>
+
+      <p v-else class="journal__empty">
+        {{ total ? t("journal.view.emptyFiltered") : t("journal.view.empty") }}
+      </p>
+    </div>
   </section>
 </template>
 
@@ -127,29 +189,63 @@ function time(at: number): string {
 .journal__head {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--ag-space-lg);
+  gap: var(--ag-space-md);
 }
 
-.journal__actions {
+.journal__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-md);
+}
+
+.journal__search {
+  width: 240px;
+}
+
+.journal__sources {
+  min-width: 200px;
+}
+
+.journal__check {
   display: flex;
   align-items: center;
-  gap: var(--ag-space-lg);
+  gap: var(--ag-space-sm);
+  font-size: var(--ag-text-sm);
+  cursor: pointer;
 }
 
-.journal__view {
-  flex: 1;
+.journal__meta {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: var(--ag-space-md);
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
+}
+
+.journal__scroll {
+  flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-  border: 0;
-  padding: 0;
 }
 
-.journal__view :deep(.p-dataview-content) {
-  padding: 0;
-  border: 0;
-  background: transparent;
+.journal__pending {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ag-space-lg);
+  padding: var(--ag-space-xs) var(--ag-space-sm);
+  border-bottom: 1px solid var(--ag-border);
+  background: var(--ag-surface);
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
 }
 
 .journal__list {
@@ -158,6 +254,13 @@ function time(at: number): string {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.journal__day {
+  padding: var(--ag-space-sm) 0 var(--ag-space-xs);
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
+  font-weight: 600;
 }
 
 .journal__row {
@@ -169,25 +272,8 @@ function time(at: number): string {
   font-size: var(--ag-text-sm);
 }
 
-.journal__time {
-  flex-shrink: 0;
-  width: 80px;
-  color: var(--p-text-muted-color);
-  font-family: var(--ag-font-mono);
-  font-size: var(--ag-text-xs);
-}
-
-.journal__kind {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: var(--ag-space-sm);
-  width: 88px;
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-xs);
-}
-
 .journal__dot {
+  align-self: center;
   flex-shrink: 0;
   width: 6px;
   height: 6px;
@@ -203,6 +289,15 @@ function time(at: number): string {
   background: var(--ag-danger);
 }
 
+.journal__time {
+  flex-shrink: 0;
+  width: 96px;
+  color: var(--p-text-muted-color);
+  font-family: var(--ag-font-mono);
+  font-size: var(--ag-text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
 .journal__source {
   flex-shrink: 0;
   width: 120px;
@@ -214,8 +309,23 @@ function time(at: number): string {
 }
 
 .journal__text {
+  flex: 1 1 auto;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.journal__match {
+  border-radius: var(--ag-radius-sm);
+  background: var(--p-highlight-background);
+  color: var(--p-highlight-color);
+  font-weight: 600;
+}
+
+.journal__kind {
+  flex-shrink: 0;
+  color: var(--ag-danger);
+  font-size: var(--ag-text-xs);
+  font-weight: 600;
 }
 
 .journal__empty {
