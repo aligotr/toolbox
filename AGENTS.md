@@ -22,6 +22,8 @@
 
 - Глобальные правила: `.agents/rules/global/`
 - Проектные правила: `.agents/rules/project/`
+- Правила интерфейса: `.agents/rules/project/ui/` (устройство стилей, принципы
+  вида, элементы)
 - Глобальные машиночитаемые запреты: `.agents/rules/global/agents-guard.yml`
 - Проектные машиночитаемые запреты: `.agents/rules/project/agents-guard.yml`
 - Подробные правила приоритетов: `.agents/rules/global/priorities.md`
@@ -31,7 +33,7 @@
 ## Перед началом работы
 
 1. Если `.agents/` существует — изучи `rules/global/*.md`,
-   `rules/project/*.md` и оба `agents-guard.yml`
+   `rules/project/*.md`, `rules/project/*/*.md` и оба `agents-guard.yml`
 2. Если `.agents/` отсутствует — соблюдай базовые инварианты выше
 3. Если `.agents/mcp/` существует — посмотри названия подпапок и выбери
    релевантные для задачи библиотеки

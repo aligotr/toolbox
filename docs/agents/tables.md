@@ -114,5 +114,5 @@ PrimeVue 4.5.5 считает отступ закреплённой колонк
   колонки.
 - `.agents/decisions/0027-domain-column-width.md` — ширина колонки домена
   и потолок.
-- `.agents/rules/project/ui.md`, `.agents/rules/project/vue.md` — правила
-  интерфейса и компонентов.
+- `.agents/rules/project/ui/elements.md`, `.agents/rules/project/vue.md` —
+  правила интерфейса и компонентов.
