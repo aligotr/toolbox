@@ -6,6 +6,14 @@
  */
 
 .dns {
+  /* Ширины строки добавления. Поле домена - главный ввод, оно шире
+     общего поля. Поле типа - общий токен с полем типа в таблице; самый
+     длинный тип CNAME влезает вместе со стрелкой. Список резолверов
+     вмещает два чипа и счётчик «+N». */
+  --dns-name-width: 360px;
+  --dns-type-width: 92px;
+  --dns-servers-width: 300px;
+
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -99,14 +107,16 @@
   min-width: 0;
 }
 
-.dns__add .p-inputtext {
-  flex: 0 0 var(--ag-field-width);
+/* Ширина полей задана точнее темы: `.p-inputgroup .p-inputtext` из пресета
+   растягивает поля группы, и без этого правила домен и тип идут по содержимому. */
+.dns__add .p-inputgroup .p-inputtext {
+  flex: 0 0 var(--dns-name-width);
   min-width: 0;
 }
 
-.dns__add .p-select {
-  flex: 0 0 120px;
-  min-width: 120px;
+.dns__add .p-inputgroup .p-select {
+  flex: 0 0 var(--dns-type-width);
+  min-width: var(--dns-type-width);
 }
 
 .dns__add .p-inputtext.p-invalid::placeholder {
@@ -115,28 +125,33 @@
 
 .dns__servers-row {
   display: flex;
-  flex: 1 1 var(--ag-field-width);
+  flex: 1 1 auto;
   align-items: center;
   gap: var(--ag-space-sm);
+  min-width: 0;
   max-width: 100%;
 }
 
-.dns__servers {
-  flex: 1 1 auto;
+/* Группа сжимается по содержимому: тема растягивает `.p-inputgroup`
+   на всю строку, а здесь ширину задаёт список. */
+.dns .dns__servers {
+  flex: 0 1 auto;
   width: auto;
   min-width: 0;
   max-width: 100%;
 }
 
-.dns__servers .p-multiselect {
-  flex: 1 1 auto;
-  width: auto;
-  min-width: 0;
+/* Список не растягивается на всю строку: ширины хватает двум чипам. */
+.dns__servers .p-inputwrapper.p-multiselect {
+  flex: 0 1 var(--dns-servers-width);
+  width: var(--dns-servers-width);
+  min-width: 160px;
   max-width: 100%;
 }
 
 .dns__run {
   flex: none;
+  margin-left: auto;
   white-space: nowrap;
 }
 

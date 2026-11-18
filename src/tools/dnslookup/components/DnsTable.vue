@@ -25,7 +25,6 @@ import {
   SERVER_COLUMN_MIN_WIDTH,
   SYSTEM_SERVER_ID,
   TYPE_COLUMN_MIN_WIDTH,
-  TYPE_FIELD_WIDTH,
 } from "../constants";
 import { extraAnswers, firstAnswer, statusClass, statusLabel, statusShown } from "../cell";
 import CellDetails from "./CellDetails.vue";
@@ -289,7 +288,7 @@ watch(
             :model-value="data.type"
             :options="RECORD_TYPES"
             size="small"
-            :style="{ width: TYPE_FIELD_WIDTH }"
+            :style="{ width: 'var(--dns-type-width)' }"
             :disabled="busy"
             :aria-label="t('dnslookup.table.typeAria', { name: data.input })"
             @change="onTypeChange(data.id, $event)"
