@@ -378,10 +378,6 @@
     // ── Busprobe ──────────────────────────────────────────────────────────
     "busprobe.view.lead":
       "Bus demo: a training core:ping request and its path to the core:pong reply.",
-    "busprobe.view.badgeTrace": "trace in progress",
-    "busprobe.view.badgeTraced": "path recorded",
-    "busprobe.view.badgeReplied": "reply received",
-    "busprobe.view.badgeReady": "ready",
     "busprobe.view.inputAria": "Message text",
     "busprobe.view.inputPlaceholder": "Text for echo",
     "busprobe.view.check": "Check the bus",

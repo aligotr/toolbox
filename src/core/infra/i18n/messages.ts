@@ -361,10 +361,6 @@ export const ruMessages: Messages = {
   // ── Busprobe ─────────────────────────────────────────────────────────────
   "busprobe.view.lead":
     "Демонстрация шины: учебный запрос core:ping и его путь до ответа core:pong.",
-  "busprobe.view.badgeTrace": "идёт прогон",
-  "busprobe.view.badgeTraced": "путь записан",
-  "busprobe.view.badgeReplied": "ответ получен",
-  "busprobe.view.badgeReady": "готов",
   "busprobe.view.inputAria": "Текст сообщения",
   "busprobe.view.inputPlaceholder": "Текст для echo",
   "busprobe.view.check": "Проверить шину",

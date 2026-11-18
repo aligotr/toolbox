@@ -10,25 +10,15 @@
 
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
-import { computed, onMounted, onUnmounted } from "vue";
+import { onMounted, onUnmounted } from "vue";
 import { catalog, t } from "@/core/infra/i18n";
 import RoutePanel from "./RoutePanel.vue";
 import { TOOL_TITLE } from "./constants";
 import { formatMs } from "./format";
 import { useBusprobe } from "./useBusprobe";
 
-type BadgeTone = "muted" | "ok";
-
 const { echo, status, reply, elapsedMs, chain, rows, selected, checkBus, toggle, start, stop } =
   useBusprobe();
-
-/** Короткое состояние для метки в шапке. */
-const badge = computed<{ text: string; tone: BadgeTone }>(() => {
-  if (status.loading) return { text: t("busprobe.view.badgeTrace"), tone: "muted" };
-  if (chain.value) return { text: t("busprobe.view.badgeTraced"), tone: "ok" };
-  if (reply.value) return { text: t("busprobe.view.badgeReplied"), tone: "ok" };
-  return { text: t("busprobe.view.badgeReady"), tone: "muted" };
-});
 
 function formatTime(at: number): string {
   return new Date(at).toLocaleTimeString(catalog.locale);
@@ -45,15 +35,9 @@ onUnmounted(() => {
 
 <template>
   <section class="busprobe">
-    <header class="busprobe__head">
-      <div class="busprobe__heading">
-        <h1 class="busprobe__title">{{ TOOL_TITLE }}</h1>
-        <p class="busprobe__lead">{{ t("busprobe.view.lead") }}</p>
-      </div>
-      <span class="busprobe__badge">
-        <i class="busprobe__badge-dot" :class="`busprobe__badge-dot--${badge.tone}`" />
-        {{ badge.text }}
-      </span>
+    <header class="busprobe__heading">
+      <h1 class="busprobe__title">{{ TOOL_TITLE }}</h1>
+      <p class="busprobe__lead">{{ t("busprobe.view.lead") }}</p>
     </header>
 
     <div class="busprobe__form">
@@ -86,11 +70,11 @@ onUnmounted(() => {
       <dl class="reply__facts">
         <div class="reply__fact">
           <dt>echo</dt>
-          <dd>{{ reply.echo ?? "—" }}</dd>
+          <dd>{{ reply.echo ?? "нет" }}</dd>
         </div>
         <div class="reply__fact">
           <dt>correlation_id</dt>
-          <dd class="mono">{{ reply.correlation_id ?? "—" }}</dd>
+          <dd class="mono">{{ reply.correlation_id ?? "нет" }}</dd>
         </div>
         <div class="reply__fact">
           <dt>{{ t("busprobe.view.sentAt") }}</dt>
@@ -116,18 +100,9 @@ onUnmounted(() => {
   gap: var(--ag-space-xl);
 }
 
-.busprobe__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--ag-space-lg);
-}
-
 .busprobe__heading {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  min-width: 0;
   gap: var(--ag-space-sm);
 }
 
@@ -141,27 +116,6 @@ onUnmounted(() => {
   margin: 0;
   color: var(--p-text-muted-color);
   font-size: var(--ag-text-md);
-}
-
-.busprobe__badge {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: var(--ag-space-sm);
-  padding-top: var(--ag-space-sm);
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-xs);
-}
-
-.busprobe__badge-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--ag-radius-round);
-  background: currentColor;
-}
-
-.busprobe__badge-dot--ok {
-  background: var(--ag-ok);
 }
 
 .busprobe__form {

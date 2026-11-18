@@ -37,9 +37,10 @@
 - «Проверить шину» запускает `ask_traced`, заполняет ответ и очищает
   прошлую цепочку; путь приходит событием `core:trace` и показывается
   без второй кнопки.
-- Удалены `busprobe.view.showPath`, `busprobe.view.badgePing`,
-  `journal.busprobe.pingSent` и `journal.busprobe.traceError`. Запрос
-  без задержки остался в протоколе, но не на экране.
+- Удалены `busprobe.view.showPath`, все ключи `busprobe.view.badge*`,
+  `journal.busprobe.pingSent` и `journal.busprobe.traceError`. Статус
+  в правом верхнем углу и его вычисление убраны. Запрос без задержки
+  остался в протоколе, но не на экране.
 - ADR 0007 дополнен разделом о демонстрации; ADR 0020 не менялся.
 - Тесты: `tests/busprobe/check.test.ts` проверяет успешный прогон и отказ
   с очисткой прошлого ответа.
