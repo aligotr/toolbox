@@ -1,28 +1,20 @@
 // Состояние инструмента Busprobe.
 //
-// Две операции независимы: обычная самопроверка и учебный прогон с записью
-// этапов. Поэтому и состояния два — `status.ping` и `status.trace`, а не один
-// общий `loading` (правила Vue). Компонент только показывает то, что здесь
-// уже разложено; транспорт целиком в `api.ts`.
+// Одна операция: учебный прогон. Она же показывает ответ, а записанную
+// цепочку присылает событие `core:trace`. Поэтому состояние одно, а не
+// `ping` и `trace` по отдельности (правила Vue). Компонент только показывает
+// то, что здесь уже разложено; транспорт целиком в `api.ts`.
 //
 // Цепочка показывается целиком: настоящий путь длится доли миллисекунды,
 // поэтому его разбор идёт не темпом, а пояснениями по клику.
 
-import { computed, reactive, ref } from "vue";
+import { computed, ref } from "vue";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import { useAsyncAction } from "@/core/infra/useAsyncAction";
-import {
-  onPong,
-  onTrace,
-  ping,
-  tracedPing,
-  type Pong,
-  type TraceChain,
-  type TraceStage,
-} from "./api";
+import { onPong, onTrace, tracedPing, type Pong, type TraceChain, type TraceStage } from "./api";
 import { DEFAULT_ECHO, JOURNAL_SOURCE, TRACE_DELAY_MS } from "./constants";
 
 /** Строка маршрута: этап, граница сообщения или настоящее ожидание. */
@@ -48,20 +40,29 @@ export function useBusprobe() {
   let unlistenPong: UnlistenFn | null = null;
   let unlistenTrace: UnlistenFn | null = null;
 
-  /** Обычная самопроверка: запрос и ответ без искусственной задержки. */
-  const check = useAsyncAction(async () => {
-    write(JOURNAL_SOURCE, "info", "journal.busprobe.pingSent", {
-      echo: echo.value,
+  /**
+   * Учебный прогон: ядро записывает цепочку и присылает её событием.
+   *
+   * Ответ и путь появляются после одного действия: прошлая цепочка
+   * очищается, чтобы отказ не показывал старый путь как новый.
+   */
+  const probe = useAsyncAction(async () => {
+    chain.value = null;
+    selected.value = null;
+    reply.value = null;
+    elapsedMs.value = null;
+    write(JOURNAL_SOURCE, "info", "journal.busprobe.traceStarted", {
+      delay: TRACE_DELAY_MS,
     });
 
     const started = performance.now();
     try {
-      const answer = await ping(echo.value);
+      const answer = await tracedPing(echo.value, TRACE_DELAY_MS);
       reply.value = answer;
       elapsedMs.value = performance.now() - started;
       write(JOURNAL_SOURCE, "result", "journal.busprobe.pong", {
-        echo: answer.echo ?? "—",
-        correlation: answer.correlation_id ?? "—",
+        echo: answer.echo ?? "нет",
+        correlation: answer.correlation_id ?? "нет",
       });
     } catch (error) {
       write(JOURNAL_SOURCE, "error", "journal.busprobe.pingError", {
@@ -71,25 +72,7 @@ export function useBusprobe() {
     }
   });
 
-  /** Учебный прогон: ядро записывает цепочку и присылает её событием. */
-  const trace = useAsyncAction(async () => {
-    chain.value = null;
-    selected.value = null;
-    write(JOURNAL_SOURCE, "info", "journal.busprobe.traceStarted", {
-      delay: TRACE_DELAY_MS,
-    });
-
-    try {
-      await tracedPing(echo.value, TRACE_DELAY_MS);
-    } catch (error) {
-      write(JOURNAL_SOURCE, "error", "journal.busprobe.traceError", {
-        reason: error,
-      });
-      throw error;
-    }
-  });
-
-  const status = reactive({ ping: check.status, trace: trace.status });
+  const status = probe.status;
 
   /**
    * Подписки живут вместе с открытой панелью.
@@ -107,7 +90,7 @@ export function useBusprobe() {
       unlistenTrace = await onTrace(handleTrace);
     } catch (error) {
       stop();
-      status.trace.error = t("busprobe.view.subscribeFailed", {
+      status.error = t("busprobe.view.subscribeFailed", {
         reason: describeError(error),
       });
       write(JOURNAL_SOURCE, "error", "journal.busprobe.subscribeError", {
@@ -188,8 +171,7 @@ export function useBusprobe() {
     chain,
     rows,
     selected,
-    checkBus: check.run,
-    showPath: trace.run,
+    checkBus: probe.run,
     toggle,
     start,
     stop,

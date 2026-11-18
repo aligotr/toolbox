@@ -205,13 +205,11 @@
     "journal.languages.exportError":
       "The dictionary sample was not exported: {reason}",
 
-    "journal.busprobe.pingSent": "core:ping request sent, echo=“{echo}”",
     "journal.busprobe.pong":
       "Reply received: echo=“{echo}”, correlation={correlation}",
     "journal.busprobe.pingError": "The request failed: {reason}",
     "journal.busprobe.traceStarted":
       "Training run: core:ping with a {delay} ms delay",
-    "journal.busprobe.traceError": "The run failed: {reason}",
     "journal.busprobe.pongObserver":
       "The second subscriber received core:pong: at={at}",
     "journal.busprobe.subscribeError":
@@ -374,13 +372,12 @@
     "tools.open.anotherTab": "Ctrl+click for another tab",
 
     // ── Tool descriptions ─────────────────────────────────────────────────
-    "tools.busprobe.description": "Bus self-check and the path of a message",
+    "tools.busprobe.description": "Bus demo and the path of a message",
     "tools.dnslookup.description": "Check and compare DNS server answers",
 
     // ── Busprobe ──────────────────────────────────────────────────────────
     "busprobe.view.lead":
-      "Bus self-check: a real core:ping request and a core:pong reply.",
-    "busprobe.view.badgePing": "request in flight",
+      "Bus demo: a training core:ping request and its path to the core:pong reply.",
     "busprobe.view.badgeTrace": "trace in progress",
     "busprobe.view.badgeTraced": "path recorded",
     "busprobe.view.badgeReplied": "reply received",
@@ -388,7 +385,6 @@
     "busprobe.view.inputAria": "Message text",
     "busprobe.view.inputPlaceholder": "Text for echo",
     "busprobe.view.check": "Check the bus",
-    "busprobe.view.showPath": "Show the path",
     "busprobe.view.replyTitle": "Reply",
     "busprobe.view.sentAt": "Reply time",
     "busprobe.view.roundTrip": "Round-trip time",

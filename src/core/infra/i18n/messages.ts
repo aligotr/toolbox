@@ -189,11 +189,9 @@ export const ruMessages: Messages = {
   "journal.languages.unavailable": "Словарь «{code}» недоступен: интерфейс показывает русский",
   "journal.languages.exportError": "Образец словаря не выгружен: {reason}",
 
-  "journal.busprobe.pingSent": "Запрос core:ping отправлен, echo=«{echo}»",
   "journal.busprobe.pong": "Ответ получен: echo=«{echo}», correlation={correlation}",
   "journal.busprobe.pingError": "Запрос не выполнен: {reason}",
   "journal.busprobe.traceStarted": "Учебный прогон: core:ping с задержкой {delay} мс",
-  "journal.busprobe.traceError": "Прогон не выполнен: {reason}",
   "journal.busprobe.pongObserver": "Второй подписчик получил core:pong: at={at}",
   "journal.busprobe.subscribeError": "Подписка на события не создана: {reason}",
   "journal.busprobe.traceRecorded": "Цепочка записана: этапов — {stages}, время — {elapsed} мс",
@@ -357,12 +355,11 @@ export const ruMessages: Messages = {
   "tools.open.anotherTab": "Ctrl+клик — ещё одна вкладка",
 
   // ── Описания инструментов ───────────────────────────────────────────────
-  "tools.busprobe.description": "Самопроверка шины и путь сообщения",
+  "tools.busprobe.description": "Витрина шины и путь сообщения",
   "tools.dnslookup.description": "Проверка и сравнение ответов DNS-серверов",
 
   // ── Busprobe ─────────────────────────────────────────────────────────────
-  "busprobe.view.lead": "Самопроверка шины: настоящий запрос core:ping и ответ core:pong.",
-  "busprobe.view.badgePing": "идёт запрос",
+  "busprobe.view.lead": "Витрина шины: учебный запрос core:ping и его путь до ответа core:pong.",
   "busprobe.view.badgeTrace": "идёт прогон",
   "busprobe.view.badgeTraced": "путь записан",
   "busprobe.view.badgeReplied": "ответ получен",
@@ -370,7 +367,6 @@ export const ruMessages: Messages = {
   "busprobe.view.inputAria": "Текст сообщения",
   "busprobe.view.inputPlaceholder": "Текст для echo",
   "busprobe.view.check": "Проверить шину",
-  "busprobe.view.showPath": "Показать путь",
   "busprobe.view.replyTitle": "Ответ",
   "busprobe.view.sentAt": "Момент ответа",
   "busprobe.view.roundTrip": "Круговое время",

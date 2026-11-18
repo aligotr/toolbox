@@ -6,10 +6,10 @@
 // а не в разметке (ADR 0012).
 
 import type { UnlistenFn } from "@tauri-apps/api/event";
-import { ask, askTraced, subscribeEvent } from "@/core/infra/bus";
+import { askTraced, subscribeEvent } from "@/core/infra/bus";
 import { TRACE_TIMEOUT_MS } from "./constants";
 
-/** Ответ ядра на самопроверку. */
+/** Ответ ядра на учебный запрос. */
 export interface Pong {
   echo: string | null;
   /** Момент ответа в миллисекундах эпохи. */
@@ -34,19 +34,14 @@ export interface TraceChain {
   elapsed_ms: number;
 }
 
-/** Обычная самопроверка: запрос и ответ без искусственной задержки. */
-export async function ping(echo: string): Promise<Pong> {
-  return ask<Pong>("core:ping", "core:pong", { echo });
-}
-
 /**
  * Учебный прогон с записью этапов.
  *
- * Цепочка придёт отдельным событием `core:trace`; функция только запускает
- * запрос и дожидается ответа.
+ * Цепочка придёт отдельным событием `core:trace`; функция возвращает ответ,
+ * чтобы панель показала его вместе с путём после одного действия.
  */
-export async function tracedPing(echo: string, delayMs: number): Promise<void> {
-  await askTraced("core:ping", "core:pong", { echo, delay_ms: delayMs }, TRACE_TIMEOUT_MS);
+export async function tracedPing(echo: string, delayMs: number): Promise<Pong> {
+  return askTraced<Pong>("core:ping", "core:pong", { echo, delay_ms: delayMs }, TRACE_TIMEOUT_MS);
 }
 
 /**

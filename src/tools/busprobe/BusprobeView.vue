@@ -1,12 +1,12 @@
 <script setup lang="ts">
 // Панель инструмента Busprobe.
 //
-// Смысл экрана «Как работает шина» сохранён: кнопка отправляет настоящий
-// `ask`, ядро записывает этапы цепочки, интерфейс показывает весь путь сразу,
-// а пояснение к этапу раскрывается по клику.
+// Экран работает как витрина шины: одна кнопка отправляет учебный `ask`,
+// ядро записывает этапы цепочки, интерфейс сразу показывает ответ и весь
+// путь, а пояснение к этапу раскрывается по клику.
 //
-// Мост, подписки и состояния операций живут в `api.ts` и `useBusprobe.ts`;
-// показ пути — в `RoutePanel.vue`; здесь только шапка, форма и ответ.
+// Мост, подписки и состояние операции живут в `api.ts` и `useBusprobe.ts`;
+// показ пути в `RoutePanel.vue`; здесь только шапка, форма и ответ.
 
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
@@ -19,25 +19,12 @@ import { useBusprobe } from "./useBusprobe";
 
 type BadgeTone = "muted" | "ok";
 
-const {
-  echo,
-  status,
-  reply,
-  elapsedMs,
-  chain,
-  rows,
-  selected,
-  checkBus,
-  showPath,
-  toggle,
-  start,
-  stop,
-} = useBusprobe();
+const { echo, status, reply, elapsedMs, chain, rows, selected, checkBus, toggle, start, stop } =
+  useBusprobe();
 
 /** Короткое состояние для метки в шапке. */
 const badge = computed<{ text: string; tone: BadgeTone }>(() => {
-  if (status.ping.loading) return { text: t("busprobe.view.badgePing"), tone: "muted" };
-  if (status.trace.loading) return { text: t("busprobe.view.badgeTrace"), tone: "muted" };
+  if (status.loading) return { text: t("busprobe.view.badgeTrace"), tone: "muted" };
   if (chain.value) return { text: t("busprobe.view.badgeTraced"), tone: "ok" };
   if (reply.value) return { text: t("busprobe.view.badgeReplied"), tone: "ok" };
   return { text: t("busprobe.view.badgeReady"), tone: "muted" };
@@ -76,34 +63,21 @@ onUnmounted(() => {
         size="small"
         :aria-label="t('busprobe.view.inputAria')"
         :placeholder="t('busprobe.view.inputPlaceholder')"
-        :disabled="status.ping.loading || status.trace.loading"
+        :disabled="status.loading"
         @keyup.enter="checkBus"
       />
       <Button
         :label="t('busprobe.view.check')"
         icon="pi pi-bolt"
         size="small"
-        :loading="status.ping.loading"
+        :loading="status.loading"
         @click="checkBus"
-      />
-      <Button
-        :label="t('busprobe.view.showPath')"
-        icon="pi pi-share-alt"
-        severity="secondary"
-        outlined
-        size="small"
-        :loading="status.trace.loading"
-        @click="showPath"
       />
     </div>
 
-    <p v-if="status.ping.error" class="busprobe__error">
+    <p v-if="status.error" class="busprobe__error">
       <i class="pi pi-exclamation-circle" aria-hidden="true" />
-      {{ status.ping.error }}
-    </p>
-    <p v-if="status.trace.error" class="busprobe__error">
-      <i class="pi pi-exclamation-circle" aria-hidden="true" />
-      {{ status.trace.error }}
+      {{ status.error }}
     </p>
 
     <section v-if="reply" class="reply">
