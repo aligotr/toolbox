@@ -302,7 +302,7 @@ async function remove(preset: Preset): Promise<void> {
     :style="{ width: DIALOG_WIDTH, maxWidth: DIALOG_MAX_WIDTH }"
     @update:visible="emit('update:visible', $event)"
   >
-    <div class="presets">
+    <div class="presets" autofocus tabindex="-1">
       <section class="presets__current">
         <div class="presets__current-text">
           <template v-if="bound">

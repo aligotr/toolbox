@@ -82,7 +82,7 @@ function remove(serverId: string): void {
     :style="{ width: DIALOG_WIDTH, maxWidth: '92vw' }"
     @update:visible="emit('update:visible', $event)"
   >
-    <div class="servers">
+    <div class="servers" autofocus tabindex="-1">
       <section class="servers__list">
         <h3 class="servers__title">{{ t("dnslookup.servers.added") }}</h3>
         <p v-if="servers.length === 0" class="servers__empty">
