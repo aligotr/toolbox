@@ -269,7 +269,7 @@
 
     // ── Settings: log ─────────────────────────────────────────────────────
     "settings.log.lead":
-      "The log file keeps only failures: why the program or one of its features did not work. Tool activity goes to the program journal - the Journal section. The recording level changes without a restart.",
+      "The log file keeps only failures: why the program or one of its features did not work.\nTool activity goes to the program journal - the Journal section.",
     "settings.log.level": "Recording level",
     "settings.log.level.error": "Errors",
     "settings.log.level.errorHint": "only what stopped a feature from working",

@@ -29,10 +29,11 @@ const FILE_PREFIX: &str = "toolbox-";
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LogLevel {
+    /// Умолчание: в файл идут только отказы, лог остаётся коротким.
+    #[default]
     Error,
     Warn,
-    /// Штатный режим: отказы и предупреждения видны, отладочных строк нет.
-    #[default]
+    /// Подробнее умолчания: к отказам добавляются предупреждения.
     Info,
     Debug,
 }
@@ -301,8 +302,8 @@ mod tests {
     }
 
     #[test]
-    fn default_level_is_info() {
-        assert_eq!(LogLevel::default(), LogLevel::Info);
+    fn default_level_is_error() {
+        assert_eq!(LogLevel::default(), LogLevel::Error);
     }
 
     #[test]

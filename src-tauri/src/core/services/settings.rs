@@ -639,7 +639,7 @@ mod tests {
 
         let loaded = load(&path);
 
-        assert_eq!(loaded.settings.log.level, LogLevel::Info);
+        assert_eq!(loaded.settings.log.level, LogLevel::Error);
         assert_eq!(
             loaded.settings.window,
             WindowSettings::default(),

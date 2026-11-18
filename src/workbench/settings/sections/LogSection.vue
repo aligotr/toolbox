@@ -78,12 +78,7 @@ onMounted(() => {
     <div class="log__field">
       <div class="log__label-line">
         <label class="log__label" for="log-level">{{ t("settings.log.level") }}</label>
-        <i
-          v-tooltip.top="levelHint"
-          class="pi pi-circle-fill log__dot"
-          :aria-label="levelHint"
-          tabindex="0"
-        />
+        <span class="log__hint">{{ levelHint }}</span>
       </div>
       <Select
         v-model="level"
@@ -169,8 +164,9 @@ onMounted(() => {
 
 .log__label-line {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--ag-space-sm);
+  flex-wrap: wrap;
 }
 
 .log__label {
@@ -178,17 +174,16 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* Точка у заголовка: подсказка о выбранном уровне записи. Знак, а не
-   действие, но доступна с клавиатуры и читается экранным диктором. */
-.log__dot {
+/* Пояснение уровня идёт за заголовком через точку-разделитель: это
+   справка о выбранном уровне, а не часть подписи поля. */
+.log__hint {
   color: var(--p-text-muted-color);
   font-size: var(--ag-text-xs);
-  cursor: help;
 }
 
-.log__dot:focus-visible {
-  outline: 2px solid var(--p-primary-color);
-  outline-offset: 2px;
+.log__hint::before {
+  margin-right: var(--ag-space-sm);
+  content: "•";
 }
 
 .log__select {

@@ -44,8 +44,8 @@ export const status = reactive<Record<SettingsOperation, OperationStatus>>({
   window: idle(),
 });
 
-/** Действующий уровень лога; до чтения файла — `info`. */
-export const logLevel = computed<LogLevel>(() => settings.current?.log.level ?? "info");
+/** Действующий уровень лога; до чтения файла — умолчание ядра, `error`. */
+export const logLevel = computed<LogLevel>(() => settings.current?.log.level ?? "error");
 
 /**
  * Перечитывает настройки.
