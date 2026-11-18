@@ -88,7 +88,12 @@ function requestClear(event: MouseEvent): void {
 <template>
   <section class="journal wb-section">
     <header class="journal__head">
-      <h1 class="wb-screen__title">{{ t("journal.view.title") }}</h1>
+      <div class="journal__top">
+        <h1 class="wb-screen__title">{{ t("journal.view.title") }}</h1>
+        <span v-if="total > 0" class="journal__shown">
+          {{ t("journal.view.shown", { shown, total }) }}
+        </span>
+      </div>
 
       <div class="journal__filters">
         <InputText
@@ -140,9 +145,8 @@ function requestClear(event: MouseEvent): void {
         />
       </div>
 
-      <p v-if="total > 0" class="journal__meta">
-        <span>{{ t("journal.view.shown", { shown, total }) }}</span>
-        <span v-if="truncated">{{ t("journal.view.limit", { count: JOURNAL_LIMIT }) }}</span>
+      <p v-if="truncated" class="journal__meta">
+        {{ t("journal.view.limit", { count: JOURNAL_LIMIT }) }}
       </p>
     </header>
 
@@ -197,6 +201,18 @@ function requestClear(event: MouseEvent): void {
   gap: var(--ag-space-md);
 }
 
+.journal__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ag-space-md);
+}
+
+.journal__shown {
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
+}
+
 .journal__filters {
   display: flex;
   flex-wrap: wrap;
@@ -221,9 +237,6 @@ function requestClear(event: MouseEvent): void {
 }
 
 .journal__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ag-space-md);
   margin: 0;
   color: var(--p-text-muted-color);
   font-size: var(--ag-text-xs);
