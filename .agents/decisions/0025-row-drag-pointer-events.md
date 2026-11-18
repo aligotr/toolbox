@@ -84,5 +84,5 @@
 
 - код: `src/ui/useRowDrag.ts`, `src/ui/rowDrag.css`,
   `src/tools/dnslookup/DnsTable.vue`, `src/tools/dnslookup/DnslookupView.vue`
-- правила: `.agents/rules/project/ui.md`, `.agents/rules/project/vue.md`
+- правила: `.agents/rules/project/ui/elements.md`, `.agents/rules/project/vue.md`
 - связанные решения: ADR 0009 (PrimeVue), ADR 0017 (сеанс по `cellKey`)

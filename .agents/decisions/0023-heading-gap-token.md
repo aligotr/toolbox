@@ -3,7 +3,7 @@
 - **Статус:** заменено (ADR 0024)
 - **Дата:** 2026-11-13
 - **Область:** `src/styles/global.css`, `src/tools/`, `src/shell/`,
-  `.agents/rules/project/ui.md`
+  `.agents/rules/project/ui/design.md`
 
 ## Контекст
 
@@ -67,5 +67,5 @@
 - код: `src/styles/global.css`, `src/tools/dnslookup/DnslookupView.vue`,
   `src/tools/ping/PingView.vue`, `src/shell/JournalView.vue`,
   `src/shell/settings/SettingsView.vue`
-- правила: `.agents/rules/project/ui.md`
+- правила: `.agents/rules/project/ui/design.md`
 - связанные решения: ADR 0021 (типографика), ADR 0022 (токены отступов)

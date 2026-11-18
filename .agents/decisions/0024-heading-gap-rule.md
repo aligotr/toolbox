@@ -2,7 +2,7 @@
 
 - **Статус:** заменено (ADR 0053)
 - **Дата:** 2026-11-13
-- **Область:** `src/tools/`, `src/shell/`, `.agents/rules/project/ui.md`
+- **Область:** `src/tools/`, `src/shell/`, `.agents/rules/project/ui/design.md`
 
 ## Контекст
 
@@ -66,5 +66,5 @@ ADR 0023 ввёл токен `--ag-space-heading` и применил его к�
 ## Ссылки
 
 - код: `src/tools/dnslookup/DnslookupView.vue`, `src/styles/global.css`
-- правила: `.agents/rules/project/ui.md`
+- правила: `.agents/rules/project/ui/design.md`
 - связанные решения: ADR 0022 (токены отступов), ADR 0023 (появление токена)

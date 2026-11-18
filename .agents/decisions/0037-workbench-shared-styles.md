@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-16
-- **Область:** `src/workbench/`, `.agents/rules/project/ui.md`
+- **Область:** `src/workbench/`, `.agents/rules/project/ui/architecture.md`
 
 ## Контекст
 
@@ -92,7 +92,7 @@
   базовые 1.5 рассчитаны на текст, а не на строку в 24 px.
 - Правило «стили оболочки — `src/workbench/styles.css` с префиксом `wb-`,
   импорт один раз в `WorkbenchView.vue`» становится обязательным и попадает
-  в `ui.md`.
+  в `ui/architecture.md`.
 
 ## Отклонённые альтернативы
 
@@ -113,5 +113,5 @@
 - код: `src/workbench/RailItem.vue`, `src/workbench/styles.css`,
   `src/workbench/WorkbenchView.vue`, `src/workbench/Sidebar.vue`,
   `src/workbench/workspace/EmptyTab.vue`
-- правила: `.agents/rules/project/ui.md`
+- правила: `.agents/rules/project/ui/architecture.md`
 - связанные решения: ADR 0011, ADR 0036

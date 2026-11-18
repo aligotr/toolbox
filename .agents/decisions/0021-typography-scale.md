@@ -3,7 +3,7 @@
 - **Статус:** принято
 - **Дата:** 2026-11-13
 - **Область:** `src/ui/theme.ts`, `src/styles/global.css`,
-  `.agents/rules/project/ui.md`, экраны `src/shell/`, `src/tools/`
+  `.agents/rules/project/ui/design.md`, экраны `src/shell/`, `src/tools/`
 
 ## Контекст
 
@@ -71,5 +71,5 @@
 ## Ссылки
 
 - код: `src/ui/theme.ts`, `src/styles/global.css`,
-  `.agents/rules/project/ui.md`
+  `.agents/rules/project/ui/design.md`
 - связанные решения: ADR 0009 (PrimeVue как основа), ADR 0019 (светлая тема)

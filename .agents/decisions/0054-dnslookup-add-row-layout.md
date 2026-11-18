@@ -4,7 +4,7 @@
 - **Дата:** 2026-11-18
 - **Область:** `src/tools/dnslookup/styles.css`,
   `src/tools/dnslookup/components/DnsTable.vue`,
-  `src/tools/dnslookup/constants.ts`, `.agents/rules/project/ui.md`
+  `src/tools/dnslookup/constants.ts`, `.agents/rules/project/ui/elements.md`
 
 ## Контекст
 
@@ -106,6 +106,6 @@
 - код: `src/tools/dnslookup/styles.css`,
   `src/tools/dnslookup/components/DnsTable.vue`,
   `src/tools/dnslookup/constants.ts`
-- правила: `.agents/rules/project/ui.md`
+- правила: `.agents/rules/project/ui/elements.md`
 - связанные решения: ADR 0022 (токены отступов), ADR 0032 (шапка
   инструмента)

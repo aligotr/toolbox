@@ -173,8 +173,8 @@
   `src-tauri/src/modules/busprobe.rs`, `src/app/tools.ts`,
   `scripts/check-zones.mjs`, `vite.config.ts`, `tsconfig.json`
 - правила: `.agents/rules/global/code-style.md`,
-  `.agents/rules/project/architecture.md`, `.agents/rules/project/ui.md`,
-  `.agents/rules/project/vue.md`
+  `.agents/rules/project/architecture.md`,
+  `.agents/rules/project/ui/architecture.md`, `.agents/rules/project/vue.md`
 - связанные решения: ADR 0011 (оболочка, вкладки, сайдбар), ADR 0012 (слои
   и контракт модуля), ADR 0017 (сеанс по ячейке), ADR 0020 (ping без
   воспроизведения), ADR 0035 (зоны ядра)

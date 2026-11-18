@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-13
-- **Область:** `src/styles/global.css`, `.agents/rules/project/ui.md`,
+- **Область:** `src/styles/global.css`, `.agents/rules/project/ui/design.md`,
   стили экранов `src/app/`, `src/shell/`, `src/tools/`
 
 ## Контекст
@@ -70,6 +70,6 @@
 ## Ссылки
 
 - код: `src/styles/global.css` (`--ag-text-heading`, правило `h1`)
-- правила: `.agents/rules/project/ui.md`
+- правила: `.agents/rules/project/ui/design.md`
 - связанные решения: ADR 0019 (светлая схема), ADR 0021 (типографика),
   ADR 0022 (токены), ADR 0032 (шапка инструмента)

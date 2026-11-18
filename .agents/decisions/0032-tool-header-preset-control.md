@@ -4,7 +4,7 @@
 - **Дата:** 2026-11-13
 - **Область:** `src/tools/dnslookup/DnslookupView.vue`,
   `src/tools/dnslookup/PresetsDialog.vue`, `src/tools/dnslookup/constants.ts`,
-  `.agents/rules/project/ui.md`
+  `.agents/rules/project/ui/elements.md`
 
 ## Контекст
 
@@ -109,6 +109,6 @@ ADR 0028 (п. 11) отложил переработку заголовка и т
   `src/tools/dnslookup/PresetsDialog.vue`,
   `src/tools/dnslookup/constants.ts` (`PRESET_BUTTON_EMPTY`,
   `PRESET_CHANGED_LABEL`)
-- правила: `.agents/rules/project/ui.md`
+- правила: `.agents/rules/project/ui/elements.md`
 - связанные решения: ADR 0024 (зазор после заголовка), ADR 0028 (пресеты
   настроек), ADR 0030 (пресет по умолчанию), ADR 0031 (перезапуск вкладки)

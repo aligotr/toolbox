@@ -3,7 +3,7 @@
 - **Статус:** принято
 - **Дата:** 2026-11-13
 - **Область:** `src/styles/global.css`, `src/ui/theme.ts`,
-  `.agents/rules/project/ui.md`, стили `src/shell/` и `src/tools/`
+  `.agents/rules/project/ui/architecture.md`, стили `src/shell/` и `src/tools/`
 
 ## Контекст
 
@@ -76,5 +76,5 @@
 ## Ссылки
 
 - код: `src/styles/global.css`, `src/ui/theme.ts`,
-  `.agents/rules/project/ui.md`
+  `.agents/rules/project/ui/architecture.md`
 - связанные решения: ADR 0019 (светлая тема), ADR 0021 (типографика)

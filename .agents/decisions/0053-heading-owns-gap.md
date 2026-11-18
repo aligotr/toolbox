@@ -3,7 +3,7 @@
 - **Статус:** принято
 - **Дата:** 2026-11-18
 - **Область:** `src/workbench/styles.css`, `src/workbench/`,
-  `src/tools/`, `.agents/rules/project/ui.md`
+  `src/tools/`, `.agents/rules/project/ui/design.md`
 
 ## Контекст
 
@@ -72,7 +72,7 @@ ADR 0024 задал зазор после заголовка правилом н
   `src/workbench/settings/SettingsView.vue`,
   `src/workbench/workspace/EmptyTab.vue`, `src/tools/dnslookup/styles.css`,
   `src/tools/busprobe/BusprobeView.vue`
-- правила: `.agents/rules/project/ui.md`
+- правила: `.agents/rules/project/ui/design.md`
 - связанные решения: ADR 0022 (токены отступов), ADR 0023 (появление
   токена), ADR 0024 (отступ задаётся правилом), ADR 0037 (общие стили
   оболочки)
