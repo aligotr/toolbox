@@ -296,12 +296,10 @@ export const ruMessages: Messages = {
   // ── Программа ────────────────────────────────────────────────────────────
   "settings.app.lead":
     "Сведения о сборке и месте, где лежат настройки, лог и профили. Всё состояние хранится рядом с исполняемым файлом.",
-  "settings.app.debug": "отладочная (cargo run / tauri dev)",
-  "settings.app.release": "релизная",
+  "settings.app.debug": "Отладочная (cargo run / tauri dev)",
+  "settings.app.release": "Релизная",
   "settings.app.version": "Версия",
   "settings.app.buildMode": "Режим сборки",
-  "settings.app.activeProfile": "Активный профиль",
-  "settings.app.root": "Папка программы",
   "settings.app.openFolder": "Открыть папку программы",
   "settings.app.loading": "Сведения читаются…",
 

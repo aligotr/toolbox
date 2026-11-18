@@ -308,12 +308,10 @@
     // ── Settings: program ─────────────────────────────────────────────────
     "settings.app.lead":
       "Build details and the place where settings, the log and profiles live. All state is stored next to the executable.",
-    "settings.app.debug": "debug (cargo run / tauri dev)",
-    "settings.app.release": "release",
+    "settings.app.debug": "Debug (cargo run / tauri dev)",
+    "settings.app.release": "Release",
     "settings.app.version": "Version",
     "settings.app.buildMode": "Build mode",
-    "settings.app.activeProfile": "Active profile",
-    "settings.app.root": "Program folder",
     "settings.app.openFolder": "Open program folder",
     "settings.app.loading": "Reading details…",
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Раздел «Программа»: версия, режим сборки, папка и активный профиль.
+// Раздел «Программа»: версия и режим сборки.
 //
 // Это справка, а не переключатели: менять здесь нечего. Папку программы
 // открывают, чтобы положить рядом файл или посмотреть, что занимает место.
@@ -14,14 +14,6 @@ const info = computed(() => appInfo.current);
 const buildMode = computed(() =>
   info.value?.debug ? t("settings.app.debug") : t("settings.app.release"),
 );
-
-const profileLabel = computed(() => {
-  const current = info.value;
-  if (!current) return "—";
-  return current.profile_title === current.profile
-    ? current.profile
-    : `${current.profile_title} (${current.profile})`;
-});
 
 onMounted(() => {
   void loadAppInfo();
@@ -46,14 +38,6 @@ onMounted(() => {
       <div class="app__fact">
         <dt>{{ t("settings.app.buildMode") }}</dt>
         <dd>{{ buildMode }}</dd>
-      </div>
-      <div class="app__fact">
-        <dt>{{ t("settings.app.activeProfile") }}</dt>
-        <dd>{{ profileLabel }}</dd>
-      </div>
-      <div class="app__fact">
-        <dt>{{ t("settings.app.root") }}</dt>
-        <dd class="mono">{{ info.root }}</dd>
       </div>
     </dl>
 
@@ -121,10 +105,5 @@ onMounted(() => {
   color: var(--ag-danger);
   font-size: var(--ag-text-xs);
   line-height: 1.45;
-}
-
-.mono {
-  font-family: var(--ag-font-mono);
-  font-size: var(--ag-text-xs);
 }
 </style>
