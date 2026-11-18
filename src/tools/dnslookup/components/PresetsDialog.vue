@@ -297,6 +297,7 @@ async function remove(preset: Preset): Promise<void> {
     :visible="visible"
     :header="t('dnslookup.preset.dialogTitle')"
     modal
+    dismissable-mask
     :draggable="false"
     :style="{ width: DIALOG_WIDTH, maxWidth: DIALOG_MAX_WIDTH }"
     @update:visible="emit('update:visible', $event)"

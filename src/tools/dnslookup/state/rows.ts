@@ -2,7 +2,8 @@
 //
 // Строка появляется из ввода, перепроверяется при смене типа и удаляется
 // вместе с результатами. Дубликат не создаётся: вместо второй такой же строки
-// подсвечивается первая и проверяется заново.
+// подсвечивается первая и проверяется заново. Новая строка встаёт в начало
+// таблицы: свежий запрос виден сразу, без прокрутки вниз.
 //
 // Перестановка уважает фильтр: места меняют только видимые строки, скрытые
 // остаются на своих позициях.
@@ -92,7 +93,7 @@ function highlightRow(session: DnsSession, rowId: string): void {
   highlightTimers.set(session, timer);
 }
 
-/** Добавляет строку и сразу проверяет её; дубликат не создаётся. */
+/** Добавляет строку в начало и сразу проверяет её; дубликат не создаётся. */
 export function addRow(session: DnsSession, input: string, type: RecordType): AddRowResult {
   const parsed = parseAddressInput(input, type);
   if (!parsed.ok) {
@@ -114,7 +115,7 @@ export function addRow(session: DnsSession, input: string, type: RecordType): Ad
     name: parsed.value.name,
     type,
   };
-  session.rows.push(row);
+  session.rows.unshift(row);
   void runRows(session, [row.id]);
   return { kind: "added", rowId: row.id };
 }

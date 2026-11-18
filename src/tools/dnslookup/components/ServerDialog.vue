@@ -77,6 +77,7 @@ function remove(serverId: string): void {
     :visible="visible"
     :header="t('dnslookup.servers.title')"
     modal
+    dismissable-mask
     :draggable="false"
     :style="{ width: DIALOG_WIDTH, maxWidth: '92vw' }"
     @update:visible="emit('update:visible', $event)"
