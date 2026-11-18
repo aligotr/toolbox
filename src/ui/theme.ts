@@ -248,16 +248,23 @@ export const toolboxPreset = definePreset(Aura, {
       white-space: pre-line;
     }
 
-    /* Всплывающее подтверждение: кнопки стоят по центру блока, а не
-       у правого края. Минимальная ширина не даёт короткому вопросу
-       сжаться до ширины кнопок. */
+    /* Всплывающее подтверждение: вопрос по центру, кнопки по центру блока.
+       Минимальная ширина не даёт короткому вопросу сжаться до ширины кнопок. */
     html .p-confirmpopup {
       min-width: 260px;
     }
 
+    html .p-confirmpopup-content {
+      justify-content: center;
+    }
+
+    html .p-confirmpopup-message {
+      text-align: center;
+    }
+
     html .p-confirmpopup-footer {
       justify-content: center;
-      gap: var(--ag-space-sm);
+      gap: var(--ag-space-lg);
     }
   `,
 });

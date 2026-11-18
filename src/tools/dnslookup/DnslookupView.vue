@@ -19,8 +19,8 @@ import Select from "primevue/select";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted, ref, watch } from "vue";
 import type { ToolCellProps } from "@/contracts/tools";
-import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
+import { requireConfirm } from "@/ui/confirmPopup";
 import DnsTable from "./components/DnsTable.vue";
 import PresetBar from "./components/PresetBar.vue";
 import PresetsDialog from "./components/PresetsDialog.vue";
@@ -200,14 +200,11 @@ function toggleRun(): void {
 
 /** Спрашивает подтверждение очистки всплывающим блоком у кнопки. */
 function requestClear(event: MouseEvent): void {
-  confirm.require({
-    group: "popup",
+  requireConfirm(confirm, {
     target: event.currentTarget as HTMLElement,
     message: t("dnslookup.view.clearMessage"),
     acceptLabel: t("dnslookup.view.clearAccept"),
     rejectLabel: t("dnslookup.view.cancel"),
-    acceptProps: CONFIRM_DANGER_ACCEPT,
-    rejectProps: CONFIRM_CALM_REJECT,
     accept: () => {
       void clear();
     },

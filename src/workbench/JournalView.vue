@@ -14,10 +14,10 @@ import InputText from "primevue/inputtext";
 import MultiSelect from "primevue/multiselect";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, ref } from "vue";
-import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
 import { JOURNAL_LIMIT } from "@/core/infra/constants";
 import { t } from "@/core/infra/i18n";
 import { clearJournal, journalText, journalSource, type JournalKind } from "@/core/infra/journal";
+import { requireConfirm } from "@/ui/confirmPopup";
 import { highlightParts } from "./journalList";
 import { useJournalView } from "./useJournalView";
 
@@ -67,14 +67,11 @@ function resumeToTop(): void {
 
 /** Спрашивает подтверждение очистки всплывающим блоком у кнопки. */
 function requestClear(event: MouseEvent): void {
-  confirm.require({
-    group: "popup",
+  requireConfirm(confirm, {
     target: event.currentTarget as HTMLElement,
     message: t("journal.clear.message"),
     acceptLabel: t("journal.clear.accept"),
     rejectLabel: t("journal.clear.reject"),
-    acceptProps: CONFIRM_DANGER_ACCEPT,
-    rejectProps: CONFIRM_CALM_REJECT,
     accept: () => {
       clearJournal();
       // Лента могла стоять на паузе со снимком: его тоже пора отпустить,
