@@ -86,15 +86,15 @@ function requestClear(event: MouseEvent): void {
 </script>
 
 <template>
-  <section class="journal wb-section">
-    <header class="journal__head">
-      <div class="journal__top">
-        <h1 class="wb-screen__title">{{ t("journal.view.title") }}</h1>
-        <span v-if="total > 0" class="journal__shown">
-          {{ t("journal.view.shown", { shown, total }) }}
-        </span>
-      </div>
+  <section class="journal wb-screen">
+    <header class="wb-screen__head journal__head">
+      <h1 class="wb-screen__title">{{ t("journal.view.title") }}</h1>
+      <span v-if="total > 0" class="journal__shown">
+        {{ t("journal.view.shown", { shown, total }) }}
+      </span>
+    </header>
 
+    <div class="wb-screen__body">
       <div class="journal__filters">
         <InputText
           v-model="view.query"
@@ -148,61 +148,54 @@ function requestClear(event: MouseEvent): void {
       <p v-if="truncated" class="journal__meta">
         {{ t("journal.view.limit", { count: JOURNAL_LIMIT }) }}
       </p>
-    </header>
 
-    <div ref="scroller" class="journal__scroll" @scroll.passive="onScroll">
-      <div v-if="pending > 0" class="journal__pending">
-        <span>{{ t("journal.view.pending", { count: pending }) }}</span>
-        <Button size="small" text :label="t('journal.view.resume')" @click="resumeToTop" />
+      <div ref="scroller" class="journal__scroll" @scroll.passive="onScroll">
+        <div v-if="pending > 0" class="journal__pending">
+          <span>{{ t("journal.view.pending", { count: pending }) }}</span>
+          <Button size="small" text :label="t('journal.view.resume')" @click="resumeToTop" />
+        </div>
+
+        <ul v-if="rows.length > 0" class="journal__list">
+          <template
+            v-for="row in rows"
+            :key="row.type === 'day' ? `day-${row.dayKey}` : row.entry.id"
+          >
+            <li v-if="row.type === 'day'" class="journal__day">{{ dayLabel(row.dayKey) }}</li>
+            <li v-else class="journal__row">
+              <i class="journal__dot" :class="TONE[row.entry.kind]" aria-hidden="true" />
+              <time class="journal__time">{{ time(row.entry.at) }}</time>
+              <span class="journal__source">{{ journalSource(row.entry.source) }}</span>
+              <span class="journal__text">
+                <template
+                  v-for="(part, index) in highlightParts(journalText(row.entry), view.query)"
+                  :key="index"
+                >
+                  <mark v-if="part.match" class="journal__match">{{ part.text }}</mark>
+                  <template v-else>{{ part.text }}</template>
+                </template>
+              </span>
+              <span v-if="row.entry.kind === 'error'" class="journal__kind">
+                {{ t("journal.kind.error") }}
+              </span>
+            </li>
+          </template>
+        </ul>
+
+        <p v-else class="journal__empty">
+          {{ total ? t("journal.view.emptyFiltered") : t("journal.view.empty") }}
+        </p>
       </div>
-
-      <ul v-if="rows.length > 0" class="journal__list">
-        <template
-          v-for="row in rows"
-          :key="row.type === 'day' ? `day-${row.dayKey}` : row.entry.id"
-        >
-          <li v-if="row.type === 'day'" class="journal__day">{{ dayLabel(row.dayKey) }}</li>
-          <li v-else class="journal__row">
-            <i class="journal__dot" :class="TONE[row.entry.kind]" aria-hidden="true" />
-            <time class="journal__time">{{ time(row.entry.at) }}</time>
-            <span class="journal__source">{{ journalSource(row.entry.source) }}</span>
-            <span class="journal__text">
-              <template
-                v-for="(part, index) in highlightParts(journalText(row.entry), view.query)"
-                :key="index"
-              >
-                <mark v-if="part.match" class="journal__match">{{ part.text }}</mark>
-                <template v-else>{{ part.text }}</template>
-              </template>
-            </span>
-            <span v-if="row.entry.kind === 'error'" class="journal__kind">
-              {{ t("journal.kind.error") }}
-            </span>
-          </li>
-        </template>
-      </ul>
-
-      <p v-else class="journal__empty">
-        {{ total ? t("journal.view.emptyFiltered") : t("journal.view.empty") }}
-      </p>
     </div>
   </section>
 </template>
 
 <style scoped>
 .journal {
-  height: 100%;
   padding: var(--ag-space-lg);
 }
 
 .journal__head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ag-space-md);
-}
-
-.journal__top {
-  display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
   gap: var(--ag-space-md);

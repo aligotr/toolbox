@@ -1,6 +1,6 @@
 # ADR 0032: Шапка инструмента: имя и управление пресетом в одной строке
 
-- **Статус:** принято
+- **Статус:** принято; зазор после шапки уточнён ADR 0053
 - **Дата:** 2026-11-13
 - **Область:** `src/tools/dnslookup/DnslookupView.vue`,
   `src/tools/dnslookup/PresetsDialog.vue`, `src/tools/dnslookup/constants.ts`,

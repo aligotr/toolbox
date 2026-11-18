@@ -29,7 +29,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="settings">
+  <section class="settings wb-screen">
     <header class="wb-screen__head">
       <h1 class="wb-screen__title">{{ t("settings.view.title") }}</h1>
       <p class="wb-screen__lead">{{ t("settings.view.lead") }}</p>
@@ -65,14 +65,9 @@ onMounted(() => {
 
 <style scoped>
 .settings {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ag-space-xl);
-  height: 100%;
   max-width: var(--ag-content-settings);
   margin: 0 auto;
   padding: var(--ag-space-lg);
-  min-height: 0;
 }
 
 .settings__body {

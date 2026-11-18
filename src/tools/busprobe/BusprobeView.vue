@@ -40,56 +40,58 @@ onUnmounted(() => {
       <p class="busprobe__lead">{{ t("busprobe.view.lead") }}</p>
     </header>
 
-    <div class="busprobe__form">
-      <InputText
-        v-model="echo"
-        class="busprobe__input"
-        size="small"
-        :aria-label="t('busprobe.view.inputAria')"
-        :placeholder="t('busprobe.view.inputPlaceholder')"
-        :disabled="status.loading"
-        @keyup.enter="checkBus"
-      />
-      <Button
-        :label="t('busprobe.view.check')"
-        icon="pi pi-bolt"
-        size="small"
-        :loading="status.loading"
-        @click="checkBus"
-      />
+    <div class="busprobe__body">
+      <div class="busprobe__form">
+        <InputText
+          v-model="echo"
+          class="busprobe__input"
+          size="small"
+          :aria-label="t('busprobe.view.inputAria')"
+          :placeholder="t('busprobe.view.inputPlaceholder')"
+          :disabled="status.loading"
+          @keyup.enter="checkBus"
+        />
+        <Button
+          :label="t('busprobe.view.check')"
+          icon="pi pi-bolt"
+          size="small"
+          :loading="status.loading"
+          @click="checkBus"
+        />
+      </div>
+
+      <p v-if="status.error" class="busprobe__error">
+        <i class="pi pi-exclamation-circle" aria-hidden="true" />
+        {{ status.error }}
+      </p>
+
+      <section v-if="reply" class="reply">
+        <h2 class="busprobe__section-title">{{ t("busprobe.view.replyTitle") }}</h2>
+
+        <dl class="reply__facts">
+          <div class="reply__fact">
+            <dt>echo</dt>
+            <dd>{{ reply.echo ?? "нет" }}</dd>
+          </div>
+          <div class="reply__fact">
+            <dt>correlation_id</dt>
+            <dd class="mono">{{ reply.correlation_id ?? "нет" }}</dd>
+          </div>
+          <div class="reply__fact">
+            <dt>{{ t("busprobe.view.sentAt") }}</dt>
+            <dd>{{ formatTime(reply.at) }}</dd>
+          </div>
+          <div v-if="elapsedMs !== null" class="reply__fact">
+            <dt>{{ t("busprobe.view.roundTrip") }}</dt>
+            <dd>{{ formatMs(elapsedMs, 1) }}</dd>
+          </div>
+        </dl>
+
+        <p class="busprobe__note">{{ t("busprobe.view.note") }}</p>
+      </section>
+
+      <RoutePanel v-if="chain" :chain="chain" :rows="rows" :selected="selected" @toggle="toggle" />
     </div>
-
-    <p v-if="status.error" class="busprobe__error">
-      <i class="pi pi-exclamation-circle" aria-hidden="true" />
-      {{ status.error }}
-    </p>
-
-    <section v-if="reply" class="reply">
-      <h2 class="busprobe__section-title">{{ t("busprobe.view.replyTitle") }}</h2>
-
-      <dl class="reply__facts">
-        <div class="reply__fact">
-          <dt>echo</dt>
-          <dd>{{ reply.echo ?? "нет" }}</dd>
-        </div>
-        <div class="reply__fact">
-          <dt>correlation_id</dt>
-          <dd class="mono">{{ reply.correlation_id ?? "нет" }}</dd>
-        </div>
-        <div class="reply__fact">
-          <dt>{{ t("busprobe.view.sentAt") }}</dt>
-          <dd>{{ formatTime(reply.at) }}</dd>
-        </div>
-        <div v-if="elapsedMs !== null" class="reply__fact">
-          <dt>{{ t("busprobe.view.roundTrip") }}</dt>
-          <dd>{{ formatMs(elapsedMs, 1) }}</dd>
-        </div>
-      </dl>
-
-      <p class="busprobe__note">{{ t("busprobe.view.note") }}</p>
-    </section>
-
-    <RoutePanel v-if="chain" :chain="chain" :rows="rows" :selected="selected" @toggle="toggle" />
   </section>
 </template>
 
@@ -97,13 +99,19 @@ onUnmounted(() => {
 .busprobe {
   display: flex;
   flex-direction: column;
-  gap: var(--ag-space-xl);
 }
 
 .busprobe__heading {
   display: flex;
   flex-direction: column;
   gap: var(--ag-space-sm);
+  margin-block-end: var(--ag-space-heading);
+}
+
+.busprobe__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-xl);
 }
 
 .busprobe__title {

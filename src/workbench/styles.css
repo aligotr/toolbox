@@ -4,11 +4,31 @@
    префикс `wb-`: файл не `scoped`, и префикс — единственная защита от
    протечки в стили инструментов. */
 
-/* Шапка экрана: заголовок и пояснение. Одна на все экраны оболочки. */
+/* Экран оболочки: шапка и тело. Контейнер не задаёт общий `gap`: зазор
+   после шапки принадлежит самой шапке, иначе он сложился бы с ним. */
+.wb-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Шапка экрана: заголовок и пояснение. Одна на все экраны оболочки.
+   Отступ после шапки задаёт она сама, а не следующий блок. */
 .wb-screen__head {
   display: flex;
   flex-direction: column;
   gap: var(--ag-space-sm);
+  margin-block-end: var(--ag-space-heading);
+}
+
+/* Тело экрана: блоки под шапкой со своим ритмом. */
+.wb-screen__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--ag-space-lg);
+  min-height: 0;
 }
 
 .wb-screen__title {

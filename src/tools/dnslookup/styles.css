@@ -13,15 +13,16 @@
   height: 100%;
 }
 
-.dns > * + * {
-  margin-block-start: var(--ag-space-lg);
+.dns__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--ag-space-lg);
+  min-width: 0;
+  min-height: 0;
 }
 
-.dns__head + * {
-  margin-block-start: var(--ag-space-heading);
-}
-
-.dns > :not(.dns__table) {
+.dns__body > :not(.dns__table) {
   flex: none;
 }
 
@@ -34,6 +35,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--ag-space-sm) var(--ag-space-md);
+  margin-block-end: var(--ag-space-heading);
 }
 
 .dns__title {
