@@ -162,10 +162,10 @@ function requestClear(event: MouseEvent): void {
           >
             <li v-if="row.type === 'day'" class="journal__day">{{ dayLabel(row.dayKey) }}</li>
             <li v-else class="journal__row">
-              <i class="journal__dot" :class="TONE[row.entry.kind]" aria-hidden="true" />
               <time class="journal__time">{{ time(row.entry.at) }}</time>
               <span class="journal__source">{{ journalSource(row.entry.source) }}</span>
               <span class="journal__text">
+                <i class="journal__dot" :class="TONE[row.entry.kind]" aria-hidden="true" />
                 <template
                   v-for="(part, index) in highlightParts(journalText(row.entry), view.query)"
                   :key="index"
@@ -281,12 +281,13 @@ function requestClear(event: MouseEvent): void {
 }
 
 .journal__dot {
-  align-self: center;
-  flex-shrink: 0;
+  display: inline-block;
   width: 6px;
   height: 6px;
+  margin-inline-end: var(--ag-space-sm);
   border-radius: var(--ag-radius-round);
   background: var(--p-surface-400);
+  vertical-align: middle;
 }
 
 .journal__dot--ok {
