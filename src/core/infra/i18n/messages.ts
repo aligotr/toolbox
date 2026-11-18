@@ -355,11 +355,12 @@ export const ruMessages: Messages = {
   "tools.open.anotherTab": "Ctrl+клик — ещё одна вкладка",
 
   // ── Описания инструментов ───────────────────────────────────────────────
-  "tools.busprobe.description": "Витрина шины и путь сообщения",
+  "tools.busprobe.description": "Демонстрация шины и путь сообщения",
   "tools.dnslookup.description": "Проверка и сравнение ответов DNS-серверов",
 
   // ── Busprobe ─────────────────────────────────────────────────────────────
-  "busprobe.view.lead": "Витрина шины: учебный запрос core:ping и его путь до ответа core:pong.",
+  "busprobe.view.lead":
+    "Демонстрация шины: учебный запрос core:ping и его путь до ответа core:pong.",
   "busprobe.view.badgeTrace": "идёт прогон",
   "busprobe.view.badgeTraced": "путь записан",
   "busprobe.view.badgeReplied": "ответ получен",
