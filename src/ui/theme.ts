@@ -228,6 +228,15 @@ export const toolboxPreset = definePreset(Aura, {
       font-size: 14px;
     }
 
+    /* Поля, списки и кнопки одной высоты: соседние элементы в строке стоят
+       на одной линии, а не расходятся на разницу высоты строки текста. */
+    html .p-inputtext-sm,
+    html .p-select-sm,
+    html .p-multiselect-sm,
+    html .p-button-sm {
+      height: var(--ag-control-h);
+    }
+
     html .p-tooltip,
     html .p-chip {
       font-size: 13px;

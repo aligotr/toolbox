@@ -329,10 +329,16 @@
   white-space: nowrap;
 }
 
-.dns-table__expand {
+/* Кнопки строки таблицы размером с иконку: строка данных остаётся плотной,
+   а не тянется до высоты контролов формы. */
+.dns-table .dns-table__domain-main .p-button {
   flex-shrink: 0;
   width: 24px;
   height: 24px;
+  padding: 0;
+}
+
+.dns-table__expand {
   margin-left: -4px;
 }
 

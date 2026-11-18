@@ -380,7 +380,7 @@ async function exportCsv(): Promise<void> {
 
         <div class="dns__table-actions">
           <Button
-            v-tooltip.top="t('dnslookup.view.columns')"
+            v-tooltip.bottom="t('dnslookup.view.columns')"
             icon="pi pi-table"
             severity="secondary"
             text
@@ -390,7 +390,7 @@ async function exportCsv(): Promise<void> {
             @click="toggleColumns"
           />
           <Button
-            v-tooltip.top="t('dnslookup.view.export')"
+            v-tooltip.bottom="t('dnslookup.view.export')"
             icon="pi pi-download"
             severity="secondary"
             text
@@ -400,7 +400,7 @@ async function exportCsv(): Promise<void> {
             @click="exportCsv"
           />
           <Button
-            v-tooltip.top="t('dnslookup.view.clear')"
+            v-tooltip.bottom="t('dnslookup.view.clear')"
             icon="pi pi-trash"
             severity="danger"
             text
