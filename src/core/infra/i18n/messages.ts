@@ -122,6 +122,8 @@ export const ruMessages: Messages = {
   "journal.view.resume": "Продолжить",
   "journal.view.emptyFiltered": "Ничего не найдено. Измените фильтр или запрос.",
   "journal.view.empty": "Пока записей нет. Сюда попадут проверки, сохранения и ошибки.",
+  "journal.order.newestFirst": "Сначала новые",
+  "journal.order.oldestFirst": "Сначала старые",
   "journal.order.toNewest": "Показать сначала новые",
   "journal.order.toOldest": "Показать сначала старые",
   "journal.day.today": "Сегодня",

@@ -116,6 +116,8 @@
     "journal.view.resume": "Resume",
     "journal.view.emptyFiltered": "Nothing found. Change the filter or the query.",
     "journal.view.empty": "No entries yet. Checks, saves and errors will appear here.",
+    "journal.order.newestFirst": "Newest first",
+    "journal.order.oldestFirst": "Oldest first",
     "journal.order.toNewest": "Show newest first",
     "journal.order.toOldest": "Show oldest first",
     "journal.day.today": "Today",

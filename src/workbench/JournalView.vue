@@ -49,7 +49,12 @@ const TONE: Record<JournalKind, string> = {
   error: "journal__dot--danger",
 };
 
-/** Действие переключателя порядка: подпись и подсказка. */
+/** Текущий порядок словом: подпись у иконки переключателя. */
+const orderLabel = computed(() =>
+  view.order === "newest" ? t("journal.order.newestFirst") : t("journal.order.oldestFirst"),
+);
+
+/** Действие переключателя порядка: подсказка при наведении. */
 const orderAction = computed(() =>
   view.order === "newest" ? t("journal.order.toOldest") : t("journal.order.toNewest"),
 );
@@ -94,11 +99,6 @@ function requestClear(event: MouseEvent): void {
           :aria-label="t('journal.view.search')"
         />
 
-        <label class="journal__check">
-          <Checkbox v-model="view.onlyErrors" binary />
-          <span>{{ t("journal.view.onlyErrors") }}</span>
-        </label>
-
         <MultiSelect
           v-model="view.sources"
           class="journal__sources"
@@ -114,13 +114,18 @@ function requestClear(event: MouseEvent): void {
         <Button
           class="journal__order"
           :icon="view.order === 'newest' ? 'pi pi-sort-amount-down' : 'pi pi-sort-amount-up-alt'"
+          :label="orderLabel"
           v-tooltip.bottom="orderAction"
           severity="secondary"
           text
           size="small"
-          :aria-label="orderAction"
           @click="toggleOrder"
         />
+
+        <label class="journal__check">
+          <Checkbox v-model="view.onlyErrors" binary />
+          <span>{{ t("journal.view.onlyErrors") }}</span>
+        </label>
 
         <Button
           class="journal__clear"
