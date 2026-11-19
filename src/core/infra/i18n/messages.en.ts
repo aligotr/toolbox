@@ -30,7 +30,7 @@ export const enMessages: Messages = {
   "settings.section.app": "About",
   "settings.language.title": "Language",
   "settings.language.lead":
-    "Choose the interface language. Russian and English are built in and update with the program. An external dictionary is your file: the program never changes it.",
+    "The built-in dictionary is updated with the program: currently Russian and English.\nAn external dictionary is your file: the program does not change it, missing keys come in a separate file and must be moved manually.",
   "settings.language.current": "Interface language",
   "settings.language.russian": "Russian",
   "settings.language.english": "English",
@@ -65,8 +65,6 @@ export const enMessages: Messages = {
   "settings.language.missingWritten": "Missing keys exported: {path}",
   "settings.language.missingActual": "The additions file is up to date: {path}",
   "settings.language.missingNone": "No keys are missing: the additions file was removed.",
-  "settings.language.note":
-    "The built-in languages update with the program. An external dictionary is your file: the program never changes it.\nMissing keys are provided as a separate file; copy them over manually.\nPress Refresh or return to the window after editing.",
 
   "notifications.languages.exported": "Dictionary “{code}” was exported to an external file",
   "notifications.languages.reverted": "The built-in translation for “{code}” is back",

@@ -318,8 +318,6 @@ onUnmounted(() => {
     </p>
     <p v-if="missingNote !== null" class="language__hint">{{ missingNote }}</p>
 
-    <p class="language__note">{{ t("settings.language.note") }}</p>
-
     <p v-for="item in broken" :key="`problem-${item.code}`" class="language__error">
       {{ item.problem ? describeError(item.problem) : "" }}
     </p>
@@ -431,8 +429,7 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 
-.language__hint,
-.language__note {
+.language__hint {
   margin: 0;
   color: var(--p-text-muted-color);
   font-size: var(--ag-text-sm);
