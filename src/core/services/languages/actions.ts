@@ -40,9 +40,9 @@ export async function exportLanguage(code: string): Promise<string | null> {
     });
     await loadLanguages();
     notify({
-      kind: "success",
+      kind: "info",
       code: "notifications.languages.exported",
-      params: { code },
+      params: { code, file: fileNameOf(path) },
       group: "language-export",
     });
     return path;
@@ -55,6 +55,12 @@ export async function exportLanguage(code: string): Promise<string | null> {
   } finally {
     status.export.loading = false;
   }
+}
+
+/** Имя файла из пути: уведомлению не нужен полный путь. */
+function fileNameOf(path: string): string {
+  const index = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+  return index === -1 ? path : path.slice(index + 1);
 }
 
 /** Возвращает встроенный язык: внешний файл уходит в корзину. */
@@ -138,8 +144,9 @@ export async function exportLanguageSample(): Promise<string | null> {
       document: { name: BUILTIN_LANGUAGE_NAME, messages: ruMessages },
     });
     notify({
-      kind: "success",
+      kind: "info",
       code: "notifications.languages.sampleSaved",
+      params: { file: fileNameOf(path) },
       group: "language-sample",
     });
     return path;

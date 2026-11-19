@@ -71,8 +71,8 @@ export const ruMessages: Messages = {
   "settings.language.missingExport": "Выгрузить недостающие",
 
   // ── Уведомления ──────────────────────────────────────────────────────────
-  "notifications.languages.exported": "Словарь «{code}» выгружен во внешний файл",
-  "notifications.languages.sampleSaved": "Образец словаря сохранён",
+  "notifications.languages.exported": "Словарь «{code}» выгружен: {file}",
+  "notifications.languages.sampleSaved": "Образец словаря сохранён: {file}",
   "notifications.languages.missingWritten": "Файл: {file}\nНедостающих ключей: {count}",
   "notifications.languages.missingActual": "Файл дополнений уже актуален",
   "notifications.languages.missingNone": "Недостающих ключей нет, файл дополнений убран",
