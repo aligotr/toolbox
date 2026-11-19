@@ -102,6 +102,35 @@ function printLimited(prefix, items, describe = (item) => item) {
   }
 }
 
+/** Ключи-исключения капитализации: единицы измерения - символы, не метки. */
+const LOWERCASE_ALLOWED = new Set(["busprobe.unit.ms"]);
+
+/**
+ * Видимый текст начинается с заглавной буквы (i18n.md).
+ *
+ * Правило одно для предложений и коротких меток: статус, бейдж и подпись
+ * фильтра читаются как текст, а не как служебный код. Строчными остаются
+ * только единицы измерения.
+ */
+function checkCapitalization(code, messages) {
+  const found = [];
+  for (const [key, message] of Object.entries(messages)) {
+    if (LOWERCASE_ALLOWED.has(key)) continue;
+    for (const text of messageTexts(message)) {
+      if (/^[a-zа-яё]/u.test(text)) found.push({ key, text });
+    }
+  }
+
+  if (found.length === 0) {
+    console.log(`Словарь «${code}»: тексты начинаются с заглавной.`);
+    return true;
+  }
+
+  console.error(`Словарь «${code}»: текст начинается со строчной буквы (i18n.md):`);
+  printLimited("", found, ({ key, text }) => `${key}: ${text.slice(0, 60)}`);
+  return false;
+}
+
 /** Проверяет встроенный словарь против русского эталона. */
 function checkBuiltin(code, messages) {
   const categories = pluralCategories(code);
@@ -215,4 +244,7 @@ if (unused.length > 0) {
 
 console.log(`Русский словарь полон: ${used.size} ключей.`);
 
+if (!checkCapitalization("ru", ruMessages)) process.exit(1);
+
 if (!checkBuiltin("en", enMessages)) process.exit(1);
+if (!checkCapitalization("en", enMessages)) process.exit(1);

@@ -29,6 +29,8 @@ import { requireConfirm } from "@/ui/confirmPopup";
 
 const confirm = useConfirm();
 
+let switching = false;
+
 /**
  * Переключает язык и сразу проверяет недостающие ключи.
  *
@@ -37,8 +39,25 @@ const confirm = useConfirm();
  * только после перезапуска (ADR 0057).
  */
 async function switchLanguage(code: string): Promise<void> {
-  if (!(await setLanguage(code))) return;
-  await checkLanguageFile(code);
+  if (switching || settings.current?.ui.language === code) return;
+
+  switching = true;
+  try {
+    if (await setLanguage(code)) await checkLanguageFile(code);
+  } finally {
+    switching = false;
+  }
+}
+
+/** Можно ли выбрать язык: битый внешний без встроенного не выбирается. */
+function isSelectable(entry: LanguageEntry): boolean {
+  return entry.problem === null || entry.overrides;
+}
+
+/** Клик по карточке выбирает язык; кнопки действий этого не делают. */
+function select(entry: LanguageEntry): void {
+  if (!isSelectable(entry) || current.value === entry.code) return;
+  current.value = entry.code;
 }
 
 /** Выбранный язык: пишется в настройки, применяется и проверяется сразу. */
@@ -154,44 +173,58 @@ onUnmounted(() => {
         v-for="item in languages.items"
         :key="item.code"
         class="language__item"
-        :class="{ 'language__item--active': current === item.code }"
+        :class="{
+          'language__item--active': current === item.code,
+          'language__item--disabled': !isSelectable(item),
+        }"
+        @click="select(item)"
       >
         <input
+          class="language__radio"
           type="radio"
           name="ui-language"
           :value="item.code"
           v-model="current"
-          :disabled="item.problem !== null && !item.overrides"
+          :disabled="!isSelectable(item)"
+          :aria-label="`${nameOf(item)}, ${item.code}`"
+          @click.stop
         />
-        <span class="language__name">
-          {{ nameOf(item) }}
-          <span class="language__code">{{ item.code }}</span>
+
+        <span class="language__body">
+          <span class="language__name">
+            {{ nameOf(item) }}
+            <span class="language__code">{{ item.code }}</span>
+          </span>
+
+          <span class="language__badges">
+            <span v-if="item.problem !== null" class="language__badge language__badge--bad">
+              {{ t("settings.language.broken") }}
+            </span>
+            <span v-else-if="item.overrides" class="language__badge">
+              {{ t("settings.language.override") }}
+            </span>
+            <span v-else-if="item.builtin" class="language__badge language__badge--ok">
+              {{ t("settings.language.builtin") }}
+            </span>
+            <span v-else class="language__badge">
+              {{ t("settings.language.external") }}
+            </span>
+
+            <span
+              v-if="
+                item.problem === null && (item.overrides || !item.builtin) && item.missing === 0
+              "
+              class="language__badge language__badge--ok"
+            >
+              {{ t("settings.language.complete") }}
+            </span>
+            <span v-if="item.problem === null && item.missing > 0" class="language__badge">
+              {{ t("settings.language.missingCount", { count: item.missing }) }}
+            </span>
+          </span>
         </span>
 
-        <span v-if="item.problem !== null" class="language__badge language__badge--bad">
-          {{ t("settings.language.broken") }}
-        </span>
-        <span v-else-if="item.overrides" class="language__badge">
-          {{ t("settings.language.override") }}
-        </span>
-        <span v-else-if="item.builtin" class="language__badge language__badge--ok">
-          {{ t("settings.language.builtin") }}
-        </span>
-        <span v-else class="language__badge">
-          {{ t("settings.language.external") }}
-        </span>
-
-        <span
-          v-if="item.problem === null && (item.overrides || !item.builtin) && item.missing === 0"
-          class="language__badge language__badge--ok"
-        >
-          {{ t("settings.language.complete") }}
-        </span>
-        <span v-if="item.problem === null && item.missing > 0" class="language__badge">
-          {{ t("settings.language.missingCount", { count: item.missing }) }}
-        </span>
-
-        <span class="language__row-actions">
+        <span class="language__row-actions" @click.stop>
           <Button
             v-if="item.builtin && !item.overrides"
             :label="t('settings.language.exportFile')"
@@ -300,18 +333,28 @@ onUnmounted(() => {
   gap: var(--ag-space-sm);
 }
 
+/* Карточка: выбор слева, действия отдельной колонкой справа. */
 .language__item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--ag-space-md);
+  gap: var(--ag-space-lg);
   padding: var(--ag-space-lg);
   border: 1px solid var(--ag-border);
   border-radius: var(--ag-radius-md);
   background: var(--ag-surface);
+  cursor: pointer;
+}
+
+.language__item:not(.language__item--active):hover {
+  border-color: var(--ag-border-strong);
 }
 
 /* Отметка выбора - цветом действия, а не системным синим. */
-.language__item input {
+.language__radio {
+  width: 16px;
+  height: 16px;
+  margin: 0;
   accent-color: var(--p-primary-color);
 }
 
@@ -320,17 +363,38 @@ onUnmounted(() => {
   background: var(--p-surface-100);
 }
 
+.language__item--disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.language__item--disabled:not(.language__item--active):hover {
+  border-color: var(--ag-border);
+}
+
+.language__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-xs);
+  min-width: 0;
+}
+
 .language__name {
   display: flex;
   align-items: baseline;
   gap: var(--ag-space-sm);
-  flex: 1;
   font-size: var(--ag-text-sm);
 }
 
 .language__code {
   color: var(--p-text-muted-color);
   font-size: var(--ag-text-xs);
+}
+
+.language__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ag-space-xs);
 }
 
 .language__badge {
