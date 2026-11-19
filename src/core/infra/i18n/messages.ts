@@ -305,7 +305,7 @@ export const ruMessages: Messages = {
   "settings.window.position": "Положение",
   "settings.window.reset": "Сбросить размер и положение",
   "settings.window.resetMessage":
-    "Размер и положение окна вернутся к значениям по умолчанию. Содержимое вкладок не изменится.",
+    "Размер и положение окна вернутся к значениям по умолчанию.\nСбросить?",
   "settings.window.resetAccept": "Сбросить",
   "settings.window.resetReject": "Отмена",
 

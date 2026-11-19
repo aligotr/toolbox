@@ -250,7 +250,7 @@ export const enMessages: Messages = {
   "settings.window.position": "Position",
   "settings.window.reset": "Reset size and position",
   "settings.window.resetMessage":
-    "The window size and position will return to their defaults. The tab contents will not change.",
+    "The window size and position will return to their defaults.\nReset?",
   "settings.window.resetAccept": "Reset",
   "settings.window.resetReject": "Cancel",
   "settings.app.lead":

@@ -294,7 +294,8 @@ export const toolboxPreset = definePreset(Aura, {
     }
 
     /* Всплывающее подтверждение: вопрос по центру, кнопки по центру блока.
-       Минимальная ширина не даёт короткому вопросу сжаться до ширины кнопок. */
+       Минимальная ширина не даёт короткому вопросу сжаться до ширины кнопок.
+       Перенос строки в вопросе показывается как есть. */
     html .p-confirmpopup {
       min-width: 260px;
     }
@@ -305,6 +306,7 @@ export const toolboxPreset = definePreset(Aura, {
 
     html .p-confirmpopup-message {
       text-align: center;
+      white-space: pre-line;
     }
 
     html .p-confirmpopup-footer {
