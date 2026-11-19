@@ -20,7 +20,7 @@ import {
   renameProfile,
   status,
 } from "@/core/services/profiles";
-import { alignPopoverArrow } from "@/ui/confirmPopup";
+import { anchorOverlay } from "@/ui/anchoredOverlay";
 import { filesLabel, presetsLabel } from "../../plural";
 import { useProfiles } from "../useProfiles";
 
@@ -164,7 +164,7 @@ function resetCreate(): void {
 
 /** Ставит фокус в поле и наводит стрелку на центр кнопки. */
 async function focusCreate(): Promise<void> {
-  if (createTarget.value) alignPopoverArrow(createTarget.value);
+  if (createTarget.value) anchorOverlay(createTarget.value);
 
   await nextTick();
   const instance = createInput.value as unknown as { $el?: unknown } | null;
