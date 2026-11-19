@@ -58,8 +58,9 @@ export function anchorOverlay(target: HTMLElement): void {
  *
  * ConfirmPopup на любой клик внутри зовёт свой `alignOverlay` и сбрасывает
  * положение на стандартное. Обработчик на самом блоке срабатывает раньше
- * документа, поэтому поправка ставится в микрозадачу: она выполняется после
- * PrimeVue и до отрисовки, без видимого скачка.
+ * документа, и микрозадача тоже: Chromium выполняет её сразу после этого
+ * обработчика, до всплытия клика. Поэтому поправка ставится в кадр отрисовки:
+ * он идёт после обработчика документа и до отрисовки, без видимого скачка.
  */
 function keepOnClick(popup: HTMLElement, target: HTMLElement): void {
   targets.set(popup, target);
@@ -70,7 +71,7 @@ function keepOnClick(popup: HTMLElement, target: HTMLElement): void {
     const current = targets.get(popup);
     if (!current) return;
 
-    queueMicrotask(() => {
+    requestAnimationFrame(() => {
       if (!popup.isConnected || popup.offsetWidth === 0) return;
       placeBelow(popup, current);
       for (let tries = 0; tries < 30; tries += 1) {
@@ -87,7 +88,9 @@ function nudgeArrow(popup: HTMLElement, target: HTMLElement): boolean {
   const wanted = targetRect.left + targetRect.width / 2 - popupRect.left;
   const delta = wanted - arrowCenter(popup);
 
-  if (Math.abs(delta) < 0.5) return true;
+  // Допуск в сотую пикселя: после клика стрелка возвращается к тому же
+  // значению, а не к ближайшему в пределах половины пикселя.
+  if (Math.abs(delta) < 0.01) return true;
 
   const variable = arrowVariable(popup);
   const current = stylePixels(popup.style.getPropertyValue(variable));
