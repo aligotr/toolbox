@@ -537,9 +537,7 @@ export const ruMessages: Messages = {
   "dnslookup.preset.loadAccept": "Загрузить",
   "dnslookup.preset.deleteAccept": "Удалить",
   "dnslookup.preset.cancel": "Отмена",
-  "dnslookup.preset.deleteMessage": "Пресет «{title}» будет перемещён в корзину.",
-  "dnslookup.preset.deleteOpenMessage":
-    "Пресет «{title}» будет перемещён в корзину, привязка снимется. Текущие настройки останутся в таблице.",
+  "dnslookup.preset.deleteMessage": "Удалить пресет «{title}»?",
   "dnslookup.preset.replaceMessage":
     "Текущие строки и результаты будут заменены пресетом «{title}».",
   "dnslookup.preset.replaceRunning": "Идущая проверка будет остановлена.",

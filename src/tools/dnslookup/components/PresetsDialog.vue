@@ -266,12 +266,9 @@ function requestDelete(preset: Preset, event: MouseEvent): void {
   const target = event.currentTarget;
   if (!(target instanceof HTMLElement)) return;
 
-  const open = preset.id === props.session.presetId;
   requireConfirm(confirm, {
     target,
-    message: open
-      ? t("dnslookup.preset.deleteOpenMessage", { title: preset.title })
-      : t("dnslookup.preset.deleteMessage", { title: preset.title }),
+    message: t("dnslookup.preset.deleteMessage", { title: preset.title }),
     acceptLabel: t("dnslookup.preset.deleteAccept"),
     rejectLabel: t("dnslookup.preset.cancel"),
     accept: () => {

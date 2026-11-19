@@ -458,9 +458,7 @@ export const enMessages: Messages = {
   "dnslookup.preset.loadAccept": "Load",
   "dnslookup.preset.deleteAccept": "Delete",
   "dnslookup.preset.cancel": "Cancel",
-  "dnslookup.preset.deleteMessage": "Preset “{title}” will be moved to the trash.",
-  "dnslookup.preset.deleteOpenMessage":
-    "Preset “{title}” will be moved to the trash and the binding will be dropped. The current settings stay in the table.",
+  "dnslookup.preset.deleteMessage": "Delete preset “{title}”?",
   "dnslookup.preset.replaceMessage":
     "The current rows and results will be replaced by preset “{title}”.",
   "dnslookup.preset.replaceRunning": "The running check will be stopped.",
