@@ -16,6 +16,8 @@ export function useProfiles() {
 
   /** Переключение с предупреждением о перезапуске. */
   function requestSwitch(profile: Profile, onCancel?: () => void): void {
+    let accepted = false;
+
     confirm.require({
       header: t("settings.profiles.switchHeader"),
       message: t("settings.profiles.switchMessage", { title: profile.title }),
@@ -23,7 +25,15 @@ export function useProfiles() {
       rejectLabel: t("settings.profiles.switchReject"),
       rejectProps: CONFIRM_CALM_REJECT,
       reject: onCancel,
-      accept: () => void switchProfile(profile.id),
+      // Esc и клик мимо диалога тоже отказ: отметка не должна остаться
+      // на профиле, который не выбран. После согласия она ждёт перезапуска.
+      onHide: () => {
+        if (!accepted) onCancel?.();
+      },
+      accept: () => {
+        accepted = true;
+        void switchProfile(profile.id);
+      },
     });
   }
 
