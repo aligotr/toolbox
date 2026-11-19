@@ -332,10 +332,8 @@ export const ruMessages: Messages = {
   "settings.profiles.loading": "Список профилей читается…",
   "settings.profiles.empty":
     "Профилей нет. Создайте первый — приложение работает только внутри профиля.",
-  "settings.profiles.active": "Активный",
   "settings.profiles.renameAria": "Новое название профиля «{title}»",
   "settings.profiles.save": "Сохранить",
-  "settings.profiles.switch": "Переключить",
   "settings.profiles.rename": "Переименовать",
   "settings.profiles.delete": "Удалить",
   "settings.profiles.switchHeader": "Переключение профиля",

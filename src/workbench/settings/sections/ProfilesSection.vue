@@ -7,7 +7,7 @@
 
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import type { Profile } from "@/contracts/profiles";
 import { t } from "@/core/infra/i18n";
 import {
@@ -34,6 +34,52 @@ function usageLabel(id: string): string {
 /** Создание профиля: форма и поле живут в разделе, у него один потребитель. */
 const creating = ref(false);
 const newTitle = ref("");
+
+/** Профиль, отмеченный радиокнопкой до подтверждения переключения. */
+const pendingId = ref<string | null>(null);
+
+/**
+ * Выбор профиля радиокнопкой.
+ *
+ * Отметка ставится сразу, а активным профиль становится после подтверждения
+ * и перезапуска. Отказ возвращает отметку на активный профиль.
+ */
+const selected = computed({
+  get: () => pendingId.value ?? profiles.active ?? "",
+  set: (id: string) => {
+    if (id === profiles.active) return;
+
+    const profile = profiles.items.find((item) => item.id === id);
+    if (!profile) return;
+
+    pendingId.value = id;
+    requestSwitch(profile, () => {
+      pendingId.value = null;
+    });
+  },
+});
+
+/** Клик по карточке выбирает профиль, как радиокнопка. */
+function select(profile: Profile): void {
+  if (profile.id === profiles.active || renamingId.value === profile.id) return;
+  selected.value = profile.id;
+}
+
+/** Отказ переключения возвращает отметку на активный профиль. */
+watch(
+  () => status.switch.error,
+  (error) => {
+    if (error) pendingId.value = null;
+  },
+);
+
+/** Смена активного профиля снимает отложенную отметку. */
+watch(
+  () => profiles.active,
+  () => {
+    pendingId.value = null;
+  },
+);
 
 /** Идентификатор профиля, который сейчас переименовывают. */
 const renamingId = ref<string | null>(null);
@@ -145,20 +191,35 @@ onMounted(() => {
       {{ t("settings.profiles.empty") }}
     </p>
 
-    <ul v-else class="profiles__list">
+    <ul
+      v-else
+      class="profiles__list"
+      role="radiogroup"
+      :aria-label="t('settings.section.profiles')"
+    >
       <li
         v-for="profile in profiles.items"
         :key="profile.id"
         class="profile-row"
-        :class="{ 'profile-row--active': profile.id === profiles.active }"
+        :class="{
+          'profile-row--active': profile.id === profiles.active,
+          'profile-row--renaming': renamingId === profile.id,
+        }"
+        @click="select(profile)"
       >
+        <input
+          class="profile-row__radio"
+          type="radio"
+          name="active-profile"
+          :value="profile.id"
+          v-model="selected"
+          :disabled="renamingId === profile.id"
+          :aria-label="profile.title"
+          @click.stop
+        />
+
         <div class="profile-row__main">
-          <div class="profile-row__title-line">
-            <strong class="profile-row__name">{{ profile.title }}</strong>
-            <span v-if="profile.id === profiles.active" class="profile-row__badge">
-              {{ t("settings.profiles.active") }}
-            </span>
-          </div>
+          <strong class="profile-row__name">{{ profile.title }}</strong>
           <span class="profile-row__meta">
             <template v-if="usageLabel(profile.id)"> {{ usageLabel(profile.id) }} · </template>
             <span class="profile-row__id mono">{{ profile.id }}</span>
@@ -168,6 +229,7 @@ onMounted(() => {
         <form
           v-if="renamingId === profile.id"
           class="profile-row__form"
+          @click.stop
           @submit.prevent="submitRename(profile)"
         >
           <InputText
@@ -191,16 +253,7 @@ onMounted(() => {
           />
         </form>
 
-        <div v-else class="profile-row__actions">
-          <Button
-            v-if="profile.id !== profiles.active"
-            :label="t('settings.profiles.switch')"
-            size="small"
-            severity="secondary"
-            outlined
-            :disabled="status.switch.loading"
-            @click="requestSwitch(profile)"
-          />
+        <div v-else class="profile-row__actions" @click.stop>
           <Button
             :label="t('settings.profiles.rename')"
             size="small"
@@ -264,6 +317,10 @@ onMounted(() => {
   min-width: 240px;
 }
 
+.profile-row__form {
+  grid-column: 1 / -1;
+}
+
 .profiles__list {
   display: flex;
   flex-direction: column;
@@ -271,47 +328,58 @@ onMounted(() => {
   margin: 0;
   padding: 0;
   list-style: none;
+  /* Раскладка карточки зависит от её ширины: место занимает навигация. */
+  container-type: inline-size;
 }
 
+/* Карточка профиля в одном стиле с карточкой языка: выбор слева,
+   название и счётчики в теле, действия справа. */
 .profile-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "radio body actions";
   align-items: center;
   gap: var(--ag-space-lg);
-  flex-wrap: wrap;
   padding: var(--ag-space-lg);
   border: 1px solid var(--ag-border);
   border-radius: var(--ag-radius-md);
   background: var(--ag-surface);
+  cursor: pointer;
+}
+
+.profile-row:not(.profile-row--active):hover {
+  border-color: var(--ag-border-strong);
 }
 
 .profile-row--active {
   border-color: var(--p-primary-color);
+  background: var(--p-surface-100);
+}
+
+.profile-row--active,
+.profile-row--renaming {
+  cursor: default;
+}
+
+.profile-row__radio {
+  grid-area: radio;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--p-primary-color);
 }
 
 .profile-row__main {
+  grid-area: body;
   display: flex;
   flex-direction: column;
   gap: var(--ag-space-xs);
-  min-width: 200px;
-  margin-right: auto;
-}
-
-.profile-row__title-line {
-  display: flex;
-  align-items: center;
-  gap: var(--ag-space-sm);
+  min-width: 0;
 }
 
 .profile-row__name {
-  font-size: var(--ag-text-md);
-}
-
-.profile-row__badge {
-  padding: var(--ag-space-xs) var(--ag-space-sm);
-  border-radius: var(--ag-radius-md);
-  background: var(--p-primary-50);
-  color: var(--p-primary-700);
-  font-size: var(--ag-text-xs);
+  font-size: var(--ag-text-sm);
+  font-weight: 600;
 }
 
 .profile-row__id {
@@ -328,15 +396,23 @@ onMounted(() => {
 }
 
 .profile-row__actions {
+  grid-area: actions;
   display: flex;
   align-items: center;
-  gap: var(--ag-space-sm);
+  gap: var(--ag-space-xs);
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.profile-row__error,
+.profile-row__error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ag-danger);
+  font-size: var(--ag-text-xs);
+  line-height: 1.45;
+}
+
 .profiles__error {
-  flex-basis: 100%;
   margin: 0;
   color: var(--ag-danger);
   font-size: var(--ag-text-xs);
@@ -352,5 +428,22 @@ onMounted(() => {
 .mono {
   font-family: var(--ag-font-mono);
   font-size: var(--ag-text-xs);
+}
+
+/* Узкая карточка: действия уходят под текст. Выравнивание остаётся
+   естественным, у правого края. */
+@container (max-width: 660px) {
+  .profile-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "radio body"
+      "actions actions";
+    align-items: start;
+    row-gap: var(--ag-space-md);
+  }
+
+  .profile-row__radio {
+    margin-top: 2px;
+  }
 }
 </style>

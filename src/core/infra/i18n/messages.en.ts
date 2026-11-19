@@ -273,10 +273,8 @@ export const enMessages: Messages = {
   "settings.profiles.loading": "Reading the profile list…",
   "settings.profiles.empty":
     "There are no profiles. Create the first one - the program only works inside a profile.",
-  "settings.profiles.active": "Active",
   "settings.profiles.renameAria": "New name for profile “{title}”",
   "settings.profiles.save": "Save",
-  "settings.profiles.switch": "Switch",
   "settings.profiles.rename": "Rename",
   "settings.profiles.delete": "Delete",
   "settings.profiles.switchHeader": "Switch profile",

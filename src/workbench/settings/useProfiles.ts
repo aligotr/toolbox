@@ -15,13 +15,14 @@ export function useProfiles() {
   const confirm = useConfirm();
 
   /** Переключение с предупреждением о перезапуске. */
-  function requestSwitch(profile: Profile): void {
+  function requestSwitch(profile: Profile, onCancel?: () => void): void {
     confirm.require({
       header: t("settings.profiles.switchHeader"),
       message: t("settings.profiles.switchMessage", { title: profile.title }),
       acceptLabel: t("settings.profiles.switchAccept"),
       rejectLabel: t("settings.profiles.switchReject"),
       rejectProps: CONFIRM_CALM_REJECT,
+      reject: onCancel,
       accept: () => void switchProfile(profile.id),
     });
   }
