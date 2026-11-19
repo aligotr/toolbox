@@ -13,7 +13,7 @@ import type { ToolDescriptor } from "@/contracts/tools";
 import { setSidebarCollapsed, settings } from "@/core/services/settings/index";
 import type { StartupStatus } from "@/core/services/startup";
 import { ensureWorkspace, startWorkspace } from "@/core/services/workspace/index";
-import Sidebar from "./Sidebar.vue";
+import Sidebar from "./sidebar/Sidebar.vue";
 import TabStrip from "./tabs/TabStrip.vue";
 import WorkspaceView from "./workspace/WorkspaceView.vue";
 import "./styles.css";

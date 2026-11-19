@@ -9,7 +9,7 @@ import { computed, type Component } from "vue";
 import type { ToolDescriptor } from "@/contracts/tools";
 import type { StartupStatus } from "@/core/services/startup";
 import { workspace } from "@/core/services/workspace/index";
-import JournalView from "../JournalView.vue";
+import JournalView from "../journal/JournalView.vue";
 import SettingsView from "../settings/SettingsView.vue";
 import EmptyTab from "./EmptyTab.vue";
 import ToolGrid from "./ToolGrid.vue";

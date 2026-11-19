@@ -21,9 +21,9 @@ import { t } from "@/core/infra/i18n";
 import { activeProfile, loadProfiles, profiles, status } from "@/core/services/profiles";
 import { openSingleton, workspace } from "@/core/services/workspace/index";
 import RailItem from "./RailItem.vue";
-import { openToolOnAuxClick, openToolOnClick, openToolOnKeydown } from "./toolGestures";
-import { openSettingsSection } from "./settings/navigation";
-import { useProfiles } from "./settings/useProfiles";
+import { openToolOnAuxClick, openToolOnClick, openToolOnKeydown } from "../toolGestures";
+import { openSettingsSection } from "../settings/navigation";
+import { useProfiles } from "../settings/useProfiles";
 
 const props = defineProps<{ tools: ToolDescriptor[]; collapsed: boolean }>();
 

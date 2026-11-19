@@ -22,7 +22,7 @@ import {
   type JournalOrder,
   type JournalRow,
   type TextPart,
-} from "../../src/workbench/journalList.ts";
+} from "../../src/workbench/journal/journalList.ts";
 
 installBuiltin(ruMessages);
 
