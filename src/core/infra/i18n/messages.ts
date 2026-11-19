@@ -35,7 +35,7 @@ export const ruMessages: Messages = {
   // ── Раздел «Язык» ───────────────────────────────────────────────────────
   "settings.language.title": "Язык",
   "settings.language.lead":
-    "Встроенный словарь - обновляются вместе с программой, сейчас это русский и английский.\nВнешний словарь - ваш файл: программа его не меняет, недостающие ключи отдаются отдельным файлом, их нужно переносить вручную.",
+    "Встроенные словари обновляются вместе с программой: сейчас это русский и английский.\nВнешние словари - ваши файлы: программа их не меняет.\nНедостающие ключи отдаются отдельным файлом, их нужно переносить вручную.",
   "settings.language.current": "Язык интерфейса",
   "settings.language.russian": "Русский",
   "settings.language.english": "Английский",
@@ -75,8 +75,7 @@ export const ruMessages: Messages = {
   "notifications.languages.exported": "Словарь «{code}» выгружен во внешний файл",
   "notifications.languages.reverted": "Вернулся встроенный перевод «{code}»",
   "notifications.languages.sampleSaved": "Образец словаря сохранён",
-  "notifications.languages.missingWritten":
-    "Недостающие ключи словаря «{code}»: {count}. Файл: {file}",
+  "notifications.languages.missingWritten": "Файл: {file}\nНедостающих ключей: {count}",
   "notifications.languages.missingActual": "Файл дополнений уже актуален",
   "notifications.languages.missingNone": "Недостающих ключей нет, файл дополнений убран",
 

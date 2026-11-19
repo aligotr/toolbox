@@ -100,7 +100,6 @@ pub(crate) fn language_missing_write(
             .unwrap_or_default();
 
         let mut params = Map::new();
-        params.insert("code".to_owned(), Value::from(code.clone()));
         params.insert("count".to_owned(), Value::from(result.count));
         params.insert("file".to_owned(), Value::from(file));
         notifications::send(

@@ -275,6 +275,11 @@ export const toolboxPreset = definePreset(Aura, {
       white-space: pre-line;
     }
 
+    /* Уведомление тоже может быть из нескольких строк: файл и число. */
+    html .p-toast-summary {
+      white-space: pre-line;
+    }
+
     /* Крестик диалога - иконочная кнопка действия, как и прочие: общий
        радиус вместо круга. Иначе и обводка фокуса очерчивает круг. */
     html .p-dialog-close-button.p-button-rounded {
