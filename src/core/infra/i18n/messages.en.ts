@@ -65,7 +65,7 @@ export const enMessages: Messages = {
   "notifications.languages.exported": "Dictionary “{code}” was exported to an external file",
   "notifications.languages.reverted": "The built-in translation for “{code}” is back",
   "notifications.languages.sampleSaved": "Dictionary sample saved",
-  "notifications.languages.missingWritten": "Missing keys for “{code}”: {count}",
+  "notifications.languages.missingWritten": "Missing keys for “{code}”: {count}. File: {file}",
   "notifications.languages.missingActual": "The additions file is up to date",
   "notifications.languages.missingNone": "No keys are missing, the additions file was removed",
   "shell.sidebar.tools": "Tools",

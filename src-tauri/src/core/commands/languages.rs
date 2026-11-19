@@ -92,9 +92,17 @@ pub(crate) fn language_missing_write(
     let result = languages::missing_write(&storage.languages_dir(), &code, document.as_ref())?;
 
     if result.written {
+        // Имя файла, а не полный путь: тост должен назвать выгруженный файл,
+        // но длинный путь в нём не помещается.
+        let file = languages::missing_path(&storage.languages_dir(), &code)
+            .file_name()
+            .map(|name| name.to_string_lossy().into_owned())
+            .unwrap_or_default();
+
         let mut params = Map::new();
         params.insert("code".to_owned(), Value::from(code.clone()));
         params.insert("count".to_owned(), Value::from(result.count));
+        params.insert("file".to_owned(), Value::from(file));
         notifications::send(
             &bus,
             Notification::new(
