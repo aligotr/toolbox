@@ -34,27 +34,32 @@ export function requireConfirm(
     accept: request.accept,
   } satisfies ConfirmationOptions);
 
-  centerArrow(request.target);
+  alignPopup(request.target);
 }
 
+/** Зазор между кнопкой и блоком подтверждения. */
+const POPUP_GAP = 8;
+
 /**
- * Ждёт появления блока и ставит стрелку на центр кнопки.
+ * Ждёт появления блока, ставит его под кнопкой и наводит стрелку на центр.
  *
- * Положение стрелки читается из живых стилей, а переменная сдвигается
- * на разницу с центром кнопки. Кнопка у края окна заставляет PrimeVue
- * пересчитывать блок уже после показа, поэтому поправка повторяется
- * несколько кадров подряд, пока стрелка не встанет на место.
+ * PrimeVue 4.5.5 не выравнивает блок при показе, и он остаётся в углу окна.
+ * Поэтому положение считается здесь. Стрелка читается из живых стилей,
+ * а переменная сдвигается на разницу с центром кнопки. У края окна блок
+ * пересчитывается уже после показа, поэтому поправка повторяется несколько
+ * кадров подряд, пока стрелка не встанет на место.
  */
-function centerArrow(target: HTMLElement): void {
+function alignPopup(target: HTMLElement): void {
   let tries = 0;
   let settled = 0;
 
   const align = (): void => {
     tries += 1;
     const popup = document.querySelector<HTMLElement>(".p-confirmpopup");
-    const popupRect = popup?.getBoundingClientRect();
 
-    if (popup && popupRect && popupRect.width > 0) {
+    if (popup && popup.offsetWidth > 0) {
+      placePopup(popup, target);
+      const popupRect = popup.getBoundingClientRect();
       const targetRect = target.getBoundingClientRect();
       const wanted = targetRect.left + targetRect.width / 2 - popupRect.left;
       const delta = wanted - arrowCenter(popup);
@@ -74,6 +79,35 @@ function centerArrow(target: HTMLElement): void {
   };
 
   requestAnimationFrame(align);
+}
+
+/**
+ * Ставит блок под кнопкой, а у края окна прижимает его внутрь.
+ *
+ * `top` и `left` считаются в координатах документа: блок лежит в `body`
+ * и позиционируется абсолютно.
+ */
+function placePopup(popup: HTMLElement, target: HTMLElement): void {
+  const rect = target.getBoundingClientRect();
+  const width = popup.offsetWidth;
+  const height = popup.offsetHeight;
+  const viewportWidth = document.documentElement.clientWidth;
+  const viewportHeight = document.documentElement.clientHeight;
+
+  let top = rect.bottom + POPUP_GAP;
+  if (top + height > viewportHeight) top = Math.max(POPUP_GAP, rect.top - height - POPUP_GAP);
+
+  let left = rect.left;
+  if (left + width > viewportWidth) left = Math.max(POPUP_GAP, rect.right - width);
+
+  popup.style.removeProperty("inset-inline-start");
+  popup.style.removeProperty("inset-inline-end");
+  popup.style.top = `${top + window.scrollY}px`;
+  popup.style.left = `${left + window.scrollX}px`;
+
+  const flipped = top < rect.top;
+  popup.toggleAttribute("data-p-confirmpopup-flipped", flipped);
+  popup.classList.toggle("p-confirmpopup-flipped", flipped);
 }
 
 /** Центр стрелки относительно левого края блока. */

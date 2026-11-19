@@ -65,8 +65,7 @@ export const ruMessages: Messages = {
   "settings.language.export": "Выгрузить образец",
   "settings.language.exportFile": "Выгрузить во внешний файл",
   "settings.language.revert": "Вернуть встроенный",
-  "settings.language.revertMessage":
-    "Файл словаря «{code}» переедет в корзину. Программа снова возьмёт встроенный перевод; правки останутся в корзине.",
+  "settings.language.revertMessage": "Удалить файл словаря «{code}» и вернуться к встроенному?",
   "settings.language.revertAccept": "Вернуть",
   "settings.language.revertCancel": "Отмена",
   "settings.language.missingExport": "Выгрузить недостающие",

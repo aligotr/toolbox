@@ -57,7 +57,7 @@ export const enMessages: Messages = {
   "settings.language.exportFile": "Export to an external file",
   "settings.language.revert": "Restore built-in",
   "settings.language.revertMessage":
-    "The dictionary file “{code}” will move to the trash. The program will use the built-in translation again; your edits stay in the trash.",
+    "Delete the dictionary file “{code}” and return to the built-in one?",
   "settings.language.revertAccept": "Restore",
   "settings.language.revertCancel": "Cancel",
   "settings.language.missingExport": "Export missing keys",

@@ -103,10 +103,19 @@ async function restoreBuiltin(entry: LanguageEntry): Promise<void> {
   if (target !== null) await refresh();
 }
 
-/** Спрашивает подтверждение возврата к встроенному языку. */
+/**
+ * Спрашивает подтверждение возврата к встроенному языку.
+ *
+ * Цель берётся из `event.target`, а не `currentTarget`: у кнопки-компонента
+ * событие приходит без текущей цели, и подтверждение вставало в угол окна.
+ */
 function requestRevert(event: Event, entry: LanguageEntry): void {
+  const node = event.target;
+  const target = node instanceof HTMLElement ? (node.closest("button") ?? node) : null;
+  if (target === null) return;
+
   requireConfirm(confirm, {
-    target: event.currentTarget as HTMLElement,
+    target,
     message: t("settings.language.revertMessage", { code: entry.code }),
     acceptLabel: t("settings.language.revertAccept"),
     rejectLabel: t("settings.language.revertCancel"),
