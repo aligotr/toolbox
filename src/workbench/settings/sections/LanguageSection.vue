@@ -106,8 +106,8 @@ async function restoreBuiltin(entry: LanguageEntry): Promise<void> {
 /**
  * Спрашивает подтверждение возврата к встроенному языку.
  *
- * Цель берётся из `event.target`, а не `currentTarget`: у кнопки-компонента
- * событие приходит без текущей цели, и подтверждение вставало в угол окна.
+ * Цель - сама кнопка: у кнопки-компонента событие может прийти с вложенного
+ * элемента, поэтому берётся ближайшая кнопка.
  */
 function requestRevert(event: Event, entry: LanguageEntry): void {
   const node = event.target;
