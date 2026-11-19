@@ -163,10 +163,21 @@ export async function exportLanguageSample(): Promise<string | null> {
     });
     return path;
   } catch (error) {
-    notifyError(error, "language-sample");
-    write(JOURNAL_CORE_SOURCE, "error", "journal.languages.exportError", {
-      reason: error,
-    });
+    const coded = appErrorOf(error);
+    if (coded.code === "errors.languages.exists") {
+      // Образец не перезаписывается намеренно: это не отказ, а напоминание.
+      notify({
+        kind: "info",
+        code: "notifications.languages.sampleExists",
+        params: { file: fileNameOf(coded.params.path ?? "") },
+        group: "language-sample",
+      });
+    } else {
+      notifyError(error, "language-sample");
+      write(JOURNAL_CORE_SOURCE, "error", "journal.languages.exportError", {
+        reason: error,
+      });
+    }
     return null;
   } finally {
     status.export.loading = false;
