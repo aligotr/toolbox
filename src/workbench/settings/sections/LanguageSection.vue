@@ -10,6 +10,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted, onUnmounted } from "vue";
 import { describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
+import { notify } from "@/core/infra/notifications";
 import { openFolder, status as appStatus } from "@/core/services/appInfo";
 import {
   activateLanguage,
@@ -84,6 +85,18 @@ const lost = computed(() => {
 async function refresh(): Promise<void> {
   await loadLanguages();
   await activateLanguage(current.value);
+}
+
+/** Кнопка «Обновить»: перечитывает список и подтверждает итог. */
+async function refreshWithNotice(): Promise<void> {
+  await refresh();
+  if (status.list.error === null) {
+    notify({
+      kind: "info",
+      code: "notifications.languages.refreshed",
+      group: "language-refresh",
+    });
+  }
 }
 
 /** Возврат фокуса в окно: правки файла подхватываются без кнопки. */
@@ -256,9 +269,6 @@ onUnmounted(() => {
     <p v-if="status.list.error" class="language__error">
       {{ status.list.error }}
     </p>
-    <p v-if="status.export.error" class="language__error">
-      {{ status.export.error }}
-    </p>
     <p v-if="status.revert.error" class="language__error">
       {{ status.revert.error }}
     </p>
@@ -274,7 +284,7 @@ onUnmounted(() => {
         severity="secondary"
         outlined
         :loading="status.list.loading"
-        @click="refresh"
+        @click="refreshWithNotice"
       />
       <Button
         :label="t('settings.language.open_folder')"

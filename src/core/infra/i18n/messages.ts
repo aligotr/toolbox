@@ -73,6 +73,7 @@ export const ruMessages: Messages = {
   // ── Уведомления ──────────────────────────────────────────────────────────
   "notifications.languages.exported": "Словарь «{code}» выгружен: {file}",
   "notifications.languages.sampleSaved": "Образец словаря сохранён: {file}",
+  "notifications.languages.refreshed": "Список словарей обновлён",
   "notifications.languages.missingWritten": "Файл: {file}\nНедостающих ключей: {count}",
   "notifications.languages.missingActual": "Файл дополнений уже актуален",
   "notifications.languages.missingNone": "Недостающих ключей нет, файл дополнений убран",

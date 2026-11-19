@@ -64,6 +64,7 @@ export const enMessages: Messages = {
 
   "notifications.languages.exported": "Dictionary “{code}” exported: {file}",
   "notifications.languages.sampleSaved": "Dictionary sample saved: {file}",
+  "notifications.languages.refreshed": "Dictionary list refreshed",
   "notifications.languages.missingWritten": "File: {file}\nMissing keys: {count}",
   "notifications.languages.missingActual": "The additions file is up to date",
   "notifications.languages.missingNone": "No keys are missing, the additions file was removed",

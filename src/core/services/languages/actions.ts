@@ -7,7 +7,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { MissingResult } from "@/contracts/languages";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
-import { describeError } from "../../infra/errors";
+import { appErrorOf, describeError } from "../../infra/errors";
 import { ruMessages } from "../../infra/i18n/messages";
 import { write } from "../../infra/journal";
 import { notify } from "../../infra/notifications";
@@ -47,7 +47,7 @@ export async function exportLanguage(code: string): Promise<string | null> {
     });
     return path;
   } catch (error) {
-    status.export.error = describeError(error);
+    notifyError(error, "language-export");
     write(JOURNAL_CORE_SOURCE, "error", "journal.languages.exportError", {
       reason: error,
     });
@@ -61,6 +61,18 @@ export async function exportLanguage(code: string): Promise<string | null> {
 function fileNameOf(path: string): string {
   const index = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
   return index === -1 ? path : path.slice(index + 1);
+}
+
+/** Показывает отказ действия уведомлением: код переводит словарь. */
+function notifyError(error: unknown, group: string): void {
+  const coded = appErrorOf(error);
+  notify({
+    kind: "error",
+    code: coded.code,
+    params: coded.params,
+    fallback: coded.fallback,
+    group,
+  });
 }
 
 /** Возвращает встроенный язык: внешний файл уходит в корзину. */
@@ -151,7 +163,7 @@ export async function exportLanguageSample(): Promise<string | null> {
     });
     return path;
   } catch (error) {
-    status.export.error = describeError(error);
+    notifyError(error, "language-sample");
     write(JOURNAL_CORE_SOURCE, "error", "journal.languages.exportError", {
       reason: error,
     });
