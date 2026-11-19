@@ -46,7 +46,7 @@ pub(crate) fn language_export(
     Ok(path.display().to_string())
 }
 
-/// Выгружает встроенный язык во внешний файл `<code>.json`.
+/// Выгружает встроенный язык во внешний файл `<code>.jsonc`.
 #[tauri::command]
 pub(crate) fn language_export_file(
     runtime: State<'_, Runtime>,

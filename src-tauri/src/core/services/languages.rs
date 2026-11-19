@@ -1,11 +1,11 @@
-//! Словари интерфейса: файлы `local/languages/<code>.json` (ADR 0039).
+//! Словари интерфейса: файлы `local/languages/<code>.jsonc` (ADR 0039, 0059).
 //!
 //! Файл - JSON с комментариями и висячими запятыми. Разбирает только Rust:
 //! у интерфейса и ядра один диалект, а ошибка приходит с номером строки.
 //!
 //! Встроенных словарей два, `ru` и `en`, и они живут в интерфейсе (ADR 0057).
 //! Здесь - только внешние файлы: приложение их **не перезаписывает**.
-//! Единственное, что оно пишет само, - файл дополнений `<code>.missing.json`.
+//! Единственное, что оно пишет само, - файл дополнений `<code>.missing.jsonc`.
 
 use std::fs;
 use std::io::ErrorKind;
@@ -23,8 +23,8 @@ use crate::core::store::files::{ensure_dir, strip_bom, write_atomic};
 /// блокирующий экран и настройки разошлись бы в значении.
 pub const DEFAULT_CODE: &str = "ru";
 
-/// Расширение файла словаря.
-const EXTENSION: &str = "json";
+/// Расширение файла словаря: JSONC допускает комментарии и висячие запятые.
+const EXTENSION: &str = "jsonc";
 
 /// Предел кода языка: тег BCP 47 короче, а имя файла должно оставаться
 /// читаемым.
@@ -80,7 +80,7 @@ pub fn catalog(dir: &Path) -> AppResult<Vec<CatalogEntry>> {
         let Some(code) = path.file_stem().and_then(|value| value.to_str()) else {
             continue;
         };
-        // Служебные файлы (`ru.template.json`, `en.missing.json`) словарями
+        // Служебные файлы (`ru.template.jsonc`, `en.missing.jsonc`) словарями
         // не считаются: точка в основе имени означает не код языка.
         if code.contains('.') {
             continue;
@@ -161,7 +161,7 @@ pub fn export(dir: &Path, code: &str, document: &Value) -> AppResult<PathBuf> {
     Ok(target)
 }
 
-/// Выгружает встроенный язык во внешний файл `<code>.json`.
+/// Выгружает встроенный язык во внешний файл `<code>.jsonc`.
 ///
 /// Существующий файл не перезаписывается: это уже словарь пользователя.
 pub fn export_language(dir: &Path, code: &str, document: &Value) -> AppResult<PathBuf> {
@@ -192,7 +192,7 @@ pub fn export_language(dir: &Path, code: &str, document: &Value) -> AppResult<Pa
          //\n\
          // Внешний файл принадлежит пользователю: приложение его не перезаписывает.\n\
          // Ключи переименовывать нельзя, подстановки вида {{name}} оставить как есть.\n\
-         // Недостающие ключи выгружаются отдельным файлом <code>.missing.json.\n\
+         // Недостающие ключи выгружаются отдельным файлом <code>.missing.jsonc.\n\
          {body}\n"
     );
     write_atomic(&target, &text)?;
@@ -241,7 +241,7 @@ pub struct MissingResult {
     pub count: usize,
 }
 
-/// Путь файла дополнений: `<code>.missing.json`.
+/// Путь файла дополнений: `<code>.missing.jsonc`.
 pub fn missing_path(dir: &Path, code: &str) -> PathBuf {
     dir.join(format!("{code}.missing.{EXTENSION}"))
 }
@@ -351,12 +351,12 @@ fn validate_code(code: &str) -> AppResult<()> {
     }
 }
 
-/// Путь словаря: `local/languages/<code>.json`.
+/// Путь словаря: `local/languages/<code>.jsonc`.
 fn file_path(dir: &Path, code: &str) -> PathBuf {
     dir.join(format!("{code}.{EXTENSION}"))
 }
 
-/// Свободное имя словаря в корзине: `en.json`, `en-2.json`, …
+/// Свободное имя словаря в корзине: `en.jsonc`, `en-2.jsonc`, …
 ///
 /// Расширение входит в проверяемое имя: `unique_id` без него увидел бы
 /// свободный `en` и вернул имя, совпадающее с лежащим файлом.
@@ -562,17 +562,18 @@ mod tests {
     }
 
     #[test]
-    fn catalog_skips_marker_and_foreign_files() {
+    fn catalog_reads_jsonc_and_skips_legacy_json() {
         let dir = temp_dir("catalog");
-        fs::write(dir.join("en.json"), SAMPLE).expect("словарь");
-        fs::write(dir.join("broken.json"), "{").expect("битый словарь");
-        fs::write(dir.join("en.missing.json"), "{}").expect("файл дополнений");
+        fs::write(dir.join("en.jsonc"), SAMPLE).expect("словарь");
+        fs::write(dir.join("broken.jsonc"), "{").expect("битый словарь");
+        fs::write(dir.join("legacy.json"), SAMPLE).expect("старый .json");
+        fs::write(dir.join("en.missing.jsonc"), "{}").expect("файл дополнений");
         fs::write(dir.join("notes.txt"), "не словарь").expect("чужой файл");
 
         let items = catalog(&dir).expect("каталог");
         let codes: Vec<_> = items.iter().map(|item| item.code.as_str()).collect();
 
-        assert_eq!(codes, ["broken", "en"]);
+        assert_eq!(codes, ["broken", "en"], "старый .json не читается");
         assert!(items[0].problem.is_some(), "битый файл объясняет отказ");
         assert!(items[0].messages.is_none(), "у битого нет сообщений");
         assert!(items[1].problem.is_none(), "годный файл без замечаний");
@@ -653,12 +654,12 @@ mod tests {
         let dir = root.join("languages");
         let trash = root.join("trash").join("languages");
         fs::create_dir_all(&dir).expect("папка словарей");
-        fs::write(dir.join("en.json"), SAMPLE).expect("словарь");
+        fs::write(dir.join("en.jsonc"), SAMPLE).expect("словарь");
 
         let target = revert(&dir, &trash, "en").expect("словарь возвращён");
 
-        assert!(!dir.join("en.json").exists(), "внешний файл убран");
-        assert_eq!(target, trash.join("en.json"));
+        assert!(!dir.join("en.jsonc").exists(), "внешний файл убран");
+        assert_eq!(target, trash.join("en.jsonc"));
         assert_eq!(
             fs::read_to_string(&target).expect("корзина"),
             SAMPLE,
@@ -673,14 +674,14 @@ mod tests {
         let trash = root.join("trash").join("languages");
         fs::create_dir_all(&dir).expect("папка словарей");
 
-        fs::write(dir.join("en.json"), SAMPLE).expect("первый словарь");
+        fs::write(dir.join("en.jsonc"), SAMPLE).expect("первый словарь");
         let first = revert(&dir, &trash, "en").expect("первый возврат");
 
-        fs::write(dir.join("en.json"), SAMPLE).expect("второй словарь");
+        fs::write(dir.join("en.jsonc"), SAMPLE).expect("второй словарь");
         let second = revert(&dir, &trash, "en").expect("второй возврат");
 
-        assert_eq!(first, trash.join("en.json"));
-        assert_eq!(second, trash.join("en-2.json"));
+        assert_eq!(first, trash.join("en.jsonc"));
+        assert_eq!(second, trash.join("en-2.jsonc"));
         assert!(first.is_file() && second.is_file(), "оба файла уцелели");
     }
 

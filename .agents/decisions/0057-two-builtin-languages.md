@@ -1,6 +1,6 @@
 # ADR 0057: Два встроенных языка и внешние словари
 
-- **Статус:** принято
+- **Статус:** принято; расширение словарей `.jsonc` уточнено ADR 0059
 - **Дата:** 2026-11-19
 - **Область:** `src/app/locales.ts`, `src/core/services/languages.ts`,
   `src/workbench/settings/sections/LanguageSection.vue`,

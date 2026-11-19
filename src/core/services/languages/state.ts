@@ -117,7 +117,7 @@ function entryOfFile(file: CatalogEntry, builtin: BuiltinLanguage | null): Langu
 
   if (file.problem !== null || file.messages === null) return base;
 
-  // Код - часть контракта: файл `pt_BR.json` прочитался бы, но склонения
+  // Код - часть контракта: файл `pt_BR.jsonc` прочитался бы, но склонения
   // для него `Intl` не знает, и текст пошёл бы с русскими формами.
   if (!isLocaleTag(file.code)) {
     return {
