@@ -17,7 +17,7 @@ import { t } from "@/core/infra/i18n";
 import { JOURNAL_CORE_SOURCE } from "../infra/constants";
 import { describeError } from "../infra/errors";
 import { write } from "../infra/journal";
-import { notify, notifyError } from "../infra/notifications";
+import { notifyError } from "../infra/notifications";
 import { idle, type OperationStatus } from "../infra/status";
 import { flushWorkspace } from "./workspace/index";
 
@@ -259,12 +259,6 @@ export async function deleteProfile(profile: Profile): Promise<boolean> {
     });
     await reload();
     await refreshUsage();
-    notify({
-      kind: "info",
-      code: "notifications.profiles.deleted",
-      params: { title: profile.title },
-      group: "profile-delete",
-    });
     return true;
   } catch (error) {
     status.delete.error = describeError(error);

@@ -69,7 +69,6 @@ export const enMessages: Messages = {
   "notifications.languages.missingWritten": "File: {file}\nMissing keys: {count}",
   "notifications.languages.missingActual": "The additions file is up to date",
   "notifications.languages.missingNone": "No keys are missing, the additions file was removed",
-  "notifications.profiles.deleted": "Profile “{title}” was deleted",
   "shell.sidebar.tools": "Tools",
   "shell.sidebar.app": "Application",
   "shell.sidebar.noTools": "No tools yet",

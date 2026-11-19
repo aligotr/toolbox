@@ -78,7 +78,6 @@ export const ruMessages: Messages = {
   "notifications.languages.missingWritten": "Файл: {file}\nНедостающих ключей: {count}",
   "notifications.languages.missingActual": "Файл дополнений уже актуален",
   "notifications.languages.missingNone": "Недостающих ключей нет, файл дополнений убран",
-  "notifications.profiles.deleted": "Профиль «{title}» удалён",
 
   // ── Оболочка ─────────────────────────────────────────────────────────────
   "shell.sidebar.tools": "Инструменты",
