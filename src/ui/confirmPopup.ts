@@ -40,6 +40,47 @@ export function requireConfirm(
 /** Зазор между кнопкой и блоком подтверждения. */
 const POPUP_GAP = 8;
 
+/** Отступ стрелки панели Popover от левого края. */
+const POPOVER_ARROW = "--p-popover-arrow-offset";
+
+/**
+ * Наводит стрелку всплывающей панели на центр кнопки.
+ *
+ * PrimeVue ставит стрелку на фиксированный отступ от края панели: у широкой
+ * кнопки она смотрит вбок. Сдвиг считается по живому положению стрелки
+ * и повторяется, пока она не встанет на центр.
+ */
+export function alignPopoverArrow(target: HTMLElement): void {
+  let tries = 0;
+  let settled = 0;
+
+  const align = (): void => {
+    tries += 1;
+    const popup = document.querySelector<HTMLElement>(".p-popover");
+
+    if (popup && popup.offsetWidth > 0) {
+      const popupRect = popup.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const wanted = targetRect.left + targetRect.width / 2 - popupRect.left;
+      const delta = wanted - arrowCenter(popup);
+
+      if (Math.abs(delta) < 0.5) {
+        settled += 1;
+      } else {
+        settled = 0;
+        const current = stylePixels(popup.style.getPropertyValue(POPOVER_ARROW));
+        popup.style.setProperty(POPOVER_ARROW, `${current + delta}px`);
+      }
+    }
+
+    if (settled < 2 && tries < 30) {
+      requestAnimationFrame(align);
+    }
+  };
+
+  requestAnimationFrame(align);
+}
+
 /**
  * Ждёт появления блока, ставит его под кнопкой и наводит стрелку на центр.
  *

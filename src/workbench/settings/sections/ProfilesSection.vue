@@ -20,6 +20,7 @@ import {
   renameProfile,
   status,
 } from "@/core/services/profiles";
+import { alignPopoverArrow } from "@/ui/confirmPopup";
 import { filesLabel, presetsLabel } from "../../plural";
 import { useProfiles } from "../useProfiles";
 
@@ -35,6 +36,7 @@ function usageLabel(id: string): string {
 /** Создание профиля: панель у кнопки, чтобы список не сдвигался. */
 const createMenu = ref<InstanceType<typeof Popover> | null>(null);
 const createInput = ref<InstanceType<typeof InputText> | null>(null);
+const createTarget = ref<HTMLElement | null>(null);
 const newTitle = ref("");
 
 /** Профиль, отмеченный радиокнопкой до подтверждения переключения. */
@@ -144,6 +146,7 @@ async function submitRename(profile: Profile): Promise<void> {
 /** Открывает панель создания у кнопки. */
 function startCreate(event: MouseEvent): void {
   resetCreate();
+  createTarget.value = event.currentTarget as HTMLElement;
   createMenu.value?.toggle(event);
 }
 
@@ -159,8 +162,10 @@ function resetCreate(): void {
   status.create.error = null;
 }
 
-/** Ставит фокус в поле после показа панели. */
+/** Ставит фокус в поле и наводит стрелку на центр кнопки. */
 async function focusCreate(): Promise<void> {
+  if (createTarget.value) alignPopoverArrow(createTarget.value);
+
   await nextTick();
   const instance = createInput.value as unknown as { $el?: unknown } | null;
   const element = instance?.$el;
