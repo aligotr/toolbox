@@ -14,6 +14,7 @@ import { openFolder, status as appStatus } from "@/core/services/appInfo";
 import {
   activateLanguage,
   BUILTIN_LANGUAGE,
+  checkLanguageFile,
   exportLanguage,
   exportLanguageSample,
   exportMissing,
@@ -28,11 +29,23 @@ import { requireConfirm } from "@/ui/confirmPopup";
 
 const confirm = useConfirm();
 
-/** Выбранный язык: пишется в настройки и применяется сразу. */
+/**
+ * Переключает язык и сразу проверяет недостающие ключи.
+ *
+ * Это тот же путь, что на старте: недостающие ключи пишет ядро в файл
+ * дополнений и уведомляет о записи. Без проверки пропуски появились бы
+ * только после перезапуска (ADR 0057).
+ */
+async function switchLanguage(code: string): Promise<void> {
+  if (!(await setLanguage(code))) return;
+  await checkLanguageFile(code);
+}
+
+/** Выбранный язык: пишется в настройки, применяется и проверяется сразу. */
 const current = computed({
   get: () => settings.current?.ui.language ?? BUILTIN_LANGUAGE,
   set: (code: string) => {
-    void setLanguage(code);
+    void switchLanguage(code);
   },
 });
 
