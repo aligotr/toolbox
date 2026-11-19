@@ -7,7 +7,8 @@
 
 import Button from "primevue/button";
 import InputText from "primevue/inputtext";
-import { computed, onMounted, ref, watch } from "vue";
+import Popover from "primevue/popover";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import type { Profile } from "@/contracts/profiles";
 import { t } from "@/core/infra/i18n";
 import {
@@ -31,8 +32,9 @@ function usageLabel(id: string): string {
   return `${presetsLabel(counts.presets)} · ${filesLabel(counts.data_files)}`;
 }
 
-/** Создание профиля: форма и поле живут в разделе, у него один потребитель. */
-const creating = ref(false);
+/** Создание профиля: панель у кнопки, чтобы список не сдвигался. */
+const createMenu = ref<InstanceType<typeof Popover> | null>(null);
+const createInput = ref<InstanceType<typeof InputText> | null>(null);
 const newTitle = ref("");
 
 /** Профиль, отмеченный радиокнопкой до подтверждения переключения. */
@@ -139,25 +141,39 @@ async function submitRename(profile: Profile): Promise<void> {
   }
 }
 
-function startCreate(): void {
-  creating.value = true;
-  newTitle.value = "";
-  status.create.error = null;
+/** Открывает панель создания у кнопки. */
+function startCreate(event: MouseEvent): void {
+  resetCreate();
+  createMenu.value?.toggle(event);
 }
 
+/** Закрывает панель, ничего не создавая. */
 function cancelCreate(): void {
-  creating.value = false;
+  createMenu.value?.hide();
+  resetCreate();
+}
+
+/** Сбрасывает ввод: закрытая панель не хранит прошлую попытку. */
+function resetCreate(): void {
   newTitle.value = "";
   status.create.error = null;
 }
 
+/** Ставит фокус в поле после показа панели. */
+async function focusCreate(): Promise<void> {
+  await nextTick();
+  const instance = createInput.value as unknown as { $el?: unknown } | null;
+  const element = instance?.$el;
+  if (element instanceof HTMLInputElement) element.focus();
+}
+
+/** Создаёт профиль; успех закрывает панель, ошибка оставляет её открытой. */
 async function submitCreate(): Promise<void> {
   const title = newTitle.value.trim();
   if (!title) return;
 
   if (await createProfile(title)) {
-    creating.value = false;
-    newTitle.value = "";
+    cancelCreate();
   }
 }
 
@@ -176,7 +192,6 @@ onMounted(() => {
       </div>
 
       <Button
-        v-if="!creating"
         class="profiles__create"
         :label="t('settings.profiles.create')"
         icon="pi pi-plus"
@@ -187,28 +202,41 @@ onMounted(() => {
       />
     </header>
 
-    <form v-if="creating" class="profiles__form" @submit.prevent="submitCreate">
-      <InputText
-        v-model="newTitle"
-        :placeholder="t('settings.profiles.titlePlaceholder')"
-        :aria-label="t('settings.profiles.titleAria')"
-      />
-      <Button
-        type="submit"
-        :label="t('settings.profiles.submit')"
-        size="small"
-        :loading="status.create.loading"
-        :disabled="!newTitle.trim()"
-      />
-      <Button
-        type="button"
-        :label="t('settings.profiles.cancel')"
-        size="small"
-        severity="secondary"
-        text
-        @click="cancelCreate"
-      />
-    </form>
+    <Popover ref="createMenu" @show="focusCreate" @hide="resetCreate">
+      <form
+        class="profiles__create-form"
+        @submit.prevent="submitCreate"
+        @keydown.esc="cancelCreate"
+      >
+        <InputText
+          ref="createInput"
+          v-model="newTitle"
+          class="profiles__create-input"
+          size="small"
+          :maxlength="TITLE_MAX_LENGTH"
+          :placeholder="t('settings.profiles.titlePlaceholder')"
+          :aria-label="t('settings.profiles.titleAria')"
+          :disabled="status.create.loading"
+        />
+        <div class="profiles__create-actions">
+          <Button
+            type="submit"
+            :label="t('settings.profiles.submit')"
+            size="small"
+            :loading="status.create.loading"
+            :disabled="!newTitle.trim()"
+          />
+          <Button
+            type="button"
+            :label="t('settings.profiles.cancel')"
+            size="small"
+            severity="secondary"
+            text
+            @click="cancelCreate"
+          />
+        </div>
+      </form>
+    </Popover>
 
     <p v-if="!profiles.loaded" class="profiles__note">
       {{ t("settings.profiles.loading") }}
@@ -342,15 +370,23 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.profiles__form {
+/* Панель создания: поле сверху, кнопки под ним у правого края. */
+.profiles__create-form {
   display: flex;
-  align-items: center;
-  gap: var(--ag-space-sm);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: var(--ag-space-md);
+  width: 260px;
 }
 
-.profiles__form :deep(input) {
-  min-width: 240px;
+.profiles__create-input {
+  width: 100%;
+}
+
+.profiles__create-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ag-space-sm);
 }
 
 .profiles__list {
