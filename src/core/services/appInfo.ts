@@ -14,7 +14,7 @@ import { write } from "../infra/journal";
 import { idle, type OperationStatus } from "../infra/status";
 
 /** Папки, которые умеет открывать ядро. */
-export type FolderKind = "logs" | "root" | "languages";
+export type FolderKind = "logs" | "profiles" | "root" | "languages";
 
 /** Состояние сведений о программе. */
 export interface AppInfoState {
@@ -58,7 +58,7 @@ export async function loadAppInfo(): Promise<void> {
   }
 }
 
-/** Открывает папку программы или логов в проводнике. */
+/** Открывает папку программы, профилей, логов или словарей в проводнике. */
 export async function openFolder(kind: FolderKind): Promise<boolean> {
   if (status.folder.loading) return false;
 

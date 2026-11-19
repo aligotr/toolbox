@@ -11,6 +11,7 @@ import Popover from "primevue/popover";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import type { Profile } from "@/contracts/profiles";
 import { t } from "@/core/infra/i18n";
+import { openFolder, status as appStatus } from "@/core/services/appInfo";
 import {
   createProfile,
   loadProfiles,
@@ -196,16 +197,30 @@ onMounted(() => {
         <p class="wb-section__lead">{{ t("settings.profiles.lead") }}</p>
       </div>
 
-      <Button
-        class="profiles__create"
-        :label="t('settings.profiles.create')"
-        icon="pi pi-plus"
-        size="small"
-        severity="secondary"
-        outlined
-        @click="startCreate"
-      />
+      <div class="profiles__actions">
+        <Button
+          :label="t('settings.profiles.openFolder')"
+          icon="pi pi-folder-open"
+          size="small"
+          severity="secondary"
+          outlined
+          :loading="appStatus.folder.loading"
+          @click="openFolder('profiles')"
+        />
+        <Button
+          :label="t('settings.profiles.create')"
+          icon="pi pi-plus"
+          size="small"
+          severity="secondary"
+          outlined
+          @click="startCreate"
+        />
+      </div>
     </header>
+
+    <p v-if="appStatus.folder.error" class="profiles__error">
+      {{ appStatus.folder.error }}
+    </p>
 
     <Popover ref="createMenu" @show="focusCreate" @hide="resetCreate">
       <form
@@ -371,8 +386,11 @@ onMounted(() => {
   min-width: 0;
 }
 
-.profiles__create {
+.profiles__actions {
+  display: flex;
   flex-shrink: 0;
+  align-items: center;
+  gap: var(--ag-space-sm);
 }
 
 /* Панель создания: поле сверху, кнопки под ним у правого края. */
@@ -520,6 +538,13 @@ onMounted(() => {
   margin: 0;
   color: var(--p-text-muted-color);
   font-size: var(--ag-text-sm);
+}
+
+.profiles__error {
+  margin: 0;
+  color: var(--ag-danger);
+  font-size: var(--ag-text-xs);
+  line-height: 1.45;
 }
 
 .mono {

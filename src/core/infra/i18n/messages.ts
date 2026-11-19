@@ -323,6 +323,7 @@ export const ruMessages: Messages = {
   "settings.profiles.lead":
     "Профиль - отдельная папка с настройками и данными инструментов.\nПереключение перезапускает приложение.",
   "settings.profiles.create": "Создать профиль",
+  "settings.profiles.openFolder": "Открыть папку профилей",
   "settings.profiles.titlePlaceholder": "Название профиля",
   "settings.profiles.titleAria": "Название нового профиля",
   "settings.profiles.submit": "Создать",

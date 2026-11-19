@@ -264,6 +264,7 @@ export const enMessages: Messages = {
   "settings.profiles.lead":
     "A profile is a separate folder with settings and tool data.\nSwitching restarts the program.",
   "settings.profiles.create": "Create profile",
+  "settings.profiles.openFolder": "Open profiles folder",
   "settings.profiles.titlePlaceholder": "Profile name",
   "settings.profiles.titleAria": "New profile name",
   "settings.profiles.submit": "Create",

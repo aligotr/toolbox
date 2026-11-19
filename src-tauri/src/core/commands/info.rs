@@ -114,7 +114,7 @@ pub(crate) fn logs_prune(runtime: State<'_, Runtime>) -> AppResult<usize> {
     Ok(removed)
 }
 
-/// Открывает папку программы, логов или словарей в проводнике.
+/// Открывает папку программы, профилей, логов или словарей в проводнике.
 ///
 /// Путь выбирает ядро по имени, а не интерфейс: иначе окно могло бы
 /// попросить открыть любой каталог на диске.
@@ -128,6 +128,7 @@ pub(crate) fn open_folder(
     let path = match kind.as_str() {
         "logs" => storage.logs_dir(),
         "languages" => storage.languages_dir(),
+        "profiles" => storage.profiles_dir(),
         "root" => storage.root().to_path_buf(),
         other => {
             return Err(AppError::new(
