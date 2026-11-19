@@ -237,9 +237,8 @@ export const enMessages: Messages = {
     other: "Clear logs older than {count} days",
   },
   "settings.log.pruneMessage": {
-    one: "Log files older than {count} day will be deleted. Recent entries will stay: they are still useful for investigating problems.",
-    other:
-      "Log files older than {count} days will be deleted. Recent entries will stay: they are still useful for investigating problems.",
+    one: "Delete log files older than {count} day?",
+    other: "Delete log files older than {count} days?",
   },
   "settings.log.pruneAccept": "Clear",
   "settings.log.pruneReject": "Cancel",
