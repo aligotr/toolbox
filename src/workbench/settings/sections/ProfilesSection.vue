@@ -21,7 +21,7 @@ import {
   renameProfile,
   status,
 } from "@/core/services/profiles";
-import { anchorOverlay } from "@/ui/anchoredOverlay";
+import { anchorOverlay } from "@/ui/primevue/popup/anchoredOverlay";
 import { filesLabel, presetsLabel } from "../../plural";
 import { useProfiles } from "../useProfiles";
 

@@ -11,7 +11,7 @@ import { computed, onMounted } from "vue";
 import { CONFIRM_PRIMARY_ACCEPT } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
 import { loadSettings, resetWindow, settings, status } from "@/core/services/settings/index";
-import { requireConfirm } from "@/ui/confirmPopup";
+import { requireConfirm } from "@/ui/primevue/popup/confirmPopup";
 
 const confirm = useConfirm();
 

@@ -9,7 +9,7 @@ import type { Profile } from "@/contracts/profiles";
 import { CONFIRM_CALM_REJECT } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
 import { deleteProfile, switchProfile } from "@/core/services/profiles";
-import { requireConfirm } from "@/ui/confirmPopup";
+import { requireConfirm } from "@/ui/primevue/popup/confirmPopup";
 
 export function useProfiles() {
   const confirm = useConfirm();

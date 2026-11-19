@@ -26,7 +26,7 @@ import {
   type LanguageEntry,
 } from "@/core/services/languages";
 import { setLanguage, settings } from "@/core/services/settings/index";
-import { requireConfirm } from "@/ui/confirmPopup";
+import { requireConfirm } from "@/ui/primevue/popup/confirmPopup";
 
 const confirm = useConfirm();
 

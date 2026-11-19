@@ -20,7 +20,7 @@ import {
   settings,
   status,
 } from "@/core/services/settings/index";
-import { requireConfirm } from "@/ui/confirmPopup";
+import { requireConfirm } from "@/ui/primevue/popup/confirmPopup";
 import { logLevelOptions } from "../logLevels";
 
 const confirm = useConfirm();

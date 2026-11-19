@@ -17,7 +17,7 @@ import { computed, ref } from "vue";
 import { JOURNAL_LIMIT } from "@/core/infra/constants";
 import { t } from "@/core/infra/i18n";
 import { clearJournal, journalText, journalSource, type JournalKind } from "@/core/infra/journal";
-import { requireConfirm } from "@/ui/confirmPopup";
+import { requireConfirm } from "@/ui/primevue/popup/confirmPopup";
 import { highlightParts } from "./journalList";
 import { useJournalView } from "./useJournalView";
 

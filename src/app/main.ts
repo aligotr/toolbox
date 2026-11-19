@@ -7,7 +7,7 @@ import Tooltip from "primevue/tooltip";
 import "primeicons/primeicons.css";
 import App from "./App.vue";
 import { setupLocale } from "./locales";
-import { toolboxPreset } from "@/ui/theme";
+import { toolboxPreset } from "@/ui/primevue/theme";
 import "@/styles/global.css";
 
 // Ошибки интерфейса идут в тот же файловый лог, что и отказы Rust.

@@ -20,7 +20,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted, ref, watch } from "vue";
 import type { ToolCellProps } from "@/contracts/tools";
 import { t } from "@/core/infra/i18n";
-import { requireConfirm } from "@/ui/confirmPopup";
+import { requireConfirm } from "@/ui/primevue/popup/confirmPopup";
 import DnsTable from "./components/DnsTable.vue";
 import PresetBar from "./components/PresetBar.vue";
 import PresetsDialog from "./components/PresetsDialog.vue";

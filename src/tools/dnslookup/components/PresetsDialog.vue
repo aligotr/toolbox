@@ -20,7 +20,7 @@ import { describeError } from "@/core/infra/errors";
 import { catalog, t } from "@/core/infra/i18n";
 import { PRESET_TITLE_MAX_LENGTH } from "@/core/services/presets/constants";
 import type { Preset } from "@/core/services/presets";
-import { requireConfirm } from "@/ui/confirmPopup";
+import { requireConfirm } from "@/ui/primevue/popup/confirmPopup";
 import { DIALOG_MAX_WIDTH, DIALOG_WIDTH } from "../constants";
 import {
   adoptPresetTitle,
