@@ -445,9 +445,5 @@ onUnmounted(() => {
   .language__radio {
     margin-top: 2px;
   }
-
-  .language__row-actions {
-    justify-content: flex-start;
-  }
 }
 </style>
