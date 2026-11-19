@@ -63,7 +63,6 @@ export const ruMessages: Messages = {
   "settings.language.refresh": "Обновить",
   "settings.language.open_folder": "Открыть папку словарей",
   "settings.language.export": "Выгрузить образец",
-  "settings.language.exported": "Образец сохранён: {path}",
   "settings.language.exportFile": "Выгрузить во внешний файл",
   "settings.language.revert": "Вернуть встроенный",
   "settings.language.revertMessage":
@@ -71,14 +70,14 @@ export const ruMessages: Messages = {
   "settings.language.revertAccept": "Вернуть",
   "settings.language.revertCancel": "Отмена",
   "settings.language.missingExport": "Выгрузить недостающие",
-  "settings.language.missingWritten": "Недостающие ключи выгружены: {path}",
-  "settings.language.missingActual": "Файл дополнений уже актуален: {path}",
-  "settings.language.missingNone": "Недостающих ключей нет: файл дополнений убран.",
 
   // ── Уведомления ──────────────────────────────────────────────────────────
   "notifications.languages.exported": "Словарь «{code}» выгружен во внешний файл",
   "notifications.languages.reverted": "Вернулся встроенный перевод «{code}»",
+  "notifications.languages.sampleSaved": "Образец словаря сохранён",
   "notifications.languages.missingWritten": "Недостающие ключи словаря «{code}»: {count}",
+  "notifications.languages.missingActual": "Файл дополнений уже актуален",
+  "notifications.languages.missingNone": "Недостающих ключей нет, файл дополнений убран",
 
   // ── Оболочка ─────────────────────────────────────────────────────────────
   "shell.sidebar.tools": "Инструменты",

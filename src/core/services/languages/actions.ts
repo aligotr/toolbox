@@ -91,7 +91,8 @@ export type { MissingResult };
  * Выгружает недостающие ключи внешнего словаря.
  *
  * `document` = `null` убирает устаревший файл. Запись и уведомление
- * о ней делает ядро: файл дополнений - его артефакт.
+ * о ней делает ядро: файл дополнений - его артефакт. Исходы без записи
+ * уведомляет интерфейс, чтобы каждое нажатие получало ответ.
  */
 export async function exportMissing(entry: LanguageEntry): Promise<MissingResult | null> {
   if (status.missing.loading) return null;
@@ -99,10 +100,22 @@ export async function exportMissing(entry: LanguageEntry): Promise<MissingResult
   status.missing.loading = true;
   status.missing.error = null;
   try {
-    return await invoke<MissingResult>("language_missing_write", {
+    const result = await invoke<MissingResult>("language_missing_write", {
       code: entry.code,
       document: missingDocument(entry),
     });
+
+    // О записи файла уведомляет ядро. Здесь - исходы без записи: файл
+    // уже актуален или недостающих ключей нет и устаревший файл убран.
+    if (!result.written) {
+      const group = `language-missing-${entry.code}`;
+      if (result.path === null) {
+        notify({ kind: "info", code: "notifications.languages.missingNone", group });
+      } else {
+        notify({ kind: "info", code: "notifications.languages.missingActual", group });
+      }
+    }
+    return result;
   } catch (error) {
     status.missing.error = describeError(error);
     write(JOURNAL_CORE_SOURCE, "error", "journal.languages.missingError", {
@@ -126,10 +139,16 @@ export async function exportLanguageSample(): Promise<string | null> {
   status.export.loading = true;
   status.export.error = null;
   try {
-    return await invoke<string>("language_export", {
+    const path = await invoke<string>("language_export", {
       code: BUILTIN_LANGUAGE,
       document: { name: BUILTIN_LANGUAGE_NAME, messages: ruMessages },
     });
+    notify({
+      kind: "success",
+      code: "notifications.languages.sampleSaved",
+      group: "language-sample",
+    });
+    return path;
   } catch (error) {
     status.export.error = describeError(error);
     write(JOURNAL_CORE_SOURCE, "error", "journal.languages.exportError", {

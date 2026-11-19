@@ -7,7 +7,7 @@
 
 import Button from "primevue/button";
 import { useConfirm } from "primevue/useconfirm";
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted } from "vue";
 import { describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
 import { openFolder, status as appStatus } from "@/core/services/appInfo";
@@ -80,12 +80,6 @@ const lost = computed(() => {
   return active.value === null || active.value.problem !== null;
 });
 
-/** Куда записан последний образец. */
-const exported = ref<string | null>(null);
-
-/** Итог последней выгрузки недостающих ключей. */
-const missingNote = ref<string | null>(null);
-
 /** Перечитывает папку и применяет правки действующего словаря. */
 async function refresh(): Promise<void> {
   await loadLanguages();
@@ -95,12 +89,6 @@ async function refresh(): Promise<void> {
 /** Возврат фокуса в окно: правки файла подхватываются без кнопки. */
 function onFocus(): void {
   void refresh();
-}
-
-/** Выгружает русский словарь образцом для нового перевода. */
-async function exportSample(): Promise<void> {
-  exported.value = await exportLanguageSample();
-  if (exported.value !== null) await refresh();
 }
 
 /** Выгружает встроенный язык во внешний файл. */
@@ -126,20 +114,6 @@ function requestRevert(event: Event, entry: LanguageEntry): void {
       void restoreBuiltin(entry);
     },
   });
-}
-
-/** Выгружает недостающие ключи выбранного внешнего словаря. */
-async function requestMissing(entry: LanguageEntry): Promise<void> {
-  const result = await exportMissing(entry);
-  if (result === null) return;
-
-  if (result.path === null) {
-    missingNote.value = t("settings.language.missingNone");
-  } else if (result.written) {
-    missingNote.value = t("settings.language.missingWritten", { path: result.path });
-  } else {
-    missingNote.value = t("settings.language.missingActual", { path: result.path });
-  }
 }
 
 /** Подпись языка: встроенные переводятся, внешние показываются как есть. */
@@ -253,7 +227,7 @@ onUnmounted(() => {
             severity="secondary"
             text
             :loading="status.missing.loading"
-            @click.stop.prevent="requestMissing(item)"
+            @click.stop.prevent="exportMissing(item)"
           />
         </span>
       </div>
@@ -309,14 +283,9 @@ onUnmounted(() => {
         severity="secondary"
         text
         :loading="status.export.loading"
-        @click="exportSample"
+        @click="exportLanguageSample"
       />
     </div>
-
-    <p v-if="exported !== null" class="language__hint">
-      {{ t("settings.language.exported", { path: exported }) }}
-    </p>
-    <p v-if="missingNote !== null" class="language__hint">{{ missingNote }}</p>
 
     <p v-for="item in broken" :key="`problem-${item.code}`" class="language__error">
       {{ item.problem ? describeError(item.problem) : "" }}
