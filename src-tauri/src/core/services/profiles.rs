@@ -63,6 +63,8 @@ pub struct Profile {
     pub id: String,
     /// Название для интерфейса из `profile.json`.
     pub title: String,
+    /// Название прочитано из файла; `false` - файла нет или он испорчен.
+    pub named: bool,
 }
 
 /// Сколько файлов лежит в профиле.
@@ -100,9 +102,13 @@ pub struct ProfileList {
 pub fn list(dir: &Path) -> AppResult<Vec<Profile>> {
     let mut profiles = profile_dirs(dir)?
         .into_iter()
-        .map(|(id, path)| Profile {
-            title: read_title(&path).unwrap_or_else(|| id.clone()),
-            id,
+        .map(|(id, path)| {
+            let title = read_title(&path);
+            Profile {
+                named: title.is_some(),
+                title: title.unwrap_or_else(|| id.clone()),
+                id,
+            }
         })
         .collect::<Vec<_>>();
 
@@ -222,7 +228,11 @@ pub fn create_with(
         return Err(error);
     }
 
-    Ok(Profile { id, title })
+    Ok(Profile {
+        id,
+        title,
+        named: true,
+    })
 }
 
 /// Переименовывает профиль: меняется название, папка остаётся на месте.
@@ -234,6 +244,7 @@ pub fn rename(dir: &Path, id: &str, title: &str) -> AppResult<Profile> {
     Ok(Profile {
         id: id.to_owned(),
         title,
+        named: true,
     })
 }
 
@@ -336,6 +347,7 @@ pub fn ensure_default(dir: &Path) -> AppResult<Option<Profile>> {
     Ok(Some(Profile {
         id: DEFAULT_PROFILE.to_owned(),
         title: DEFAULT_PROFILE.to_owned(),
+        named: false,
     }))
 }
 
@@ -643,6 +655,10 @@ mod tests {
             .map(|profile| profile.title.as_str())
             .collect();
         assert_eq!(titles, ["Дом", "Работа"], "порядок по названию");
+        assert!(
+            profiles.iter().all(|profile| profile.named),
+            "названия прочитаны"
+        );
     }
 
     #[test]
@@ -655,6 +671,20 @@ mod tests {
         assert_eq!(profiles.len(), 1);
         assert_eq!(profiles[0].id, "misc");
         assert_eq!(profiles[0].title, "misc", "подпись — имя папки");
+        assert!(!profiles[0].named, "названия в файле нет");
+    }
+
+    #[test]
+    fn broken_file_keeps_profile_visible_without_name() {
+        let dir = temp_dir("broken-file");
+        fs::create_dir_all(dir.join("misc")).expect("папка профиля");
+        fs::write(dir.join("misc").join(PROFILE_FILE), "{ \"title\": ").expect("битый файл");
+
+        let profiles = list(&dir).expect("список");
+
+        assert_eq!(profiles.len(), 1);
+        assert_eq!(profiles[0].title, "misc", "подпись — имя папки");
+        assert!(!profiles[0].named, "название не прочитано");
     }
 
     #[test]

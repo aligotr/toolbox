@@ -78,6 +78,7 @@ export const ruMessages: Messages = {
   "notifications.languages.missingWritten": "Файл: {file}\nНедостающих ключей: {count}",
   "notifications.languages.missingActual": "Файл дополнений уже актуален",
   "notifications.languages.missingNone": "Недостающих ключей нет, файл дополнений убран",
+  "notifications.profiles.deleted": "Профиль «{title}» удалён",
 
   // ── Оболочка ─────────────────────────────────────────────────────────────
   "shell.sidebar.tools": "Инструменты",
@@ -333,7 +334,11 @@ export const ruMessages: Messages = {
   "settings.profiles.empty":
     "Профилей нет. Создайте первый — приложение работает только внутри профиля.",
   "settings.profiles.renameAria": "Новое название профиля «{title}»",
-  "settings.profiles.save": "Сохранить",
+  "settings.profiles.renameSave": "Сохранить название",
+  "settings.profiles.renameCancel": "Отменить переименование",
+  "settings.profiles.unnamed": "Название не прочитано",
+  "settings.profiles.unnamedHint":
+    "Файл profile.json отсутствует или повреждён: показано имя папки",
   "settings.profiles.rename": "Переименовать",
   "settings.profiles.delete": "Удалить",
   "settings.profiles.switchHeader": "Переключение профиля",

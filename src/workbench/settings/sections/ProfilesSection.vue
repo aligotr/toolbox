@@ -84,27 +84,54 @@ watch(
 /** Идентификатор профиля, который сейчас переименовывают. */
 const renamingId = ref<string | null>(null);
 
-/** Новое название; до отправки живёт в форме. */
+/** Новое название; до отправки живёт в поле. */
 const renameTitle = ref("");
 
-/** Открывает форму и подставляет текущее название. */
+/** Предел названия повторяет предел ядра: длиннее всё равно не сохранится. */
+const TITLE_MAX_LENGTH = 60;
+
+/** Поле переименования: при появлении получает фокус и выделяет текст. */
+function setRenameInput(target: unknown): void {
+  const element = (target as { $el?: unknown } | null)?.$el;
+  if (!(element instanceof HTMLInputElement)) return;
+
+  // Обновление карточки снова зовёт ref: уже активное поле не трогаем,
+  // иначе выделение сбрасывалось бы на каждом введённом символе.
+  if (document.activeElement === element) return;
+
+  element.focus();
+  element.select();
+}
+
+/** Открывает правку на месте и подставляет текущее название. */
 function startRename(profile: Profile): void {
   renamingId.value = profile.id;
   renameTitle.value = profile.title;
   status.rename.error = null;
 }
 
-/** Закрывает форму, ничего не записывая. */
+/** Закрывает правку, ничего не записывая. */
 function cancelRename(): void {
   renamingId.value = null;
   renameTitle.value = "";
   status.rename.error = null;
 }
 
-/** Записывает название; пустое не отправляется. */
+/** Сохранять есть что: название непустое, изменилось и запись не идёт. */
+function canSaveRename(profile: Profile): boolean {
+  const title = renameTitle.value.trim();
+  return title !== "" && title !== profile.title && !status.rename.loading;
+}
+
+/** Записывает название; пустое и прежнее не отправляются. */
 async function submitRename(profile: Profile): Promise<void> {
   const title = renameTitle.value.trim();
   if (!title) return;
+
+  if (title === profile.title) {
+    cancelRename();
+    return;
+  }
 
   if (await renameProfile(profile.id, title)) {
     renamingId.value = null;
@@ -182,7 +209,6 @@ onMounted(() => {
         @click="cancelCreate"
       />
     </form>
-    <p v-if="status.create.error" class="profiles__error">{{ status.create.error }}</p>
 
     <p v-if="!profiles.loaded" class="profiles__note">
       {{ t("settings.profiles.loading") }}
@@ -204,6 +230,7 @@ onMounted(() => {
         :class="{
           'profile-row--active': profile.id === profiles.active,
           'profile-row--renaming': renamingId === profile.id,
+          'profile-row--unnamed': !profile.named,
         }"
         @click="select(profile)"
       >
@@ -219,69 +246,80 @@ onMounted(() => {
         />
 
         <div class="profile-row__main">
-          <strong class="profile-row__name">{{ profile.title }}</strong>
+          <InputText
+            v-if="renamingId === profile.id"
+            :ref="setRenameInput"
+            v-model="renameTitle"
+            class="profile-row__name-input"
+            size="small"
+            :maxlength="TITLE_MAX_LENGTH"
+            :aria-label="t('settings.profiles.renameAria', { title: profile.title })"
+            :disabled="status.rename.loading"
+            @keyup.enter="submitRename(profile)"
+            @keyup.esc="cancelRename"
+            @click.stop
+          />
+          <div v-else class="profile-row__title">
+            <strong class="profile-row__name">{{ profile.title }}</strong>
+            <span
+              v-if="!profile.named"
+              class="profile-row__badge profile-row__badge--bad"
+              :title="t('settings.profiles.unnamedHint')"
+            >
+              {{ t("settings.profiles.unnamed") }}
+            </span>
+          </div>
           <span class="profile-row__meta">
             <template v-if="usageLabel(profile.id)"> {{ usageLabel(profile.id) }} · </template>
             <span class="profile-row__id mono">{{ profile.id }}</span>
           </span>
         </div>
 
-        <form
-          v-if="renamingId === profile.id"
-          class="profile-row__form"
-          @click.stop
-          @submit.prevent="submitRename(profile)"
-        >
-          <InputText
-            v-model="renameTitle"
-            :aria-label="t('settings.profiles.renameAria', { title: profile.title })"
-          />
-          <Button
-            type="submit"
-            :label="t('settings.profiles.save')"
-            size="small"
-            :loading="status.rename.loading"
-            :disabled="!renameTitle.trim()"
-          />
-          <Button
-            type="button"
-            :label="t('settings.profiles.cancel')"
-            size="small"
-            severity="secondary"
-            text
-            @click="cancelRename"
-          />
-        </form>
-
-        <div v-else class="profile-row__actions" @click.stop>
-          <Button
-            :label="t('settings.profiles.rename')"
-            size="small"
-            severity="secondary"
-            text
-            :disabled="status.rename.loading"
-            @click="startRename(profile)"
-          />
-          <Button
-            v-if="profile.id !== profiles.active"
-            :label="t('settings.profiles.delete')"
-            size="small"
-            severity="danger"
-            text
-            :disabled="status.delete.loading"
-            @click="requestDelete(profile, $event)"
-          />
+        <div class="profile-row__actions" @click.stop>
+          <template v-if="renamingId === profile.id">
+            <Button
+              v-tooltip.top="t('settings.profiles.renameSave')"
+              icon="pi pi-check"
+              size="small"
+              text
+              :aria-label="t('settings.profiles.renameSave')"
+              :loading="status.rename.loading"
+              :disabled="!canSaveRename(profile)"
+              @click="submitRename(profile)"
+            />
+            <Button
+              v-tooltip.top="t('settings.profiles.renameCancel')"
+              icon="pi pi-times"
+              severity="secondary"
+              size="small"
+              text
+              :aria-label="t('settings.profiles.renameCancel')"
+              :disabled="status.rename.loading"
+              @click="cancelRename"
+            />
+          </template>
+          <template v-else>
+            <Button
+              :label="t('settings.profiles.rename')"
+              size="small"
+              severity="secondary"
+              text
+              :disabled="status.rename.loading"
+              @click="startRename(profile)"
+            />
+            <Button
+              v-if="profile.id !== profiles.active"
+              :label="t('settings.profiles.delete')"
+              size="small"
+              severity="danger"
+              text
+              :disabled="status.delete.loading"
+              @click="requestDelete(profile, $event)"
+            />
+          </template>
         </div>
-
-        <p v-if="renamingId === profile.id && status.rename.error" class="profile-row__error">
-          {{ status.rename.error }}
-        </p>
       </li>
     </ul>
-
-    <p v-if="status.switch.error" class="profiles__error">{{ status.switch.error }}</p>
-    <p v-if="status.delete.error" class="profiles__error">{{ status.delete.error }}</p>
-    <p v-if="status.usage.error" class="profiles__error">{{ status.usage.error }}</p>
   </section>
 </template>
 
@@ -304,21 +342,15 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.profiles__form,
-.profile-row__form {
+.profiles__form {
   display: flex;
   align-items: center;
   gap: var(--ag-space-sm);
   flex-wrap: wrap;
 }
 
-.profiles__form :deep(input),
-.profile-row__form :deep(input) {
+.profiles__form :deep(input) {
   min-width: 240px;
-}
-
-.profile-row__form {
-  grid-column: 1 / -1;
 }
 
 .profiles__list {
@@ -356,6 +388,17 @@ onMounted(() => {
   background: var(--p-surface-100);
 }
 
+/* Профиль без читаемого названия приглушён, но остаётся доступным:
+   папка существует, переключение и правка работают. */
+.profile-row--unnamed:not(.profile-row--active) {
+  border-style: dashed;
+}
+
+.profile-row--unnamed:not(.profile-row--renaming) .profile-row__radio,
+.profile-row--unnamed:not(.profile-row--renaming) .profile-row__main {
+  opacity: 0.7;
+}
+
 .profile-row--active,
 .profile-row--renaming {
   cursor: default;
@@ -377,7 +420,35 @@ onMounted(() => {
   min-width: 0;
 }
 
+.profile-row__title {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-sm);
+  flex-wrap: wrap;
+}
+
 .profile-row__name {
+  font-size: var(--ag-text-sm);
+  font-weight: 600;
+}
+
+.profile-row__badge {
+  padding: 2px 6px;
+  border: 1px solid var(--ag-border);
+  border-radius: var(--ag-radius-sm);
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
+  white-space: nowrap;
+}
+
+.profile-row__badge--bad {
+  border-color: var(--ag-danger);
+  color: var(--ag-danger);
+}
+
+.profile-row__name-input {
+  width: 100%;
+  max-width: 360px;
   font-size: var(--ag-text-sm);
   font-weight: 600;
 }
@@ -402,21 +473,6 @@ onMounted(() => {
   gap: var(--ag-space-xs);
   flex-wrap: wrap;
   justify-content: flex-end;
-}
-
-.profile-row__error {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: var(--ag-danger);
-  font-size: var(--ag-text-xs);
-  line-height: 1.45;
-}
-
-.profiles__error {
-  margin: 0;
-  color: var(--ag-danger);
-  font-size: var(--ag-text-xs);
-  line-height: 1.45;
 }
 
 .profiles__note {

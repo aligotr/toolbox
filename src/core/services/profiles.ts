@@ -15,8 +15,9 @@ import { computed, reactive } from "vue";
 import type { Profile, ProfileList, ProfileUsage } from "@/contracts/profiles";
 import { t } from "@/core/infra/i18n";
 import { JOURNAL_CORE_SOURCE } from "../infra/constants";
-import { describeError } from "../infra/errors";
+import { appErrorOf, describeError } from "../infra/errors";
 import { write } from "../infra/journal";
+import { notify } from "../infra/notifications";
 import { idle, type OperationStatus } from "../infra/status";
 import { flushWorkspace } from "./workspace/index";
 
@@ -66,6 +67,18 @@ export const status = reactive<Record<ProfileOperation, OperationStatus>>({
   switch: idle(),
 });
 
+/** Показывает отказ операции уведомлением: код переводит словарь. */
+function notifyError(error: unknown, group: string): void {
+  const coded = appErrorOf(error);
+  notify({
+    kind: "error",
+    code: coded.code,
+    params: coded.params,
+    fallback: coded.fallback,
+    group,
+  });
+}
+
 /** Активный профиль или `null`, пока список не прочитан. */
 export const activeProfile = computed<Profile | null>(
   () => profiles.items.find((profile) => profile.id === profiles.active) ?? null,
@@ -98,6 +111,7 @@ async function refreshUsage(): Promise<void> {
     await reloadUsage();
   } catch (error) {
     status.usage.error = describeError(error);
+    notifyError(error, "profile-usage");
     write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.usageError", {
       reason: error,
     });
@@ -181,6 +195,7 @@ export async function loadProfilesUsage(): Promise<void> {
     await reloadUsage();
   } catch (error) {
     status.usage.error = describeError(error);
+    notifyError(error, "profile-usage");
     write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.usageError", {
       reason: error,
     });
@@ -206,6 +221,7 @@ export async function createProfile(title: string): Promise<boolean> {
     return true;
   } catch (error) {
     status.create.error = describeError(error);
+    notifyError(error, "profile-create");
     write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.createError", {
       reason: error,
     });
@@ -231,6 +247,7 @@ export async function renameProfile(id: string, title: string): Promise<boolean>
     return true;
   } catch (error) {
     status.rename.error = describeError(error);
+    notifyError(error, "profile-rename");
     write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.renameError", {
       reason: error,
     });
@@ -254,9 +271,16 @@ export async function deleteProfile(profile: Profile): Promise<boolean> {
     });
     await reload();
     await refreshUsage();
+    notify({
+      kind: "info",
+      code: "notifications.profiles.deleted",
+      params: { title: profile.title },
+      group: "profile-delete",
+    });
     return true;
   } catch (error) {
     status.delete.error = describeError(error);
+    notifyError(error, "profile-delete");
     write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.deleteError", {
       reason: error,
     });
@@ -289,6 +313,7 @@ export async function switchProfile(id: string): Promise<void> {
     await invoke("profile_switch", { id });
   } catch (error) {
     status.switch.error = describeError(error);
+    notifyError(error, "profile-switch");
     write(JOURNAL_CORE_SOURCE, "error", "journal.profiles.switchError", {
       reason: error,
     });

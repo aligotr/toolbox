@@ -10,6 +10,8 @@ export interface Profile {
   id: string;
   /** Название для интерфейса. */
   title: string;
+  /** Название прочитано из `profile.json`; `false` - файла нет или он испорчен. */
+  named: boolean;
 }
 
 /** Сколько файлов лежит в профиле. */
