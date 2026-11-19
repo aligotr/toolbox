@@ -307,12 +307,16 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--ag-space-sm);
+  /* Раскладка карточки зависит от её ширины, а не от окна: место занимает
+     ещё и боковая навигация. */
+  container-type: inline-size;
 }
 
 /* Карточка: выбор слева, действия отдельной колонкой справа. */
 .language__item {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "radio body actions";
   align-items: center;
   gap: var(--ag-space-lg);
   padding: var(--ag-space-lg);
@@ -328,6 +332,7 @@ onUnmounted(() => {
 
 /* Отметка выбора - цветом действия, а не системным синим. */
 .language__radio {
+  grid-area: radio;
   width: 16px;
   height: 16px;
   margin: 0;
@@ -349,6 +354,7 @@ onUnmounted(() => {
 }
 
 .language__body {
+  grid-area: body;
   display: flex;
   flex-direction: column;
   gap: var(--ag-space-xs);
@@ -393,6 +399,7 @@ onUnmounted(() => {
 }
 
 .language__row-actions {
+  grid-area: actions;
   display: flex;
   align-items: center;
   gap: var(--ag-space-xs);
@@ -420,5 +427,27 @@ onUnmounted(() => {
   color: var(--ag-danger);
   font-size: var(--ag-text-xs);
   line-height: 1.45;
+}
+
+/* Узкая карточка: действия уходят под текст. Иначе колонка кнопок забирает
+   ширину у тела, и бейджи наезжают на кнопки. Правило стоит последним:
+   при равной специфичности оно должно перекрыть широкую раскладку. */
+@container (max-width: 660px) {
+  .language__item {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "radio body"
+      "actions actions";
+    align-items: start;
+    row-gap: var(--ag-space-md);
+  }
+
+  .language__radio {
+    margin-top: 2px;
+  }
+
+  .language__row-actions {
+    justify-content: flex-start;
+  }
 }
 </style>
