@@ -197,30 +197,16 @@ onMounted(() => {
         <p class="wb-section__lead">{{ t("settings.profiles.lead") }}</p>
       </div>
 
-      <div class="profiles__actions">
-        <Button
-          :label="t('settings.profiles.openFolder')"
-          icon="pi pi-folder-open"
-          size="small"
-          severity="secondary"
-          outlined
-          :loading="appStatus.folder.loading"
-          @click="openFolder('profiles')"
-        />
-        <Button
-          :label="t('settings.profiles.create')"
-          icon="pi pi-plus"
-          size="small"
-          severity="secondary"
-          outlined
-          @click="startCreate"
-        />
-      </div>
+      <Button
+        class="profiles__create"
+        :label="t('settings.profiles.create')"
+        icon="pi pi-plus"
+        size="small"
+        severity="secondary"
+        outlined
+        @click="startCreate"
+      />
     </header>
-
-    <p v-if="appStatus.folder.error" class="profiles__error">
-      {{ appStatus.folder.error }}
-    </p>
 
     <Popover ref="createMenu" @show="focusCreate" @hide="resetCreate">
       <form
@@ -368,6 +354,22 @@ onMounted(() => {
         </div>
       </li>
     </ul>
+
+    <div class="profiles__actions">
+      <Button
+        :label="t('settings.profiles.openFolder')"
+        icon="pi pi-folder-open"
+        size="small"
+        severity="secondary"
+        outlined
+        :loading="appStatus.folder.loading"
+        @click="openFolder('profiles')"
+      />
+    </div>
+
+    <p v-if="appStatus.folder.error" class="profiles__error">
+      {{ appStatus.folder.error }}
+    </p>
   </section>
 </template>
 
@@ -386,9 +388,13 @@ onMounted(() => {
   min-width: 0;
 }
 
+.profiles__create {
+  flex-shrink: 0;
+}
+
 .profiles__actions {
   display: flex;
-  flex-shrink: 0;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--ag-space-sm);
 }
