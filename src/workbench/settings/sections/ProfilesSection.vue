@@ -225,19 +225,19 @@ onMounted(() => {
         />
         <div class="profiles__create-actions">
           <Button
-            type="submit"
-            :label="t('settings.profiles.submit')"
-            size="small"
-            :loading="status.create.loading"
-            :disabled="!newTitle.trim()"
-          />
-          <Button
             type="button"
             :label="t('settings.profiles.cancel')"
             size="small"
             severity="secondary"
             text
             @click="cancelCreate"
+          />
+          <Button
+            type="submit"
+            :label="t('settings.profiles.submit')"
+            size="small"
+            :loading="status.create.loading"
+            :disabled="!newTitle.trim()"
           />
         </div>
       </form>
