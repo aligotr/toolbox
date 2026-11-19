@@ -236,7 +236,6 @@ export const enMessages: Messages = {
     one: "Clear logs older than {count} day",
     other: "Clear logs older than {count} days",
   },
-  "settings.log.pruneHeader": "Clear logs",
   "settings.log.pruneMessage": {
     one: "Log files older than {count} day will be deleted. Recent entries will stay: they are still useful for investigating problems.",
     other:
@@ -251,7 +250,6 @@ export const enMessages: Messages = {
   "settings.window.size": "Current size",
   "settings.window.position": "Position",
   "settings.window.reset": "Reset size and position",
-  "settings.window.resetHeader": "Reset window",
   "settings.window.resetMessage":
     "The window size and position will return to their defaults. The tab contents will not change.",
   "settings.window.resetAccept": "Reset",
@@ -458,7 +456,6 @@ export const enMessages: Messages = {
   "dnslookup.preset.notRemoved": "The preset was not deleted.",
   "dnslookup.preset.loadHeader": "Load preset",
   "dnslookup.preset.loadAccept": "Load",
-  "dnslookup.preset.deleteHeader": "Delete preset",
   "dnslookup.preset.deleteAccept": "Delete",
   "dnslookup.preset.cancel": "Cancel",
   "dnslookup.preset.deleteMessage": "Preset “{title}” will be moved to the trash.",

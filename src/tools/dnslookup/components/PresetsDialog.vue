@@ -15,11 +15,12 @@ import Dialog from "primevue/dialog";
 import InputText from "primevue/inputtext";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, ref, watch } from "vue";
-import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
+import { CONFIRM_CALM_REJECT } from "@/core/constants";
 import { describeError } from "@/core/infra/errors";
 import { catalog, t } from "@/core/infra/i18n";
 import { PRESET_TITLE_MAX_LENGTH } from "@/core/services/presets/constants";
 import type { Preset } from "@/core/services/presets";
+import { requireConfirm } from "@/ui/confirmPopup";
 import { DIALOG_MAX_WIDTH, DIALOG_WIDTH } from "../constants";
 import {
   adoptPresetTitle,
@@ -261,18 +262,18 @@ async function duplicate(preset: Preset): Promise<void> {
 }
 
 /** Удаление уносит файл в корзину: промах в списке не должен стоить настроек. */
-function requestDelete(preset: Preset): void {
+function requestDelete(preset: Preset, event: MouseEvent): void {
+  const target = event.currentTarget;
+  if (!(target instanceof HTMLElement)) return;
+
   const open = preset.id === props.session.presetId;
-  confirm.require({
-    header: t("dnslookup.preset.deleteHeader"),
+  requireConfirm(confirm, {
+    target,
     message: open
       ? t("dnslookup.preset.deleteOpenMessage", { title: preset.title })
       : t("dnslookup.preset.deleteMessage", { title: preset.title }),
-    icon: "pi pi-exclamation-triangle",
     acceptLabel: t("dnslookup.preset.deleteAccept"),
     rejectLabel: t("dnslookup.preset.cancel"),
-    acceptProps: CONFIRM_DANGER_ACCEPT,
-    rejectProps: CONFIRM_CALM_REJECT,
     accept: () => {
       void remove(preset);
     },
@@ -440,7 +441,7 @@ async function remove(preset: Preset): Promise<void> {
                 size="small"
                 text
                 :aria-label="t('dnslookup.preset.deleteAria')"
-                @click="requestDelete(preset)"
+                @click="requestDelete(preset, $event)"
               />
             </div>
           </template>

@@ -38,3 +38,11 @@ export const EMPTY_TAB_ICON = "pi pi-th-large";
  */
 export const CONFIRM_DANGER_ACCEPT = { severity: "danger" } as const;
 export const CONFIRM_CALM_REJECT = { severity: "secondary", text: true } as const;
+
+/**
+ * Главный ответ неопасного подтверждения: цвет действия по умолчанию.
+ *
+ * Нужен там, где ответ остаётся главным, но потери данных нет: сброс
+ * положения окна, переключение без удаления.
+ */
+export const CONFIRM_PRIMARY_ACCEPT = {} as const;

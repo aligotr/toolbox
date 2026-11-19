@@ -16,6 +16,10 @@ export interface ConfirmRequest {
   message: string;
   acceptLabel: string;
   rejectLabel: string;
+  /** Вид главной кнопки; по умолчанию опасный. */
+  acceptProps?: ConfirmationOptions["acceptProps"];
+  /** Вид кнопки отказа; по умолчанию спокойный. */
+  rejectProps?: ConfirmationOptions["rejectProps"];
   accept: () => void;
 }
 
@@ -30,8 +34,8 @@ export function requireConfirm(
     message: request.message,
     acceptLabel: request.acceptLabel,
     rejectLabel: request.rejectLabel,
-    acceptProps: CONFIRM_DANGER_ACCEPT,
-    rejectProps: CONFIRM_CALM_REJECT,
+    acceptProps: request.acceptProps ?? CONFIRM_DANGER_ACCEPT,
+    rejectProps: request.rejectProps ?? CONFIRM_CALM_REJECT,
     accept: request.accept,
   } satisfies ConfirmationOptions);
 

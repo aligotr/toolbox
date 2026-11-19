@@ -8,9 +8,10 @@
 import Button from "primevue/button";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted } from "vue";
-import { CONFIRM_CALM_REJECT } from "@/core/constants";
+import { CONFIRM_PRIMARY_ACCEPT } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
 import { loadSettings, resetWindow, settings, status } from "@/core/services/settings/index";
+import { requireConfirm } from "@/ui/confirmPopup";
 
 const confirm = useConfirm();
 
@@ -30,13 +31,16 @@ const position = computed(() => {
   return `${window.x}, ${window.y}`;
 });
 
-function requestReset(): void {
-  confirm.require({
-    header: t("settings.window.resetHeader"),
+function requestReset(event: MouseEvent): void {
+  const target = event.currentTarget;
+  if (!(target instanceof HTMLElement)) return;
+
+  requireConfirm(confirm, {
+    target,
     message: t("settings.window.resetMessage"),
     acceptLabel: t("settings.window.resetAccept"),
     rejectLabel: t("settings.window.resetReject"),
-    rejectProps: CONFIRM_CALM_REJECT,
+    acceptProps: CONFIRM_PRIMARY_ACCEPT,
     accept: () => void resetWindow(),
   });
 }

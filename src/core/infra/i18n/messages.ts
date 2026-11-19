@@ -287,7 +287,6 @@ export const ruMessages: Messages = {
     many: "Очистить логи старше {count} дней",
     other: "Очистить логи старше {count} дня",
   },
-  "settings.log.pruneHeader": "Очистка логов",
   "settings.log.pruneMessage": {
     one: "Файлы лога старше {count} дня будут удалены. Свежие записи останутся: по ним ещё можно разбирать поломки.",
     few: "Файлы лога старше {count} дней будут удалены. Свежие записи останутся: по ним ещё можно разбирать поломки.",
@@ -306,7 +305,6 @@ export const ruMessages: Messages = {
   "settings.window.size": "Текущий размер",
   "settings.window.position": "Положение",
   "settings.window.reset": "Сбросить размер и положение",
-  "settings.window.resetHeader": "Сброс окна",
   "settings.window.resetMessage":
     "Размер и положение окна вернутся к значениям по умолчанию. Содержимое вкладок не изменится.",
   "settings.window.resetAccept": "Сбросить",
@@ -537,7 +535,6 @@ export const ruMessages: Messages = {
   "dnslookup.preset.notRemoved": "Пресет не удалён.",
   "dnslookup.preset.loadHeader": "Загрузить пресет",
   "dnslookup.preset.loadAccept": "Загрузить",
-  "dnslookup.preset.deleteHeader": "Удалить пресет",
   "dnslookup.preset.deleteAccept": "Удалить",
   "dnslookup.preset.cancel": "Отмена",
   "dnslookup.preset.deleteMessage": "Пресет «{title}» будет перемещён в корзину.",

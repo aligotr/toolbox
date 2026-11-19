@@ -11,7 +11,6 @@ import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted, ref } from "vue";
 import type { LogLevel } from "@/contracts/settings";
 import { appInfo, loadAppInfo, openFolder, status as appStatus } from "@/core/services/appInfo";
-import { CONFIRM_CALM_REJECT, CONFIRM_DANGER_ACCEPT } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
 import { pruneLogs, status as logsStatus } from "@/core/services/logs";
 import {
@@ -21,6 +20,7 @@ import {
   settings,
   status,
 } from "@/core/services/settings/index";
+import { requireConfirm } from "@/ui/confirmPopup";
 import { logLevelOptions } from "../logLevels";
 
 const confirm = useConfirm();
@@ -45,16 +45,17 @@ const pruned = ref<number | null>(null);
 /** Срок хранения приходит из ядра, чтобы подпись и действие не разошлись. */
 const keepDays = computed(() => appInfo.current?.log_keep_days ?? null);
 
-function requestPrune(): void {
+function requestPrune(event: MouseEvent): void {
   if (keepDays.value === null) return;
 
-  confirm.require({
-    header: t("settings.log.pruneHeader"),
+  const target = event.currentTarget;
+  if (!(target instanceof HTMLElement)) return;
+
+  requireConfirm(confirm, {
+    target,
     message: t("settings.log.pruneMessage", { count: keepDays.value }),
     acceptLabel: t("settings.log.pruneAccept"),
     rejectLabel: t("settings.log.pruneReject"),
-    acceptProps: CONFIRM_DANGER_ACCEPT,
-    rejectProps: CONFIRM_CALM_REJECT,
     accept: async () => {
       const removed = await pruneLogs();
       if (removed !== null) pruned.value = removed;
