@@ -156,11 +156,6 @@ fn boot(app: &AppHandle) -> Runtime {
     };
     logging::install_panic_hook(logger.clone());
 
-    // Английский словарь ставится один раз: дальше пользователь правит его сам.
-    if let Err(reason) = languages::seed(&storage.languages_dir()) {
-        log::warn!("Словари интерфейса не подготовлены: {reason}");
-    }
-
     log::info!(
         "ToolBox {}: запуск, режим {}, папка программы '{root}'",
         env!("CARGO_PKG_VERSION"),
@@ -308,9 +303,12 @@ pub fn run() {
             commands::presets::preset_rename,
             commands::presets::preset_duplicate,
             commands::presets::preset_delete,
-            commands::languages::languages_list,
+            commands::languages::languages_catalog,
             commands::languages::language_load,
             commands::languages::language_export,
+            commands::languages::language_export_file,
+            commands::languages::language_revert,
+            commands::languages::language_missing_write,
             commands::info::app_info,
             commands::info::logs_prune,
             commands::info::open_folder,

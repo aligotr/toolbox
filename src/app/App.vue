@@ -20,9 +20,12 @@ import type { AppError } from "@/contracts/errors";
 import { describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
-import { loadSettings, startSettingsSync } from "@/core/services/settings/index";
+import { startNotifications, stopNotifications } from "@/core/infra/notifications";
+import { checkLanguageFile } from "@/core/services/languages";
+import { loadSettings, settings, startSettingsSync } from "@/core/services/settings/index";
 import { loadStartupStatus, type StartupStatus } from "@/core/services/startup";
 import WorkbenchView from "@/workbench/WorkbenchView.vue";
+import NotificationHost from "./NotificationHost.vue";
 import { tools } from "./tools";
 
 /**
@@ -69,12 +72,18 @@ onMounted(async () => {
       reason: payload.error,
     });
   });
+  await startNotifications();
   unlistenSettings = await startSettingsSync();
+
+  // Стартовая проверка активного внешнего словаря не задерживает первый кадр:
+  // совпавший файл дополнений ядро не переписывает и молчит (ADR 0057).
+  void checkLanguageFile(settings.current?.ui.language ?? null);
 });
 
 onUnmounted(() => {
   unlistenError?.();
   unlistenSettings?.();
+  stopNotifications();
 });
 </script>
 
@@ -113,6 +122,8 @@ onUnmounted(() => {
   <div v-else-if="!ready" class="blocked" />
 
   <WorkbenchView v-else :tools="tools" :startup="startup" />
+
+  <NotificationHost />
 
   <ConfirmDialog />
 

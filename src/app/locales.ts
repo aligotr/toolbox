@@ -9,6 +9,7 @@ import { ruMessages } from "@/core/infra/i18n/messages";
 import {
   activateLanguage,
   BUILTIN_LANGUAGE,
+  BUILTIN_LANGUAGES,
   languages,
   loadLanguages,
 } from "@/core/services/languages";
@@ -46,10 +47,17 @@ async function chooseLanguage(): Promise<string> {
 
 /** Системный язык, если для него есть словарь; иначе русский. */
 async function detectLanguage(): Promise<string> {
-  await loadLanguages();
-
   const preferred = navigator.language.toLowerCase();
   const base = preferred.split("-")[0];
+
+  // Встроенные языки не требуют чтения папки: они есть всегда.
+  const builtin =
+    BUILTIN_LANGUAGES.find((language) => language.code === preferred) ??
+    BUILTIN_LANGUAGES.find((language) => language.code === base);
+  if (builtin) return builtin.code;
+
+  await loadLanguages();
+
   const available = languages.items.filter((item) => item.problem === null);
 
   const exact = available.find((item) => item.code.toLowerCase() === preferred);

@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { createApp } from "vue";
 import PrimeVue from "primevue/config";
 import ConfirmationService from "primevue/confirmationservice";
+import ToastService from "primevue/toastservice";
 import Tooltip from "primevue/tooltip";
 import "primeicons/primeicons.css";
 import App from "./App.vue";
@@ -57,6 +58,9 @@ app.directive("tooltip", Tooltip);
 // Подтверждения переключения и удаления профилей: один диалог на всё
 // приложение, текст задаётся в настройках профилей.
 app.use(ConfirmationService);
+
+// Уведомления поверх экрана: один приёмник на всё приложение (ADR 0058).
+app.use(ToastService);
 
 app.config.errorHandler = (error, _instance, info) => {
   const text = error instanceof Error ? `${error.name}: ${error.message}` : String(error);

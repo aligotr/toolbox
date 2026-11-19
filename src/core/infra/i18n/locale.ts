@@ -8,6 +8,9 @@ import type { PluralCategory } from "./types.ts";
 /** Язык эталонного словаря: на него откатываются правила. */
 export const FALLBACK_LOCALE = "ru";
 
+/** Язык по умолчанию и встроенный эталон словаря. */
+export const DEFAULT_LOCALE = FALLBACK_LOCALE;
+
 /** Готовые правила по локали: `Intl` дорог в создании, а `t()` зовут часто. */
 const rules = new Map<string, Intl.PluralRules>();
 

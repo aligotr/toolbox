@@ -147,10 +147,18 @@ impl Storage {
     /// Папка словарей интерфейса: `local/languages/` (ADR 0039).
     ///
     /// Машинное состояние: выбранный язык не переезжает вместе с профилем.
-    /// Внутри — пользовательские файлы словарей; приложение их не
+    /// Внутри - пользовательские файлы словарей; приложение их не
     /// перезаписывает.
     pub fn languages_dir(&self) -> PathBuf {
         self.local_dir().join(LANGUAGES_DIR)
+    }
+
+    /// Корзина внешних словарей: `local/trash/languages/`.
+    ///
+    /// Возврат к встроенному языку не стирает файл пользователя: он лежит
+    /// в корзине, пока её не почистят.
+    pub fn languages_trash_dir(&self) -> PathBuf {
+        self.trash_dir().join(LANGUAGES_DIR)
     }
 
     /// Папка корзины: `local/trash/`.
@@ -354,6 +362,10 @@ mod tests {
         assert_eq!(
             storage.presets_trash_dir(),
             root.join("local").join("trash").join("presets")
+        );
+        assert_eq!(
+            storage.languages_trash_dir(),
+            root.join("local").join("trash").join("languages")
         );
         assert_eq!(
             storage.data_dir(),

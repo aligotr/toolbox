@@ -216,6 +216,24 @@ export const toolboxPreset = definePreset(Aura, {
         },
       },
     },
+    // Уведомление: ширина по тексту сообщения, общий радиус и линия темы.
+    // Времена жизни и очередь задаёт приёмник (ADR 0058).
+    toast: {
+      root: {
+        width: "24rem",
+        borderRadius: "{border.radius.md}",
+        borderWidth: "1px",
+      },
+      content: {
+        padding: "12px 16px",
+      },
+      summary: {
+        fontSize: "14px",
+      },
+      detail: {
+        fontSize: "13px",
+      },
+    },
   },
   // База типографики PrimeVue: компоненты, которые не задают размер сами
   // (подсказки, меню, диалоги, оверлеи), наследуют корневые 16 px и выглядят

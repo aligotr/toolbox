@@ -12,5 +12,6 @@ pub mod deps;
 pub mod error;
 pub mod message;
 pub mod module;
+pub mod notifications;
 pub mod sink;
 pub mod trace;

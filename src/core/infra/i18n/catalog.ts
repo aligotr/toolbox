@@ -4,11 +4,9 @@
 // перерисовывает интерфейс без перезапуска (ADR 0039).
 
 import { reactive } from "vue";
+import { DEFAULT_LOCALE } from "./locale.ts";
 import { translate } from "./translate.ts";
 import type { MessageParams, Messages } from "./types.ts";
-
-/** Язык встроенного словаря: он же последний рубеж отката. */
-export const DEFAULT_LOCALE = "ru";
 
 /** Состояние каталога. */
 interface CatalogState {

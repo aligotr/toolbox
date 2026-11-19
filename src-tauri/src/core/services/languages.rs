@@ -1,11 +1,11 @@
 //! Словари интерфейса: файлы `local/languages/<code>.json` (ADR 0039).
 //!
-//! Файл — JSON с комментариями и висячими запятыми. Разбирает только Rust:
+//! Файл - JSON с комментариями и висячими запятыми. Разбирает только Rust:
 //! у интерфейса и ядра один диалект, а ошибка приходит с номером строки.
 //!
-//! Приложение внешние словари **не перезаписывает**. Единственное, что оно
-//! создаёт само, — английский образец при первой установке; маркер
-//! `.seeded` не даёт вернуть файл после осознанного удаления.
+//! Встроенных словарей два, `ru` и `en`, и они живут в интерфейсе (ADR 0057).
+//! Здесь - только внешние файлы: приложение их **не перезаписывает**.
+//! Единственное, что оно пишет само, - файл дополнений `<code>.missing.json`.
 
 use std::fs;
 use std::io::ErrorKind;
@@ -33,25 +33,20 @@ const MAX_CODE_LEN: usize = 35;
 /// Категории склонения CLDR: других форм в словаре быть не может.
 const CATEGORIES: [&str; 6] = ["zero", "one", "two", "few", "many", "other"];
 
-/// Английский словарь, поставляемый с программой.
-const SEED_CODE: &str = "en";
-
-/// Метка начальной установки: после неё удалённый словарь не возвращается.
-const SEED_MARKER: &str = ".seeded";
-
-/// Содержимое английского словаря. Вшито в бинарник: работает и в `tauri dev`,
-/// и в установщике, без зависимости от каталога ресурсов.
-const SEED: &str = include_str!("../../../resources/languages/en.json");
-
-/// Сведения о найденном словаре.
+/// Сведения о внешнем словаре вместе с сообщениями.
+///
+/// Файл читается и разбирается один раз: второй проход за сообщениями
+/// не нужен (ADR 0057).
 #[derive(Debug, Clone, PartialEq, Serialize)]
-pub struct LanguageSummary {
+pub struct CatalogEntry {
     /// Код языка: имя файла без расширения.
     pub code: String,
     /// Название для списка: поле `name`, иначе код.
     pub name: String,
-    /// Причина, по которой файл не прочитан; `None` — словарь годен.
+    /// Причина, по которой файл не прочитан; `None` - словарь годен.
     pub problem: Option<AppError>,
+    /// Сообщения годного словаря; у битого - `None`.
+    pub messages: Option<Map<String, Value>>,
 }
 
 /// Прочитанный словарь.
@@ -62,8 +57,9 @@ pub struct Language {
     pub messages: Map<String, Value>,
 }
 
-/// Список словарей в папке. Отсутствие папки — не поломка: только русский.
-pub fn list(dir: &Path) -> AppResult<Vec<LanguageSummary>> {
+/// Каталог внешних словарей. Отсутствие папки - не поломка: встроенные
+/// языки работают и без неё.
+pub fn catalog(dir: &Path) -> AppResult<Vec<CatalogEntry>> {
     let entries = match fs::read_dir(dir) {
         Ok(entries) => entries,
         Err(error) if error.kind() == ErrorKind::NotFound => return Ok(Vec::new()),
@@ -84,42 +80,40 @@ pub fn list(dir: &Path) -> AppResult<Vec<LanguageSummary>> {
         let Some(code) = path.file_stem().and_then(|value| value.to_str()) else {
             continue;
         };
-        // Служебные файлы (`ru.template.json`, `.seeded`) словарями не
-        // считаются: точка в основе имени означает не код языка, а образец.
+        // Служебные файлы (`ru.template.json`, `en.missing.json`) словарями
+        // не считаются: точка в основе имени означает не код языка.
         if code.contains('.') {
             continue;
         }
 
-        found.push(summary(code, &path));
+        found.push(match read(&path, code) {
+            Ok(language) => CatalogEntry {
+                code: language.code,
+                name: language.name,
+                problem: None,
+                messages: Some(language.messages),
+            },
+            Err(problem) => CatalogEntry {
+                code: code.to_owned(),
+                name: code.to_owned(),
+                problem: Some(problem),
+                messages: None,
+            },
+        });
     }
 
     found.sort_by(|left, right| left.code.cmp(&right.code));
     Ok(found)
 }
 
-/// Читает словарь по коду языка.
-pub fn load(dir: &Path, code: &str) -> AppResult<Language> {
+/// Читает словарь, если файл есть. `None` - встроенный язык без перекрытия.
+pub fn load_existing(dir: &Path, code: &str) -> AppResult<Option<Language>> {
     validate_code(code)?;
-    read(&file_path(dir, code), code)
-}
-
-/// Создаёт английский словарь при первой установке.
-///
-/// Маркер пишется в любом случае: если файл уже лежал, он остаётся как есть,
-/// а после удаления уже не восстанавливается.
-pub fn seed(dir: &Path) -> AppResult<()> {
-    let marker = dir.join(SEED_MARKER);
-    if marker.exists() {
-        return Ok(());
+    let path = file_path(dir, code);
+    if !path.exists() {
+        return Ok(None);
     }
-
-    ensure_dir(dir)?;
-    let target = file_path(dir, SEED_CODE);
-    if !target.exists() {
-        write_atomic(&target, SEED)?;
-    }
-    write_atomic(&marker, "1\n")?;
-    Ok(())
+    read(&path, code).map(Some)
 }
 
 /// Выгружает образец словаря и возвращает путь.
@@ -167,6 +161,162 @@ pub fn export(dir: &Path, code: &str, document: &Value) -> AppResult<PathBuf> {
     Ok(target)
 }
 
+/// Выгружает встроенный язык во внешний файл `<code>.json`.
+///
+/// Существующий файл не перезаписывается: это уже словарь пользователя.
+pub fn export_language(dir: &Path, code: &str, document: &Value) -> AppResult<PathBuf> {
+    validate_code(code)?;
+    if !document.is_object() {
+        return fail!(
+            "errors.languages.sampleNotObject",
+            "Словарь должен быть объектом"
+        );
+    }
+
+    ensure_dir(dir)?;
+    let target = file_path(dir, code);
+    if target.exists() {
+        return fail!(
+            "errors.languages.existsFile",
+            format!(
+                "Файл '{}' уже существует: выгрузка не перезаписывает словарь",
+                target.display()
+            ),
+            path = target.display(),
+        );
+    }
+
+    let body = serialize_document(document)?;
+    let text = format!(
+        "// Словарь ToolBox.\n\
+         //\n\
+         // Внешний файл принадлежит пользователю: приложение его не перезаписывает.\n\
+         // Ключи переименовывать нельзя, подстановки вида {{name}} оставить как есть.\n\
+         // Недостающие ключи выгружаются отдельным файлом <code>.missing.json.\n\
+         {body}\n"
+    );
+    write_atomic(&target, &text)?;
+    Ok(target)
+}
+
+/// Возвращает встроенный язык: переносит внешний файл в корзину.
+pub fn revert(dir: &Path, trash_dir: &Path, code: &str) -> AppResult<PathBuf> {
+    validate_code(code)?;
+    let source = file_path(dir, code);
+    if !source.is_file() {
+        return fail!(
+            "errors.languages.missingFile",
+            format!("Словаря '{}' нет", source.display()),
+            path = source.display(),
+        );
+    }
+
+    ensure_dir(trash_dir)?;
+    let target = trash_dir.join(free_file_name(trash_dir, code));
+    fs::rename(&source, &target).map_err(|error| {
+        AppError::new(
+            "errors.languages.move",
+            format!(
+                "Не удалось перенести '{}' в '{}': {error}",
+                source.display(),
+                target.display()
+            ),
+        )
+        .with("path", source.display())
+        .with("target", target.display())
+        .with("reason", error)
+    })?;
+
+    Ok(target)
+}
+
+/// Итог записи файла дополнений.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct MissingResult {
+    /// Путь файла; `None`, если недостающих ключей нет и файл убран.
+    pub path: Option<String>,
+    /// Файл создан или обновлён; ложь - уже был актуален.
+    pub written: bool,
+    /// Сколько ключей в файле дополнений; ноль, если файла нет.
+    pub count: usize,
+}
+
+/// Путь файла дополнений: `<code>.missing.json`.
+pub fn missing_path(dir: &Path, code: &str) -> PathBuf {
+    dir.join(format!("{code}.missing.{EXTENSION}"))
+}
+
+/// Пишет файл недостающих ключей или убирает его, если писать нечего.
+///
+/// Текст детерминирован, поэтому актуальный файл сравнивается побайтово
+/// и не перезаписывается. Это не словарь: каталог его пропускает.
+pub fn missing_write(dir: &Path, code: &str, document: Option<&Value>) -> AppResult<MissingResult> {
+    validate_code(code)?;
+    let target = missing_path(dir, code);
+
+    let Some(document) = document else {
+        if target.exists() {
+            fs::remove_file(&target).map_err(|error| {
+                AppError::new(
+                    "errors.languages.missingRemove",
+                    format!("Не удалось убрать '{}': {error}", target.display()),
+                )
+                .with("path", target.display())
+                .with("reason", error)
+            })?;
+        }
+        return Ok(MissingResult {
+            path: None,
+            written: false,
+            count: 0,
+        });
+    };
+
+    let count = document
+        .get("messages")
+        .and_then(Value::as_object)
+        .map(Map::len)
+        .unwrap_or(0);
+
+    let body = serialize_document(document)?;
+    let text = format!(
+        "// Недостающие ключи словаря.\n\
+         //\n\
+         // Файл создаёт программа; правки будут перезаписаны.\n\
+         // Скопируйте нужные строки в свой словарь.\n\
+         {body}\n"
+    );
+
+    if let Ok(current) = fs::read_to_string(&target) {
+        if current == text {
+            return Ok(MissingResult {
+                path: Some(target.display().to_string()),
+                written: false,
+                count,
+            });
+        }
+    }
+
+    ensure_dir(dir)?;
+    write_atomic(&target, &text)?;
+    Ok(MissingResult {
+        path: Some(target.display().to_string()),
+        written: true,
+        count,
+    })
+}
+
+/// Сериализует документ словаря с ошибкой, объясняющей путь.
+fn serialize_document(document: &Value) -> AppResult<String> {
+    serde_json::to_string_pretty(document).map_err(|error| {
+        AppError::new(
+            "errors.languages.serialize",
+            format!("Словарь не сериализован: {error}"),
+        )
+        .with("reason", error)
+    })
+}
+
 /// Годен ли код как тег языка и имя файла словаря.
 ///
 /// Проверка структурная, без списка языков: подтеги из латиницы и цифр,
@@ -204,6 +354,20 @@ fn validate_code(code: &str) -> AppResult<()> {
 /// Путь словаря: `local/languages/<code>.json`.
 fn file_path(dir: &Path, code: &str) -> PathBuf {
     dir.join(format!("{code}.{EXTENSION}"))
+}
+
+/// Свободное имя словаря в корзине: `en.json`, `en-2.json`, …
+///
+/// Расширение входит в проверяемое имя: `unique_id` без него увидел бы
+/// свободный `en` и вернул имя, совпадающее с лежащим файлом.
+fn free_file_name(dir: &Path, code: &str) -> String {
+    let mut name = format!("{code}.{EXTENSION}");
+    let mut suffix = 2;
+    while dir.join(&name).exists() {
+        name = format!("{code}-{suffix}.{EXTENSION}");
+        suffix += 1;
+    }
+    name
 }
 
 /// Читает и разбирает файл.
@@ -331,22 +495,6 @@ fn validate_message(key: &str, value: &Value) -> AppResult<()> {
     }
 }
 
-/// Сведения о файле: годный словарь или причина отказа.
-fn summary(code: &str, path: &Path) -> LanguageSummary {
-    match read(path, code) {
-        Ok(language) => LanguageSummary {
-            code: language.code,
-            name: language.name,
-            problem: None,
-        },
-        Err(reason) => LanguageSummary {
-            code: code.to_owned(),
-            name: code.to_owned(),
-            problem: Some(reason),
-        },
-    }
-}
-
 #[cfg(test)]
 mod tests {
     //! Проверки касаются формата файла и обещаний «не перезаписывать»:
@@ -408,29 +556,34 @@ mod tests {
     }
 
     #[test]
-    fn missing_folder_gives_empty_list() {
+    fn missing_folder_gives_empty_catalog() {
         let dir = temp_dir("missing").join("languages");
-        assert_eq!(list(&dir).expect("пустой список"), Vec::new());
+        assert_eq!(catalog(&dir).expect("пустой каталог"), Vec::new());
     }
 
     #[test]
-    fn list_skips_marker_and_foreign_files() {
-        let dir = temp_dir("list");
+    fn catalog_skips_marker_and_foreign_files() {
+        let dir = temp_dir("catalog");
         fs::write(dir.join("en.json"), SAMPLE).expect("словарь");
         fs::write(dir.join("broken.json"), "{").expect("битый словарь");
-        fs::write(dir.join(".seeded"), "1\n").expect("маркер");
+        fs::write(dir.join("en.missing.json"), "{}").expect("файл дополнений");
         fs::write(dir.join("notes.txt"), "не словарь").expect("чужой файл");
 
-        let items = list(&dir).expect("список");
+        let items = catalog(&dir).expect("каталог");
         let codes: Vec<_> = items.iter().map(|item| item.code.as_str()).collect();
 
         assert_eq!(codes, ["broken", "en"]);
         assert!(items[0].problem.is_some(), "битый файл объясняет отказ");
+        assert!(items[0].messages.is_none(), "у битого нет сообщений");
         assert!(items[1].problem.is_none(), "годный файл без замечаний");
+        assert_eq!(
+            items[1].messages.as_ref().expect("сообщения")["title"],
+            "Settings"
+        );
     }
 
     #[test]
-    fn list_skips_exported_sample() {
+    fn catalog_skips_exported_sample() {
         let dir = temp_dir("sample");
         let document = serde_json::json!({
             "name": "Русский",
@@ -438,46 +591,13 @@ mod tests {
         });
         export(&dir, "ru", &document).expect("образец записан");
 
-        let items = list(&dir).expect("список");
+        let items = catalog(&dir).expect("каталог");
 
         assert!(
             items.is_empty(),
-            "образец — не словарь: {:?}",
+            "образец - не словарь: {:?}",
             items.iter().map(|item| &item.code).collect::<Vec<_>>()
         );
-    }
-
-    #[test]
-    fn seed_creates_english_once() {
-        let dir = temp_dir("seed").join("languages");
-
-        seed(&dir).expect("первая установка");
-        let target = dir.join("en.json");
-        assert!(target.is_file(), "английский словарь появился");
-        assert!(
-            fs::read_to_string(&target).expect("словарь").contains("English"),
-            "поставлен английский словарь"
-        );
-
-        fs::remove_file(&target).expect("словарь удалён");
-        seed(&dir).expect("повторная установка");
-
-        assert!(
-            !target.exists(),
-            "после осознанного удаления словарь не возвращается"
-        );
-    }
-
-    #[test]
-    fn seed_keeps_existing_dictionary() {
-        let dir = temp_dir("seed-keep").join("languages");
-        fs::create_dir_all(&dir).expect("папка");
-        fs::write(dir.join("en.json"), SAMPLE).expect("правленый словарь");
-
-        seed(&dir).expect("установка");
-
-        let text = fs::read_to_string(dir.join("en.json")).expect("словарь");
-        assert_eq!(text, SAMPLE, "правка пользователя не перезаписана");
     }
 
     #[test]
@@ -495,15 +615,107 @@ mod tests {
             "в образце есть подсказка"
         );
 
-        let error = export(&dir, "ru", &document).expect_err("второй раз — отказ");
+        let error = export(&dir, "ru", &document).expect_err("второй раз - отказ");
         assert!(error.to_string().contains("не перезаписывается"));
+    }
+
+    #[test]
+    fn export_language_refuses_existing_file() {
+        let dir = temp_dir("export-language");
+        let document = serde_json::json!({
+            "name": "English",
+            "messages": { "title": "Settings" }
+        });
+
+        let path = export_language(&dir, "en", &document).expect("словарь выгружен");
+        assert!(path.is_file());
+        assert!(
+            fs::read_to_string(&path)
+                .expect("словарь")
+                .contains("\"name\": \"English\""),
+            "документ записан целиком"
+        );
+
+        fs::write(&path, SAMPLE).expect("правка пользователя");
+        let error =
+            export_language(&dir, "en", &document).expect_err("выгрузка не перезаписывает");
+        assert!(error.to_string().contains("уже существует"));
+        assert_eq!(
+            fs::read_to_string(&path).expect("словарь"),
+            SAMPLE,
+            "файл пользователя не тронут"
+        );
+    }
+
+    #[test]
+    fn revert_moves_dictionary_to_trash() {
+        let root = temp_dir("revert");
+        let dir = root.join("languages");
+        let trash = root.join("trash").join("languages");
+        fs::create_dir_all(&dir).expect("папка словарей");
+        fs::write(dir.join("en.json"), SAMPLE).expect("словарь");
+
+        let target = revert(&dir, &trash, "en").expect("словарь возвращён");
+
+        assert!(!dir.join("en.json").exists(), "внешний файл убран");
+        assert_eq!(target, trash.join("en.json"));
+        assert_eq!(
+            fs::read_to_string(&target).expect("корзина"),
+            SAMPLE,
+            "файл уцелел в корзине"
+        );
+    }
+
+    #[test]
+    fn second_revert_keeps_both_files_in_trash() {
+        let root = temp_dir("revert-twice");
+        let dir = root.join("languages");
+        let trash = root.join("trash").join("languages");
+        fs::create_dir_all(&dir).expect("папка словарей");
+
+        fs::write(dir.join("en.json"), SAMPLE).expect("первый словарь");
+        let first = revert(&dir, &trash, "en").expect("первый возврат");
+
+        fs::write(dir.join("en.json"), SAMPLE).expect("второй словарь");
+        let second = revert(&dir, &trash, "en").expect("второй возврат");
+
+        assert_eq!(first, trash.join("en.json"));
+        assert_eq!(second, trash.join("en-2.json"));
+        assert!(first.is_file() && second.is_file(), "оба файла уцелели");
+    }
+
+    #[test]
+    fn missing_write_is_deterministic_and_removed() {
+        let dir = temp_dir("missing-write");
+        let document = serde_json::json!({
+            "name": "English",
+            "messages": { "title": "Settings" }
+        });
+
+        let first = missing_write(&dir, "en", Some(&document)).expect("файл записан");
+        assert!(first.written, "первый раз файл создан");
+        assert!(first.path.is_some());
+        assert_eq!(first.count, 1, "посчитан один недостающий ключ");
+
+        let second = missing_write(&dir, "en", Some(&document)).expect("файл актуален");
+        assert!(!second.written, "актуальный файл не переписывается");
+        assert_eq!(second.count, 1);
+
+        let removed = missing_write(&dir, "en", None).expect("файл убран");
+        assert!(!removed.written);
+        assert!(removed.path.is_none());
+        assert_eq!(removed.count, 0, "у удалённого файла ключей нет");
+        assert!(!missing_path(&dir, "en").exists());
     }
 
     #[test]
     fn load_rejects_path_in_code() {
         let dir = temp_dir("code");
 
-        assert!(load(&dir, "../evil").is_err(), "разделители пути недопустимы");
+        assert!(
+            load_existing(&dir, "../evil").is_err(),
+            "разделители пути недопустимы"
+        );
     }
 
     #[test]
