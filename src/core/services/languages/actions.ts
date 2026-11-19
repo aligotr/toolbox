@@ -10,7 +10,7 @@ import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { appErrorOf, describeError } from "../../infra/errors";
 import { ruMessages } from "../../infra/i18n/messages";
 import { write } from "../../infra/journal";
-import { notify } from "../../infra/notifications";
+import { notify, notifyError } from "../../infra/notifications";
 import {
   BUILTIN_LANGUAGE,
   BUILTIN_LANGUAGE_NAME,
@@ -61,18 +61,6 @@ export async function exportLanguage(code: string): Promise<string | null> {
 function fileNameOf(path: string): string {
   const index = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
   return index === -1 ? path : path.slice(index + 1);
-}
-
-/** Показывает отказ действия уведомлением: код переводит словарь. */
-function notifyError(error: unknown, group: string): void {
-  const coded = appErrorOf(error);
-  notify({
-    kind: "error",
-    code: coded.code,
-    params: coded.params,
-    fallback: coded.fallback,
-    group,
-  });
 }
 
 /** Возвращает встроенный язык: внешний файл уходит в корзину. */

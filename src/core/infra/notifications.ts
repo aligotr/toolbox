@@ -10,6 +10,7 @@
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import type { NoticePayload } from "@/contracts/notifications";
 import { subscribeEvent } from "./bus.ts";
+import { appErrorOf } from "./errors.ts";
 import { hasMessage, t } from "./i18n/index.ts";
 import type { MessageParams } from "./i18n/types.ts";
 
@@ -35,6 +36,18 @@ export function noticeText(
 ): string {
   if (knows(notice.code)) return translate(notice.code, notice.params);
   return notice.fallback ?? notice.code;
+}
+
+/** Показывает отказ операции уведомлением: код переводит словарь. */
+export function notifyError(error: unknown, group: string): void {
+  const coded = appErrorOf(error);
+  notify({
+    kind: "error",
+    code: coded.code,
+    params: coded.params,
+    fallback: coded.fallback,
+    group,
+  });
 }
 
 /** Добавляет уведомление в очередь: группа заменяет, длина ограничена. */

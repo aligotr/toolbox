@@ -15,9 +15,9 @@ import { computed, reactive } from "vue";
 import type { Profile, ProfileList, ProfileUsage } from "@/contracts/profiles";
 import { t } from "@/core/infra/i18n";
 import { JOURNAL_CORE_SOURCE } from "../infra/constants";
-import { appErrorOf, describeError } from "../infra/errors";
+import { describeError } from "../infra/errors";
 import { write } from "../infra/journal";
-import { notify } from "../infra/notifications";
+import { notify, notifyError } from "../infra/notifications";
 import { idle, type OperationStatus } from "../infra/status";
 import { flushWorkspace } from "./workspace/index";
 
@@ -66,18 +66,6 @@ export const status = reactive<Record<ProfileOperation, OperationStatus>>({
   delete: idle(),
   switch: idle(),
 });
-
-/** Показывает отказ операции уведомлением: код переводит словарь. */
-function notifyError(error: unknown, group: string): void {
-  const coded = appErrorOf(error);
-  notify({
-    kind: "error",
-    code: coded.code,
-    params: coded.params,
-    fallback: coded.fallback,
-    group,
-  });
-}
 
 /** Активный профиль или `null`, пока список не прочитан. */
 export const activeProfile = computed<Profile | null>(
