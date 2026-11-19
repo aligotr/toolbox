@@ -454,14 +454,14 @@ export const enMessages: Messages = {
   "dnslookup.preset.notCopied": "The preset was not copied.",
   "dnslookup.preset.removed": "Preset “{title}” was moved to the trash.",
   "dnslookup.preset.notRemoved": "The preset was not deleted.",
-  "dnslookup.preset.loadHeader": "Load preset",
   "dnslookup.preset.loadAccept": "Load",
   "dnslookup.preset.deleteAccept": "Delete",
   "dnslookup.preset.cancel": "Cancel",
   "dnslookup.preset.deleteMessage": "Delete preset “{title}”?",
   "dnslookup.preset.replaceMessage":
     "The current rows and results will be replaced by preset “{title}”.",
-  "dnslookup.preset.replaceRunning": "The running check will be stopped.",
+  "dnslookup.preset.replaceRunningMessage":
+    "The current rows and results will be replaced by preset “{title}”. The running check will be stopped.",
   "dnslookup.preset.dialogTitle": "Settings presets",
   "dnslookup.preset.currentChanged": "Settings changed",
   "dnslookup.preset.none": "No preset selected",

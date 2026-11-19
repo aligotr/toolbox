@@ -533,14 +533,14 @@ export const ruMessages: Messages = {
   "dnslookup.preset.notCopied": "Пресет не скопирован.",
   "dnslookup.preset.removed": "Пресет «{title}» перемещён в корзину.",
   "dnslookup.preset.notRemoved": "Пресет не удалён.",
-  "dnslookup.preset.loadHeader": "Загрузить пресет",
   "dnslookup.preset.loadAccept": "Загрузить",
   "dnslookup.preset.deleteAccept": "Удалить",
   "dnslookup.preset.cancel": "Отмена",
   "dnslookup.preset.deleteMessage": "Удалить пресет «{title}»?",
   "dnslookup.preset.replaceMessage":
     "Текущие строки и результаты будут заменены пресетом «{title}».",
-  "dnslookup.preset.replaceRunning": "Идущая проверка будет остановлена.",
+  "dnslookup.preset.replaceRunningMessage":
+    "Текущие строки и результаты будут заменены пресетом «{title}». Идущая проверка будет остановлена.",
   "dnslookup.preset.dialogTitle": "Пресеты настроек",
   "dnslookup.preset.currentChanged": "Настройки изменены",
   "dnslookup.preset.none": "Пресет не выбран",

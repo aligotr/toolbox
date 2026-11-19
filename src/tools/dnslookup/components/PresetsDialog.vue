@@ -15,7 +15,7 @@ import Dialog from "primevue/dialog";
 import InputText from "primevue/inputtext";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, ref, watch } from "vue";
-import { CONFIRM_CALM_REJECT } from "@/core/constants";
+import { CONFIRM_PRIMARY_ACCEPT } from "@/core/constants";
 import { describeError } from "@/core/infra/errors";
 import { catalog, t } from "@/core/infra/i18n";
 import { PRESET_TITLE_MAX_LENGTH } from "@/core/services/presets/constants";
@@ -148,25 +148,24 @@ async function loadPreset(preset: Preset): Promise<void> {
 }
 
 /** Загрузка заменяет таблицу: без пустой таблицы сначала спрашиваем. */
-function requestLoad(preset: Preset): void {
+function requestLoad(preset: Preset, event: MouseEvent): void {
   const clean = props.session.rows.length === 0;
   if (clean && !props.session.status.run.loading) {
     void loadPreset(preset);
     return;
   }
 
-  const parts = [t("dnslookup.preset.replaceMessage", { title: preset.title })];
-  if (props.session.status.run.loading) {
-    parts.push(t("dnslookup.preset.replaceRunning"));
-  }
+  const target = event.currentTarget;
+  if (!(target instanceof HTMLElement)) return;
 
-  confirm.require({
-    header: t("dnslookup.preset.loadHeader"),
-    message: parts.join(" "),
-    icon: "pi pi-exclamation-triangle",
+  requireConfirm(confirm, {
+    target,
+    message: props.session.status.run.loading
+      ? t("dnslookup.preset.replaceRunningMessage", { title: preset.title })
+      : t("dnslookup.preset.replaceMessage", { title: preset.title }),
     acceptLabel: t("dnslookup.preset.loadAccept"),
     rejectLabel: t("dnslookup.preset.cancel"),
-    rejectProps: CONFIRM_CALM_REJECT,
+    acceptProps: CONFIRM_PRIMARY_ACCEPT,
     accept: () => {
       void loadPreset(preset);
     },
@@ -380,7 +379,7 @@ async function remove(preset: Preset): Promise<void> {
               type="button"
               class="presets__open"
               :aria-label="t('dnslookup.preset.loadAria', { title: preset.title })"
-              @click="requestLoad(preset)"
+              @click="requestLoad(preset, $event)"
             >
               <span class="presets__title-row">
                 <span class="presets__title">{{ preset.title }}</span>
@@ -410,7 +409,7 @@ async function remove(preset: Preset): Promise<void> {
                 size="small"
                 text
                 :aria-label="t('dnslookup.preset.loadTipAria')"
-                @click="requestLoad(preset)"
+                @click="requestLoad(preset, $event)"
               />
               <Button
                 v-tooltip.top="t('dnslookup.preset.renameTip')"
