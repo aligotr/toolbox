@@ -66,12 +66,6 @@ export async function revertLanguage(code: string): Promise<string | null> {
   try {
     const target = await invoke<string>("language_revert", { code });
     await loadLanguages();
-    notify({
-      kind: "success",
-      code: "notifications.languages.reverted",
-      params: { code },
-      group: "language-revert",
-    });
     return target;
   } catch (error) {
     status.revert.error = describeError(error);
