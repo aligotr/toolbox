@@ -165,7 +165,7 @@ function resetCreate(): void {
 
 /** Ставит фокус в поле и наводит стрелку на центр кнопки. */
 async function focusCreate(): Promise<void> {
-  if (createTarget.value) anchorOverlay(createTarget.value);
+  if (createTarget.value) anchorOverlay(createTarget.value, "popover");
 
   await nextTick();
   const instance = createInput.value as unknown as { $el?: unknown } | null;

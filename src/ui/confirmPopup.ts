@@ -39,5 +39,5 @@ export function requireConfirm(
     accept: request.accept,
   } satisfies ConfirmationOptions);
 
-  anchorOverlay(request.target);
+  anchorOverlay(request.target, "confirm");
 }

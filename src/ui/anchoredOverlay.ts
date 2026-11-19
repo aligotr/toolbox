@@ -9,6 +9,15 @@
 /** Зазор между кнопкой и всплывающим блоком. */
 const GAP = 8;
 
+/** Предел попыток выравнивания: примерно полсекунды. */
+const FRAME_LIMIT = 30;
+
+/** Допуск стрелки в пикселях: погрешность меньше сотой не видна. */
+const ARROW_TOLERANCE = 0.01;
+
+/** Какой блок выравнивать: у подтверждения и панели разные классы. */
+export type OverlayKind = "confirm" | "popover";
+
 /** Цели открытых подтверждений: обработчик клика берёт кнопку оттуда. */
 const targets = new WeakMap<HTMLElement, HTMLElement>();
 
@@ -25,27 +34,28 @@ function arrowVariable(popup: HTMLElement): string {
 /**
  * Приводит всплывающий блок у кнопки в порядок.
  *
- * Ждёт появления блока, у подтверждения ставит его сам, затем наводит стрелку
- * на центр кнопки. Поправка повторяется, пока стрелка не устоится: блок у края
- * окна пересчитывается уже после показа.
+ * Ждёт появления блока нужного вида, у подтверждения ставит его сам, затем
+ * наводит стрелку на центр кнопки. Поправка повторяется, пока стрелка
+ * не устоится: блок у края окна пересчитывается уже после показа.
  */
-export function anchorOverlay(target: HTMLElement): void {
+export function anchorOverlay(target: HTMLElement, kind: OverlayKind = "confirm"): void {
+  const selector = kind === "confirm" ? ".p-confirmpopup" : ".p-popover";
   let tries = 0;
   let settled = 0;
 
   const align = (): void => {
     tries += 1;
-    const popup = document.querySelector<HTMLElement>(".p-confirmpopup, .p-popover");
+    const popup = document.querySelector<HTMLElement>(selector);
 
     if (popup && popup.offsetWidth > 0) {
-      if (popup.classList.contains("p-confirmpopup")) {
+      if (kind === "confirm") {
         keepOnClick(popup, target);
         placeBelow(popup, target);
       }
       settled = nudgeArrow(popup, target) ? settled + 1 : 0;
     }
 
-    if (settled < 2 && tries < 30) {
+    if (settled < 2 && tries < FRAME_LIMIT) {
       requestAnimationFrame(align);
     }
   };
@@ -74,7 +84,7 @@ function keepOnClick(popup: HTMLElement, target: HTMLElement): void {
     requestAnimationFrame(() => {
       if (!popup.isConnected || popup.offsetWidth === 0) return;
       placeBelow(popup, current);
-      for (let tries = 0; tries < 30; tries += 1) {
+      for (let tries = 0; tries < FRAME_LIMIT; tries += 1) {
         if (nudgeArrow(popup, current)) break;
       }
     });
@@ -90,7 +100,7 @@ function nudgeArrow(popup: HTMLElement, target: HTMLElement): boolean {
 
   // Допуск в сотую пикселя: после клика стрелка возвращается к тому же
   // значению, а не к ближайшему в пределах половины пикселя.
-  if (Math.abs(delta) < 0.01) return true;
+  if (Math.abs(delta) < ARROW_TOLERANCE) return true;
 
   const variable = arrowVariable(popup);
   const current = stylePixels(popup.style.getPropertyValue(variable));
