@@ -60,10 +60,11 @@ function nudgeArrow(popup: HTMLElement, target: HTMLElement): boolean {
 }
 
 /**
- * Ставит блок под кнопкой, а у края окна прижимает его внутрь.
+ * Ставит блок под кнопкой по центру, а у края окна прижимает внутрь.
  *
- * `top` и `left` считаются в координатах документа: блок лежит в `body`
- * и позиционируется абсолютно.
+ * Центр по кнопке держит стрелку в середине блока: у края окна блок
+ * сдвигается внутрь, и стрелка уходит от края. `top` и `left` считаются
+ * в координатах документа: блок лежит в `body` и позиционируется абсолютно.
  */
 function placeBelow(popup: HTMLElement, target: HTMLElement): void {
   const rect = target.getBoundingClientRect();
@@ -75,8 +76,9 @@ function placeBelow(popup: HTMLElement, target: HTMLElement): void {
   let top = rect.bottom + GAP;
   if (top + height > viewportHeight) top = Math.max(GAP, rect.top - height - GAP);
 
-  let left = rect.left;
-  if (left + width > viewportWidth) left = Math.max(GAP, rect.right - width);
+  let left = rect.left + rect.width / 2 - width / 2;
+  left = Math.min(left, viewportWidth - width - GAP);
+  left = Math.max(GAP, left);
 
   popup.style.removeProperty("inset-inline-start");
   popup.style.removeProperty("inset-inline-end");
