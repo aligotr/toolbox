@@ -9,6 +9,12 @@
 /** Зазор между кнопкой и всплывающим блоком. */
 const GAP = 8;
 
+/** Цели открытых подтверждений: обработчик клика берёт кнопку оттуда. */
+const targets = new WeakMap<HTMLElement, HTMLElement>();
+
+/** Блоки, которым уже назначен обработчик клика. */
+const bound = new WeakSet<HTMLElement>();
+
 /** Переменная стрелки: у подтверждения и панели она своя. */
 function arrowVariable(popup: HTMLElement): string {
   return popup.classList.contains("p-confirmpopup")
@@ -32,7 +38,10 @@ export function anchorOverlay(target: HTMLElement): void {
     const popup = document.querySelector<HTMLElement>(".p-confirmpopup, .p-popover");
 
     if (popup && popup.offsetWidth > 0) {
-      if (popup.classList.contains("p-confirmpopup")) placeBelow(popup, target);
+      if (popup.classList.contains("p-confirmpopup")) {
+        keepOnClick(popup, target);
+        placeBelow(popup, target);
+      }
       settled = nudgeArrow(popup, target) ? settled + 1 : 0;
     }
 
@@ -42,6 +51,33 @@ export function anchorOverlay(target: HTMLElement): void {
   };
 
   requestAnimationFrame(align);
+}
+
+/**
+ * Возвращает подтверждение на место после клика внутри блока.
+ *
+ * ConfirmPopup на любой клик внутри зовёт свой `alignOverlay` и сбрасывает
+ * положение на стандартное. Обработчик на самом блоке срабатывает раньше
+ * документа, поэтому поправка ставится в микрозадачу: она выполняется после
+ * PrimeVue и до отрисовки, без видимого скачка.
+ */
+function keepOnClick(popup: HTMLElement, target: HTMLElement): void {
+  targets.set(popup, target);
+  if (bound.has(popup)) return;
+
+  bound.add(popup);
+  popup.addEventListener("click", () => {
+    const current = targets.get(popup);
+    if (!current) return;
+
+    queueMicrotask(() => {
+      if (!popup.isConnected || popup.offsetWidth === 0) return;
+      placeBelow(popup, current);
+      for (let tries = 0; tries < 30; tries += 1) {
+        if (nudgeArrow(popup, current)) break;
+      }
+    });
+  });
 }
 
 /** Сдвигает стрелку к центру кнопки; `true` - уже на месте. */
