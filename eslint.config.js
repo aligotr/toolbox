@@ -35,7 +35,13 @@ export default [
     },
   },
   {
-    files: ["scripts/**/*.mjs", "tests/**/*.mjs", "vite.config.ts", "eslint.config.js"],
+    files: [
+      "scripts/**/*.mjs",
+      "scripts/**/*.ts",
+      "tests/**/*.mjs",
+      "vite.config.ts",
+      "eslint.config.js",
+    ],
     languageOptions: {
       globals: { ...globals.node },
     },
