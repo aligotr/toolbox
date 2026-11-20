@@ -103,7 +103,6 @@ export const ruMessages: Messages = {
 
   // ── Пустая вкладка ───────────────────────────────────────────────────────
   "workspace.empty.title": "Новая вкладка",
-  "workspace.empty.lead": "Добавьте инструмент, чтобы начать работу.",
   "workspace.empty.tools": "Инструменты",
   "workspace.empty.toolsNone": "Инструменты ещё не зарегистрированы.",
   "workspace.empty.coreOn": "Ядро запущено",
@@ -355,7 +354,8 @@ export const ruMessages: Messages = {
 
   // ── Описания инструментов ───────────────────────────────────────────────
   "tools.busprobe.description": "Демонстрация шины и путь сообщения",
-  "tools.dnslookup.description": "Проверка и сравнение ответов DNS-серверов",
+  // В «DNS‑серверов» неразрывный дефис (U+2011): термин переносится целиком.
+  "tools.dnslookup.description": "Проверка и сравнение ответов DNS‑серверов",
 
   // ── Busprobe ─────────────────────────────────────────────────────────────
   "busprobe.view.lead":

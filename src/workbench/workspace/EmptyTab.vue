@@ -18,39 +18,39 @@ defineProps<{ tools: ToolDescriptor[]; startup: StartupStatus | null }>();
   <section class="empty wb-screen">
     <header class="wb-screen__head">
       <h1 class="wb-screen__title">{{ t("workspace.empty.title") }}</h1>
-      <p class="wb-screen__lead">{{ t("workspace.empty.lead") }}</p>
     </header>
 
     <div class="wb-screen__body empty__body">
-      <section class="wb-section">
-        <h2 class="wb-section__title">{{ t("workspace.empty.tools") }}</h2>
+      <div
+        v-if="tools.length"
+        class="empty__tools"
+        role="group"
+        :aria-label="t('workspace.empty.tools')"
+      >
+        <button
+          v-for="tool in tools"
+          :key="tool.id"
+          class="action-card"
+          type="button"
+          v-tooltip.bottom="{
+            value: t('tools.open.anotherTab'),
+            disabled: !tool.multipleTabs,
+          }"
+          @click="openToolOnClick(tool, $event)"
+          @auxclick="openToolOnAuxClick(tool, $event)"
+          @keydown="openToolOnKeydown(tool, $event)"
+        >
+          <i class="action-card__icon" :class="tool.icon" aria-hidden="true" />
+          <span class="action-card__text">
+            <strong class="action-card__title">{{ tool.title }}</strong>
+            <small v-if="tool.descriptionKey" class="action-card__note">
+              {{ t(tool.descriptionKey) }}
+            </small>
+          </span>
+        </button>
+      </div>
 
-        <div v-if="tools.length" class="empty__tools">
-          <button
-            v-for="tool in tools"
-            :key="tool.id"
-            class="action-card"
-            type="button"
-            v-tooltip.bottom="{
-              value: t('tools.open.anotherTab'),
-              disabled: !tool.multipleTabs,
-            }"
-            @click="openToolOnClick(tool, $event)"
-            @auxclick="openToolOnAuxClick(tool, $event)"
-            @keydown="openToolOnKeydown(tool, $event)"
-          >
-            <i class="action-card__icon" :class="tool.icon" aria-hidden="true" />
-            <span class="action-card__text">
-              <strong class="action-card__title">{{ tool.title }}</strong>
-              <small v-if="tool.descriptionKey" class="action-card__note">
-                {{ t(tool.descriptionKey) }}
-              </small>
-            </span>
-          </button>
-        </div>
-
-        <p v-else class="empty__note">{{ t("workspace.empty.toolsNone") }}</p>
-      </section>
+      <p v-else class="empty__note">{{ t("workspace.empty.toolsNone") }}</p>
 
       <footer class="empty__status">
         <span class="status__dot" :class="{ 'status__dot--off': !startup }" aria-hidden="true" />

@@ -88,7 +88,6 @@ export const enMessages: Messages = {
   "tabs.tab.close": "Close tab",
   "tabs.tab.closeTitle": "Close tab “{title}”",
   "workspace.empty.title": "New tab",
-  "workspace.empty.lead": "Add a tool to get started.",
   "workspace.empty.tools": "Tools",
   "workspace.empty.toolsNone": "No tools are registered yet.",
   "workspace.empty.coreOn": "Core is running",
