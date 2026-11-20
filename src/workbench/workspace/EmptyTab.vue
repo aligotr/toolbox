@@ -1,56 +1,122 @@
 <script setup lang="ts">
-// Пустая вкладка — «главная» рабочего пространства.
+// Пустая вкладка - «главная» рабочего пространства.
 //
 // Отдельного экрана «Главная» нет: при запуске и по кнопке «плюс» открывается
-// вкладка, на которой видно, из чего собрать рабочее место (ADR 0011).
+// вкладка, на которой видно, с чего начать (ADR 0011). Экран показывает
+// каталог: инструменты отдельно, приложение отдельно (ADR 0062).
 //
-// Карточек здесь только инструменты: выбрать больше нечего.
+// Дескриптор сам называет группу: оболочка имён инструментов не знает,
+// а карточки разделов приложения открывают те же одиночные вкладки, что
+// и сайдбар.
 
+import { computed, onMounted, ref } from "vue";
 import type { ToolDescriptor } from "@/contracts/tools";
-import type { StartupStatus } from "@/core/services/startup";
+import { SINGLETON_TABS } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
+import { defaultPresetTitle } from "@/core/services/presets/defaultPreset";
+import type { StartupStatus } from "@/core/services/startup";
+import { openSingleton } from "@/core/services/workspace/index";
 import { openToolOnAuxClick, openToolOnClick, openToolOnKeydown } from "../toolGestures";
+import CatalogCard from "./CatalogCard.vue";
 
-defineProps<{ tools: ToolDescriptor[]; startup: StartupStatus | null }>();
+const props = defineProps<{ tools: ToolDescriptor[]; startup: StartupStatus | null }>();
+
+/** Инструменты и приложение: место в каталоге называет дескриптор. */
+const toolItems = computed(() => props.tools.filter((tool) => tool.group !== "app"));
+const appItems = computed(() => props.tools.filter((tool) => tool.group === "app"));
+
+/** Разделы приложения в порядке каталога: журнал, затем настройки. */
+const appSections = (["journal", "settings"] as const).map((kind) => ({
+  kind,
+  ...SINGLETON_TABS[kind],
+}));
+
+/** Названия пресетов по умолчанию: подпись говорит, что загрузит новая вкладка. */
+const presetTitles = ref<Record<string, string>>({});
+
+onMounted(async () => {
+  const found = await Promise.all(
+    toolItems.value.map(async (tool) => ({
+      id: tool.id,
+      title: await defaultPresetTitle(tool.id),
+    })),
+  );
+
+  const titles: Record<string, string> = {};
+  for (const item of found) {
+    if (item.title !== null) titles[item.id] = item.title;
+  }
+  presetTitles.value = titles;
+});
+
+/** Подпись пресета по умолчанию; `undefined` - умолчания нет. */
+function presetLine(id: string): string | undefined {
+  const title = presetTitles.value[id];
+  return title === undefined ? undefined : t("workspace.empty.preset", { title });
+}
 </script>
 
 <template>
   <section class="empty wb-screen">
     <header class="wb-screen__head">
       <h1 class="wb-screen__title">{{ t("workspace.empty.title") }}</h1>
+      <p class="wb-screen__lead">{{ t("workspace.empty.lead") }}</p>
     </header>
 
     <div class="wb-screen__body empty__body">
-      <div
-        v-if="tools.length"
-        class="empty__tools"
-        role="group"
-        :aria-label="t('workspace.empty.tools')"
-      >
-        <button
-          v-for="tool in tools"
-          :key="tool.id"
-          class="action-card"
-          type="button"
-          v-tooltip.bottom="{
-            value: t('tools.open.anotherTab'),
-            disabled: !tool.multipleTabs,
-          }"
-          @click="openToolOnClick(tool, $event)"
-          @auxclick="openToolOnAuxClick(tool, $event)"
-          @keydown="openToolOnKeydown(tool, $event)"
-        >
-          <i class="action-card__icon" :class="tool.icon" aria-hidden="true" />
-          <span class="action-card__text">
-            <strong class="action-card__title">{{ tool.title }}</strong>
-            <small v-if="tool.descriptionKey" class="action-card__note">
-              {{ t(tool.descriptionKey) }}
-            </small>
-          </span>
-        </button>
-      </div>
+      <section class="wb-section">
+        <h2 class="wb-section__title">{{ t("workspace.empty.tools") }}</h2>
 
-      <p v-else class="empty__note">{{ t("workspace.empty.toolsNone") }}</p>
+        <div v-if="toolItems.length" class="empty__grid empty__grid--tools">
+          <CatalogCard
+            v-for="tool in toolItems"
+            :key="tool.id"
+            :icon="tool.icon"
+            :title="tool.title"
+            :preset="presetLine(tool.id)"
+            :description="tool.descriptionKey ? t(tool.descriptionKey) : undefined"
+            v-tooltip.bottom="{
+              value: t('tools.open.anotherTab'),
+              disabled: !tool.multipleTabs,
+            }"
+            @click="openToolOnClick(tool, $event)"
+            @auxclick="openToolOnAuxClick(tool, $event)"
+            @keydown="openToolOnKeydown(tool, $event)"
+          />
+        </div>
+
+        <p v-else class="empty__note">{{ t("workspace.empty.toolsNone") }}</p>
+      </section>
+
+      <section class="wb-section">
+        <h2 class="wb-section__title">{{ t("workspace.empty.app") }}</h2>
+
+        <div class="empty__grid">
+          <CatalogCard
+            v-for="tool in appItems"
+            :key="tool.id"
+            :icon="tool.icon"
+            :title="tool.title"
+            :description="tool.descriptionKey ? t(tool.descriptionKey) : undefined"
+            v-tooltip.bottom="{
+              value: t('tools.open.anotherTab'),
+              disabled: !tool.multipleTabs,
+            }"
+            @click="openToolOnClick(tool, $event)"
+            @auxclick="openToolOnAuxClick(tool, $event)"
+            @keydown="openToolOnKeydown(tool, $event)"
+          />
+
+          <CatalogCard
+            v-for="section in appSections"
+            :key="section.kind"
+            :icon="section.icon"
+            :title="t(section.titleKey)"
+            :description="t(section.descriptionKey)"
+            @click="openSingleton(section.kind)"
+          />
+        </div>
+      </section>
 
       <footer class="empty__status">
         <span class="status__dot" :class="{ 'status__dot--off': !startup }" aria-hidden="true" />
@@ -73,61 +139,15 @@ defineProps<{ tools: ToolDescriptor[]; startup: StartupStatus | null }>();
   gap: var(--ag-space-2xl);
 }
 
-/* Карточка-действие: иконка и подпись инструмента. */
-.action-card {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--ag-space-lg);
-  padding: var(--ag-space-lg);
-  border: 1px solid var(--ag-border);
-  border-radius: var(--ag-radius-md);
-  background: var(--ag-surface);
-  color: var(--p-text-color);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.action-card:hover {
-  border-color: var(--ag-border-strong);
-}
-
-.action-card:focus-visible {
-  outline: 2px solid var(--p-primary-color);
-  outline-offset: 2px;
-}
-
-.action-card__text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ag-space-xs);
-  min-width: 0;
-}
-
-.action-card__title {
-  overflow: hidden;
-  font-size: var(--ag-text-md);
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.action-card__note {
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-xs);
-}
-
-.action-card__icon {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--p-primary-color);
-  font-size: 18px;
-}
-
-.empty__tools {
+.empty__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--ag-space-lg);
+}
+
+/* Инструментов на экране запуска мало: карточка занимает строку целиком. */
+.empty__grid--tools {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .empty__note {

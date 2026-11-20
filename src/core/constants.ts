@@ -1,9 +1,9 @@
 // Постоянные подписи и числа оболочки.
 //
 // Здесь только то, что принадлежит оболочке и не имеет своего домена:
-// названия одиночных вкладок и договор кнопок подтверждения. Подписи
-// хранятся ключами словаря: текст берётся при показе, поэтому смена языка
-// не требует перезапуска (ADR 0039). Иконки нужны и core (он создаёт
+// названия и описания одиночных вкладок и договор кнопок подтверждения.
+// Подписи хранятся ключами словаря: текст берётся при показе, поэтому смена
+// языка не требует перезапуска (ADR 0039). Иконки нужны и core (он создаёт
 // вкладку), и workbench (он рисует пункт сайдбара).
 //
 // Константы домена живут рядом с его правилами: настройки — в
@@ -17,13 +17,23 @@ import type { SingletonKind } from "@/contracts/workspace";
 export interface SingletonTabMeta {
   /** Ключ подписи в словаре. */
   titleKey: string;
+  /** Ключ описания для карточки быстрого запуска. */
+  descriptionKey: string;
   icon: string;
 }
 
 /** Журнал и настройки: их открывает сайдбар, а полоса вкладок показывает наравне с рабочими. */
 export const SINGLETON_TABS: Record<SingletonKind, SingletonTabMeta> = {
-  journal: { titleKey: "tab.journal.title", icon: "pi pi-history" },
-  settings: { titleKey: "tab.settings.title", icon: "pi pi-cog" },
+  journal: {
+    titleKey: "tab.journal.title",
+    descriptionKey: "workspace.empty.journalDescription",
+    icon: "pi pi-history",
+  },
+  settings: {
+    titleKey: "tab.settings.title",
+    descriptionKey: "workspace.empty.settingsDescription",
+    icon: "pi pi-cog",
+  },
 };
 
 /** Иконка пустой вкладки: та же, что у кнопки «плюс» в полосе вкладок. */

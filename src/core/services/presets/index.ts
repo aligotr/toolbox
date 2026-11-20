@@ -76,16 +76,31 @@ function toPreset(stored: StoredPreset): Preset {
   };
 }
 
+/**
+ * Сырое чтение списка пресетов и указателя по умолчанию.
+ *
+ * Пара команд домена живёт в одном месте: её используют держатель состояния
+ * и подпись на экране запуска. Разбор ответа и запись замечаний остаются
+ * у вызывающего.
+ */
+export async function readPresetFiles(tool: string): Promise<{
+  list: StoredPresetList;
+  pointer: StoredPresetDefault;
+}> {
+  const [list, pointer] = await Promise.all([
+    invoke<StoredPresetList>("presets_list", { tool }),
+    invoke<StoredPresetDefault>("preset_default_get", { tool }),
+  ]);
+  return { list, pointer };
+}
+
 /** Создаёт независимое состояние пресетов инструмента. */
 export function createPresets(tool: string): Presets {
   const state = reactive<PresetState>({ items: [], loaded: false, defaultId: null });
 
   /** Перечитывает список пресетов инструмента и указатель по умолчанию. */
   async function reload(): Promise<void> {
-    const [list, presetDefault] = await Promise.all([
-      invoke<StoredPresetList>("presets_list", { tool }),
-      invoke<StoredPresetDefault>("preset_default_get", { tool }),
-    ]);
+    const { list, pointer } = await readPresetFiles(tool);
 
     // Испорченный файл не мешает остальным, но причину пользователь должен
     // видеть: иначе пресет просто исчез бы из списка.
@@ -95,15 +110,15 @@ export function createPresets(tool: string): Presets {
         reason: warning,
       });
     }
-    if (presetDefault.warning !== null) {
+    if (pointer.warning !== null) {
       write(JOURNAL_CORE_SOURCE, "error", "journal.presets.defaultBroken", {
         tool,
-        reason: presetDefault.warning,
+        reason: pointer.warning,
       });
     }
 
     state.items = list.items.map(toPreset);
-    state.defaultId = presetDefault.id;
+    state.defaultId = pointer.id;
     state.loaded = true;
   }
 

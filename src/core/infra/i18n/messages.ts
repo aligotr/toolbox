@@ -103,8 +103,13 @@ export const ruMessages: Messages = {
 
   // ── Пустая вкладка ───────────────────────────────────────────────────────
   "workspace.empty.title": "Новая вкладка",
+  "workspace.empty.lead": "Выберите инструмент или раздел приложения.",
   "workspace.empty.tools": "Инструменты",
   "workspace.empty.toolsNone": "Инструменты ещё не зарегистрированы.",
+  "workspace.empty.app": "Приложение",
+  "workspace.empty.journalDescription": "История событий",
+  "workspace.empty.settingsDescription": "Профили, язык, окно, журнал",
+  "workspace.empty.preset": "Пресет «{title}»",
   "workspace.empty.coreOn": "Ядро запущено",
   "workspace.empty.coreOff": "Нет связи с ядром",
   "workspace.grid.unknown": "Инструмент не найден:",
