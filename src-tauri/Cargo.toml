@@ -1,6 +1,6 @@
 [package]
 name = "toolbox"
-version = "0.1.0"
+version = "26.11.0"
 description = "A Tauri App"
 authors = ["you"]
 license = "MIT"
