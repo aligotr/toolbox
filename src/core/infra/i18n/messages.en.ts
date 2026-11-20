@@ -93,7 +93,7 @@ export const enMessages: Messages = {
   "workspace.empty.app": "Application",
   "workspace.empty.journalDescription": "Event history",
   "workspace.empty.settingsDescription": "Profiles, language, window, log",
-  "workspace.empty.preset": "Preset “{title}”",
+  "workspace.empty.preset": "Default preset: {title}",
   "workspace.empty.coreOn": "Core is running",
   "workspace.empty.coreOff": "No connection to the core",
   "workspace.grid.unknown": "Tool not found:",

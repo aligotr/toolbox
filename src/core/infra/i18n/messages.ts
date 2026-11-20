@@ -108,7 +108,7 @@ export const ruMessages: Messages = {
   "workspace.empty.app": "Приложение",
   "workspace.empty.journalDescription": "История событий",
   "workspace.empty.settingsDescription": "Профили, язык, окно, журнал",
-  "workspace.empty.preset": "Пресет «{title}»",
+  "workspace.empty.preset": "Пресет по умолчанию: {title}",
   "workspace.empty.coreOn": "Ядро запущено",
   "workspace.empty.coreOff": "Нет связи с ядром",
   "workspace.grid.unknown": "Инструмент не найден:",
