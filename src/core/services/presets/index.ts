@@ -60,7 +60,7 @@ export interface Presets {
   rename(id: string, title: string): Promise<Preset | null>;
   /** Дублирует пресет с припиской «(копия)». */
   duplicate(id: string): Promise<Preset | null>;
-  /** Удаляет пресет в корзину. */
+  /** Удаляет пресет. */
   remove(preset: Preset): Promise<boolean>;
   /** Назначает или снимает пресет по умолчанию. */
   setDefault(id: string | null): Promise<boolean>;
@@ -199,9 +199,9 @@ export function createPresets(tool: string): Presets {
   const deleteAction = presetAction(
     "journal.presets.deleteError",
     (preset: Preset) => invoke<string>("preset_delete", { tool, id: preset.id }),
-    (target, preset) => ({
+    (_target, preset) => ({
       code: "journal.presets.moved",
-      params: { tool, title: preset.title, target },
+      params: { tool, title: preset.title },
     }),
   );
 
@@ -275,7 +275,7 @@ export function createPresets(tool: string): Presets {
     return duplicateAction.run(id);
   }
 
-  /** Удаляет пресет в `local/trash/presets/<tool>/`. */
+  /** Удаляет пресет: файл уходит в служебную корзину. */
   async function remove(preset: Preset): Promise<boolean> {
     return (await deleteAction.run(preset)) !== null;
   }

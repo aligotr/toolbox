@@ -21,8 +21,9 @@ use chrono::{SecondsFormat, Utc};
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use crate::core::services::profiles;
 use crate::core::infra::error::{fail, AppError, AppResult};
+use crate::core::services::profiles;
+use crate::core::services::trash;
 use crate::core::store::files::{ensure_dir, read, strip_bom, write_atomic};
 use crate::core::store::names;
 
@@ -231,13 +232,14 @@ pub fn duplicate(root: &Path, tool: &str, id: &str, suffix: &str) -> AppResult<P
     create(root, tool, &copy_title(&document, id, suffix), payload_of(&document))
 }
 
-/// Удаляет пресет в корзину: `local/trash/presets/<tool>/`.
+/// Удаляет пресет в корзину: `local/trash/presets/<profile>/<tool>/`.
 ///
 /// Переносом, а не удалением: промах в списке не должен стоить собранных
-/// настроек. Корзину чистят руками.
+/// настроек. Корзина чистится автоматически через 14 дней.
 ///
-/// Указатель по умолчанию снимается здесь же: правило «удалил пресет — снял
-/// указатель» принадлежит домену, а не точке сборки.
+/// Указатель по умолчанию снимается до переноса: при отказе переноса
+/// пресет остаётся, а указатель можно поставить заново. Обратный порядок
+/// оставил бы ссылку на уже удалённый файл.
 pub fn delete(
     root: &Path,
     trash_root: &Path,
@@ -247,11 +249,27 @@ pub fn delete(
 ) -> AppResult<PathBuf> {
     validate_tool(tool)?;
     let path = preset_path(root, tool, id)?;
+    let profile = profile_dir
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| {
+            AppError::new(
+                "errors.presets.invalidProfile",
+                format!(
+                    "Не удалось определить профиль пресета по пути '{}'",
+                    profile_dir.display()
+                ),
+            )
+            .with("path", profile_dir.display())
+        })?;
 
-    let trash_dir = trash_root.join(tool);
+    let trash_dir = trash_root.join(profile).join(tool);
     ensure_dir(&trash_dir)?;
 
     let target = trash_dir.join(unique_file_name(&trash_dir, id));
+
+    clear_default_if(profile_dir, tool, id)?;
+
     fs::rename(&path, &target).map_err(|error| {
         AppError::new(
             "errors.presets.move",
@@ -266,7 +284,7 @@ pub fn delete(
         .with("reason", error)
     })?;
 
-    clear_default_if(profile_dir, tool, id)?;
+    trash::stamp(&target);
 
     Ok(target)
 }
@@ -919,7 +937,7 @@ mod tests {
     }
 
     #[test]
-    fn delete_moves_preset_to_tool_trash() {
+    fn delete_moves_preset_to_profile_trash() {
         let root = temp_dir("delete");
         let presets = root.join("profiles").join("work").join("presets");
         let profile = root.join("profiles").join("work");
@@ -929,7 +947,10 @@ mod tests {
 
         let target = delete(&presets, &trash, &profile, "dnslookup", &preset.id).expect("удаление");
 
-        assert_eq!(target, trash.join("dnslookup").join("dns.json"));
+        assert_eq!(
+            target,
+            trash.join("work").join("dnslookup").join("dns.json")
+        );
         assert!(target.is_file(), "пресет должен лежать в корзине");
         assert!(
             !presets
@@ -943,6 +964,65 @@ mod tests {
                 .items
                 .is_empty()
         );
+    }
+
+    #[test]
+    fn same_preset_id_from_different_profiles_does_not_mix() {
+        let root = temp_dir("delete-profiles");
+        let trash = root.join("local").join("trash").join("presets");
+        let work_presets = root.join("profiles").join("work").join("presets");
+        let home_presets = root.join("profiles").join("home").join("presets");
+        fs::create_dir_all(root.join("profiles").join("work")).expect("профиль work");
+        fs::create_dir_all(root.join("profiles").join("home")).expect("профиль home");
+
+        let work = create(&work_presets, "dnslookup", "DNS", payload()).expect("пресет work");
+        let work_target = delete(
+            &work_presets,
+            &trash,
+            &root.join("profiles").join("work"),
+            "dnslookup",
+            &work.id,
+        )
+        .expect("удаление work");
+
+        let home = create(&home_presets, "dnslookup", "DNS", payload()).expect("пресет home");
+        let home_target = delete(
+            &home_presets,
+            &trash,
+            &root.join("profiles").join("home"),
+            "dnslookup",
+            &home.id,
+        )
+        .expect("удаление home");
+
+        assert_eq!(
+            work_target,
+            trash.join("work").join("dnslookup").join("dns.json")
+        );
+        assert_eq!(
+            home_target,
+            trash.join("home").join("dnslookup").join("dns.json")
+        );
+        assert!(work_target.is_file() && home_target.is_file());
+    }
+
+    #[test]
+    fn profile_named_presets_keeps_both_segments_in_path() {
+        // Профиль `presets` и категория `presets` - разные уровни пути.
+        let root = temp_dir("delete-profile-presets");
+        let profile = root.join("profiles").join("presets");
+        let presets = profile.join("presets");
+        let trash = root.join("local").join("trash").join("presets");
+        fs::create_dir_all(&profile).expect("профиль");
+        let preset = create(&presets, "dnslookup", "DNS", payload()).expect("пресет");
+
+        let target = delete(&presets, &trash, &profile, "dnslookup", &preset.id).expect("удаление");
+
+        assert_eq!(
+            target,
+            trash.join("presets").join("dnslookup").join("dns.json")
+        );
+        assert!(target.is_file());
     }
 
     #[test]
@@ -961,8 +1041,14 @@ mod tests {
         let second_target =
             delete(&presets, &trash, &profile, "dnslookup", &second.id).expect("второе");
 
-        assert_eq!(first_target, trash.join("dnslookup").join("dns.json"));
-        assert_eq!(second_target, trash.join("dnslookup").join("dns-2.json"));
+        assert_eq!(
+            first_target,
+            trash.join("profile").join("dnslookup").join("dns.json")
+        );
+        assert_eq!(
+            second_target,
+            trash.join("profile").join("dnslookup").join("dns-2.json")
+        );
     }
 
     #[test]

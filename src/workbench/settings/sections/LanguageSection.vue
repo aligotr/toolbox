@@ -110,7 +110,7 @@ async function exportBuiltin(entry: LanguageEntry): Promise<void> {
   if (path !== null) await refresh();
 }
 
-/** Возвращает встроенный язык: файл уходит в корзину. */
+/** Возвращает встроенный язык: внешний файл удаляется. */
 async function restoreBuiltin(entry: LanguageEntry): Promise<void> {
   const target = await revertLanguage(entry.code);
   if (target !== null) await refresh();

@@ -245,17 +245,16 @@ export async function renameProfile(id: string, title: string): Promise<boolean>
   }
 }
 
-/** Удаляет профиль в `local/trash/`. */
+/** Удаляет профиль: папка уходит из списка вместе с пресетами и данными. */
 export async function deleteProfile(profile: Profile): Promise<boolean> {
   if (status.delete.loading) return false;
 
   status.delete.loading = true;
   status.delete.error = null;
   try {
-    const target = await invoke<string>("profile_delete", { id: profile.id });
+    await invoke("profile_delete", { id: profile.id });
     write(JOURNAL_CORE_SOURCE, "result", "journal.profiles.moved", {
       title: profile.title,
-      target,
     });
     await reload();
     await refreshUsage();

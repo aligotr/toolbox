@@ -10,6 +10,7 @@ use crate::core::infra::error::AppResult;
 use crate::core::runtime::Runtime;
 use crate::core::services::profiles;
 use crate::core::services::settings::{self, Settings};
+use crate::core::services::trash;
 use crate::core::services::workspace;
 
 use super::settings::commit_settings;
@@ -73,9 +74,9 @@ pub(crate) fn profile_rename(
     Ok(profile)
 }
 
-/// Удаляет профиль в корзину `local/trash/`.
+/// Удаляет профиль в корзину `local/trash/profiles/`.
 ///
-/// Запрет удаления активного профиля — правило домена, поэтому живёт
+/// Запрет удаления активного профиля - правило домена, поэтому живёт
 /// в [`profiles::delete`].
 #[tauri::command]
 pub(crate) fn profile_delete(runtime: State<'_, Runtime>, id: String) -> AppResult<String> {
@@ -87,15 +88,21 @@ pub(crate) fn profile_delete(runtime: State<'_, Runtime>, id: String) -> AppResu
         .active_profile
         .clone();
 
-    let target = profiles::delete(&storage.profiles_dir(), &storage.trash_dir(), &id, &active)?;
+    let target = profiles::delete(
+        &storage.profiles_dir(),
+        &storage.profiles_trash_dir(),
+        &id,
+        &active,
+    )?;
 
-    // Рабочее пространство — машинное состояние, а не данные профиля:
+    // Рабочее пространство - машинное состояние, а не данные профиля:
     // в корзину не идёт, но и оставаться без профиля не должно.
     if let Err(error) = workspace::forget(&storage.workspace_path_for(&id)) {
         log::warn!("Рабочее пространство удалённого профиля не очищено: {error}");
     }
 
-    log::info!("Профиль '{id}' перемещён в '{}'", target.display());
+    trash::sweep_after(storage, &target);
+
     Ok(target.display().to_string())
 }
 

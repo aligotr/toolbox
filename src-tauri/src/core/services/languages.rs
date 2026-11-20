@@ -15,6 +15,7 @@ use serde::Serialize;
 use serde_json::{Map, Value};
 
 use crate::core::infra::error::{fail, AppError, AppResult};
+use crate::core::services::trash;
 use crate::core::store::files::{ensure_dir, strip_bom, write_atomic};
 
 /// Язык по умолчанию, пока выбор не сделан.
@@ -200,6 +201,9 @@ pub fn export_language(dir: &Path, code: &str, document: &Value) -> AppResult<Pa
 }
 
 /// Возвращает встроенный язык: переносит внешний файл в корзину.
+///
+/// Файл дополнений убирается до переноса: если перенос не удался, словарь
+/// остаётся, а список недостающих ключей можно построить заново.
 pub fn revert(dir: &Path, trash_dir: &Path, code: &str) -> AppResult<PathBuf> {
     validate_code(code)?;
     let source = file_path(dir, code);
@@ -227,7 +231,19 @@ pub fn revert(dir: &Path, trash_dir: &Path, code: &str) -> AppResult<PathBuf> {
         .with("reason", error)
     })?;
 
+    trash::stamp(&target);
+
     Ok(target)
+}
+
+/// Возвращает встроенный язык вместе с уборкой файла дополнений.
+///
+/// Порядок задан здесь, а не в команде: файл дополнений относится
+/// к внешнему словарю и устаревает раньше, чем словарь покидает папку.
+/// При отказе переноса описание исчезнувшего словаря не остаётся.
+pub fn revert_builtin(dir: &Path, trash_dir: &Path, code: &str) -> AppResult<PathBuf> {
+    missing_write(dir, code, None)?;
+    revert(dir, trash_dir, code)
 }
 
 /// Итог записи файла дополнений.
@@ -287,14 +303,14 @@ pub fn missing_write(dir: &Path, code: &str, document: Option<&Value>) -> AppRes
          {body}\n"
     );
 
-    if let Ok(current) = fs::read_to_string(&target) {
-        if current == text {
-            return Ok(MissingResult {
-                path: Some(target.display().to_string()),
-                written: false,
-                count,
-            });
-        }
+    if let Ok(current) = fs::read_to_string(&target)
+        && current == text
+    {
+        return Ok(MissingResult {
+            path: Some(target.display().to_string()),
+            written: false,
+            count,
+        });
     }
 
     ensure_dir(dir)?;
@@ -683,6 +699,39 @@ mod tests {
         assert_eq!(first, trash.join("en.jsonc"));
         assert_eq!(second, trash.join("en-2.jsonc"));
         assert!(first.is_file() && second.is_file(), "оба файла уцелели");
+    }
+
+    #[test]
+    fn revert_builtin_removes_missing_file_with_dictionary() {
+        let root = temp_dir("revert-builtin");
+        let dir = root.join("languages");
+        let trash = root.join("trash").join("languages");
+        fs::create_dir_all(&dir).expect("папка словарей");
+        fs::write(dir.join("en.jsonc"), SAMPLE).expect("словарь");
+        let missing = dir.join("en.missing.jsonc");
+        fs::write(&missing, "{}").expect("файл дополнений");
+
+        let target = revert_builtin(&dir, &trash, "en").expect("словарь возвращён");
+
+        assert!(!missing.exists(), "файл дополнений убран");
+        assert!(!dir.join("en.jsonc").exists(), "внешний файл убран");
+        assert!(target.is_file(), "словарь лежит в корзине");
+    }
+
+    #[test]
+    fn revert_builtin_clears_missing_before_move_fails() {
+        // Порядок: файл дополнений убирается до проверки словаря.
+        let root = temp_dir("revert-builtin-order");
+        let dir = root.join("languages");
+        let trash = root.join("trash").join("languages");
+        fs::create_dir_all(&dir).expect("папка словарей");
+        let missing = dir.join("en.missing.jsonc");
+        fs::write(&missing, "{}").expect("файл дополнений");
+
+        let error = revert_builtin(&dir, &trash, "en").expect_err("словаря нет");
+
+        assert_eq!(error.code, "errors.languages.missingFile");
+        assert!(!missing.exists(), "файл дополнений убран до отказа переноса");
     }
 
     #[test]

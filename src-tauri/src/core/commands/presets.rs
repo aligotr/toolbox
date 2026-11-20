@@ -9,6 +9,7 @@ use tauri::State;
 use crate::core::infra::error::AppResult;
 use crate::core::runtime::Runtime;
 use crate::core::services::presets;
+use crate::core::services::trash;
 
 /// Список пресетов инструмента в активном профиле.
 ///
@@ -110,7 +111,7 @@ pub(crate) fn preset_duplicate(
     presets::duplicate(&storage.presets_dir(), &tool, &id, &suffix)
 }
 
-/// Удаляет пресет в `local/trash/presets/<tool>/`.
+/// Удаляет пресет в `local/trash/presets/<profile>/<tool>/`.
 #[tauri::command]
 pub(crate) fn preset_delete(
     runtime: State<'_, Runtime>,
@@ -125,5 +126,6 @@ pub(crate) fn preset_delete(
         &tool,
         &id,
     )?;
+    trash::sweep_after(storage, &target);
     Ok(target.display().to_string())
 }

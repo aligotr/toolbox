@@ -12,6 +12,7 @@ use crate::core::infra::error::AppResult;
 use crate::core::infra::notifications::{self, Notification, NotificationKind};
 use crate::core::runtime::Runtime;
 use crate::core::services::languages;
+use crate::core::services::trash;
 
 /// Каталог внешних словарей: файл читается и разбирается один раз.
 ///
@@ -58,21 +59,21 @@ pub(crate) fn language_export_file(
     Ok(path.display().to_string())
 }
 
-/// Возвращает встроенный язык: внешний файл уходит в корзину.
+/// Возвращает встроенный язык: внешний словарь удаляется из списка.
 #[tauri::command]
 pub(crate) fn language_revert(
     runtime: State<'_, Runtime>,
     code: String,
 ) -> AppResult<String> {
     let storage = runtime.require_storage()?;
-    let target = languages::revert(
+
+    let target = languages::revert_builtin(
         &storage.languages_dir(),
         &storage.languages_trash_dir(),
         &code,
     )?;
 
-    // Файл дополнений относился к внешнему словарю: без него он устарел.
-    languages::missing_write(&storage.languages_dir(), &code, None)?;
+    trash::sweep_after(storage, &target);
 
     Ok(target.display().to_string())
 }

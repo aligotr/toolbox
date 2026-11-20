@@ -17,5 +17,6 @@ pub mod logging;
 pub mod presets;
 pub mod profiles;
 pub mod settings;
+pub mod trash;
 pub mod window;
 pub mod workspace;

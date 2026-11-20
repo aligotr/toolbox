@@ -20,6 +20,7 @@ use serde::Serialize;
 use serde_json::{Map, Value};
 
 use crate::core::infra::error::{fail, AppError, AppResult};
+use crate::core::services::trash;
 use crate::core::store::files::{read, strip_bom, write_atomic};
 use crate::core::store::names;
 use crate::core::store::stats;
@@ -264,10 +265,11 @@ pub fn require_exists(profiles_dir: &Path, id: &str) -> AppResult<()> {
     .with("id", id))
 }
 
-/// Удаляет профиль в корзину `local/trash/`.
+/// Удаляет профиль в корзину `local/trash/profiles/`.
 ///
 /// Удаление именно переносом: профиль — папка с данными, и промах в меню
-/// не должен стоить пользователю списков. Корзину чистят руками.
+/// не должен стоить пользователю списков. Корзина чистится автоматически
+/// через 14 дней.
 ///
 /// Активный профиль удалить нельзя: его папка открыта прямо сейчас, и данные
 /// исчезли бы из-под работающего приложения. Сначала переключение.
@@ -309,6 +311,8 @@ pub fn delete(
         .with("target", target.display())
         .with("reason", error)
     })?;
+
+    trash::stamp(&target);
 
     Ok(target)
 }
@@ -591,7 +595,7 @@ mod tests {
         let root = temp_dir("delete");
         let dir = root.join("profiles");
         fs::create_dir_all(&dir).expect("папка профилей");
-        let trash = root.join("local").join("trash");
+        let trash = root.join("local").join("trash").join("profiles");
         let profile = create(&dir, "Работа").expect("профиль");
 
         let target = delete(&dir, &trash, &profile.id, "other").expect("удаление");
@@ -609,7 +613,7 @@ mod tests {
         let root = temp_dir("trash-twice");
         let dir = root.join("profiles");
         fs::create_dir_all(&dir).expect("папка профилей");
-        let trash = root.join("local").join("trash");
+        let trash = root.join("local").join("trash").join("profiles");
 
         let first = create(&dir, "Работа").expect("первый");
         let first_target = delete(&dir, &trash, &first.id, "other").expect("первое удаление");
@@ -626,7 +630,7 @@ mod tests {
         let root = temp_dir("delete-active");
         let dir = root.join("profiles");
         fs::create_dir_all(&dir).expect("папка профилей");
-        let trash = root.join("local").join("trash");
+        let trash = root.join("local").join("trash").join("profiles");
         let profile = create(&dir, "Работа").expect("профиль");
 
         let refusal = delete(&dir, &trash, &profile.id, &profile.id);

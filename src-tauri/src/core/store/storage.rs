@@ -25,13 +25,13 @@ const PROBE_FILE: &str = ".write-probe";
 const LOCAL_DIR: &str = "local";
 
 /// Папка профилей: синхронизируется, принадлежит пользователю.
-const PROFILES_DIR: &str = "profiles";
+pub(crate) const PROFILES_DIR: &str = "profiles";
 
 /// Папка логов внутри `local/`.
 const LOGS_DIR: &str = "logs";
 
 /// Папка словарей интерфейса внутри `local/` (ADR 0039).
-const LANGUAGES_DIR: &str = "languages";
+pub(crate) const LANGUAGES_DIR: &str = "languages";
 
 /// Папка рабочих пространств профилей внутри `local/` (ADR 0050).
 ///
@@ -51,8 +51,8 @@ pub(crate) const PRESETS_DIR: &str = "presets";
 /// какие файлы положить в свою папку, а ядро знает только её место.
 pub(crate) const DATA_DIR: &str = "data";
 
-/// Папка корзины внутри `local/`: удалённые профили ждут там решения
-/// пользователя.
+/// Папка корзины внутри `local/`: удалённое живёт здесь 14 дней,
+/// затем удаляется автоматически.
 const TRASH_DIR: &str = "trash";
 
 /// Активный профиль до появления выбора профилей (тикет 09).
@@ -156,7 +156,7 @@ impl Storage {
     /// Корзина внешних словарей: `local/trash/languages/`.
     ///
     /// Возврат к встроенному языку не стирает файл пользователя: он лежит
-    /// в корзине, пока её не почистят.
+    /// в корзине до автоочистки.
     pub fn languages_trash_dir(&self) -> PathBuf {
         self.trash_dir().join(LANGUAGES_DIR)
     }
@@ -165,8 +165,18 @@ impl Storage {
     ///
     /// Лежит в `local/`, а не в синхронизируемых `profiles/`: удаление —
     /// решение этой машины, и чужая копия не должна получать чужую корзину.
+    /// Корзина внутренняя: входа в интерфейсе нет, записи старше 14 дней
+    /// удаляются автоматически.
     pub fn trash_dir(&self) -> PathBuf {
         self.local_dir().join(TRASH_DIR)
+    }
+
+    /// Корзина профилей: `local/trash/profiles/`.
+    ///
+    /// Верхний уровень повторяет единицу удаления: здесь лежат только
+    /// профили, удалённые целиком.
+    pub fn profiles_trash_dir(&self) -> PathBuf {
+        self.trash_dir().join(PROFILES_DIR)
     }
 
     /// Папка пресетов настроек активного профиля: `profiles/<id>/presets/`.
@@ -180,8 +190,9 @@ impl Storage {
 
     /// Корзина пресетов: `local/trash/presets/`.
     ///
-    /// Инструменты внутри разведены папками: восстанавливать однородные
-    /// сущности проще, чем смесь настроек разных инструментов.
+    /// Внутри — профиль, затем инструмент: `presets/<profile>/<tool>/`.
+    /// Профиль в пути сохраняет происхождение пресета, а единица удаления
+    /// остаётся отдельной от профилей.
     pub fn presets_trash_dir(&self) -> PathBuf {
         self.trash_dir().join(PRESETS_DIR)
     }
@@ -362,6 +373,10 @@ mod tests {
         assert_eq!(
             storage.presets_trash_dir(),
             root.join("local").join("trash").join("presets")
+        );
+        assert_eq!(
+            storage.profiles_trash_dir(),
+            root.join("local").join("trash").join("profiles")
         );
         assert_eq!(
             storage.languages_trash_dir(),

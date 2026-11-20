@@ -63,7 +63,7 @@ function fileNameOf(path: string): string {
   return index === -1 ? path : path.slice(index + 1);
 }
 
-/** Возвращает встроенный язык: внешний файл уходит в корзину. */
+/** Возвращает встроенный язык: внешний файл удаляется. */
 export async function revertLanguage(code: string): Promise<string | null> {
   if (status.revert.loading) return null;
 

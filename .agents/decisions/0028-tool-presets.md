@@ -5,6 +5,10 @@
 - **Область:** `src-tauri/src/core/presets.rs`, `profiles/<id>/presets/`,
   `src/core/presets.ts`, `src/tools/dnslookup/`
 
+> Примечание: раскладка корзины пресетов уточнена ADR 0061:
+> `local/trash/presets/<profile>/<tool>/<id>.json`. Остальные решения
+> этого ADR в силе.
+
 ## Контекст
 
 Шаблон вкладки (ADR 0011) хранит геометрию: колонки, инструменты и размеры.

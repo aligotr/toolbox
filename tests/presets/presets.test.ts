@@ -76,7 +76,7 @@ function storeOf(): Store {
     },
     preset_delete: (args) => {
       store.items = store.items.filter((item) => item.id !== args.id);
-      return `trash/presets/${args.id}.json`;
+      return `trash/presets/work/${args.id}.json`;
     },
     preset_default_set: (args) => {
       store.defaultId = args.id;
@@ -155,6 +155,10 @@ test("удаление убирает пресет из списка", async () 
   assert.equal(removed, true);
   assert.deepEqual(presets.state.items, []);
   assert.deepEqual(codes(), ["journal.presets.moved", "journal.presets.created"]);
+
+  // Журнал называет предмет, но не печатает путь служебной корзины.
+  const fact = journal.entries.find((entry) => entry.code === "journal.presets.moved");
+  assert.equal(fact?.params.target, undefined);
 });
 
 test("пресет по умолчанию запоминается и снимается", async () => {

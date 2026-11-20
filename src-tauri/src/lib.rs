@@ -27,6 +27,7 @@ use core::services::languages;
 use core::services::logging;
 use core::services::profiles;
 use core::services::settings::{self, Settings};
+use core::services::trash;
 use core::services::workspace;
 use core::store::storage::{DEFAULT_PROFILE, Storage};
 
@@ -195,6 +196,10 @@ fn boot(app: &AppHandle) -> Runtime {
         }
         Err(error) => log::warn!("Рабочие пространства не проверены: {error}"),
     }
+
+    // Корзина - внутренняя страховка: записи старше 14 дней больше не нужны.
+    // Чистка не блокирует запуск: отказ остаётся в логе, приложение работает.
+    trash::sweep(&storage);
 
     // Согласование могло заменить активный профиль. Файл обязан совпадать
     // с тем, с которым работаем: иначе следующий запуск снова станет искать
