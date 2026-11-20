@@ -46,7 +46,6 @@ function activateFromKeyboard(event: KeyboardEvent): void {
       class="tab__close"
       type="button"
       :aria-label="t('tabs.tab.closeTitle', { title: tabTitle(tab) })"
-      v-tooltip.bottom="t('tabs.tab.close')"
       @click.stop="emit('close')"
     >
       <i class="pi pi-times" aria-hidden="true" />

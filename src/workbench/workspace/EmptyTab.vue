@@ -75,10 +75,6 @@ function presetLine(id: string): string | undefined {
             :title="tool.title"
             :preset="presetLine(tool.id)"
             :description="tool.descriptionKey ? t(tool.descriptionKey) : undefined"
-            v-tooltip.bottom="{
-              value: t('tools.open.anotherTab'),
-              disabled: !tool.multipleTabs,
-            }"
             @click="openToolOnClick(tool, $event)"
             @auxclick="openToolOnAuxClick(tool, $event)"
             @keydown="openToolOnKeydown(tool, $event)"
@@ -98,10 +94,6 @@ function presetLine(id: string): string | undefined {
             :icon="tool.icon"
             :title="tool.title"
             :description="tool.descriptionKey ? t(tool.descriptionKey) : undefined"
-            v-tooltip.bottom="{
-              value: t('tools.open.anotherTab'),
-              disabled: !tool.multipleTabs,
-            }"
             @click="openToolOnClick(tool, $event)"
             @auxclick="openToolOnAuxClick(tool, $event)"
             @keydown="openToolOnKeydown(tool, $event)"

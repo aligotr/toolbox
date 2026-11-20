@@ -85,7 +85,6 @@ export const enMessages: Messages = {
   "tabs.strip.label": "Tabs",
   "tabs.scroll.left": "Scroll tabs left",
   "tabs.scroll.right": "Scroll tabs right",
-  "tabs.tab.close": "Close tab",
   "tabs.tab.closeTitle": "Close tab “{title}”",
   "workspace.empty.title": "New tab",
   "workspace.empty.lead": "Choose a tool or an application section.",

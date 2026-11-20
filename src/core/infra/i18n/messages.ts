@@ -98,7 +98,6 @@ export const ruMessages: Messages = {
   "tabs.strip.label": "Вкладки",
   "tabs.scroll.left": "Прокрутить вкладки влево",
   "tabs.scroll.right": "Прокрутить вкладки вправо",
-  "tabs.tab.close": "Закрыть вкладку",
   "tabs.tab.closeTitle": "Закрыть вкладку «{title}»",
 
   // ── Пустая вкладка ───────────────────────────────────────────────────────
