@@ -1,4 +1,5 @@
-//! Геометрия окна: восстановление, прижатие к экрану и сохранение (ADR 0011).
+//! Окно: восстановление геометрии, прилипание к краям рабочей области
+//! и сохранение (ADR 0011, ADR 0064).
 //!
 //! Своя реализация вместо `tauri-plugin-window-state`: плагин пишет в каталог
 //! данных приложения, а здесь всё состояние живёт рядом с `.exe` (ADR 0010).
@@ -13,6 +14,11 @@
 //! Сохранённое положение может оказаться на отключённом мониторе. Тогда окно
 //! переносится на текущий: иначе оно окажется за пределами экрана, и
 //! приложение будет выглядеть не запустившимся.
+//!
+//! Прилипание работает на событиях `Moved`: пока видимая граница окна ближе
+//! порога к краю рабочей области, окно ставится вплотную. Видимая граница
+//! уже внешнего прямоугольника на невидимую рамку, поэтому поправка нужна
+//! и при перетаскивании, и при восстановлении (ADR 0064).
 
 use std::sync::mpsc::{self, RecvTimeoutError};
 use std::sync::{Arc, Mutex};
@@ -126,18 +132,66 @@ pub struct Frame {
     pub height: u32,
 }
 
+/// Невидимая вставка между внешним прямоугольником окна и его видимой
+/// границей.
+///
+/// `GetWindowRect`, которым пользуется Tauri, отдаёт прямоугольник шире
+/// видимого окна: оконная система держит запас под тень и захват для
+/// изменения размера. Без поправки окно встаёт к рабочей области с щелью
+/// в эту вставку. Величина зависит от масштаба экрана и версии системы,
+/// поэтому измеряется, а не задаётся числом.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct Inset {
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+}
+
+/// Порог прилипания в логических пикселях.
+const SNAP_DISTANCE: f64 = 12.0;
+
+/// Границы внешнего прямоугольника по одной оси: от прижатия к началу
+/// рабочей области до прижатия к концу.
+///
+/// Видимая граница окна может выступать за рабочую область на невидимую
+/// вставку, поэтому обе границы сдвинуты наружу на неё. Если окно длиннее
+/// рабочей области, границы совпадают: прижать его к обоим краям нельзя.
+fn outer_bounds(
+    area_start: i32,
+    area_length: u32,
+    inset_start: i32,
+    inset_end: i32,
+    outer_length: i32,
+) -> (i32, i32) {
+    let start = area_start.saturating_sub(inset_start);
+    let end = area_start
+        .saturating_add(area_length as i32)
+        .saturating_sub(outer_length)
+        .saturating_add(inset_end)
+        .max(start);
+
+    (start, end)
+}
+
 /// Подбирает геометрию, прижатую к рабочей области монитора.
 ///
 /// Логика в три шага: найти монитор под сохранённой точкой (иначе текущий),
-/// перевести размер в его физические пиксели и прижать внешний прямоугольник
-/// окна внутрь рабочей области монитора. Размер уменьшается только если окно
+/// перевести размер в его физические пиксели и прижать видимую границу окна
+/// внутрь рабочей области монитора. Размер уменьшается только если окно
 /// физически больше экрана; положение сдвигается всегда, чтобы окно осталось
 /// достижимым.
+///
+/// Прижатие считается по видимой границе, а не по внешнему прямоугольнику:
+/// тот шире окна на невидимую вставку, и без поправки окно встало бы
+/// с щелью, а сохранённое прилипшее положение откатывалось бы при каждом
+/// запуске.
 pub fn fit(
     saved: &WindowSettings,
     screens: &[Screen],
     current: Option<&Screen>,
     frame: Frame,
+    inset: Inset,
 ) -> Placement {
     let width = saved.width.max(MIN_WIDTH);
     let height = saved.height.max(MIN_HEIGHT);
@@ -154,9 +208,16 @@ pub fn fit(
     // Сохранённая точка главнее текущего монитора: пользователь оставил окно
     // там, и вернуть его нужно туда же. Текущий монитор — только запасной
     // вариант, когда такой точки на столе больше нет.
+    //
+    // Ищется видимая точка: прилипшее к левому или верхнему краю окно
+    // внешним углом выступает за рабочую область на вставку.
     let screen = screens
         .iter()
-        .find(|screen| screen.work_area.contains(x, y))
+        .find(|screen| {
+            screen
+                .work_area
+                .contains(x.saturating_add(inset.left), y.saturating_add(inset.top))
+        })
         .or(current);
 
     let Some(screen) = screen else {
@@ -174,9 +235,12 @@ pub fn fit(
     let scale = normalize_scale(screen.scale_factor);
 
     // Рамка задана в физических пикселях, поэтому место под клиентскую
-    // область — это рабочая область монитора минус рамка.
-    let available_width = f64::from(area.width.saturating_sub(frame.width).max(1));
-    let available_height = f64::from(area.height.saturating_sub(frame.height).max(1));
+    // область - это рабочая область монитора плюс невидимая вставка минус
+    // рамка: видимая граница может выступать за рабочую область на вставку.
+    let room_width = f64::from(area.width) + f64::from(inset.left) + f64::from(inset.right);
+    let room_height = f64::from(area.height) + f64::from(inset.top) + f64::from(inset.bottom);
+    let available_width = (room_width - f64::from(frame.width)).max(1.0);
+    let available_height = (room_height - f64::from(frame.height)).max(1.0);
 
     let physical_width = (f64::from(width) * scale).round();
     let physical_height = (f64::from(height) * scale).round();
@@ -186,16 +250,84 @@ pub fn fit(
     let outer_width = clamped_width + f64::from(frame.width);
     let outer_height = clamped_height + f64::from(frame.height);
 
-    // Нижняя граница прижатия — не меньше рабочей области монитора: при окне шире
-    // экрана правый край совпадает с её краем, а не уходит в минус.
-    let left = x.clamp(area.x, area.right() - outer_width as i32);
-    let top = y.clamp(area.y, area.bottom() - outer_height as i32);
+    let (left_min, left_max) = outer_bounds(
+        area.x,
+        area.width,
+        inset.left,
+        inset.right,
+        outer_width as i32,
+    );
+    let (top_min, top_max) = outer_bounds(
+        area.y,
+        area.height,
+        inset.top,
+        inset.bottom,
+        outer_height as i32,
+    );
+
+    let left = x.clamp(left_min, left_max);
+    let top = y.clamp(top_min, top_max);
 
     Placement {
         width: (clamped_width / scale).round(),
         height: (clamped_height / scale).round(),
         x: Some(left),
         y: Some(top),
+    }
+}
+
+/// Прилипание окна к краям рабочей области.
+///
+/// Внешний прямоугольник окна сдвигается вплотную к тем краям, до которых
+/// его видимая граница ближе порога. Края считаются независимо, поэтому
+/// углы выравниваются сами. Ось пропускается, если видимый размер окна
+/// больше рабочей области: два её края одновременно не выровнять.
+pub fn snapped(window: Rect, area: Rect, inset: Inset, threshold: i32) -> Rect {
+    let visible_width = i64::from(window.width) - i64::from(inset.left) - i64::from(inset.right);
+    let visible_height = i64::from(window.height) - i64::from(inset.top) - i64::from(inset.bottom);
+
+    let mut target = window;
+
+    if visible_width <= i64::from(area.width) {
+        let (start, end) = outer_bounds(
+            area.x,
+            area.width,
+            inset.left,
+            inset.right,
+            window.width as i32,
+        );
+        target.x = snap_axis(window.x, start, end, threshold);
+    }
+
+    if visible_height <= i64::from(area.height) {
+        let (start, end) = outer_bounds(
+            area.y,
+            area.height,
+            inset.top,
+            inset.bottom,
+            window.height as i32,
+        );
+        target.y = snap_axis(window.y, start, end, threshold);
+    }
+
+    target
+}
+
+/// Выравнивание по одной оси: побеждает ближайший край в пределах порога.
+///
+/// Начало оси при равенстве расстояний важнее конца: так окно не прыгает
+/// между двумя краями, когда почти совпадает с рабочей областью по размеру.
+fn snap_axis(position: i32, start: i32, end: i32, threshold: i32) -> i32 {
+    let start_distance = (i64::from(position) - i64::from(start)).abs();
+    let end_distance = (i64::from(position) - i64::from(end)).abs();
+    let threshold = i64::from(threshold);
+
+    if start_distance <= threshold && start_distance <= end_distance {
+        start
+    } else if end_distance <= threshold {
+        end
+    } else {
+        position
     }
 }
 
@@ -243,7 +375,21 @@ pub fn restore(window: &WebviewWindow, saved: &WindowSettings) -> tauri::Result<
         .current_monitor()?
         .map(|monitor| Screen::from_monitor(&monitor));
     let frame = frame(window)?;
-    let placement = fit(saved, &screens, current.as_ref(), frame);
+    let position = window.outer_position()?;
+    let size = window.outer_size()?;
+    let outer = Rect {
+        x: position.x,
+        y: position.y,
+        width: size.width,
+        height: size.height,
+    };
+    let placement = fit(
+        saved,
+        &screens,
+        current.as_ref(),
+        frame,
+        visible_inset(window, outer),
+    );
 
     let adjusted = placement.width != f64::from(saved.width)
         || placement.height != f64::from(saved.height)
@@ -274,6 +420,105 @@ fn frame(window: &WebviewWindow) -> tauri::Result<Frame> {
         width: outer.width.saturating_sub(inner.width),
         height: outer.height.saturating_sub(inner.height),
     })
+}
+
+/// Прилипание живого окна к краям рабочей области.
+///
+/// Возвращает `true`, если окно сдвинулось. Развёрнутое, полноэкранное
+/// и свёрнутое окно пропускаются: их прямоугольник уже совпадает с рабочей
+/// областью или с экраном, и прилипание сдвинуло бы окно с места.
+pub fn snap_to_edges(window: &WebviewWindow) -> tauri::Result<bool> {
+    if window.is_minimized()? || window.is_maximized()? || window.is_fullscreen()? {
+        return Ok(false);
+    }
+
+    let Some(monitor) = window.current_monitor()? else {
+        return Ok(false);
+    };
+
+    let screen = Screen::from_monitor(&monitor);
+    let position = window.outer_position()?;
+    let size = window.outer_size()?;
+    let current = Rect {
+        x: position.x,
+        y: position.y,
+        width: size.width,
+        height: size.height,
+    };
+
+    // Порог задан в логических пикселях: на мониторе с масштабом 150 %
+    // он равен 18 физическим, иначе магнит был бы вдвое слабее.
+    let threshold = (SNAP_DISTANCE * screen.scale_factor).round() as i32;
+    let target = snapped(
+        current,
+        screen.work_area,
+        visible_inset(window, current),
+        threshold,
+    );
+
+    if target.x == current.x && target.y == current.y {
+        return Ok(false);
+    }
+
+    window.set_position(Position::Physical(PhysicalPosition::new(
+        target.x, target.y,
+    )))?;
+    Ok(true)
+}
+
+/// Вставка между внешним прямоугольником окна и его видимой границей.
+///
+/// `GetWindowRect` отдаёт прямоугольник шире видимого окна на запас под тень
+/// и захват для изменения размера. Вставка нужна и при восстановлении,
+/// и при прилипании: без неё окно встаёт к рабочей области с щелью в 7-8 px.
+/// Неправдоподобный ответ (скрытое окно, отказ DWM) заменяется нулём: тогда
+/// поведение остаётся прежним, а не ломается.
+#[cfg(windows)]
+fn visible_inset(window: &WebviewWindow, outer: Rect) -> Inset {
+    use windows::Win32::Foundation::RECT;
+    use windows::Win32::Graphics::Dwm::{DWMWA_EXTENDED_FRAME_BOUNDS, DwmGetWindowAttribute};
+
+    /// Запас больше этого не встречается у обычного окна: даже на 200 %
+    /// вставка равна 14-16 px.
+    const MAX_INSET: i32 = 32;
+
+    let Ok(hwnd) = window.hwnd() else {
+        return Inset::default();
+    };
+
+    let mut rect = RECT::default();
+    let length = std::mem::size_of::<RECT>() as u32;
+    let result = unsafe {
+        DwmGetWindowAttribute(
+            hwnd,
+            DWMWA_EXTENDED_FRAME_BOUNDS,
+            std::ptr::from_mut(&mut rect).cast(),
+            length,
+        )
+    };
+    if result.is_err() {
+        return Inset::default();
+    }
+
+    let inset = Inset {
+        left: rect.left - outer.x,
+        top: rect.top - outer.y,
+        right: outer.x + outer.width as i32 - rect.right,
+        bottom: outer.y + outer.height as i32 - rect.bottom,
+    };
+
+    let plausible = [inset.left, inset.top, inset.right, inset.bottom]
+        .iter()
+        .all(|value| (0..=MAX_INSET).contains(value));
+
+    if plausible { inset } else { Inset::default() }
+}
+
+/// Вставка на других платформах не измеряется: окно выравнивается
+/// по внешнему прямоугольнику.
+#[cfg(not(windows))]
+fn visible_inset(_window: &WebviewWindow, _outer: Rect) -> Inset {
+    Inset::default()
 }
 
 /// Снимок текущей геометрии для записи в настройки.
@@ -500,6 +745,7 @@ mod tests {
             &[screen(0, 0, 1920, 1040)],
             None,
             Frame::default(),
+            Inset::default(),
         );
 
         assert_eq!(placement.width, 1280.0);
@@ -515,6 +761,7 @@ mod tests {
             &[screen(0, 0, 1920, 1040)],
             None,
             Frame::default(),
+            Inset::default(),
         );
 
         assert_eq!(placement.width, f64::from(MIN_WIDTH));
@@ -528,6 +775,7 @@ mod tests {
             &[screen(0, 0, 1920, 1040)],
             None,
             Frame::default(),
+            Inset::default(),
         );
 
         assert_eq!(placement.x, Some(100));
@@ -542,6 +790,7 @@ mod tests {
             &[screen(0, 0, 1920, 1040)],
             None,
             Frame::default(),
+            Inset::default(),
         );
 
         assert_eq!(placement.width, 1920.0);
@@ -557,6 +806,7 @@ mod tests {
             &[screen(0, 0, 1920, 1040)],
             None,
             Frame::default(),
+            Inset::default(),
         );
 
         assert_eq!(placement.x, Some(920));
@@ -572,6 +822,7 @@ mod tests {
             &[screen(0, 0, 1920, 1040)],
             None,
             measured_frame(),
+            Inset::default(),
         );
 
         assert_eq!(placement.width, 1904.0);
@@ -589,6 +840,7 @@ mod tests {
             &screens,
             None,
             Frame::default(),
+            Inset::default(),
         );
 
         assert_eq!(placement.x, Some(-1800));
@@ -604,6 +856,7 @@ mod tests {
             &[current],
             Some(&current),
             Frame::default(),
+            Inset::default(),
         );
 
         assert_eq!(placement.x, Some(920));
@@ -618,6 +871,7 @@ mod tests {
             &[],
             None,
             Frame::default(),
+            Inset::default(),
         );
 
         assert_eq!(placement.x, None);
@@ -636,11 +890,228 @@ mod tests {
             &[scaled],
             None,
             Frame::default(),
+            Inset::default(),
         );
 
         assert_eq!(placement.width, 1280.0);
         assert_eq!(placement.height, 693.0);
         assert_eq!(placement.x, Some(0));
         assert_eq!(placement.y, Some(0));
+    }
+
+    /// Рабочая область основного монитора: 1920×1040, панель задач снизу.
+    fn work_area() -> Rect {
+        Rect {
+            x: 0,
+            y: 0,
+            width: 1920,
+            height: 1040,
+        }
+    }
+
+    fn window_at(x: i32, y: i32) -> Rect {
+        Rect {
+            x,
+            y,
+            width: 1000,
+            height: 700,
+        }
+    }
+
+    #[test]
+    fn window_in_the_band_is_pulled_flush() {
+        // Вариации одного поведения: видимая граница ближе порога, окно встаёт
+        // вплотную. Слева, справа, сверху, снизу, в углу и с выходом за край;
+        // 1920 − 1000 = 920, 1040 − 700 = 340.
+        let cases = [
+            (5, 200, 0, 200),
+            (12, 200, 0, 200),
+            (-4, 200, 0, 200),
+            (915, 200, 920, 200),
+            (300, 5, 300, 0),
+            (300, 334, 300, 340),
+            (7, 6, 0, 0),
+        ];
+
+        for (x, y, expected_x, expected_y) in cases {
+            let result = snapped(window_at(x, y), work_area(), Inset::default(), 12);
+            assert_eq!(
+                (result.x, result.y),
+                (expected_x, expected_y),
+                "окно в ({x}, {y})"
+            );
+        }
+    }
+
+    #[test]
+    fn window_outside_the_band_keeps_place() {
+        // Вдали от краёв и на пиксель дальше порога магнит не срабатывает.
+        let cases = [(300, 200), (13, 200), (300, 353)];
+
+        for (x, y) in cases {
+            let window = window_at(x, y);
+            assert_eq!(
+                snapped(window, work_area(), Inset::default(), 12),
+                window,
+                "окно в ({x}, {y})"
+            );
+        }
+    }
+
+    #[test]
+    fn inset_targets_the_visible_border() {
+        let inset = Inset {
+            left: 7,
+            top: 0,
+            right: 7,
+            bottom: 7,
+        };
+
+        let left = snapped(window_at(0, 200), work_area(), inset, 12);
+        assert_eq!(left.x, -7);
+
+        // 1040 − 700 + 7: внешний прямоугольник выступает за рабочую область
+        // на вставку, чтобы её нижняя граница совпала с верхом панели задач.
+        let bottom = snapped(window_at(300, 345), work_area(), inset, 12);
+        assert_eq!(bottom.y, 347);
+    }
+
+    #[test]
+    fn taskbar_on_top_moves_the_top_edge_down() {
+        let area = Rect {
+            x: 0,
+            y: 40,
+            width: 1920,
+            height: 1000,
+        };
+
+        assert_eq!(
+            snapped(window_at(300, 44), area, Inset::default(), 12).y,
+            40
+        );
+    }
+
+    #[test]
+    fn window_larger_than_the_area_is_not_aligned_on_that_axis() {
+        // Окно шире рабочей области: по горизонтали прижать его к обоим краям
+        // нельзя, ось пропускается. По вертикали оно помещается, но стоит
+        // вдали от краёв.
+        let narrow = Rect {
+            x: 0,
+            y: 0,
+            width: 900,
+            height: 1040,
+        };
+        let wide = Rect {
+            x: 3,
+            y: 200,
+            width: 1000,
+            height: 1000,
+        };
+        assert_eq!(snapped(wide, narrow, Inset::default(), 12).x, 3);
+
+        // То же по вертикали: окно выше рабочей области.
+        let short = Rect {
+            x: 0,
+            y: 0,
+            width: 1920,
+            height: 600,
+        };
+        let tall = Rect {
+            x: 300,
+            y: 4,
+            width: 1000,
+            height: 700,
+        };
+        assert_eq!(snapped(tall, short, Inset::default(), 12).y, 4);
+    }
+
+    /// Вставка снизу, измеренная на этой машине: 7 px невидимой рамки.
+    fn measured_inset() -> Inset {
+        Inset {
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 7,
+        }
+    }
+
+    #[test]
+    fn snapped_position_survives_restore() {
+        // Окно прилипло к верхнему краю панели задач: внешний прямоугольник
+        // выступает за рабочую область на вставку, а видимая граница
+        // совпадает с ней. Восстановление не должно поднимать окно.
+        let placement = fit(
+            &saved(1280, 800, Some(0), Some(208)),
+            &[screen(0, 0, 1920, 1040)],
+            None,
+            measured_frame(),
+            measured_inset(),
+        );
+
+        assert_eq!(placement.x, Some(0));
+        assert_eq!(placement.y, Some(208));
+    }
+
+    #[test]
+    fn visible_border_does_not_leave_the_work_area() {
+        let placement = fit(
+            &saved(1280, 800, Some(0), Some(1039)),
+            &[screen(0, 0, 1920, 1040)],
+            None,
+            measured_frame(),
+            measured_inset(),
+        );
+
+        assert_eq!(placement.y, Some(208));
+    }
+
+    #[test]
+    fn inset_gives_room_to_an_oversized_window() {
+        let inset = Inset {
+            left: 7,
+            top: 0,
+            right: 7,
+            bottom: 7,
+        };
+
+        let placement = fit(
+            &saved(2560, 1440, Some(0), Some(0)),
+            &[screen(0, 0, 1920, 1040)],
+            None,
+            measured_frame(),
+            inset,
+        );
+
+        assert_eq!(placement.width, 1918.0);
+        assert_eq!(placement.height, 1008.0);
+        assert_eq!(placement.x, Some(-7));
+        assert_eq!(placement.y, Some(0));
+    }
+
+    #[test]
+    fn window_snapped_on_a_second_monitor_stays_there() {
+        // Окно прилипло к левому краю левого монитора: внешний угол
+        // на вставку за рабочей областью. При восстановлении оно не должно
+        // переехать на основной монитор.
+        let screens = [screen(0, 0, 1920, 1040), screen(-1920, 0, 1920, 1040)];
+        let primary = screen(0, 0, 1920, 1040);
+        let inset = Inset {
+            left: 7,
+            top: 0,
+            right: 7,
+            bottom: 7,
+        };
+
+        let placement = fit(
+            &saved(1000, 700, Some(-1927), Some(100)),
+            &screens,
+            Some(&primary),
+            measured_frame(),
+            inset,
+        );
+
+        assert_eq!(placement.x, Some(-1927));
+        assert_eq!(placement.y, Some(100));
     }
 }
