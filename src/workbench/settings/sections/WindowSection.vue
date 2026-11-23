@@ -242,10 +242,7 @@ onMounted(() => {
       </div>
 
       <div class="window__fact">
-        <dt class="window__label-line">
-          <span>{{ t("settings.window.position") }}</span>
-          <span class="window__hint">{{ t("settings.window.positionHint") }}</span>
-        </dt>
+        <dt>{{ t("settings.window.position") }}</dt>
         <dd class="window__form">
           <div class="window__row">
             <WindowNumberField
@@ -303,9 +300,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* Карточки идут друг под другом: размера и положения. */
 .window__facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--ag-space-lg);
   margin: 0;
 }
@@ -328,25 +326,6 @@ onMounted(() => {
 .window__fact dd {
   margin: 0;
   font-size: var(--ag-text-sm);
-}
-
-/* Пояснение единиц идёт за подписью через точку-разделитель:
-   это справка о координатах, а не часть подписи. */
-.window__label-line {
-  display: flex;
-  align-items: baseline;
-  gap: var(--ag-space-sm);
-  flex-wrap: wrap;
-}
-
-.window__hint {
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-xs);
-}
-
-.window__hint::before {
-  margin-right: var(--ag-space-sm);
-  content: "•";
 }
 
 .window__form {

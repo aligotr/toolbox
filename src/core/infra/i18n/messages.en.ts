@@ -257,7 +257,6 @@ export const enMessages: Messages = {
   "settings.window.widthLabel": "Window width",
   "settings.window.heightLabel": "Window height",
   "settings.window.position": "Position",
-  "settings.window.positionHint": "Screen pixels",
   "settings.window.positionX": "X",
   "settings.window.positionY": "Y",
   "settings.window.positionXLabel": "X coordinate",

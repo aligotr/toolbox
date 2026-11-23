@@ -312,7 +312,6 @@ export const ruMessages: Messages = {
   "settings.window.widthLabel": "Ширина окна",
   "settings.window.heightLabel": "Высота окна",
   "settings.window.position": "Положение",
-  "settings.window.positionHint": "Пиксели экрана",
   "settings.window.positionX": "X",
   "settings.window.positionY": "Y",
   "settings.window.positionXLabel": "Координата X",
