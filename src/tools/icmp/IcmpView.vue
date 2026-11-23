@@ -19,6 +19,8 @@ import type { ToolCellProps } from "@/contracts/tools";
 import { describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
 import { requireConfirm } from "@/ui/primevue/popup/confirmPopup";
+import ToolNumberField from "@/ui/tool/ToolNumberField.vue";
+import ToolScreen from "@/ui/tool/ToolScreen.vue";
 import {
   familyFilterOptions,
   familyOptions,
@@ -32,7 +34,6 @@ import {
   statusFilterOptions,
 } from "./constants";
 import { applyDefaultPreset } from "./presets";
-import ParamField from "./components/ParamField.vue";
 import PresetBar from "./components/PresetBar.vue";
 import PresetsDialog from "./components/PresetsDialog.vue";
 import TargetTable from "./components/TargetTable.vue";
@@ -197,202 +198,206 @@ async function saveExport(
 </script>
 
 <template>
-  <section class="tool icmp">
-    <PresetBar :session="session" @open="presetsOpen = true" @note="presetNote = $event" />
+  <ToolScreen class="icmp">
+    <template #preset>
+      <PresetBar :session="session" @open="presetsOpen = true" @note="presetNote = $event" />
+    </template>
 
-    <div class="tool__body">
-      <div class="tool__toolbar">
-        <div ref="addBox" class="tool__add">
-          <InputGroup>
-            <InputText
-              v-model="draft"
-              size="small"
-              :class="{ 'p-invalid': addError }"
-              :placeholder="addError ?? t('icmp.view.targetPlaceholder')"
-              :aria-invalid="addError !== null"
-              :aria-label="t('icmp.view.targetAria')"
-              :disabled="running"
-              @keyup.enter="submitTarget"
-            />
-            <Select
-              v-model="session.family"
-              size="small"
-              :options="familyOptions()"
-              option-label="label"
-              option-value="value"
-              :aria-label="t('icmp.view.familyAria')"
-              :disabled="running"
-            />
-            <Button
-              v-tooltip.top="t('icmp.view.addHint')"
-              icon="pi pi-plus"
-              severity="secondary"
-              outlined
-              size="small"
-              :aria-label="t('icmp.view.addHint')"
-              :disabled="running"
-              @click="submitTarget"
-            />
-          </InputGroup>
-        </div>
-
-        <div
-          class="icmp__params"
-          @focusin="rememberParams"
-          @focusout="forgetParams"
-          @keyup.enter="runFromParams"
-          @keyup.escape="restoreParams"
-        >
-          <ParamField
-            id="icmp-period"
-            v-model="session.periodMs"
-            :label="t('icmp.view.period')"
-            :min="MIN_PERIOD_MS"
-            :max="MAX_PERIOD_MS"
-            :step="100"
-            :unit="t('icmp.view.ms')"
-            :invalid="periodInvalid"
+    <div class="tool__toolbar">
+      <div ref="addBox" class="tool__add">
+        <InputGroup>
+          <InputText
+            v-model="draft"
+            size="small"
+            :class="{ 'p-invalid': addError }"
+            :placeholder="addError ?? t('icmp.view.targetPlaceholder')"
+            :aria-invalid="addError !== null"
+            :aria-label="t('icmp.view.targetAria')"
             :disabled="running"
+            @keyup.enter="submitTarget"
           />
-          <ParamField
-            id="icmp-count"
-            v-model="session.count"
-            :label="t('icmp.view.count')"
-            :min="MIN_COUNT"
-            :max="MAX_COUNT"
-            :step="1"
-            unit=""
-            :invalid="countInvalid"
-            :disabled="running"
-          />
-          <ParamField
-            id="icmp-timeout"
-            v-model="session.timeoutMs"
-            :label="t('icmp.view.timeout')"
-            :min="MIN_TIMEOUT_MS"
-            :max="MAX_TIMEOUT_MS"
-            :step="100"
-            :unit="t('icmp.view.ms')"
-            :invalid="timeoutInvalid"
+          <Select
+            v-model="session.family"
+            size="small"
+            :options="familyOptions()"
+            option-label="label"
+            option-value="value"
+            :aria-label="t('icmp.view.familyAria')"
             :disabled="running"
           />
           <Button
-            class="tool__run"
-            :label="running ? t('icmp.view.stop') : t('icmp.view.run')"
-            :icon="running ? 'pi pi-stop' : 'pi pi-play'"
-            :severity="running ? 'contrast' : undefined"
+            v-tooltip.top="t('icmp.view.addHint')"
+            icon="pi pi-plus"
+            severity="secondary"
+            outlined
             size="small"
-            :disabled="!running && !canRun"
-            @click="toggleRun"
+            :aria-label="t('icmp.view.addHint')"
+            :disabled="running"
+            @click="submitTarget"
           />
-        </div>
+        </InputGroup>
       </div>
 
-      <div class="tool__filters">
-        <InputText
-          v-model="session.filters.search"
-          class="tool__search"
-          size="small"
-          :placeholder="t('icmp.view.search')"
-          :aria-label="t('icmp.view.search')"
-        />
-        <Select
-          v-model="session.filters.status"
-          :options="statusFilterOptions()"
-          option-label="label"
-          option-value="value"
-          size="small"
-          :aria-label="t('icmp.view.statusFilter')"
-        />
-        <Select
-          v-model="session.filters.family"
-          :options="familyFilterOptions()"
-          option-label="label"
-          option-value="value"
-          size="small"
-          :aria-label="t('icmp.view.familyFilter')"
-        />
-
-        <div class="tool__table-actions">
-          <Button
-            v-tooltip.bottom="t('icmp.view.exportSummary')"
-            icon="pi pi-download"
-            severity="secondary"
-            text
-            size="small"
-            :aria-label="t('icmp.view.exportSummary')"
-            :disabled="visibleTargets.length === 0"
-            @click="saveExport(exportSummary)"
-          />
-          <Button
-            v-tooltip.bottom="t('icmp.view.exportPackets')"
-            icon="pi pi-list"
-            severity="secondary"
-            text
-            size="small"
-            :aria-label="t('icmp.view.exportPackets')"
-            :disabled="visibleTargets.length === 0"
-            @click="saveExport(exportPackets)"
-          />
-          <Button
-            v-tooltip.bottom="t('icmp.view.clear')"
-            icon="pi pi-trash"
-            severity="danger"
-            text
-            size="small"
-            :aria-label="t('icmp.view.clear')"
-            :disabled="session.targets.length === 0 && !session.status.run.error"
-            @click="requestClear"
-          />
-        </div>
-      </div>
-
-      <TargetTable
-        :targets="visibleTargets"
-        :total-targets="session.targets.length"
-        :highlight-target-id="session.highlightTargetId"
-        :busy="running"
-        @repeat="runTarget"
-        @delete="removeTarget"
-        @reorder="moveTarget"
+      <div
+        class="tool__params"
+        @focusin="rememberParams"
+        @focusout="forgetParams"
+        @keyup.enter="runFromParams"
+        @keyup.escape="restoreParams"
       >
-        <template #notice>
-          <div v-if="notices.length > 0" class="tool-table__notices">
-            <p
-              v-for="notice in notices"
-              :key="notice.source"
-              class="tool-table__notice"
-              :role="notice.urgent ? 'alert' : undefined"
-              :aria-live="notice.urgent ? undefined : 'polite'"
-            >
-              <i class="pi pi-exclamation-circle" aria-hidden="true" />
-              <span>{{ notice.text }}</span>
-            </p>
-          </div>
-        </template>
-      </TargetTable>
-
-      <p v-if="session.progress.targets > 0" class="icmp__status" aria-live="polite">
-        {{
-          t("icmp.view.progress", {
-            targets: session.progress.targets,
-            addresses: session.progress.addresses,
-            sent: session.progress.sent,
-            received: session.progress.received,
-          })
-        }}
-      </p>
-
-      <p v-if="exportNote" class="tool__hint" aria-live="polite">
-        <i class="pi pi-file" aria-hidden="true" />
-        {{ exportNote }}
-      </p>
+        <ToolNumberField
+          id="icmp-period"
+          v-model="session.periodMs"
+          :label="t('icmp.view.period')"
+          :min="MIN_PERIOD_MS"
+          :max="MAX_PERIOD_MS"
+          :step="100"
+          :unit="t('icmp.view.ms')"
+          :invalid="periodInvalid"
+          :disabled="running"
+        />
+        <ToolNumberField
+          id="icmp-count"
+          v-model="session.count"
+          :label="t('icmp.view.count')"
+          :min="MIN_COUNT"
+          :max="MAX_COUNT"
+          :step="1"
+          unit=""
+          :invalid="countInvalid"
+          :disabled="running"
+        />
+        <ToolNumberField
+          id="icmp-timeout"
+          v-model="session.timeoutMs"
+          :label="t('icmp.view.timeout')"
+          :min="MIN_TIMEOUT_MS"
+          :max="MAX_TIMEOUT_MS"
+          :step="100"
+          :unit="t('icmp.view.ms')"
+          :invalid="timeoutInvalid"
+          :disabled="running"
+        />
+        <Button
+          class="tool__run"
+          :label="running ? t('icmp.view.stop') : t('icmp.view.run')"
+          :icon="running ? 'pi pi-stop' : 'pi pi-play'"
+          :severity="running ? 'contrast' : undefined"
+          size="small"
+          :disabled="!running && !canRun"
+          @click="toggleRun"
+        />
+      </div>
     </div>
 
-    <PresetsDialog
-      v-model:visible="presetsOpen"
-      :session="session"
-      @applied="forgetParamsSnapshot"
-    />
-  </section>
+    <div class="tool__filters">
+      <InputText
+        v-model="session.filters.search"
+        class="tool__search"
+        size="small"
+        :placeholder="t('icmp.view.search')"
+        :aria-label="t('icmp.view.search')"
+      />
+      <Select
+        v-model="session.filters.status"
+        :options="statusFilterOptions()"
+        option-label="label"
+        option-value="value"
+        class="tool__filter-select"
+        size="small"
+        :aria-label="t('icmp.view.statusFilter')"
+      />
+      <Select
+        v-model="session.filters.family"
+        :options="familyFilterOptions()"
+        option-label="label"
+        option-value="value"
+        class="tool__filter-select"
+        size="small"
+        :aria-label="t('icmp.view.familyFilter')"
+      />
+
+      <div class="tool__table-actions">
+        <Button
+          v-tooltip.bottom="t('icmp.view.exportSummary')"
+          icon="pi pi-download"
+          severity="secondary"
+          text
+          size="small"
+          :aria-label="t('icmp.view.exportSummary')"
+          :disabled="visibleTargets.length === 0"
+          @click="saveExport(exportSummary)"
+        />
+        <Button
+          v-tooltip.bottom="t('icmp.view.exportPackets')"
+          icon="pi pi-list"
+          severity="secondary"
+          text
+          size="small"
+          :aria-label="t('icmp.view.exportPackets')"
+          :disabled="visibleTargets.length === 0"
+          @click="saveExport(exportPackets)"
+        />
+        <Button
+          v-tooltip.bottom="t('icmp.view.clear')"
+          icon="pi pi-trash"
+          severity="danger"
+          text
+          size="small"
+          :aria-label="t('icmp.view.clear')"
+          :disabled="session.targets.length === 0 && !session.status.run.error"
+          @click="requestClear"
+        />
+      </div>
+    </div>
+
+    <TargetTable
+      :targets="visibleTargets"
+      :total-targets="session.targets.length"
+      :highlight-target-id="session.highlightTargetId"
+      :busy="running"
+      @repeat="runTarget"
+      @delete="removeTarget"
+      @reorder="moveTarget"
+    >
+      <template #notice>
+        <div v-if="notices.length > 0" class="tool-table__notices">
+          <p
+            v-for="notice in notices"
+            :key="notice.source"
+            class="tool-table__notice"
+            :role="notice.urgent ? 'alert' : undefined"
+            :aria-live="notice.urgent ? undefined : 'polite'"
+          >
+            <i class="pi pi-exclamation-circle" aria-hidden="true" />
+            <span>{{ notice.text }}</span>
+          </p>
+        </div>
+      </template>
+    </TargetTable>
+
+    <p v-if="session.progress.targets > 0" class="icmp__status" aria-live="polite">
+      {{
+        t("icmp.view.progress", {
+          targets: session.progress.targets,
+          addresses: session.progress.addresses,
+          sent: session.progress.sent,
+          received: session.progress.received,
+        })
+      }}
+    </p>
+
+    <p v-if="exportNote" class="tool__hint" aria-live="polite">
+      <i class="pi pi-file" aria-hidden="true" />
+      {{ exportNote }}
+    </p>
+
+    <template #overlays>
+      <PresetsDialog
+        v-model:visible="presetsOpen"
+        :session="session"
+        @applied="forgetParamsSnapshot"
+      />
+    </template>
+  </ToolScreen>
 </template>

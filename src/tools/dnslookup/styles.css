@@ -10,6 +10,9 @@
 .dns {
   /* Список резолверов вмещает два чипа и счётчик «+N». */
   --dns-servers-width: 290px;
+  /* Сравнительная таблица раскрытия: пять колонок дышат, но не
+     растягиваются на всю ширину строки. */
+  --dns-details-max-width: 720px;
 }
 
 /* Строка серверов сжимается по содержимому, как и поле резолверов. */
@@ -165,11 +168,88 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Сравнительная таблица раскрытия: серверы строками, записи колонками.
+   Ширина умеренная: тесная таблица слипается, а на всю строку - разъезжается.
+   Длинный ответ переносится внутри ячейки. */
+.dns-details-wrap {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.dns-details {
+  width: 100%;
+  max-width: var(--dns-details-max-width);
+  border-collapse: collapse;
+  font-size: var(--ag-text-xs);
+}
+
+.dns-details th,
+.dns-details td {
+  padding: var(--ag-space-xs) var(--ag-space-sm);
+  border-bottom: 1px solid var(--ag-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.dns-details thead th {
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dns-details__server {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dns-details__name,
+.dns-details__meta {
+  display: block;
+}
+
+.dns-details__meta {
+  color: var(--p-text-muted-color);
+  font-family: var(--ag-font-mono);
+  font-size: var(--ag-text-xs);
+  font-weight: 400;
+}
+
+.dns-details__status {
+  white-space: nowrap;
+}
+
+.dns-details__answer code {
+  font-family: var(--ag-font-mono);
+  font-size: var(--ag-text-xs);
+  overflow-wrap: anywhere;
+}
+
+.dns-details__note {
+  color: var(--p-text-muted-color);
+}
+
+.dns-details__number {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .dns-table .dns-row--diff > td {
   background: color-mix(in srgb, var(--ag-warn) 7%, transparent);
 }
 
 .dns-table .dns-row--diff > td:first-child {
+  box-shadow: inset 3px 0 0 var(--ag-warn);
+}
+
+/* Раскрытая строка с расхождением сохраняет свой цвет: акцент раскрытия
+   не затирает знак сравнения, ради которого строку и раскрыли. */
+.dns-table.tool-table--mark-expanded .tool-table__row--expanded.dns-row--diff > td {
+  background: color-mix(in srgb, var(--ag-warn) 7%, transparent);
+}
+
+.dns-table.tool-table--mark-expanded .tool-table__row--expanded.dns-row--diff > td:first-child {
   box-shadow: inset 3px 0 0 var(--ag-warn);
 }
 

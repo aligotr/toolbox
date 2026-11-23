@@ -12,11 +12,11 @@
 
 :root {
   /* Главное поле строки добавления: домен, цель. */
-  --tool-field-width: 320px;
+  --tool-field-width: 264px;
   /* Компактный список рядом с полем: тип записи, семейство адресов. */
-  --tool-compact-width: 104px;
+  --tool-compact-width: 96px;
   /* Поле числового параметра: период, число пакетов, таймаут. */
-  --tool-param-width: 92px;
+  --tool-param-width: 72px;
   /* Нижняя граница поля поиска: уже неё строка фильтров ломается. */
   --tool-search-min-width: 160px;
   /* Кнопка строки таблицы размером с иконку: строка остаётся плотной. */
@@ -29,6 +29,8 @@
   --tool-table-empty-height: 200px;
   /* Подпись пресета не растягивает шапку. */
   --tool-preset-max-width: 240px;
+  /* Отбор в строке фильтров: статус, семейство. */
+  --tool-filter-width: 150px;
 }
 
 .tool {
@@ -117,6 +119,7 @@
 .tool__toolbar {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
   gap: var(--ag-space-md);
 }
@@ -151,6 +154,35 @@
   white-space: nowrap;
 }
 
+/* Параметры прогона стоят в одной полосе с добавлением, а при нехватке
+   места переносятся целой группой. Поля идут одной полосой: подпись стоит
+   рядом с полем, а не над ним. */
+.tool__params {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-sm);
+}
+
+/* Поле числового параметра: подпись, значение и единица в одной строке. */
+.tool-param {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ag-space-xs);
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
+  white-space: nowrap;
+}
+
+.tool-param .p-inputtext {
+  width: var(--tool-param-width);
+}
+
+.tool-param__unit {
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
+}
+
 /* Строка фильтров: поиск, отборы и действия над таблицей. */
 .tool__filters {
   display: flex;
@@ -164,8 +196,9 @@
   min-width: var(--tool-search-min-width);
 }
 
-.tool__filter-status {
-  min-width: 150px;
+.tool__filter-select {
+  flex: 0 0 auto;
+  min-width: var(--tool-filter-width);
 }
 
 .tool__table-actions {
@@ -288,12 +321,39 @@
 }
 
 .tool-table__name {
+  display: inline-flex;
   flex: 0 1 auto;
+  align-items: center;
+  gap: var(--ag-space-xs);
+  min-width: 0;
   margin-right: auto;
   overflow: hidden;
   font-size: var(--ag-text-sm);
+}
+
+.tool-table__name-text {
+  overflow: hidden;
+  min-width: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Имя-кнопка раскрывает строку, но выглядит как текст: рамка и фон
+   кнопки спорили бы с данными и делали имя тяжелее адреса. */
+.tool-table__name--button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--ag-text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Число в ячейке: цифры одной ширины, столбец не дёргается. */
+.tool-table__number {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Кнопки строки размером с иконку: строка данных остаётся плотной,
@@ -337,14 +397,109 @@
   color: var(--ag-danger);
 }
 
+/* Раскрытая строка остаётся отмеченной, пока раскрытие открыто:
+   шеврон и отступ видны не всегда, а имя строки нужно удерживать.
+   Подсветку включает инструмент: если у строки есть свой цвет, акцент
+   раскрытия не затирает его. */
+.tool-table--mark-expanded .tool-table__row--expanded > td {
+  background: color-mix(in srgb, var(--p-primary-color) 5%, transparent);
+}
+
+.tool-table--mark-expanded .tool-table__row--expanded > td:first-child {
+  box-shadow: inset 3px 0 0 var(--p-primary-color);
+}
+
+.tool-table--mark-expanded .tool-table__row--expanded .tool-table__name-text {
+  font-weight: 600;
+}
+
 .tool-table__heading {
   white-space: nowrap;
 }
 
+/* Счётчик при имени: подпись колонки и число адресов цели.
+   Отступ половинный: индекс уже отделён подъёмом, полный шаг его отрывает. */
 .tool-table__count {
-  margin-inline-start: var(--ag-space-sm);
+  margin-inline-start: var(--ag-space-xs);
   color: var(--p-text-muted-color);
   font-size: var(--ag-text-xs);
   font-weight: 600;
   line-height: 0;
+}
+
+/* Раскрытие: разделы и подтаблицы.
+   Заголовок повторяет цель и остаётся липким: при длинном раскрытии
+   родительская строка уезжает вверх, а имя нужно удерживать в кадре. */
+.tool-table__expansion {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tool-table__expansion-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ag-space-xs) var(--ag-space-sm);
+  padding: var(--ag-space-sm) var(--ag-space-lg);
+  border-bottom: 1px solid var(--ag-border);
+  background: var(--ag-surface);
+}
+
+.tool-table__expansion-name {
+  overflow: hidden;
+  min-width: 0;
+  font-size: var(--ag-text-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-table__expansion-status {
+  font-size: var(--ag-text-xs);
+  font-weight: 600;
+}
+
+.tool-table__expansion-collapse {
+  margin-left: auto;
+}
+
+.tool-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-lg);
+  padding: var(--ag-space-sm) var(--ag-space-lg) var(--ag-space-lg);
+}
+
+/* Вложенное раскрытие: линия слева показывает, что блок относится
+   к строке выше, а не начинает новую строку таблицы. */
+.tool-details--nested {
+  margin-left: var(--ag-space-sm);
+  padding-left: var(--ag-space-lg);
+  border-left: 2px solid var(--ag-border-strong);
+}
+
+.tool-details__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-sm);
+  min-width: 0;
+}
+
+.tool-details__title {
+  margin: 0;
+  font-size: var(--ag-text-sm);
+  font-weight: 600;
+}
+
+.tool-details__note {
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-sm);
+}
+
+.tool-details__note[role="alert"] {
+  color: var(--ag-danger);
 }

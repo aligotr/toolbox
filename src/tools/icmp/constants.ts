@@ -41,6 +41,11 @@ export const HIGHLIGHT_MS = 2400;
 export const TARGET_COLUMN_MIN_WIDTH = "240px";
 export const TARGET_COLUMN_MAX_WIDTH = "380px";
 
+/** Ширины числовых колонок: пара пакетов, задержка и статус не сжимаются. */
+export const PACKET_COLUMN_MIN_WIDTH = "112px";
+export const LATENCY_COLUMN_MIN_WIDTH = "96px";
+export const STATUS_COLUMN_MIN_WIDTH = "132px";
+
 /** Семейства в порядке меню. */
 export const FAMILIES: Family[] = ["auto", "ipv4", "ipv6"];
 

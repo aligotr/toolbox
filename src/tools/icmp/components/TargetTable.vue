@@ -5,17 +5,28 @@
 // отфильтрованные цели и флаг идущей проверки. Поэтому таблица не решает,
 // когда запускать проверку, - это дело `useIcmp`.
 //
-// Строка цели показывает общий итог по всем адресам. В раскрытии два блока:
-// «Адреса» со сводкой по каждому адресу и «Пакеты» с плоским списком.
-// Вложенных раскрытий нет: пакеты уже видны целиком.
+// Главная строка отвечает на три вопроса: куда шли пакеты, сколько вернулось
+// и как быстро. Мин, среднее, максимум и последний RTT живут в раскрытии:
+// в строке они занимали четыре колонки и вытесняли статус за край.
+//
+// Раскрытие показывает адреса и пакеты подтаблицами: подробности читаются
+// сверху вниз, а адрес и семейство стоят в своих колонках. Ширина раскрытия
+// равна ширине строки, поэтому таблица прокручивается внутри себя, если
+// колонок больше, чем места.
 
 import Button from "primevue/button";
 import Column from "primevue/column";
-import DataTable from "primevue/datatable";
-import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
 import { t } from "@/core/infra/i18n";
-import { useRowDrag } from "@/ui/rowDrag";
-import { TARGET_COLUMN_MAX_WIDTH, TARGET_COLUMN_MIN_WIDTH } from "../constants";
+import ToolDetails from "@/ui/tool/ToolDetails.vue";
+import ToolDetailsSection from "@/ui/tool/ToolDetailsSection.vue";
+import ToolTable from "@/ui/tool/ToolTable.vue";
+import {
+  LATENCY_COLUMN_MIN_WIDTH,
+  PACKET_COLUMN_MIN_WIDTH,
+  STATUS_COLUMN_MIN_WIDTH,
+  TARGET_COLUMN_MAX_WIDTH,
+  TARGET_COLUMN_MIN_WIDTH,
+} from "../constants";
 import { addressStatus, addressCaption, statsOf, targetStats, targetStatus } from "../summary";
 import {
   familyText,
@@ -42,63 +53,14 @@ const emit = defineEmits<{
   reorder: [from: number, to: number];
 }>();
 
-/** Раскрытые цели: объект по идентификатору - так их ждёт DataTable. */
-const expandedRows = ref<Record<string, boolean>>({});
-const root = ref<HTMLElement | null>(null);
-
-useRowDrag(root, {
-  enabled: () => true,
-  grab: ".tool-table__cell",
-  count: () => props.targets.length,
-  reorder: (from, to) => emit("reorder", from, to),
-});
-
-/** Ширина закреплённой колонки цели: от неё стоит отступ второй колонки. */
-const targetWidth = ref("0px");
-let resizeFrame = 0;
-
-/** Пересчёт ширины закреплённой колонки по шапке таблицы. */
-function syncFrozenOffset(): void {
-  const header = root.value?.querySelector<HTMLElement>("thead th.p-datatable-frozen-column");
-  const width = header ? `${header.getBoundingClientRect().width}px` : "0px";
-  if (width !== targetWidth.value) targetWidth.value = width;
-}
-
-const resizeObserver = new ResizeObserver(() => {
-  cancelAnimationFrame(resizeFrame);
-  resizeFrame = requestAnimationFrame(syncFrozenOffset);
-});
-
-onMounted(() => {
-  if (root.value) resizeObserver.observe(root.value);
-  void nextTick(syncFrozenOffset);
-});
-
-// Ширина меняется и без ресайза: новые цели переставляют содержимое.
-onUpdated(syncFrozenOffset);
-
-onBeforeUnmount(() => {
-  resizeObserver.disconnect();
-  cancelAnimationFrame(resizeFrame);
-});
-
-/** Строка раскрыта: шеврон развёрнут. */
-function isExpanded(targetId: string): boolean {
-  return expandedRows.value[targetId] === true;
-}
-
-/** Клик по строке раскрывает её, как и шеврон. */
-function toggle(targetId: string): void {
-  if (isExpanded(targetId)) {
-    delete expandedRows.value[targetId];
-  } else {
-    expandedRows.value[targetId] = true;
-  }
-}
-
 /** Классы строки: недавний дубликат. */
 function rowClass(target: IcmpTarget): string {
   return props.highlightTargetId === target.id ? "icmp-row--highlight" : "";
+}
+
+/** Перенос строки приходит из общей таблицы и уходит экрану как есть. */
+function forwardReorder(from: number, to: number): void {
+  emit("reorder", from, to);
 }
 
 /** Пакет вместе с адресом: раскрытию нужны оба. */
@@ -135,47 +97,25 @@ function packetTime(packet: PacketRecord): string {
   const date = new Date(packet.atMs);
   return Number.isNaN(date.getTime()) ? "-" : date.toLocaleTimeString();
 }
-
-// Дубликат подсвечивается, но может быть за пределами видимой области.
-watch(
-  () => props.highlightTargetId,
-  (targetId) => {
-    if (!targetId) return;
-    void nextTick(() => {
-      const marker = root.value?.querySelector<HTMLElement>(`[data-target-id="${targetId}"]`);
-      marker?.closest("tr")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    });
-  },
-  // Синхронно: повторная подсветка приходит как сброс и новое значение
-  // в одном такте, и обычный watcher увидел бы только итог.
-  { flush: "sync" },
-);
 </script>
 
 <template>
-  <div
-    ref="root"
-    class="icmp-table tool-table"
-    :class="{ 'tool-table--empty': targets.length === 0 }"
-    :style="{ '--tool-frozen-offset': targetWidth }"
+  <ToolTable
+    class="icmp-table"
+    :rows="targets"
+    :total="totalTargets"
+    :empty-add="t('icmp.table.emptyAdd')"
+    :empty-filtered="t('icmp.table.emptyFiltered')"
+    :highlight-id="highlightTargetId"
+    :row-class="rowClass"
+    mark-expanded
+    @reorder="forwardReorder"
   >
-    <slot name="notice" />
-    <DataTable
-      v-model:expanded-rows="expandedRows"
-      :value="targets"
-      data-key="id"
-      :row-class="rowClass"
-      scrollable
-      size="small"
-    >
-      <template #empty>
-        <div class="tool-table__empty">
-          <i class="pi pi-search" aria-hidden="true" />
-          <p v-if="totalTargets === 0">{{ t("icmp.table.emptyAdd") }}</p>
-          <p v-else>{{ t("icmp.table.emptyFiltered") }}</p>
-        </div>
-      </template>
+    <template #notice>
+      <slot name="notice" />
+    </template>
 
+    <template #default="{ isExpanded, toggle }">
       <Column
         field="input"
         frozen
@@ -210,10 +150,22 @@ watch(
               />
               <button
                 type="button"
-                class="tool-table__name icmp-table__target"
+                class="tool-table__name tool-table__name--button"
+                :data-tool-row="data.id"
+                :aria-expanded="isExpanded(data.id)"
                 @click="toggle(data.id)"
               >
-                {{ data.input }}
+                <span class="tool-table__name-text">
+                  {{ data.input }}
+                  <sup
+                    v-if="data.addresses.length > 1"
+                    class="tool-table__count"
+                    :title="t('icmp.table.addressCount', { count: data.addresses.length })"
+                    :aria-label="t('icmp.table.addressCount', { count: data.addresses.length })"
+                  >
+                    {{ data.addresses.length }}
+                  </sup>
+                </span>
               </button>
               <Button
                 icon="pi pi-refresh"
@@ -245,68 +197,61 @@ watch(
         </template>
       </Column>
 
-      <Column :header="t('icmp.table.addresses')" style="min-width: 96px">
+      <Column :header="t('icmp.table.packetPair')" :style="{ minWidth: PACKET_COLUMN_MIN_WIDTH }">
         <template #body="{ data }">
-          <span class="icmp-table__number">{{ data.addresses.length }}</span>
+          <span class="tool-table__number">
+            {{ targetStats(data).sent }}/{{ targetStats(data).received }}
+          </span>
         </template>
       </Column>
 
-      <Column :header="t('icmp.table.sent')" style="min-width: 96px">
+      <Column :header="t('icmp.table.avgLatency')" :style="{ minWidth: LATENCY_COLUMN_MIN_WIDTH }">
         <template #body="{ data }">
-          <span class="icmp-table__number">{{ targetStats(data).sent }}</span>
+          <span class="tool-table__number">{{ formatRtt(targetStats(data).avg) }}</span>
         </template>
       </Column>
 
-      <Column :header="t('icmp.table.received')" style="min-width: 106px">
-        <template #body="{ data }">
-          <span class="icmp-table__number">{{ targetStats(data).received }}</span>
-        </template>
-      </Column>
-
-      <Column :header="t('icmp.table.loss')" style="min-width: 88px">
-        <template #body="{ data }">
-          <span class="icmp-table__number">{{ formatLoss(targetStats(data).loss) }}</span>
-        </template>
-      </Column>
-
-      <Column :header="t('icmp.table.min')" style="min-width: 88px">
-        <template #body="{ data }">
-          <span class="icmp-table__number">{{ formatRtt(targetStats(data).min) }}</span>
-        </template>
-      </Column>
-
-      <Column :header="t('icmp.table.avg')" style="min-width: 88px">
-        <template #body="{ data }">
-          <span class="icmp-table__number">{{ formatRtt(targetStats(data).avg) }}</span>
-        </template>
-      </Column>
-
-      <Column :header="t('icmp.table.max')" style="min-width: 88px">
-        <template #body="{ data }">
-          <span class="icmp-table__number">{{ formatRtt(targetStats(data).max) }}</span>
-        </template>
-      </Column>
-
-      <Column :header="t('icmp.table.last')" style="min-width: 96px">
-        <template #body="{ data }">
-          <span class="icmp-table__number">{{ formatRtt(targetStats(data).last) }}</span>
-        </template>
-      </Column>
-
-      <Column :header="t('icmp.table.status')" style="min-width: 132px">
+      <Column :header="t('icmp.table.status')" :style="{ minWidth: STATUS_COLUMN_MIN_WIDTH }">
         <template #body="{ data }">
           <span :class="statusClass(targetStatus(data, busy))">
             {{ statusText(targetStatus(data, busy)) }}
           </span>
         </template>
       </Column>
+    </template>
 
-      <template #expansion="{ data }">
-        <div class="icmp-expand">
-          <section class="icmp-expand__block">
-            <h3 class="icmp-expand__title">{{ t("icmp.table.addressBlock") }}</h3>
-            <p v-if="data.error" class="icmp-expand__note" role="alert">{{ data.error }}</p>
-            <table v-else-if="data.addresses.length > 0" class="icmp-details">
+    <template #expansion-head="{ data, toggle }">
+      <strong class="tool-table__expansion-name">
+        {{ data.input }}
+        <sup
+          v-if="data.addresses.length > 1"
+          class="tool-table__count"
+          :title="t('icmp.table.addressCount', { count: data.addresses.length })"
+          :aria-label="t('icmp.table.addressCount', { count: data.addresses.length })"
+        >
+          {{ data.addresses.length }}
+        </sup>
+      </strong>
+      <span class="tool-table__expansion-status" :class="statusClass(targetStatus(data, busy))">
+        {{ statusText(targetStatus(data, busy)) }}
+      </span>
+      <Button
+        class="tool-table__expansion-collapse"
+        :label="t('icmp.table.collapseShort')"
+        icon="pi pi-chevron-up"
+        size="small"
+        text
+        severity="secondary"
+        @click="toggle(data.id)"
+      />
+    </template>
+
+    <template #expansion="{ data }">
+      <ToolDetails nested>
+        <ToolDetailsSection :title="t('icmp.table.addressBlock')">
+          <p v-if="data.error" class="tool-details__note" role="alert">{{ data.error }}</p>
+          <div v-else-if="data.addresses.length > 0" class="icmp-details-wrap">
+            <table class="icmp-details">
               <thead>
                 <tr>
                   <th scope="col">{{ t("icmp.table.address") }}</th>
@@ -350,18 +295,19 @@ watch(
                 </tr>
               </tbody>
             </table>
-            <p v-else class="icmp-expand__note">{{ t("icmp.table.addressesPending") }}</p>
-          </section>
+          </div>
+          <p v-else class="tool-details__note">{{ t("icmp.table.addressesPending") }}</p>
+        </ToolDetailsSection>
 
-          <section class="icmp-expand__block">
-            <h3 class="icmp-expand__title">{{ t("icmp.table.packetBlock") }}</h3>
-            <p v-if="packetError(data)" class="icmp-expand__note" role="alert">
-              {{ packetError(data) }}
-            </p>
-            <p v-if="packetRows(data).length === 0" class="icmp-expand__note">
-              {{ t("icmp.table.packetsPending") }}
-            </p>
-            <table v-else class="icmp-details">
+        <ToolDetailsSection :title="t('icmp.table.packetBlock')">
+          <p v-if="packetError(data)" class="tool-details__note" role="alert">
+            {{ packetError(data) }}
+          </p>
+          <p v-if="packetRows(data).length === 0" class="tool-details__note">
+            {{ t("icmp.table.packetsPending") }}
+          </p>
+          <div v-else class="icmp-details-wrap">
+            <table class="icmp-details">
               <thead>
                 <tr>
                   <th scope="col">{{ t("icmp.table.address") }}</th>
@@ -388,9 +334,9 @@ watch(
                 </tr>
               </tbody>
             </table>
-          </section>
-        </div>
-      </template>
-    </DataTable>
-  </div>
+          </div>
+        </ToolDetailsSection>
+      </ToolDetails>
+    </template>
+  </ToolTable>
 </template>

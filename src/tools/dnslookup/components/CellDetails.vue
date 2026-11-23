@@ -3,144 +3,97 @@
 //
 // Показывает все выбранные серверы, включая скрытые колонки: пользователь
 // раскрыл строку, чтобы увидеть ответы целиком, и прятать часть из них
-// было бы обманом. Записи приходят готовыми — компонент только читает
-// ячейку и раскладывает статус, адрес и TTL.
+// было бы обманом. Записи приходят готовыми: компонент только читает
+// ячейку и раскладывает статус, запись и TTL.
 //
-// Правила чтения ячейки живут в `cell.ts`: те же подписи нужны таблице.
+// Строки выровнены по колонкам, поэтому ответы сравниваются перебором
+// сверху вниз: у каждого сервера видны статус, время и все записи. Сервер
+// с несколькими записями занимает столько строк, сколько у него ответов,
+// а имя и статус тянутся на всю группу.
+//
+// Контейнер раскрытия - из общего слоя `ToolDetails`; таблица своя, потому
+// что колонки у DNS свои.
 
+import { computed } from "vue";
 import { t } from "@/core/infra/i18n";
-import { answersOf, elapsedOf, noteFor, statusClass, statusLabel, statusShown } from "../cell";
-import type { CellDetailsEntry } from "../types";
+import ToolDetails from "@/ui/tool/ToolDetails.vue";
+import { answersOf, elapsedOf, noteFor, statusClass, statusLabel } from "../cell";
+import type { CellDetailsEntry, DnsAnswer, DnsCell, ServerOption } from "../types";
 
-defineProps<{
-  /** Серверы раскрытия и их результаты; порядок — порядок колонок. */
+const props = defineProps<{
+  /** Серверы раскрытия и их результаты; порядок - порядок колонок. */
   entries: CellDetailsEntry[];
 }>();
+
+/** Группа строк одного сервера: записи и общие для группы значения. */
+interface DetailsGroup {
+  server: ServerOption;
+  cell: DnsCell | undefined;
+  /** Записи сервера или единственная пустая строка с пояснением. */
+  answers: (DnsAnswer | null)[];
+  /** Сколько строк занимает группа: по числу записей, минимум одна. */
+  span: number;
+  elapsed: number | null;
+}
+
+const groups = computed<DetailsGroup[]>(() =>
+  props.entries.map((entry) => {
+    const answers = answersOf(entry.cell);
+    return {
+      server: entry.server,
+      cell: entry.cell,
+      answers: answers.length > 0 ? answers : [null],
+      span: Math.max(answers.length, 1),
+      elapsed: elapsedOf(entry.cell),
+    };
+  }),
+);
+
+/** Время ответа одной строкой: у сервера оно одно на все записи. */
+function elapsedText(value: number): string {
+  return t("dnslookup.cell.elapsed", { value });
+}
 </script>
 
 <template>
-  <div class="details">
-    <div class="details__grid">
-      <article v-for="entry in entries" :key="entry.server.id" class="details__card">
-        <header class="details__head">
-          <strong class="details__name">{{ entry.server.label }}</strong>
-          <!-- У системного резолвера адресов несколько: в карточке только имя. -->
-          <span v-if="entry.server.address" class="details__address">
-            {{ entry.server.address }}
-          </span>
-          <span
-            v-if="statusShown(entry.cell)"
-            class="details__status"
-            :class="statusClass(entry.cell)"
-          >
-            {{ statusLabel(entry.cell) }}
-          </span>
-          <span v-if="elapsedOf(entry.cell) !== null" class="details__time">
-            {{ t("dnslookup.cell.elapsed", { value: elapsedOf(entry.cell) ?? 0 }) }}
-          </span>
-        </header>
-
-        <ul v-if="answersOf(entry.cell).length > 0" class="details__answers">
-          <li v-for="(answer, index) in answersOf(entry.cell)" :key="index" class="details__answer">
-            <code>{{ answer.value }}</code>
-            <span v-if="answer.ttl !== null" class="details__ttl">
-              {{ t("dnslookup.cell.ttl", { value: answer.ttl ?? 0 }) }}
-            </span>
-          </li>
-        </ul>
-        <p v-else class="details__note">{{ noteFor(entry.cell) }}</p>
-      </article>
+  <ToolDetails>
+    <div class="dns-details-wrap">
+      <table class="dns-details">
+        <thead>
+          <tr>
+            <th scope="col">{{ t("dnslookup.details.server") }}</th>
+            <th scope="col">{{ t("dnslookup.details.status") }}</th>
+            <th scope="col">{{ t("dnslookup.details.answer") }}</th>
+            <th scope="col">{{ t("dnslookup.details.ttl") }}</th>
+            <th scope="col">{{ t("dnslookup.details.elapsed") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="group in groups" :key="group.server.id">
+            <tr v-for="(answer, index) in group.answers" :key="`${group.server.id}:${index}`">
+              <th v-if="index === 0" scope="row" :rowspan="group.span" class="dns-details__server">
+                <span class="dns-details__name">{{ group.server.label }}</span>
+                <span v-if="group.server.address" class="dns-details__meta">
+                  {{ group.server.address }}
+                </span>
+              </th>
+              <td v-if="index === 0" :rowspan="group.span" class="dns-details__status">
+                <span class="cell__status" :class="statusClass(group.cell)">
+                  {{ statusLabel(group.cell) }}
+                </span>
+              </td>
+              <td class="dns-details__answer">
+                <code v-if="answer">{{ answer.value }}</code>
+                <span v-else class="dns-details__note">{{ noteFor(group.cell) }}</span>
+              </td>
+              <td class="dns-details__number">{{ answer?.ttl ?? "-" }}</td>
+              <td v-if="index === 0" :rowspan="group.span" class="dns-details__number">
+                {{ group.elapsed === null ? "-" : elapsedText(group.elapsed) }}
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
     </div>
-  </div>
+  </ToolDetails>
 </template>
-
-<style scoped>
-.details {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ag-space-md);
-  padding: var(--ag-space-sm) var(--ag-space-lg) var(--ag-space-lg);
-}
-
-.details__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--ag-space-md);
-}
-
-.details__card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ag-space-sm);
-  min-width: 0;
-  padding: var(--ag-space-sm) var(--ag-space-md);
-  border: 1px solid var(--ag-border);
-  border-radius: var(--ag-radius-md);
-  background: var(--ag-surface-2);
-}
-
-.details__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--ag-space-xs) var(--ag-space-sm);
-}
-
-.details__name {
-  font-size: var(--ag-text-sm);
-}
-
-.details__address {
-  color: var(--p-text-muted-color);
-  font-family: var(--ag-font-mono);
-  font-size: var(--ag-text-xs);
-}
-
-.details__status {
-  font-size: var(--ag-text-xs);
-  font-weight: 600;
-}
-
-.details__time {
-  margin-left: auto;
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-xs);
-  font-variant-numeric: tabular-nums;
-}
-
-.details__answers {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ag-space-xs);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.details__answer {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--ag-space-sm);
-  min-width: 0;
-}
-
-.details__answer code {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  font-family: var(--ag-font-mono);
-  font-size: var(--ag-text-xs);
-}
-
-.details__ttl {
-  flex-shrink: 0;
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-xs);
-}
-
-.details__note {
-  margin: 0;
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-xs);
-}
-</style>

@@ -21,6 +21,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import type { ToolCellProps } from "@/contracts/tools";
 import { t } from "@/core/infra/i18n";
 import { requireConfirm } from "@/ui/primevue/popup/confirmPopup";
+import ToolScreen from "@/ui/tool/ToolScreen.vue";
 import DnsTable from "./components/DnsTable.vue";
 import PresetBar from "./components/PresetBar.vue";
 import PresetsDialog from "./components/PresetsDialog.vue";
@@ -260,224 +261,226 @@ async function exportCsv(): Promise<void> {
 </script>
 
 <template>
-  <section class="tool dns">
-    <PresetBar :session="session" @open="presetsOpen = true" @note="presetNote = $event" />
+  <ToolScreen class="dns">
+    <template #preset>
+      <PresetBar :session="session" @open="presetsOpen = true" @note="presetNote = $event" />
+    </template>
 
-    <div class="tool__body">
-      <div class="tool__toolbar">
-        <div ref="addBox" class="tool__add">
-          <InputGroup>
-            <InputText
-              v-model="draft"
-              size="small"
-              :class="{ 'p-invalid': addError }"
-              :placeholder="addError ?? placeholder"
-              :aria-invalid="addError !== null"
-              :aria-label="t('dnslookup.view.inputAria')"
-              :disabled="running"
-              @keyup.enter="submitRow"
-            />
-            <Select
-              v-model="session.defaultType"
-              size="small"
-              :options="RECORD_TYPES"
-              :aria-label="t('dnslookup.view.typeAria')"
-              :disabled="running"
-            />
-            <Button
-              v-tooltip.top="t('dnslookup.view.addHint')"
-              icon="pi pi-plus"
-              severity="secondary"
-              outlined
-              size="small"
-              :aria-label="t('dnslookup.view.addHint')"
-              :disabled="running"
-              @click="submitRow"
-            />
-          </InputGroup>
-        </div>
+    <div class="tool__toolbar">
+      <div ref="addBox" class="tool__add">
+        <InputGroup>
+          <InputText
+            v-model="draft"
+            size="small"
+            :class="{ 'p-invalid': addError }"
+            :placeholder="addError ?? placeholder"
+            :aria-invalid="addError !== null"
+            :aria-label="t('dnslookup.view.inputAria')"
+            :disabled="running"
+            @keyup.enter="submitRow"
+          />
+          <Select
+            v-model="session.defaultType"
+            size="small"
+            :options="RECORD_TYPES"
+            :aria-label="t('dnslookup.view.typeAria')"
+            :disabled="running"
+          />
+          <Button
+            v-tooltip.top="t('dnslookup.view.addHint')"
+            icon="pi pi-plus"
+            severity="secondary"
+            outlined
+            size="small"
+            :aria-label="t('dnslookup.view.addHint')"
+            :disabled="running"
+            @click="submitRow"
+          />
+        </InputGroup>
+      </div>
 
-        <div class="dns__servers-row">
-          <InputGroup class="dns__servers">
-            <MultiSelect
-              v-model="session.servers"
-              size="small"
-              :options="availableServers"
-              option-label="label"
-              option-value="id"
-              display="chip"
-              :selection-limit="SERVER_LIMIT"
-              :placeholder="t('dnslookup.view.serversPlaceholder')"
-              :aria-label="t('dnslookup.view.serversAria')"
-            >
-              <template #value="{ placeholder }">
-                <template v-if="session.servers.length > 0">
-                  <Chip
-                    v-for="serverId in shownServerIds"
-                    :key="serverId"
-                    :label="serverLabel(serverId)"
-                    removable
-                    @remove="unselectServer(serverId, $event)"
-                  />
-                  <span
-                    v-if="overflowServerCount > 0"
-                    class="dns__servers-more"
-                    :aria-label="t('dnslookup.view.serversMore', { count: overflowServerCount })"
-                  >
-                    +{{ overflowServerCount }}
-                  </span>
-                </template>
-                <template v-else>{{ placeholder }}</template>
+      <div class="dns__servers-row">
+        <InputGroup class="dns__servers">
+          <MultiSelect
+            v-model="session.servers"
+            size="small"
+            :options="availableServers"
+            option-label="label"
+            option-value="id"
+            display="chip"
+            :selection-limit="SERVER_LIMIT"
+            :placeholder="t('dnslookup.view.serversPlaceholder')"
+            :aria-label="t('dnslookup.view.serversAria')"
+          >
+            <template #value="{ placeholder }">
+              <template v-if="session.servers.length > 0">
+                <Chip
+                  v-for="serverId in shownServerIds"
+                  :key="serverId"
+                  :label="serverLabel(serverId)"
+                  removable
+                  @remove="unselectServer(serverId, $event)"
+                />
+                <span
+                  v-if="overflowServerCount > 0"
+                  class="dns__servers-more"
+                  :aria-label="t('dnslookup.view.serversMore', { count: overflowServerCount })"
+                >
+                  +{{ overflowServerCount }}
+                </span>
               </template>
-            </MultiSelect>
-            <Button
-              v-tooltip.top="t('dnslookup.view.customServers')"
-              icon="pi pi-pencil"
-              severity="secondary"
-              outlined
-              size="small"
-              :aria-label="t('dnslookup.view.customServers')"
-              @click="openServers"
-            />
-          </InputGroup>
-
+              <template v-else>{{ placeholder }}</template>
+            </template>
+          </MultiSelect>
           <Button
-            class="dns__run tool__run"
-            :label="running ? t('dnslookup.view.stop') : t('dnslookup.view.run')"
-            :icon="running ? 'pi pi-stop' : 'pi pi-play'"
-            :severity="running ? 'contrast' : undefined"
-            size="small"
-            :disabled="!running && !canRun"
-            @click="toggleRun"
-          />
-        </div>
-      </div>
-
-      <div class="tool__filters">
-        <InputText
-          v-model="session.filters.search"
-          class="tool__search"
-          size="small"
-          :placeholder="t('dnslookup.view.search')"
-          :aria-label="t('dnslookup.view.search')"
-        />
-        <Select
-          v-model="session.filters.status"
-          :options="statusFilterOptions()"
-          option-label="label"
-          option-value="value"
-          class="tool__filter-status"
-          size="small"
-          :aria-label="t('dnslookup.view.statusFilter')"
-        />
-        <label class="dns__check">
-          <Checkbox v-model="session.filters.diffOnly" binary :disabled="!canCompare" />
-          <span>
-            {{ t("dnslookup.view.diffOnly") }}
-            <template v-if="!canCompare"> ({{ compareHint }})</template>
-          </span>
-        </label>
-
-        <div class="tool__table-actions">
-          <Button
-            v-tooltip.bottom="t('dnslookup.view.columns')"
-            icon="pi pi-table"
+            v-tooltip.top="t('dnslookup.view.customServers')"
+            icon="pi pi-pencil"
             severity="secondary"
-            text
+            outlined
             size="small"
-            :aria-label="t('dnslookup.view.columns')"
-            :disabled="selectedServers.length === 0"
-            @click="toggleColumns"
+            :aria-label="t('dnslookup.view.customServers')"
+            @click="openServers"
           />
-          <Button
-            v-tooltip.bottom="t('dnslookup.view.export')"
-            icon="pi pi-download"
-            severity="secondary"
-            text
-            size="small"
-            :aria-label="t('dnslookup.view.export')"
-            :disabled="visibleRows.length === 0"
-            @click="exportCsv"
-          />
-          <Button
-            v-tooltip.bottom="t('dnslookup.view.clear')"
-            icon="pi pi-trash"
-            severity="danger"
-            text
-            size="small"
-            :aria-label="t('dnslookup.view.clear')"
-            :disabled="session.rows.length === 0 && !session.status.run.error"
-            @click="requestClear"
-          />
-        </div>
-        <Popover ref="columnMenu">
-          <ul class="columns">
-            <li v-for="server in selectedServers" :key="server.id" class="columns__item">
-              <Checkbox
-                :input-id="`dns-column-${server.id}`"
-                binary
-                :model-value="!session.hiddenServers.includes(server.id)"
-                @update:model-value="setColumnVisible(server.id, $event)"
-              />
-              <label :for="`dns-column-${server.id}`" class="columns__label">
-                {{ server.label }}
-              </label>
-            </li>
-          </ul>
-        </Popover>
+        </InputGroup>
+
+        <Button
+          class="dns__run tool__run"
+          :label="running ? t('dnslookup.view.stop') : t('dnslookup.view.run')"
+          :icon="running ? 'pi pi-stop' : 'pi pi-play'"
+          :severity="running ? 'contrast' : undefined"
+          size="small"
+          :disabled="!running && !canRun"
+          @click="toggleRun"
+        />
       </div>
-
-      <DnsTable
-        :rows="visibleRows"
-        :total-rows="session.rows.length"
-        :servers="columnServers"
-        :expansion-servers="selectedServers"
-        :cells="session.cells"
-        :verdicts="verdicts"
-        :highlight-row-id="session.highlightRowId"
-        :system-hint="systemHint"
-        :busy="running"
-        reorderable
-        @type-changed="changeType"
-        @repeat="runRow"
-        @delete="removeRow"
-        @reorder="moveRow"
-      >
-        <template #notice>
-          <div v-if="notices.length > 0" class="tool-table__notices">
-            <p
-              v-for="notice in notices"
-              :key="notice.source"
-              class="tool-table__notice"
-              :role="notice.urgent ? 'alert' : undefined"
-              :aria-live="notice.urgent ? undefined : 'polite'"
-            >
-              <i class="pi pi-exclamation-circle" aria-hidden="true" />
-              <span>{{ notice.text }}</span>
-            </p>
-          </div>
-        </template>
-      </DnsTable>
-
-      <p v-if="exportNote" class="tool__hint" aria-live="polite">
-        <i class="pi pi-file" aria-hidden="true" />
-        {{ exportNote }}
-      </p>
     </div>
 
-    <ServerDialog
-      v-model:visible="serversOpen"
-      :servers="session.customServers"
-      :occupied="occupiedAddresses"
-      :saving="session.status.serversSave.loading"
-      :blocked="session.serversBroken"
-      :error="serverError ?? (session.serversBroken ? session.status.servers.error : null)"
-      @add="submitServer"
-      @remove="deleteServer"
-    />
+    <div class="tool__filters">
+      <InputText
+        v-model="session.filters.search"
+        class="tool__search"
+        size="small"
+        :placeholder="t('dnslookup.view.search')"
+        :aria-label="t('dnslookup.view.search')"
+      />
+      <Select
+        v-model="session.filters.status"
+        :options="statusFilterOptions()"
+        option-label="label"
+        option-value="value"
+        class="tool__filter-select"
+        size="small"
+        :aria-label="t('dnslookup.view.statusFilter')"
+      />
+      <label class="dns__check">
+        <Checkbox v-model="session.filters.diffOnly" binary :disabled="!canCompare" />
+        <span>
+          {{ t("dnslookup.view.diffOnly") }}
+          <template v-if="!canCompare"> ({{ compareHint }})</template>
+        </span>
+      </label>
 
-    <PresetsDialog v-model:visible="presetsOpen" :session="session" />
-  </section>
+      <div class="tool__table-actions">
+        <Button
+          v-tooltip.bottom="t('dnslookup.view.columns')"
+          icon="pi pi-table"
+          severity="secondary"
+          text
+          size="small"
+          :aria-label="t('dnslookup.view.columns')"
+          :disabled="selectedServers.length === 0"
+          @click="toggleColumns"
+        />
+        <Button
+          v-tooltip.bottom="t('dnslookup.view.export')"
+          icon="pi pi-download"
+          severity="secondary"
+          text
+          size="small"
+          :aria-label="t('dnslookup.view.export')"
+          :disabled="visibleRows.length === 0"
+          @click="exportCsv"
+        />
+        <Button
+          v-tooltip.bottom="t('dnslookup.view.clear')"
+          icon="pi pi-trash"
+          severity="danger"
+          text
+          size="small"
+          :aria-label="t('dnslookup.view.clear')"
+          :disabled="session.rows.length === 0 && !session.status.run.error"
+          @click="requestClear"
+        />
+      </div>
+      <Popover ref="columnMenu">
+        <ul class="columns">
+          <li v-for="server in selectedServers" :key="server.id" class="columns__item">
+            <Checkbox
+              :input-id="`dns-column-${server.id}`"
+              binary
+              :model-value="!session.hiddenServers.includes(server.id)"
+              @update:model-value="setColumnVisible(server.id, $event)"
+            />
+            <label :for="`dns-column-${server.id}`" class="columns__label">
+              {{ server.label }}
+            </label>
+          </li>
+        </ul>
+      </Popover>
+    </div>
+
+    <DnsTable
+      :rows="visibleRows"
+      :total-rows="session.rows.length"
+      :servers="columnServers"
+      :expansion-servers="selectedServers"
+      :cells="session.cells"
+      :verdicts="verdicts"
+      :highlight-row-id="session.highlightRowId"
+      :system-hint="systemHint"
+      :busy="running"
+      reorderable
+      @type-changed="changeType"
+      @repeat="runRow"
+      @delete="removeRow"
+      @reorder="moveRow"
+    >
+      <template #notice>
+        <div v-if="notices.length > 0" class="tool-table__notices">
+          <p
+            v-for="notice in notices"
+            :key="notice.source"
+            class="tool-table__notice"
+            :role="notice.urgent ? 'alert' : undefined"
+            :aria-live="notice.urgent ? undefined : 'polite'"
+          >
+            <i class="pi pi-exclamation-circle" aria-hidden="true" />
+            <span>{{ notice.text }}</span>
+          </p>
+        </div>
+      </template>
+    </DnsTable>
+
+    <p v-if="exportNote" class="tool__hint" aria-live="polite">
+      <i class="pi pi-file" aria-hidden="true" />
+      {{ exportNote }}
+    </p>
+
+    <template #overlays>
+      <ServerDialog
+        v-model:visible="serversOpen"
+        :servers="session.customServers"
+        :occupied="occupiedAddresses"
+        :saving="session.status.serversSave.loading"
+        :blocked="session.serversBroken"
+        :error="serverError ?? (session.serversBroken ? session.status.servers.error : null)"
+        @add="submitServer"
+        @remove="deleteServer"
+      />
+
+      <PresetsDialog v-model:visible="presetsOpen" :session="session" />
+    </template>
+  </ToolScreen>
 </template>
 
 <style scoped>

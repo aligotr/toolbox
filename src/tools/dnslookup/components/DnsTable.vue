@@ -1,23 +1,24 @@
 <script setup lang="ts">
-// Таблица DNS: строки — домены, колонки — серверы.
+// Таблица DNS: строки - домены, колонки - серверы.
 //
 // Компонент отвечает только за показ и раскрытие. Данные приходят готовыми:
 // отфильтрованные строки, выбранные серверы и карта результатов. Поэтому
-// таблица не решает, когда запускать проверку, — это дело `useDnslookup`.
+// таблица не решает, когда запускать проверку, - это дело `useDnslookup`.
 //
 // «Домен» и «Тип» закреплены слева: при большом числе серверов без этого
-// теряется соответствие строки домену. Порядок строк — порядок добавления;
+// теряется соответствие строки домену. Порядок строк - порядок добавления;
 // при включённом `reorderable` строку переносят за свободное место домена
 // (текст при этом выделяется мышью, как обычно). Сортировки нет: сравнение
 // идёт построчно.
+//
+// Рамка, раскрытие, перенос строк и отступ закреплённой колонки живут
+// в общем `ToolTable`: инструмент приносит только колонки и раскрытие.
 
 import Button from "primevue/button";
 import Column from "primevue/column";
-import DataTable from "primevue/datatable";
-import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, watch } from "vue";
 import { t } from "@/core/infra/i18n";
 import PlainSelect from "@/ui/PlainSelect.vue";
-import { useRowDrag } from "@/ui/rowDrag";
+import ToolTable from "@/ui/tool/ToolTable.vue";
 import {
   DOMAIN_COLUMN_MAX_WIDTH,
   DOMAIN_COLUMN_MIN_WIDTH,
@@ -62,55 +63,6 @@ const emit = defineEmits<{
   reorder: [from: number, to: number];
 }>();
 
-/** Раскрытые строки: объект по ключу строки — так их ждёт DataTable. */
-const expandedRows = ref<Record<string, boolean>>({});
-const root = ref<HTMLElement | null>(null);
-
-// Перенос строк подключается одним вызовом: при выключенном флаге помощник
-// не трогает таблицу, а для удаления функции достаточно этой строки.
-useRowDrag(root, {
-  enabled: () => props.reorderable === true,
-  grab: ".tool-table__cell",
-  count: () => props.rows.length,
-  reorder: (from, to) => emit("reorder", from, to),
-});
-
-/** Ширина закреплённых «Доменов»: от неё стоит отступ закреплённой «Тип». */
-const domainWidth = ref("0px");
-
-// Отступ закреплённой колонки PrimeVue считает один раз, при появлении
-// ячеек, и при изменении ширины окна оставляет прежним: «Тип» уезжает на
-// старую ширину «Доменов», оставляет зазор после них и накрывает первую
-// серверную колонку. Ширина передаётся в стили при каждом изменении
-// размера таблицы, поэтому отступ всегда равен текущей ширине «Доменов».
-let resizeFrame = 0;
-
-/** Пересчёт ширины «Доменов» по шапке таблицы. */
-function syncFrozenOffset(): void {
-  const header = root.value?.querySelector<HTMLElement>("thead th.p-datatable-frozen-column");
-  const width = header ? `${header.getBoundingClientRect().width}px` : "0px";
-  if (width !== domainWidth.value) domainWidth.value = width;
-}
-
-const resizeObserver = new ResizeObserver(() => {
-  cancelAnimationFrame(resizeFrame);
-  resizeFrame = requestAnimationFrame(syncFrozenOffset);
-});
-
-onMounted(() => {
-  if (root.value) resizeObserver.observe(root.value);
-  void nextTick(syncFrozenOffset);
-});
-
-// Ширина колонок меняется и без ресайза: смена набора серверов или строк
-// переставляет их. После каждой такой перерисовки отступ сверяется заново.
-onUpdated(syncFrozenOffset);
-
-onBeforeUnmount(() => {
-  resizeObserver.disconnect();
-  cancelAnimationFrame(resizeFrame);
-});
-
 /** Результат ячейки по паре «строка × сервер». */
 function cellOf(rowId: string, serverId: string): DnsCell | undefined {
   return props.cells.get(`${rowId}:${serverId}`);
@@ -139,11 +91,6 @@ function detailsOf(rowId: string): CellDetailsEntry[] {
   }));
 }
 
-/** Строка раскрыта: шеврон развёрнут. */
-function isExpanded(rowId: string): boolean {
-  return expandedRows.value[rowId] === true;
-}
-
 /** Классы строки: расхождение и недавний дубликат. */
 function rowClass(row: DnsRow): string {
   const classes: string[] = [];
@@ -152,61 +99,35 @@ function rowClass(row: DnsRow): string {
   return classes.join(" ");
 }
 
-/** Клик по ячейке раскрывает строку, как и шеврон. */
-function toggle(rowId: string): void {
-  if (isExpanded(rowId)) {
-    delete expandedRows.value[rowId];
-  } else {
-    expandedRows.value[rowId] = true;
-  }
-}
-
 /** Тип меняется у строки, а не у копии пропса: значение приходит событием. */
 function onTypeChange(rowId: string, event: { value: unknown }): void {
   emit("type-changed", rowId, event.value as RecordType);
 }
 
-// Дубликат подсвечивается, но может быть за пределами видимой области.
-// Прокрутка идёт к маркеру внутри ячейки домена: сама строка не имеет id.
-watch(
-  () => props.highlightRowId,
-  (rowId) => {
-    if (!rowId) return;
-    void nextTick(() => {
-      const marker = root.value?.querySelector<HTMLElement>(`[data-row-id="${rowId}"]`);
-      marker?.closest("tr")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    });
-  },
-  // Синхронно: повторная подсветка строки приходит как сброс и новое
-  // значение в одном такте, и обычный watcher увидел бы только итог.
-  { flush: "sync" },
-);
+/** Перенос строки приходит из общей таблицы и уходит экрану как есть. */
+function forwardReorder(from: number, to: number): void {
+  emit("reorder", from, to);
+}
 </script>
 
 <template>
-  <div
-    ref="root"
-    class="dns-table tool-table"
-    :class="{ 'tool-table--empty': rows.length === 0 }"
-    :style="{ '--tool-frozen-offset': domainWidth }"
+  <ToolTable
+    class="dns-table"
+    :rows="rows"
+    :total="totalRows"
+    :empty-add="t('dnslookup.table.emptyAdd')"
+    :empty-filtered="t('dnslookup.table.emptyFiltered')"
+    :highlight-id="highlightRowId"
+    :row-class="rowClass"
+    :reorderable="reorderable === true"
+    mark-expanded
+    @reorder="forwardReorder"
   >
-    <slot name="notice" />
-    <DataTable
-      v-model:expanded-rows="expandedRows"
-      :value="rows"
-      data-key="id"
-      :row-class="rowClass"
-      scrollable
-      size="small"
-    >
-      <template #empty>
-        <div class="tool-table__empty">
-          <i class="pi pi-search" aria-hidden="true" />
-          <p v-if="totalRows === 0">{{ t("dnslookup.table.emptyAdd") }}</p>
-          <p v-else>{{ t("dnslookup.table.emptyFiltered") }}</p>
-        </div>
-      </template>
+    <template #notice>
+      <slot name="notice" />
+    </template>
 
+    <template #default="{ isExpanded, toggle }">
       <!-- Ширина колонки — по содержимому: `width: 1%` не даёт таблице
            отдать домену лишнюю ширину. Кнопки стоят у правого края
            колонки, а пустота за текстом остаётся только у коротких имён.
@@ -244,7 +165,9 @@ watch(
                 "
                 @click="toggle(data.id)"
               />
-              <span class="tool-table__name" :data-row-id="data.id">{{ data.input }}</span>
+              <span class="tool-table__name" :data-tool-row="data.id">
+                <span class="tool-table__name-text">{{ data.input }}</span>
+              </span>
               <Button
                 icon="pi pi-refresh"
                 size="small"
@@ -339,10 +262,10 @@ watch(
           </button>
         </template>
       </Column>
+    </template>
 
-      <template #expansion="{ data }">
-        <CellDetails :entries="detailsOf(data.id)" />
-      </template>
-    </DataTable>
-  </div>
+    <template #expansion="{ data }">
+      <CellDetails :entries="detailsOf(data.id)" />
+    </template>
+  </ToolTable>
 </template>
