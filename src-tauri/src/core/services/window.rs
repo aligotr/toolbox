@@ -281,6 +281,69 @@ pub fn fit(
     }
 }
 
+/// Положение окна, прижатое к рабочей области.
+///
+/// Введённая точка может оказаться за экраном: монитор отключили, окно
+/// переносят с чужой машины, координаты ввели с ошибкой. Тогда внешний
+/// прямоугольник сдвигается так, чтобы видимая граница окна осталась
+/// в рабочей области. Ось пропускается, если видимая сторона окна длиннее
+/// рабочей области: прижать её к обоим краям нельзя.
+pub fn pressed_position(outer: Rect, area: Rect, inset: Inset) -> Rect {
+    let visible_width = i64::from(outer.width) - i64::from(inset.left) - i64::from(inset.right);
+    let visible_height = i64::from(outer.height) - i64::from(inset.top) - i64::from(inset.bottom);
+
+    let mut target = outer;
+
+    if visible_width <= i64::from(area.width) {
+        let (start, end) = outer_bounds(
+            area.x,
+            area.width,
+            inset.left,
+            inset.right,
+            outer.width as i32,
+        );
+        target.x = outer.x.clamp(start, end);
+    }
+
+    if visible_height <= i64::from(area.height) {
+        let (start, end) = outer_bounds(
+            area.y,
+            area.height,
+            inset.top,
+            inset.bottom,
+            outer.height as i32,
+        );
+        target.y = outer.y.clamp(start, end);
+    }
+
+    target
+}
+
+/// Рабочая область, ближайшая к точке.
+///
+/// Сначала побеждает область, внутри которой точка: расстояние до неё равно
+/// нулю. Если такой нет, берётся ближайшая по сторонам: введённая точка
+/// может оказаться в промежутке между мониторами или за краем стола.
+fn nearest_area(areas: &[Rect], point: (i32, i32)) -> Option<Rect> {
+    areas
+        .iter()
+        .copied()
+        .min_by_key(|area| distance(area, point))
+}
+
+/// Расстояние от точки до прямоугольника по сторонам.
+fn distance(area: &Rect, (x, y): (i32, i32)) -> i64 {
+    let (x, y) = (i64::from(x), i64::from(y));
+    let left = i64::from(area.x);
+    let top = i64::from(area.y);
+    let right = left + i64::from(area.width);
+    let bottom = top + i64::from(area.height);
+
+    let dx = (left - x).max(x - right).max(0);
+    let dy = (top - y).max(y - bottom).max(0);
+    dx + dy
+}
+
 /// Состояние магнита: последняя позиция окна до прилипания и позиция,
 /// которую поставил сам магнит.
 ///
@@ -510,6 +573,78 @@ fn frame(window: &WebviewWindow) -> tauri::Result<Frame> {
         width: outer.width.saturating_sub(inner.width),
         height: outer.height.saturating_sub(inner.height),
     })
+}
+
+/// Переносит живое окно в заданную точку экрана.
+///
+/// Точка задаётся внешним прямоугольником в физических пикселях, как она
+/// хранится в настройках. Развёрнутое, свёрнутое и полноэкранное окно
+/// сначала восстанавливается: иначе координаты применились бы к его
+/// развёрнутому прямоугольнику.
+///
+/// Возвращает фактическое положение: введённая точка могла прижаться
+/// к рабочей области монитора.
+pub fn move_to(window: &WebviewWindow, x: i32, y: i32) -> tauri::Result<Rect> {
+    if window.is_minimized()? {
+        window.unminimize()?;
+    }
+    if window.is_maximized()? {
+        window.unmaximize()?;
+    }
+    if window.is_fullscreen()? {
+        window.set_fullscreen(false)?;
+    }
+
+    let size = window.outer_size()?;
+    let position = window.outer_position()?;
+    let outer = Rect {
+        x,
+        y,
+        width: size.width,
+        height: size.height,
+    };
+
+    // Вставка измеряется по текущему прямоугольнику: DWM возвращает рамку
+    // живого окна, а не запрошенной точки. С введённым прямоугольником
+    // разница уехала бы на расстояние переноса.
+    let current = Rect {
+        x: position.x,
+        y: position.y,
+        width: size.width,
+        height: size.height,
+    };
+    let inset = visible_inset(window, current);
+
+    let areas: Vec<Rect> = window
+        .available_monitors()?
+        .iter()
+        .map(|monitor| {
+            let area = monitor.work_area();
+            Rect {
+                x: area.position.x,
+                y: area.position.y,
+                width: area.size.width,
+                height: area.size.height,
+            }
+        })
+        .collect();
+
+    // Монитор ищется по видимой точке: внешний угол окна выступает
+    // за рабочую область на невидимую вставку.
+    let point = (x.saturating_add(inset.left), y.saturating_add(inset.top));
+    let Some(area) = nearest_area(&areas, point) else {
+        // Мониторов не видно (например, сеанс без рабочего стола):
+        // прижимать некуда, окно встаёт по введённым координатам.
+        window.set_position(Position::Physical(PhysicalPosition::new(outer.x, outer.y)))?;
+        return Ok(outer);
+    };
+
+    let target = pressed_position(outer, area, inset);
+    window.set_position(Position::Physical(PhysicalPosition::new(
+        target.x, target.y,
+    )))?;
+
+    Ok(target)
 }
 
 /// Позиция, к которой магнит тянет живое окно.
@@ -1233,6 +1368,122 @@ mod tests {
         let mut taller = SnapTracker::default();
         assert_eq!(taller.snap(tall(10), short, Inset::default(), 6), None);
         assert_eq!(taller.snap(tall(4), short, Inset::default(), 6), None);
+    }
+
+    #[test]
+    fn position_inside_the_area_keeps_the_window() {
+        let window = window_at(300, 200);
+        assert_eq!(
+            pressed_position(window, work_area(), Inset::default()),
+            window
+        );
+    }
+
+    #[test]
+    fn position_beyond_the_area_is_pressed_against_the_edge() {
+        // 1920 - 1000 = 920, 1040 - 700 = 340: дальше этих точек окно
+        // вышло бы за рабочую область.
+        let cases = [
+            ((-50, 200), (0, 200)),
+            ((2000, 200), (920, 200)),
+            ((300, -50), (300, 0)),
+            ((300, 2000), (300, 340)),
+        ];
+
+        for ((x, y), (expected_x, expected_y)) in cases {
+            assert_eq!(
+                pressed_position(window_at(x, y), work_area(), Inset::default()),
+                window_at(expected_x, expected_y),
+                "точка ({x}, {y})"
+            );
+        }
+    }
+
+    #[test]
+    fn pressed_position_keeps_the_visible_border_at_the_edge() {
+        // Внешний прямоугольник выступает за рабочую область на вставку,
+        // а видимая граница встаёт ровно на её край.
+        let inset = Inset {
+            left: 7,
+            top: 7,
+            right: 7,
+            bottom: 7,
+        };
+
+        assert_eq!(
+            pressed_position(window_at(-50, 200), work_area(), inset),
+            window_at(-7, 200)
+        );
+        assert_eq!(
+            pressed_position(window_at(2000, 200), work_area(), inset),
+            window_at(927, 200)
+        );
+        assert_eq!(
+            pressed_position(window_at(300, -50), work_area(), inset),
+            window_at(300, -7)
+        );
+        assert_eq!(
+            pressed_position(window_at(300, 2000), work_area(), inset),
+            window_at(300, 347)
+        );
+    }
+
+    #[test]
+    fn window_larger_than_the_area_keeps_the_entered_axis() {
+        let narrow = Rect {
+            x: 0,
+            y: 0,
+            width: 900,
+            height: 1040,
+        };
+        let wide = Rect {
+            x: 300,
+            y: 200,
+            width: 1000,
+            height: 1000,
+        };
+
+        // Окно шире рабочей области: горизонтальную ось прижать нельзя,
+        // введённая координата остаётся. По вертикали окно помещается,
+        // и 200 поднимается до нижней границы 1040 - 1000 = 40.
+        assert_eq!(
+            pressed_position(wide, narrow, Inset::default()),
+            Rect {
+                x: 300,
+                y: 40,
+                width: 1000,
+                height: 1000,
+            }
+        );
+    }
+
+    #[test]
+    fn nearest_area_picks_the_monitor_under_the_point() {
+        let left = work_area();
+        let right = Rect {
+            x: 1920,
+            y: 0,
+            width: 1920,
+            height: 1040,
+        };
+
+        assert_eq!(nearest_area(&[left, right], (2500, 500)), Some(right));
+        assert_eq!(nearest_area(&[left, right], (500, 500)), Some(left));
+    }
+
+    #[test]
+    fn nearest_area_picks_the_closest_monitor_for_a_distant_point() {
+        let left = work_area();
+        let right = Rect {
+            x: 1920,
+            y: 0,
+            width: 1920,
+            height: 1040,
+        };
+
+        assert_eq!(nearest_area(&[left, right], (-100, 500)), Some(left));
+        assert_eq!(nearest_area(&[left, right], (4000, 500)), Some(right));
+        assert_eq!(nearest_area(&[], (0, 0)), None);
     }
 
     /// Два события перетаскивания: окно было в `from`, стало в `to`.

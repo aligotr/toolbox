@@ -156,6 +156,8 @@ export const ruMessages: Messages = {
   "journal.settings.language": "Язык интерфейса: {language}",
   "journal.settings.windowReset": "Размер и положение окна сброшены",
   "journal.settings.windowResetError": "Геометрия окна не сброшена: {reason}",
+  "journal.settings.windowMoved": "Положение окна задано: {x}, {y}",
+  "journal.settings.windowMoveError": "Положение окна не изменено: {reason}",
 
   "journal.profiles.defaultNamed": "Профиль «{id}» назван «{title}»",
   "journal.profiles.defaultNameError": "Профиль по умолчанию не назван: {reason}",
@@ -302,9 +304,17 @@ export const ruMessages: Messages = {
   // ── Окно ─────────────────────────────────────────────────────────────────
   "settings.window.lead":
     "Размер и положение запоминаются между запусками.\nЕсли окно оказалось за краем экрана, сброс вернёт его в пределы рабочей области монитора.",
-  "settings.window.systemPosition": "Положение выбирает система",
   "settings.window.size": "Текущий размер",
   "settings.window.position": "Положение",
+  "settings.window.positionHint": "Пиксели экрана",
+  "settings.window.positionX": "X",
+  "settings.window.positionY": "Y",
+  "settings.window.positionXLabel": "Координата X",
+  "settings.window.positionYLabel": "Координата Y",
+  "settings.window.positionAuto": "Система",
+  "settings.window.positionApply": "Применить",
+  "settings.window.positionInvalid": "Введите целое число",
+  "settings.window.positionRange": "Число вне допустимых пределов",
   "settings.window.reset": "Сбросить размер и положение",
   "settings.window.resetMessage":
     "Размер и положение окна вернутся к значениям по умолчанию.\nСбросить?",
@@ -645,6 +655,8 @@ export const ruMessages: Messages = {
   "errors.logging.create": "Не удалось создать папку логов «{path}»: {reason}",
   "errors.logging.installed": "Файловый лог уже запущен: {reason}",
   "errors.window.flush": "Поток сохранения геометрии завершился с паникой",
+  "errors.window.missing": "Главное окно не найдено",
+  "errors.window.move": "Не удалось переместить окно",
 
   "errors.files.read": "Не удалось прочитать «{path}»: {reason}",
   "errors.files.write": "Не удалось записать «{path}»: {reason}",

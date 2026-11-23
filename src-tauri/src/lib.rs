@@ -295,6 +295,7 @@ pub fn run() {
             commands::settings::settings_get,
             commands::settings::settings_set,
             commands::window::window_reset,
+            commands::window::window_move,
             commands::workspace::workspace_load,
             commands::workspace::workspace_save,
             commands::profiles::profiles_list,

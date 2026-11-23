@@ -143,26 +143,67 @@ export async function setLanguage(language: string | null): Promise<boolean> {
   return true;
 }
 
-/** Сбрасывает размер и положение окна; ядро применяет сброс сразу. */
-export async function resetWindow(): Promise<boolean> {
-  if (status.window.loading) return false;
+/**
+ * Выполняет команду окна и применяет ответ ядра.
+ *
+ * Сброс и перенос меняют одну геометрию одного окна, поэтому у них общая
+ * загрузка и общая ошибка: две такие операции одновременно не имеют смысла.
+ */
+async function runWindowCommand(
+  command: string,
+  args: Record<string, unknown> = {},
+): Promise<Settings | null> {
+  if (status.window.loading) return null;
 
   status.window.loading = true;
   status.window.error = null;
   try {
-    settings.current = await invoke<Settings>("window_reset");
+    const next = await invoke<Settings>(command, args);
+    settings.current = next;
     settings.loaded = true;
-    write(JOURNAL_CORE_SOURCE, "result", "journal.settings.windowReset");
-    return true;
+    return next;
   } catch (error) {
     status.window.error = describeError(error);
-    write(JOURNAL_CORE_SOURCE, "error", "journal.settings.windowResetError", {
-      reason: error,
-    });
-    return false;
+    return null;
   } finally {
     status.window.loading = false;
   }
+}
+
+/** Сбрасывает размер и положение окна; ядро применяет сброс сразу. */
+export async function resetWindow(): Promise<boolean> {
+  const next = await runWindowCommand("window_reset");
+  if (!next) {
+    write(JOURNAL_CORE_SOURCE, "error", "journal.settings.windowResetError", {
+      reason: status.window.error,
+    });
+    return false;
+  }
+
+  write(JOURNAL_CORE_SOURCE, "result", "journal.settings.windowReset");
+  return true;
+}
+
+/**
+ * Переносит окно в заданную точку экрана.
+ *
+ * Ядро прижимает недостижимую точку к рабочей области ближайшего монитора,
+ * поэтому в журнал идут фактические координаты, а не введённые.
+ */
+export async function moveWindow(x: number, y: number): Promise<boolean> {
+  const next = await runWindowCommand("window_move", { x, y });
+  if (!next) {
+    write(JOURNAL_CORE_SOURCE, "error", "journal.settings.windowMoveError", {
+      reason: status.window.error,
+    });
+    return false;
+  }
+
+  write(JOURNAL_CORE_SOURCE, "result", "journal.settings.windowMoved", {
+    x: next.window.x ?? x,
+    y: next.window.y ?? y,
+  });
+  return true;
 }
 
 /**

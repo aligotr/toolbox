@@ -11,7 +11,7 @@ use std::sync::Arc;
 use serde_json::Value;
 use tauri::{AppHandle, Manager, PhysicalPosition, Position, State, WebviewWindow, WindowEvent};
 
-use crate::core::infra::error::AppResult;
+use crate::core::infra::error::{AppError, AppResult};
 use crate::core::runtime::Runtime;
 use crate::core::services::settings::{self, Settings};
 use crate::core::services::window;
@@ -36,6 +36,40 @@ pub(crate) fn window_reset(app: AppHandle, runtime: State<'_, Runtime>) -> AppRe
     }
 
     log::debug!("Геометрия окна сброшена");
+    Ok(updated)
+}
+
+/// Переносит главное окно в заданную точку экрана.
+///
+/// Точка - внешний прямоугольник в физических пикселях, как она хранится
+/// в настройках. Недостижимая точка прижимается к рабочей области
+/// ближайшего монитора: окно не должно оказаться за экраном.
+///
+/// Записывается фактическое положение, а не введённое: после прижатия они
+/// расходятся, и интерфейс должен показывать то, где окно стоит.
+#[tauri::command]
+pub(crate) fn window_move(
+    app: AppHandle,
+    runtime: State<'_, Runtime>,
+    x: i32,
+    y: i32,
+) -> AppResult<Settings> {
+    let Some(window) = app.get_webview_window(MAIN_WINDOW) else {
+        return Err(AppError::new(
+            "errors.window.missing",
+            "Главное окно не найдено",
+        ));
+    };
+
+    let target = window::move_to(&window, x, y).map_err(|error| {
+        log::error!("Не удалось переместить окно: {error}");
+        AppError::new("errors.window.move", "Не удалось переместить окно")
+    })?;
+
+    let updated = commit_settings(&app, &runtime, settings::SECTION_WINDOW, |current| {
+        Ok(settings::move_window(current, target.x, target.y))
+    })?;
+
     Ok(updated)
 }
 
