@@ -179,6 +179,21 @@ fn outer_bounds(
     (start, end)
 }
 
+/// Место под клиентскую область окна на мониторе.
+///
+/// Рабочая область плюс невидимая вставка минус рамка окна: видимая граница
+/// может выступать за рабочую область на вставку, а место на экране занимает
+/// окно целиком, вместе с рамкой. Ноль заменяется единицей: на нулевую
+/// площадь окно не поставить, а деление на неё сломало бы расчёт.
+fn client_room(area: Rect, frame: Frame, inset: Inset) -> (f64, f64) {
+    let width = f64::from(area.width) + f64::from(inset.left) + f64::from(inset.right)
+        - f64::from(frame.width);
+    let height = f64::from(area.height) + f64::from(inset.top) + f64::from(inset.bottom)
+        - f64::from(frame.height);
+
+    (width.max(1.0), height.max(1.0))
+}
+
 /// Подбирает геометрию, прижатую к рабочей области монитора.
 ///
 /// Логика в три шага: найти монитор под сохранённой точкой (иначе текущий),
@@ -242,10 +257,7 @@ pub fn fit(
     // Рамка задана в физических пикселях, поэтому место под клиентскую
     // область - это рабочая область монитора плюс невидимая вставка минус
     // рамка: видимая граница может выступать за рабочую область на вставку.
-    let room_width = f64::from(area.width) + f64::from(inset.left) + f64::from(inset.right);
-    let room_height = f64::from(area.height) + f64::from(inset.top) + f64::from(inset.bottom);
-    let available_width = (room_width - f64::from(frame.width)).max(1.0);
-    let available_height = (room_height - f64::from(frame.height)).max(1.0);
+    let (available_width, available_height) = client_room(area, frame, inset);
 
     let physical_width = (f64::from(width) * scale).round();
     let physical_height = (f64::from(height) * scale).round();
@@ -319,16 +331,46 @@ pub fn pressed_position(outer: Rect, area: Rect, inset: Inset) -> Rect {
     target
 }
 
-/// Рабочая область, ближайшая к точке.
+/// Логический размер окна, помещающийся в рабочую область монитора.
 ///
-/// Сначала побеждает область, внутри которой точка: расстояние до неё равно
-/// нулю. Если такой нет, берётся ближайшая по сторонам: введённая точка
-/// может оказаться в промежутке между мониторами или за краем стола.
-fn nearest_area(areas: &[Rect], point: (i32, i32)) -> Option<Rect> {
-    areas
+/// Окно не должно стать больше рабочей области: тогда край ушёл бы за экран,
+/// и часть окна стала бы недоступна. Размер задаётся в логических пикселях,
+/// как он хранится в настройках, а место на экране считается в физических,
+/// поэтому ввод переводится по масштабу монитора. Минимальный размер окна
+/// сохраняется: меньше не даёт оконная система.
+pub fn pressed_size(
+    width: u32,
+    height: u32,
+    area: Rect,
+    frame: Frame,
+    inset: Inset,
+    scale_factor: f64,
+) -> (u32, u32) {
+    let scale = normalize_scale(scale_factor);
+    let (available_width, available_height) = client_room(area, frame, inset);
+
+    let physical_width = (f64::from(width.max(MIN_WIDTH)) * scale).round();
+    let physical_height = (f64::from(height.max(MIN_HEIGHT)) * scale).round();
+
+    // Округление вниз: округлённый вверх логический размер после обратного
+    // пересчёта в физические мог бы снова выйти за рабочую область.
+    let width = (physical_width.min(available_width) / scale).floor() as u32;
+    let height = (physical_height.min(available_height) / scale).floor() as u32;
+
+    (width, height)
+}
+
+/// Монитор, ближайший к точке.
+///
+/// Сначала побеждает монитор, внутри рабочей области которого точка:
+/// расстояние до него равно нулю. Если такого нет, берётся ближайший
+/// по сторонам: введённая точка может оказаться в промежутке между
+/// мониторами или за краем стола.
+fn nearest_screen(screens: &[Screen], point: (i32, i32)) -> Option<Screen> {
+    screens
         .iter()
         .copied()
-        .min_by_key(|area| distance(area, point))
+        .min_by_key(|screen| distance(&screen.work_area, point))
 }
 
 /// Расстояние от точки до прямоугольника по сторонам.
@@ -528,14 +570,7 @@ pub fn restore(window: &WebviewWindow, saved: &WindowSettings) -> tauri::Result<
         .current_monitor()?
         .map(|monitor| Screen::from_monitor(&monitor));
     let frame = frame(window)?;
-    let position = window.outer_position()?;
-    let size = window.outer_size()?;
-    let outer = Rect {
-        x: position.x,
-        y: position.y,
-        width: size.width,
-        height: size.height,
-    };
+    let outer = outer_rect(window)?;
     let placement = fit(
         saved,
         &screens,
@@ -575,16 +610,12 @@ fn frame(window: &WebviewWindow) -> tauri::Result<Frame> {
     })
 }
 
-/// Переносит живое окно в заданную точку экрана.
+/// Приведение окна к обычному состоянию.
 ///
-/// Точка задаётся внешним прямоугольником в физических пикселях, как она
-/// хранится в настройках. Развёрнутое, свёрнутое и полноэкранное окно
-/// сначала восстанавливается: иначе координаты применились бы к его
-/// развёрнутому прямоугольнику.
-///
-/// Возвращает фактическое положение: введённая точка могла прижаться
-/// к рабочей области монитора.
-pub fn move_to(window: &WebviewWindow, x: i32, y: i32) -> tauri::Result<Rect> {
+/// Перенос и изменение размера задают обычное окно. У развёрнутого
+/// и полноэкранного окна координата и размер относятся к развёрнутому
+/// прямоугольнику, а свёрнутое вообще не имеет осмысленного места.
+fn restore_normal(window: &WebviewWindow) -> tauri::Result<()> {
     if window.is_minimized()? {
         window.unminimize()?;
     }
@@ -595,56 +626,117 @@ pub fn move_to(window: &WebviewWindow, x: i32, y: i32) -> tauri::Result<Rect> {
         window.set_fullscreen(false)?;
     }
 
-    let size = window.outer_size()?;
+    Ok(())
+}
+
+/// Внешний прямоугольник окна в физических пикселях.
+fn outer_rect(window: &WebviewWindow) -> tauri::Result<Rect> {
     let position = window.outer_position()?;
+    let size = window.outer_size()?;
+    Ok(Rect {
+        x: position.x,
+        y: position.y,
+        width: size.width,
+        height: size.height,
+    })
+}
+
+/// Перенос живого окна в заданную точку экрана.
+///
+/// Точка задаётся внешним прямоугольником в физических пикселях, как она
+/// хранится в настройках. Развёрнутое, свёрнутое и полноэкранное окно
+/// сначала восстанавливается: иначе координаты применились бы к его
+/// развёрнутому прямоугольнику.
+///
+/// Возвращается фактическое положение: введённая точка могла прижаться
+/// к рабочей области монитора.
+pub fn move_to(window: &WebviewWindow, x: i32, y: i32) -> tauri::Result<Rect> {
+    restore_normal(window)?;
+
+    let current = outer_rect(window)?;
     let outer = Rect {
         x,
         y,
-        width: size.width,
-        height: size.height,
+        width: current.width,
+        height: current.height,
     };
 
     // Вставка измеряется по текущему прямоугольнику: DWM возвращает рамку
     // живого окна, а не запрошенной точки. С введённым прямоугольником
     // разница уехала бы на расстояние переноса.
-    let current = Rect {
-        x: position.x,
-        y: position.y,
-        width: size.width,
-        height: size.height,
-    };
     let inset = visible_inset(window, current);
-
-    let areas: Vec<Rect> = window
-        .available_monitors()?
-        .iter()
-        .map(|monitor| {
-            let area = monitor.work_area();
-            Rect {
-                x: area.position.x,
-                y: area.position.y,
-                width: area.size.width,
-                height: area.size.height,
-            }
-        })
-        .collect();
 
     // Монитор ищется по видимой точке: внешний угол окна выступает
     // за рабочую область на невидимую вставку.
     let point = (x.saturating_add(inset.left), y.saturating_add(inset.top));
-    let Some(area) = nearest_area(&areas, point) else {
+    let target = match nearest_screen(&screens(window)?, point) {
+        Some(screen) => pressed_position(outer, screen.work_area, inset),
         // Мониторов не видно (например, сеанс без рабочего стола):
         // прижимать некуда, окно встаёт по введённым координатам.
-        window.set_position(Position::Physical(PhysicalPosition::new(outer.x, outer.y)))?;
-        return Ok(outer);
+        None => outer,
     };
 
-    let target = pressed_position(outer, area, inset);
     window.set_position(Position::Physical(PhysicalPosition::new(
         target.x, target.y,
     )))?;
 
     Ok(target)
+}
+
+/// Изменение размера живого окна с сохранением видимого верхнего левого угла.
+///
+/// Размер задаётся в логических пикселях, как он хранится в настройках.
+/// Окно не должно стать больше рабочей области монитора: тогда его край
+/// ушёл бы за экран. Положение после изменения подтягивается к рабочей
+/// области тем же правилом, что и при вводе точки.
+///
+/// Возвращается фактический размер в логических пикселях и внешний
+/// прямоугольник окна: введённый размер мог уменьшиться, а положение
+/// сдвинуться.
+pub fn resize(window: &WebviewWindow, width: u32, height: u32) -> tauri::Result<(u32, u32, Rect)> {
+    restore_normal(window)?;
+
+    let current = outer_rect(window)?;
+    let inset = visible_inset(window, current);
+    let frame = frame(window)?;
+
+    // Монитор ищется по видимой точке текущего угла: размер ограничивается
+    // местом того монитора, где окно стоит.
+    let point = (
+        current.x.saturating_add(inset.left),
+        current.y.saturating_add(inset.top),
+    );
+    let screen = nearest_screen(&screens(window)?, point);
+
+    let (width, height) = match screen {
+        Some(screen) => pressed_size(
+            width,
+            height,
+            screen.work_area,
+            frame,
+            inset,
+            screen.scale_factor,
+        ),
+        None => (width.max(MIN_WIDTH), height.max(MIN_HEIGHT)),
+    };
+
+    window.set_size(Size::Logical(LogicalSize::new(
+        f64::from(width),
+        f64::from(height),
+    )))?;
+
+    let outer = outer_rect(window)?;
+    let target = match screen {
+        Some(screen) => pressed_position(outer, screen.work_area, inset),
+        None => outer,
+    };
+    if target != outer {
+        window.set_position(Position::Physical(PhysicalPosition::new(
+            target.x, target.y,
+        )))?;
+    }
+
+    Ok((width, height, target))
 }
 
 /// Позиция, к которой магнит тянет живое окно.
@@ -675,14 +767,7 @@ pub fn snap_target(
     };
 
     let screen = Screen::from_monitor(&monitor);
-    let position = window.outer_position()?;
-    let size = window.outer_size()?;
-    let current = Rect {
-        x: position.x,
-        y: position.y,
-        width: size.width,
-        height: size.height,
-    };
+    let current = outer_rect(window)?;
 
     // Порог задан в логических пикселях: на мониторе с масштабом 150 %
     // он равен 9 физическим, иначе магнит был бы вдвое слабее.
@@ -1458,32 +1543,110 @@ mod tests {
     }
 
     #[test]
-    fn nearest_area_picks_the_monitor_under_the_point() {
-        let left = work_area();
-        let right = Rect {
-            x: 1920,
-            y: 0,
-            width: 1920,
-            height: 1040,
-        };
+    fn nearest_screen_picks_the_monitor_under_the_point() {
+        let left = screen(0, 0, 1920, 1040);
+        let right = screen(1920, 0, 1920, 1040);
 
-        assert_eq!(nearest_area(&[left, right], (2500, 500)), Some(right));
-        assert_eq!(nearest_area(&[left, right], (500, 500)), Some(left));
+        assert_eq!(nearest_screen(&[left, right], (2500, 500)), Some(right));
+        assert_eq!(nearest_screen(&[left, right], (500, 500)), Some(left));
     }
 
     #[test]
-    fn nearest_area_picks_the_closest_monitor_for_a_distant_point() {
-        let left = work_area();
-        let right = Rect {
-            x: 1920,
-            y: 0,
-            width: 1920,
-            height: 1040,
+    fn nearest_screen_picks_the_closest_monitor_for_a_distant_point() {
+        let left = screen(0, 0, 1920, 1040);
+        let right = screen(1920, 0, 1920, 1040);
+
+        assert_eq!(nearest_screen(&[left, right], (-100, 500)), Some(left));
+        assert_eq!(nearest_screen(&[left, right], (4000, 500)), Some(right));
+        assert_eq!(nearest_screen(&[], (0, 0)), None);
+    }
+
+    #[test]
+    fn nearest_screen_reports_its_scale() {
+        let monitor = Screen {
+            work_area: Rect {
+                x: 0,
+                y: 0,
+                width: 1920,
+                height: 1040,
+            },
+            scale_factor: 2.0,
         };
 
-        assert_eq!(nearest_area(&[left, right], (-100, 500)), Some(left));
-        assert_eq!(nearest_area(&[left, right], (4000, 500)), Some(right));
-        assert_eq!(nearest_area(&[], (0, 0)), None);
+        assert_eq!(nearest_screen(&[monitor], (500, 500)), Some(monitor));
+    }
+
+    #[test]
+    fn pressed_size_keeps_the_size_that_fits_the_area() {
+        // 1000×700 помещается в 1920×1040: размер остаётся введённым.
+        assert_eq!(
+            pressed_size(
+                1000,
+                700,
+                work_area(),
+                Frame::default(),
+                Inset::default(),
+                1.0
+            ),
+            (1000, 700)
+        );
+    }
+
+    #[test]
+    fn pressed_size_shrinks_to_the_area() {
+        // 3000×2000 больше рабочей области: окно уменьшается до неё,
+        // иначе его край ушёл бы за экран.
+        assert_eq!(
+            pressed_size(
+                3000,
+                2000,
+                work_area(),
+                Frame::default(),
+                Inset::default(),
+                1.0
+            ),
+            (1920, 1040)
+        );
+    }
+
+    #[test]
+    fn pressed_size_keeps_the_minimum_size() {
+        // Меньше минимума окно не задать: размер поднимается до него.
+        assert_eq!(
+            pressed_size(
+                100,
+                100,
+                work_area(),
+                Frame::default(),
+                Inset::default(),
+                1.0
+            ),
+            (960, 640)
+        );
+    }
+
+    #[test]
+    fn pressed_size_counts_the_scale_and_the_frame() {
+        // На масштабе 200 % логический размер занимает вдвое больше
+        // физических пикселей, а рамка и вставка съедают место.
+        let frame = Frame {
+            width: 16,
+            height: 39,
+        };
+        let inset = Inset {
+            left: 7,
+            top: 0,
+            right: 7,
+            bottom: 7,
+        };
+
+        // Место: по ширине 1920 + 14 - 16 = 1918 физических, то есть
+        // 959 логических на масштабе 200 %; по высоте 1040 + 7 - 39 = 1008,
+        // то есть 504. Ввод 1000×700 ужимается до этих чисел.
+        assert_eq!(
+            pressed_size(1000, 700, work_area(), frame, inset, 2.0),
+            (959, 504)
+        );
     }
 
     /// Два события перетаскивания: окно было в `from`, стало в `to`.

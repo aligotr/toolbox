@@ -39,7 +39,7 @@ pub(crate) fn window_reset(app: AppHandle, runtime: State<'_, Runtime>) -> AppRe
     Ok(updated)
 }
 
-/// Переносит главное окно в заданную точку экрана.
+/// Перенос главного окна в заданную точку экрана.
 ///
 /// Точка - внешний прямоугольник в физических пикселях, как она хранится
 /// в настройках. Недостижимая точка прижимается к рабочей области
@@ -68,6 +68,43 @@ pub(crate) fn window_move(
 
     let updated = commit_settings(&app, &runtime, settings::SECTION_WINDOW, |current| {
         Ok(settings::move_window(current, target.x, target.y))
+    })?;
+
+    Ok(updated)
+}
+
+/// Изменение размера главного окна.
+///
+/// Размер - логические пиксели, как он хранится в настройках. Окно
+/// не должно стать больше рабочей области монитора: размер при необходимости
+/// уменьшается, а положение подтягивается к рабочей области тем же правилом,
+/// что и при вводе точки.
+///
+/// Записывается фактический размер и положение, а не введённые: после
+/// прижатия они расходятся, и интерфейс должен показывать то, что стало.
+#[tauri::command]
+pub(crate) fn window_resize(
+    app: AppHandle,
+    runtime: State<'_, Runtime>,
+    width: u32,
+    height: u32,
+) -> AppResult<Settings> {
+    let Some(window) = app.get_webview_window(MAIN_WINDOW) else {
+        return Err(AppError::new(
+            "errors.window.missing",
+            "Главное окно не найдено",
+        ));
+    };
+
+    let (width, height, target) = window::resize(&window, width, height).map_err(|error| {
+        log::error!("Не удалось изменить размер окна: {error}");
+        AppError::new("errors.window.resize", "Не удалось изменить размер окна")
+    })?;
+
+    let updated = commit_settings(&app, &runtime, settings::SECTION_WINDOW, |current| {
+        Ok(settings::resize_window(
+            current, width, height, target.x, target.y,
+        ))
     })?;
 
     Ok(updated)

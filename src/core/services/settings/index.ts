@@ -207,6 +207,28 @@ export async function moveWindow(x: number, y: number): Promise<boolean> {
 }
 
 /**
+ * Меняет размер окна.
+ *
+ * Ядро не даёт окну стать больше рабочей области монитора и подтягивает
+ * положение, поэтому в журнал идут фактические числа, а не введённые.
+ */
+export async function resizeWindow(width: number, height: number): Promise<boolean> {
+  const next = await runWindowCommand("window_resize", { width, height });
+  if (!next) {
+    write(JOURNAL_CORE_SOURCE, "error", "journal.settings.windowResizeError", {
+      reason: status.window.error,
+    });
+    return false;
+  }
+
+  write(JOURNAL_CORE_SOURCE, "result", "journal.settings.windowResized", {
+    width: next.window.width,
+    height: next.window.height,
+  });
+  return true;
+}
+
+/**
  * Подписка на изменение настроек ядром.
  *
  * Тема общая для всех разделов, а нагрузка содержит только имя раздела:

@@ -2,6 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-23
+- **Уточнено:** ADR 0067 (ввод размера)
 - **Область:** `src-tauri/src/core/services/window.rs`,
   `src-tauri/src/core/services/settings.rs`,
   `src-tauri/src/core/commands/window.rs`,

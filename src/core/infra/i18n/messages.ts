@@ -158,6 +158,8 @@ export const ruMessages: Messages = {
   "journal.settings.windowResetError": "Геометрия окна не сброшена: {reason}",
   "journal.settings.windowMoved": "Положение окна задано: {x}, {y}",
   "journal.settings.windowMoveError": "Положение окна не изменено: {reason}",
+  "journal.settings.windowResized": "Размер окна задан: {width} × {height}",
+  "journal.settings.windowResizeError": "Размер окна не изменён: {reason}",
 
   "journal.profiles.defaultNamed": "Профиль «{id}» назван «{title}»",
   "journal.profiles.defaultNameError": "Профиль по умолчанию не назван: {reason}",
@@ -304,7 +306,11 @@ export const ruMessages: Messages = {
   // ── Окно ─────────────────────────────────────────────────────────────────
   "settings.window.lead":
     "Размер и положение запоминаются между запусками.\nЕсли окно оказалось за краем экрана, сброс вернёт его в пределы рабочей области монитора.",
-  "settings.window.size": "Текущий размер",
+  "settings.window.size": "Размер",
+  "settings.window.width": "Ширина",
+  "settings.window.height": "Высота",
+  "settings.window.widthLabel": "Ширина окна",
+  "settings.window.heightLabel": "Высота окна",
   "settings.window.position": "Положение",
   "settings.window.positionHint": "Пиксели экрана",
   "settings.window.positionX": "X",
@@ -657,6 +663,7 @@ export const ruMessages: Messages = {
   "errors.window.flush": "Поток сохранения геометрии завершился с паникой",
   "errors.window.missing": "Главное окно не найдено",
   "errors.window.move": "Не удалось переместить окно",
+  "errors.window.resize": "Не удалось изменить размер окна",
 
   "errors.files.read": "Не удалось прочитать «{path}»: {reason}",
   "errors.files.write": "Не удалось записать «{path}»: {reason}",

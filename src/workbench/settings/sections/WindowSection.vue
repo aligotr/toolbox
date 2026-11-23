@@ -1,12 +1,11 @@
 <script setup lang="ts">
-// Раздел «Окно»: геометрия, ручной ввод положения и сброс.
+// Раздел «Окно»: ручной ввод размера и положения и сброс.
 //
 // Размер хранится в логических пикселях, положение - в физических
-// (ADR 0014). Ввод положения идёт в тех же физических пикселях: только
-// в них точка однозначна на общем рабочем столе.
+// (ADR 0014). Ввод размера идёт в тех же логических пикселях, что и показ,
+// ввод положения - в физических: только там точка однозначна на общем столе.
 
 import Button from "primevue/button";
-import InputText from "primevue/inputtext";
 import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted, ref, watch } from "vue";
 import { CONFIRM_PRIMARY_ACCEPT } from "@/core/constants";
@@ -14,78 +13,162 @@ import { t } from "@/core/infra/i18n";
 import {
   loadSettings,
   moveWindow,
+  resizeWindow,
   resetWindow,
   settings,
   status,
 } from "@/core/services/settings/index";
 import { requireConfirm } from "@/ui/primevue/popup/confirmPopup";
-import { parseCoordinate, type ParsedCoordinate } from "../parseCoordinate";
+import WindowNumberField from "../WindowNumberField.vue";
+import {
+  MIN_WINDOW_HEIGHT,
+  MIN_WINDOW_WIDTH,
+  parseCoordinate,
+  parseSize,
+  type ParsedInteger,
+} from "../parseCoordinate";
 
 const confirm = useConfirm();
 
 const geometry = computed(() => settings.current?.window ?? null);
 
-/** Размер окна: ширина × высота в логических пикселях. */
-const size = computed(() =>
-  geometry.value ? `${geometry.value.width} × ${geometry.value.height}` : "-",
-);
+/** Сохранённые числа: сравнение идёт числами, а не строками полей. */
+const savedWidth = computed(() => geometry.value?.width ?? null);
+const savedHeight = computed(() => geometry.value?.height ?? null);
+const savedX = computed(() => geometry.value?.x ?? null);
+const savedY = computed(() => geometry.value?.y ?? null);
 
-/** Сохранённые координаты в том виде, в каком они стоят в полях. */
-const savedX = computed(() => (geometry.value?.x == null ? "" : String(geometry.value.x)));
-const savedY = computed(() => (geometry.value?.y == null ? "" : String(geometry.value.y)));
-
+/** Строки, которые стоят в полях. */
+const width = ref("");
+const height = ref("");
 const x = ref("");
 const y = ref("");
 
-/** Пользователь правил поля: внешнее изменение не должно затирать ввод. */
-const touched = ref(false);
+/** Форму правил пользователь: внешнее изменение не должно затирать ввод. */
+const sizeTouched = ref(false);
+const positionTouched = ref(false);
 
+const readWidth = computed(() => parseSize(width.value, MIN_WINDOW_WIDTH));
+const readHeight = computed(() => parseSize(height.value, MIN_WINDOW_HEIGHT));
 const readX = computed(() => parseCoordinate(x.value));
 const readY = computed(() => parseCoordinate(y.value));
-const parsedX = computed(() => ("value" in readX.value ? readX.value.value : null));
-const parsedY = computed(() => ("value" in readY.value ? readY.value.value : null));
 
-/** Ошибка поля: пустое поле ошибкой не считается, кнопка просто молчит. */
-function problem(read: ParsedCoordinate, input: string): string {
-  if ("value" in read || input.trim() === "") return "";
+/** Значение поля или `null`, пока ввод не готов. */
+function number(read: ParsedInteger): number | null {
+  return "value" in read ? read.value : null;
+}
+
+/** Текст причины отказа; `null` - поле верно. */
+function problem(read: ParsedInteger, emptyAllowed: boolean): string | null {
+  if ("value" in read) return null;
+  if (emptyAllowed && read.problem === "empty") return null;
+
   return read.problem === "range"
     ? t("settings.window.positionRange")
     : t("settings.window.positionInvalid");
 }
 
-const xError = computed(() => problem(readX.value, x.value));
-const yError = computed(() => problem(readY.value, y.value));
+/**
+ * Текст ошибки поля.
+ *
+ * До чтения настроек поля пусты: сообщение в этот миг было бы ложным.
+ * Положение «выбирает система» - это оба пустых поля, а не одно: заполненная
+ * и пустая координаты рядом точки не образуют.
+ */
+function error(read: ParsedInteger, emptyAllowed: boolean): string {
+  if (!settings.loaded) return "";
 
-const changed = computed(() => x.value !== savedX.value || y.value !== savedY.value);
-const canApply = computed(
-  () =>
-    changed.value &&
-    parsedX.value !== null &&
-    parsedY.value !== null &&
-    !status.window.loading &&
-    settings.loaded,
+  return problem(read, emptyAllowed) ?? "";
+}
+
+const positionEmpty = computed(() => x.value.trim() === "" && y.value.trim() === "");
+
+const widthError = computed(() => error(readWidth.value, false));
+const heightError = computed(() => error(readHeight.value, false));
+const xError = computed(() => error(readX.value, positionEmpty.value));
+const yError = computed(() => error(readY.value, positionEmpty.value));
+
+const parsedWidth = computed(() => number(readWidth.value));
+const parsedHeight = computed(() => number(readHeight.value));
+const parsedX = computed(() => number(readX.value));
+const parsedY = computed(() => number(readY.value));
+
+/** Изменена ли часть геометрии. */
+const sizeChanged = computed(
+  () => parsedWidth.value !== savedWidth.value || parsedHeight.value !== savedHeight.value,
+);
+const positionChanged = computed(
+  () => parsedX.value !== savedX.value || parsedY.value !== savedY.value,
 );
 
-/** Показывает сохранённые координаты: отмена и ответ ядра делают одно и то же. */
-function sync(): void {
-  x.value = savedX.value;
-  y.value = savedY.value;
-  touched.value = false;
+const ready = computed(() => settings.loaded && !status.window.loading);
+
+/**
+ * Размер и положение - одна форма окна, поэтому кнопка одна.
+ *
+ * Применяется только изменённая часть: незатронутые поля окно не трогают.
+ * Неверное число в изменённой части запрещает применение целиком.
+ */
+const canApply = computed(() => {
+  if (!ready.value) return false;
+
+  const sizeReady =
+    !sizeChanged.value || (parsedWidth.value !== null && parsedHeight.value !== null);
+  const positionReady =
+    !positionChanged.value || (parsedX.value !== null && parsedY.value !== null);
+
+  return (sizeChanged.value || positionChanged.value) && sizeReady && positionReady;
+});
+
+/** Показ сохранённых чисел: отмена и ответ ядра делают одно и то же. */
+function syncSize(): void {
+  width.value = savedWidth.value == null ? "" : String(savedWidth.value);
+  height.value = savedHeight.value == null ? "" : String(savedHeight.value);
+  sizeTouched.value = false;
 }
 
-/** Отмечает, что поля правят вручную. */
-function markTouched(): void {
-  touched.value = true;
+function syncPosition(): void {
+  x.value = savedX.value == null ? "" : String(savedX.value);
+  y.value = savedY.value == null ? "" : String(savedY.value);
+  positionTouched.value = false;
 }
 
-/** Применяет введённое положение; ядро отвечает фактическим. */
+/** Отметка, что поля правят вручную. */
+function markSizeTouched(): void {
+  sizeTouched.value = true;
+}
+
+/** Отметка, что поля правят вручную. */
+function markPositionTouched(): void {
+  positionTouched.value = true;
+}
+
+/** Применение изменённых чисел; ядро отвечает фактической геометрией. */
 async function apply(): Promise<void> {
-  if (!canApply.value || parsedX.value === null || parsedY.value === null) return;
+  if (!canApply.value) return;
 
-  const next = await moveWindow(parsedX.value, parsedY.value);
-  if (!next) return;
+  if (sizeChanged.value) {
+    const nextWidth = parsedWidth.value;
+    const nextHeight = parsedHeight.value;
+    if (nextWidth === null || nextHeight === null) return;
+    if (!(await resizeWindow(nextWidth, nextHeight))) {
+      syncSize();
+      return;
+    }
+  }
 
-  sync();
+  if (positionChanged.value) {
+    const nextX = parsedX.value;
+    const nextY = parsedY.value;
+    if (nextX === null || nextY === null) return;
+    if (!(await moveWindow(nextX, nextY))) {
+      syncPosition();
+      return;
+    }
+  }
+
+  syncSize();
+  syncPosition();
 }
 
 function requestReset(event: MouseEvent): void {
@@ -98,7 +181,11 @@ function requestReset(event: MouseEvent): void {
     acceptLabel: t("settings.window.resetAccept"),
     rejectLabel: t("settings.window.resetReject"),
     acceptProps: CONFIRM_PRIMARY_ACCEPT,
-    accept: () => void resetWindow().then(sync),
+    accept: () =>
+      void resetWindow().then(() => {
+        syncSize();
+        syncPosition();
+      }),
   });
 }
 
@@ -107,7 +194,8 @@ function requestReset(event: MouseEvent): void {
 watch(
   geometry,
   () => {
-    if (!touched.value) sync();
+    if (!sizeTouched.value) syncSize();
+    if (!positionTouched.value) syncPosition();
   },
   { immediate: true },
 );
@@ -127,70 +215,74 @@ onMounted(() => {
     <dl class="window__facts">
       <div class="window__fact">
         <dt>{{ t("settings.window.size") }}</dt>
-        <dd class="mono">{{ size }}</dd>
+        <dd class="window__form">
+          <div class="window__row">
+            <WindowNumberField
+              id="window-size-width"
+              v-model="width"
+              :label="t('settings.window.width')"
+              :accessible-label="t('settings.window.widthLabel')"
+              :error="widthError"
+              @update:model-value="markSizeTouched"
+              @submit="apply"
+              @cancel="syncSize"
+            />
+            <WindowNumberField
+              id="window-size-height"
+              v-model="height"
+              :label="t('settings.window.height')"
+              :accessible-label="t('settings.window.heightLabel')"
+              :error="heightError"
+              @update:model-value="markSizeTouched"
+              @submit="apply"
+              @cancel="syncSize"
+            />
+          </div>
+        </dd>
       </div>
+
       <div class="window__fact">
         <dt class="window__label-line">
           <span>{{ t("settings.window.position") }}</span>
           <span class="window__hint">{{ t("settings.window.positionHint") }}</span>
         </dt>
-        <dd class="window__position">
-          <div class="window__field">
-            <label class="window__field-label" for="window-position-x">
-              {{ t("settings.window.positionX") }}
-            </label>
-            <InputText
+        <dd class="window__form">
+          <div class="window__row">
+            <WindowNumberField
               id="window-position-x"
               v-model="x"
-              size="small"
-              inputmode="numeric"
-              autocomplete="off"
-              spellcheck="false"
-              :class="{ 'p-invalid': xError }"
-              :aria-invalid="xError !== ''"
-              :aria-label="t('settings.window.positionXLabel')"
+              :label="t('settings.window.positionX')"
+              :accessible-label="t('settings.window.positionXLabel')"
+              :error="xError"
               :placeholder="t('settings.window.positionAuto')"
-              @update:model-value="markTouched"
-              @keydown.enter.prevent="apply"
-              @keydown.esc="sync"
+              @update:model-value="markPositionTouched"
+              @submit="apply"
+              @cancel="syncPosition"
             />
-            <p v-if="xError" class="window__field-error" role="alert">{{ xError }}</p>
-          </div>
-
-          <div class="window__field">
-            <label class="window__field-label" for="window-position-y">
-              {{ t("settings.window.positionY") }}
-            </label>
-            <InputText
+            <WindowNumberField
               id="window-position-y"
               v-model="y"
-              size="small"
-              inputmode="numeric"
-              autocomplete="off"
-              spellcheck="false"
-              :class="{ 'p-invalid': yError }"
-              :aria-invalid="yError !== ''"
-              :aria-label="t('settings.window.positionYLabel')"
+              :label="t('settings.window.positionY')"
+              :accessible-label="t('settings.window.positionYLabel')"
+              :error="yError"
               :placeholder="t('settings.window.positionAuto')"
-              @update:model-value="markTouched"
-              @keydown.enter.prevent="apply"
-              @keydown.esc="sync"
+              @update:model-value="markPositionTouched"
+              @submit="apply"
+              @cancel="syncPosition"
             />
-            <p v-if="yError" class="window__field-error" role="alert">{{ yError }}</p>
           </div>
-
-          <Button
-            :label="t('settings.window.positionApply')"
-            size="small"
-            :loading="status.window.loading"
-            :disabled="!canApply"
-            @click="apply"
-          />
         </dd>
       </div>
     </dl>
 
     <div class="window__actions">
+      <Button
+        :label="t('settings.window.positionApply')"
+        size="small"
+        :loading="status.window.loading"
+        :disabled="!canApply"
+        @click="apply"
+      />
       <Button
         :label="t('settings.window.reset')"
         icon="pi pi-window-maximize"
@@ -213,7 +305,7 @@ onMounted(() => {
 <style scoped>
 .window__facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: var(--ag-space-lg);
   margin: 0;
 }
@@ -257,29 +349,17 @@ onMounted(() => {
   content: "•";
 }
 
-.window__position {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--ag-space-sm);
-  flex-wrap: wrap;
-}
-
-.window__field {
+.window__form {
   display: flex;
   flex-direction: column;
-  gap: var(--ag-space-xs);
-  width: 112px;
+  gap: var(--ag-space-sm);
 }
 
-.window__field-label {
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-xs);
-}
-
-.window__field-error {
-  margin: 0;
-  color: var(--ag-danger);
-  font-size: var(--ag-text-xs);
+.window__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ag-space-lg);
+  flex-wrap: wrap;
 }
 
 .window__actions {
@@ -294,10 +374,5 @@ onMounted(() => {
   color: var(--ag-danger);
   font-size: var(--ag-text-xs);
   line-height: 1.45;
-}
-
-.mono {
-  font-family: var(--ag-font-mono);
-  font-size: var(--ag-text-xs);
 }
 </style>

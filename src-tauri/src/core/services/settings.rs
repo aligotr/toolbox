@@ -21,7 +21,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
-use crate::core::infra::error::{fail, AppError, AppResult};
+use crate::core::infra::error::{AppError, AppResult, fail};
 use crate::core::services::languages;
 use crate::core::services::logging::LogLevel;
 use crate::core::services::profiles;
@@ -347,16 +347,32 @@ pub fn reset_window(current: &Settings) -> Settings {
     next
 }
 
-/// Ставит окну новое положение, не трогая остальные разделы.
+/// Новые геометрия и место окна без правки остальных разделов.
 ///
-/// Развёрнутость снимается: окно перед переносом восстанавливается,
-/// и следующий запуск не должен развернуть его вместо введённой точки.
-pub fn move_window(current: &Settings, x: i32, y: i32) -> Settings {
+/// Развёрнутость снимается: окно перед переносом или изменением размера
+/// восстанавливается, и следующий запуск не должен развернуть его вместо
+/// введённых чисел.
+fn with_geometry(current: &Settings, width: u32, height: u32, x: i32, y: i32) -> Settings {
     let mut next = current.clone();
+    next.window.width = width;
+    next.window.height = height;
     next.window.x = Some(x);
     next.window.y = Some(y);
     next.window.maximized = false;
     next
+}
+
+/// Новое положение окна без правки остальных разделов.
+pub fn move_window(current: &Settings, x: i32, y: i32) -> Settings {
+    with_geometry(current, current.window.width, current.window.height, x, y)
+}
+
+/// Новые размер и место окна без правки остальных разделов.
+///
+/// Размер приходит уже прижатым к рабочей области, а положение - тем местом,
+/// куда окно встало после изменения размера.
+pub fn resize_window(current: &Settings, width: u32, height: u32, x: i32, y: i32) -> Settings {
+    with_geometry(current, width, height, x, y)
 }
 
 /// Идентификатор профиля проверяется тем же правилом, что и папка профиля:
@@ -851,5 +867,52 @@ mod tests {
 
         assert_eq!(reset.window, WindowSettings::default());
         assert_eq!(reset.log, settings.log, "остальные разделы не тронуты");
+    }
+
+    #[test]
+    fn window_move_sets_position_and_clears_maximized() {
+        let settings = Settings {
+            window: WindowSettings {
+                width: 1000,
+                height: 700,
+                x: Some(10),
+                y: Some(20),
+                maximized: true,
+                ..WindowSettings::default()
+            },
+            ..Settings::default()
+        };
+
+        let moved = move_window(&settings, 300, 200);
+
+        assert_eq!(moved.window.x, Some(300));
+        assert_eq!(moved.window.y, Some(200));
+        assert!(!moved.window.maximized, "развёрнутость снята");
+        assert_eq!(moved.window.width, 1000, "размер не тронут");
+        assert_eq!(moved.log, settings.log, "остальные разделы не тронуты");
+    }
+
+    #[test]
+    fn window_resize_sets_size_and_place() {
+        let settings = Settings {
+            window: WindowSettings {
+                width: 1000,
+                height: 700,
+                x: Some(10),
+                y: Some(20),
+                maximized: true,
+                ..WindowSettings::default()
+            },
+            ..Settings::default()
+        };
+
+        let resized = resize_window(&settings, 1200, 800, 30, 40);
+
+        assert_eq!(resized.window.width, 1200);
+        assert_eq!(resized.window.height, 800);
+        assert_eq!(resized.window.x, Some(30));
+        assert_eq!(resized.window.y, Some(40));
+        assert!(!resized.window.maximized, "развёрнутость снята");
+        assert_eq!(resized.log, settings.log, "остальные разделы не тронуты");
     }
 }
