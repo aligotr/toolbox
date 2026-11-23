@@ -28,6 +28,7 @@ use core::services::logging;
 use core::services::profiles;
 use core::services::settings::{self, Settings};
 use core::services::trash;
+use core::services::window::SnapTracker;
 use core::services::workspace;
 use core::store::storage::{DEFAULT_PROFILE, Storage};
 
@@ -243,6 +244,7 @@ fn boot(app: &AppHandle) -> Runtime {
         storage: Some(storage),
         settings: Mutex::new(loaded.settings),
         geometry: Mutex::new(None),
+        snap: Mutex::new(SnapTracker::default()),
     }
 }
 
@@ -270,6 +272,7 @@ fn blocked(
         storage: None,
         settings: Mutex::new(settings),
         geometry: Mutex::new(None),
+        snap: Mutex::new(SnapTracker::default()),
     }
 }
 

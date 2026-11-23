@@ -12,7 +12,7 @@ use std::sync::{Arc, Mutex};
 use crate::core::infra::error::{AppError, AppResult};
 use crate::core::services::logging::Logger;
 use crate::core::services::settings::Settings;
-use crate::core::services::window::GeometrySaver;
+use crate::core::services::window::{GeometrySaver, SnapTracker};
 use crate::core::store::storage::Storage;
 
 /// Почему приложение не может начать работу.
@@ -39,6 +39,8 @@ pub(crate) struct Runtime {
     pub(crate) settings: Mutex<Settings>,
     /// Сохранение геометрии окна. `None` до показа окна и при блокировке.
     pub(crate) geometry: Mutex<Option<Arc<GeometrySaver>>>,
+    /// Направление движения окна для магнита: к краю или от края.
+    pub(crate) snap: Mutex<SnapTracker>,
 }
 
 impl Runtime {

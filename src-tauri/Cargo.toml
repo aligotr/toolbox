@@ -37,10 +37,15 @@ hickory-proto = "0.26.3"
 # Системные резолверы Windows: без вызова ipconfig.exe и разбора его вывода.
 ipconfig = "0.3"
 
-# Видимая граница окна: `GetWindowRect` шире её на невидимую рамку, и без
-# поправки окно встаёт к рабочей области с щелью (ADR 0064).
+# Видимая граница окна и состояние кнопки мыши: `GetWindowRect` шире окна
+# на невидимую рамку, а прилипание работает только во время перетаскивания
+# (ADR 0064, ADR 0065).
 [target."cfg(windows)".dependencies]
-windows = { version = "0.62", features = ["Win32_Foundation", "Win32_Graphics_Dwm"] }
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Dwm",
+    "Win32_UI_Input_KeyboardAndMouse",
+] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

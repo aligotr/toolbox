@@ -149,7 +149,12 @@ pub struct Inset {
 }
 
 /// Порог прилипания в логических пикселях.
-const SNAP_DISTANCE: f64 = 12.0;
+///
+/// Шесть пикселей - мера живого клиента Steam: там окно встаёт вплотную,
+/// когда видимая граница оказывается в шести пикселях от края, и идёт
+/// за курсором, как только его тянут обратно. Широкий порог превращает
+/// прилипание в залипание: окно приходится отрывать рывком.
+const SNAP_DISTANCE: f64 = 6.0;
 
 /// Границы внешнего прямоугольника по одной оси: от прижатия к началу
 /// рабочей области до прижатия к концу.
@@ -276,59 +281,144 @@ pub fn fit(
     }
 }
 
-/// Прилипание окна к краям рабочей области.
+/// Состояние магнита: последняя позиция окна до прилипания и позиция,
+/// которую поставил сам магнит.
 ///
-/// Внешний прямоугольник окна сдвигается вплотную к тем краям, до которых
-/// его видимая граница ближе порога. Края считаются независимо, поэтому
-/// углы выравниваются сами. Ось пропускается, если видимый размер окна
-/// больше рабочей области: два её края одновременно не выровнять.
-pub fn snapped(window: Rect, area: Rect, inset: Inset, threshold: i32) -> Rect {
-    let visible_width = i64::from(window.width) - i64::from(inset.left) - i64::from(inset.right);
-    let visible_height = i64::from(window.height) - i64::from(inset.top) - i64::from(inset.bottom);
-
-    let mut target = window;
-
-    if visible_width <= i64::from(area.width) {
-        let (start, end) = outer_bounds(
-            area.x,
-            area.width,
-            inset.left,
-            inset.right,
-            window.width as i32,
-        );
-        target.x = snap_axis(window.x, start, end, threshold);
-    }
-
-    if visible_height <= i64::from(area.height) {
-        let (start, end) = outer_bounds(
-            area.y,
-            area.height,
-            inset.top,
-            inset.bottom,
-            window.height as i32,
-        );
-        target.y = snap_axis(window.y, start, end, threshold);
-    }
-
-    target
+/// Нужно, чтобы отличить движение к краю от движения прочь. К краю окно
+/// притягивается, от края идёт за курсором без задержки: иначе окно
+/// приходится отрывать рывком через весь порог. Собственный перенос окна
+/// возвращается событием `Moved`; его нельзя принимать за движение
+/// пользователя, иначе магнит отпустил бы окно сразу после прилипания.
+#[derive(Debug, Default)]
+pub struct SnapTracker {
+    previous: Option<Rect>,
+    applied: Option<Rect>,
 }
 
-/// Выравнивание по одной оси: побеждает ближайший край в пределах порога.
+impl SnapTracker {
+    /// Забывает прошлое перетаскивание.
+    ///
+    /// Вызывается, когда кнопка мыши отпущена, окно сменило размер или
+    /// монитор: старое направление движения к новому случаю не относится.
+    pub fn reset(&mut self) {
+        self.previous = None;
+        self.applied = None;
+    }
+
+    /// Позиция окна, притянутая к краям рабочей области.
+    ///
+    /// `None` - окно остаётся где есть. Края считаются независимо, поэтому
+    /// углы выравниваются сами. К каждому краю окно притягивается, только
+    /// если движется в его сторону; движение вдоль края и остановка тоже
+    /// считаются движением к краю, иначе окно отрывалось бы от дрожания мыши.
+    /// Ось пропускается, если видимый размер окна больше рабочей области.
+    pub fn snap(&mut self, window: Rect, area: Rect, inset: Inset, threshold: i32) -> Option<Rect> {
+        // Собственный перенос окна: он приходит сразу после прилипания.
+        // Его позиция становится прошлой, иначе первое же движение от края
+        // сравнивалось бы с позицией до прилипания и магнит держал бы окно,
+        // пока курсор не пройдёт весь зазор. Это и есть свободный ход,
+        // из-за которого окно выдвигается из-за края с опозданием.
+        if self.applied == Some(window) {
+            self.applied = None;
+            self.previous = Some(window);
+            return None;
+        }
+
+        // Смена размера - это изменение размера, а не перетаскивание:
+        // прилипание к краю здесь только мешает задать точный размер.
+        if let Some(previous) = self.previous
+            && (previous.width != window.width || previous.height != window.height)
+        {
+            self.reset();
+            self.previous = Some(window);
+            return None;
+        }
+
+        let previous = self.previous;
+        let mut target = window;
+
+        let visible_width =
+            i64::from(window.width) - i64::from(inset.left) - i64::from(inset.right);
+        let visible_height =
+            i64::from(window.height) - i64::from(inset.top) - i64::from(inset.bottom);
+
+        if visible_width <= i64::from(area.width) {
+            let (start, end) = outer_bounds(
+                area.x,
+                area.width,
+                inset.left,
+                inset.right,
+                window.width as i32,
+            );
+            if let Some(edge) =
+                attracted(window.x, previous.map(|rect| rect.x), start, end, threshold)
+            {
+                target.x = edge;
+            }
+        }
+
+        if visible_height <= i64::from(area.height) {
+            let (start, end) = outer_bounds(
+                area.y,
+                area.height,
+                inset.top,
+                inset.bottom,
+                window.height as i32,
+            );
+            if let Some(edge) =
+                attracted(window.y, previous.map(|rect| rect.y), start, end, threshold)
+            {
+                target.y = edge;
+            }
+        }
+
+        self.previous = Some(window);
+
+        if target == window {
+            self.applied = None;
+            None
+        } else {
+            self.applied = Some(target);
+            Some(target)
+        }
+    }
+}
+
+/// Край, к которому окно движется и до которого ближе порога.
 ///
-/// Начало оси при равенстве расстояний важнее конца: так окно не прыгает
-/// между двумя краями, когда почти совпадает с рабочей областью по размеру.
-fn snap_axis(position: i32, start: i32, end: i32, threshold: i32) -> i32 {
+/// `previous` - позиция окна на прошлом событии. Окно внутри порога
+/// отпускается, только когда ушло с края в сторону рабочей области и
+/// продолжает уходить: разворот у самого края не должен превращаться
+/// в прыжок на накопленное расстояние. Равенство и движение вдоль края
+/// считаются движением к краю, иначе окно отрывалось бы от дрожания мыши.
+fn attracted(
+    position: i32,
+    previous: Option<i32>,
+    start: i32,
+    end: i32,
+    threshold: i32,
+) -> Option<i32> {
     let start_distance = (i64::from(position) - i64::from(start)).abs();
     let end_distance = (i64::from(position) - i64::from(end)).abs();
     let threshold = i64::from(threshold);
 
-    if start_distance <= threshold && start_distance <= end_distance {
-        start
-    } else if end_distance <= threshold {
-        end
+    let (edge, distance) = if start_distance <= end_distance {
+        (start, start_distance)
     } else {
-        position
+        (end, end_distance)
+    };
+
+    if distance > threshold {
+        return None;
     }
+
+    let stay = match previous {
+        None => true,
+        Some(previous) if edge == start => position <= edge || position <= previous,
+        Some(previous) => position >= edge || position >= previous,
+    };
+
+    stay.then_some(edge)
 }
 
 /// Применяет размещение к окну.
@@ -422,18 +512,31 @@ fn frame(window: &WebviewWindow) -> tauri::Result<Frame> {
     })
 }
 
-/// Прилипание живого окна к краям рабочей области.
+/// Позиция, к которой магнит тянет живое окно.
 ///
-/// Возвращает `true`, если окно сдвинулось. Развёрнутое, полноэкранное
-/// и свёрнутое окно пропускаются: их прямоугольник уже совпадает с рабочей
-/// областью или с экраном, и прилипание сдвинуло бы окно с места.
-pub fn snap_to_edges(window: &WebviewWindow) -> tauri::Result<bool> {
+/// `None` - окно оставить где есть. Прилипание работает только во время
+/// перетаскивания: без этого окно притягивалось бы и после восстановления
+/// геометрии, и после переноса из меню окна.
+///
+/// Развёрнутое, полноэкранное и свёрнутое окно пропускаются: их
+/// прямоугольник уже совпадает с рабочей областью или с экраном.
+pub fn snap_target(
+    window: &WebviewWindow,
+    tracker: &mut SnapTracker,
+) -> tauri::Result<Option<Rect>> {
+    if !dragging() {
+        tracker.reset();
+        return Ok(None);
+    }
+
     if window.is_minimized()? || window.is_maximized()? || window.is_fullscreen()? {
-        return Ok(false);
+        tracker.reset();
+        return Ok(None);
     }
 
     let Some(monitor) = window.current_monitor()? else {
-        return Ok(false);
+        tracker.reset();
+        return Ok(None);
     };
 
     let screen = Screen::from_monitor(&monitor);
@@ -447,23 +550,31 @@ pub fn snap_to_edges(window: &WebviewWindow) -> tauri::Result<bool> {
     };
 
     // Порог задан в логических пикселях: на мониторе с масштабом 150 %
-    // он равен 18 физическим, иначе магнит был бы вдвое слабее.
+    // он равен 9 физическим, иначе магнит был бы вдвое слабее.
     let threshold = (SNAP_DISTANCE * screen.scale_factor).round() as i32;
-    let target = snapped(
+
+    Ok(tracker.snap(
         current,
         screen.work_area,
         visible_inset(window, current),
         threshold,
-    );
+    ))
+}
 
-    if target.x == current.x && target.y == current.y {
-        return Ok(false);
-    }
+/// Нажата ли левая кнопка мыши.
+///
+/// Прилипание живёт только на перетаскивании. На других платформах
+/// состояние кнопки не читается: там магнит работает по позиции.
+#[cfg(windows)]
+fn dragging() -> bool {
+    use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_LBUTTON};
 
-    window.set_position(Position::Physical(PhysicalPosition::new(
-        target.x, target.y,
-    )))?;
-    Ok(true)
+    unsafe { GetAsyncKeyState(VK_LBUTTON.0 as i32) < 0 }
+}
+
+#[cfg(not(windows))]
+fn dragging() -> bool {
+    true
 }
 
 /// Вставка между внешним прямоугольником окна и его видимой границей.
@@ -920,42 +1031,127 @@ mod tests {
 
     #[test]
     fn window_in_the_band_is_pulled_flush() {
-        // Вариации одного поведения: видимая граница ближе порога, окно встаёт
-        // вплотную. Слева, справа, сверху, снизу, в углу и с выходом за край;
-        // 1920 − 1000 = 920, 1040 − 700 = 340.
+        // Вариации одного поведения: окно движется к краю и оказывается ближе
+        // порога, поэтому встаёт вплотную. Слева, справа, сверху, снизу,
+        // в углу и с выходом за край; 1920 - 1000 = 920, 1040 - 700 = 340.
         let cases = [
-            (5, 200, 0, 200),
-            (12, 200, 0, 200),
-            (-4, 200, 0, 200),
-            (915, 200, 920, 200),
-            (300, 5, 300, 0),
-            (300, 334, 300, 340),
-            (7, 6, 0, 0),
+            ((300, 200), (5, 200), (0, 200)),
+            ((300, 200), (6, 200), (0, 200)),
+            ((30, 200), (-4, 200), (0, 200)),
+            ((500, 200), (915, 200), (920, 200)),
+            ((300, 300), (300, 5), (300, 0)),
+            ((300, 200), (300, 334), (300, 340)),
+            ((300, 300), (6, 6), (0, 0)),
         ];
 
-        for (x, y, expected_x, expected_y) in cases {
-            let result = snapped(window_at(x, y), work_area(), Inset::default(), 12);
+        for (from, to, expected) in cases {
+            let mut tracker = SnapTracker::default();
             assert_eq!(
-                (result.x, result.y),
-                (expected_x, expected_y),
-                "окно в ({x}, {y})"
+                pull(&mut tracker, from, to, 6),
+                Some(window_at(expected.0, expected.1)),
+                "из {from:?} в {to:?}"
             );
         }
     }
 
     #[test]
     fn window_outside_the_band_keeps_place() {
-        // Вдали от краёв и на пиксель дальше порога магнит не срабатывает.
-        let cases = [(300, 200), (13, 200), (300, 353)];
+        // Вдали от краёв, на пиксель дальше порога и при проскоке за порог
+        // магнит не срабатывает.
+        let cases = [
+            ((300, 200), (300, 200)),
+            ((300, 200), (7, 200)),
+            ((300, 200), (300, 347)),
+            ((300, 200), (-20, 200)),
+        ];
 
-        for (x, y) in cases {
-            let window = window_at(x, y);
+        for (from, to) in cases {
+            let mut tracker = SnapTracker::default();
             assert_eq!(
-                snapped(window, work_area(), Inset::default(), 12),
-                window,
-                "окно в ({x}, {y})"
+                pull(&mut tracker, from, to, 6),
+                None,
+                "из {from:?} в {to:?}"
             );
         }
+    }
+
+    #[test]
+    fn moving_away_from_the_edge_keeps_the_window_free() {
+        let mut tracker = SnapTracker::default();
+
+        // Быстрый подход: окно оказалось в двух пикселях от края.
+        assert_eq!(
+            pull(&mut tracker, (300, 200), (2, 200), 6),
+            Some(window_at(0, 200))
+        );
+
+        // Собственный перенос окна приходит эхом и не считается движением.
+        assert_eq!(
+            tracker.snap(window_at(0, 200), work_area(), Inset::default(), 6),
+            None
+        );
+
+        // Первый шаг от края, ещё внутри порога, отпускает окно сразу.
+        assert_eq!(
+            tracker.snap(window_at(3, 200), work_area(), Inset::default(), 6),
+            None
+        );
+
+        // Обратный подход снова притягивает.
+        assert_eq!(
+            tracker.snap(window_at(2, 200), work_area(), Inset::default(), 6),
+            Some(window_at(0, 200))
+        );
+    }
+
+    #[test]
+    fn window_snapped_at_threshold_releases_on_first_step() {
+        let inset = Inset {
+            left: 7,
+            top: 0,
+            right: 7,
+            bottom: 7,
+        };
+
+        // Видимая граница окна в шести пикселях от края: магнит притягивает
+        // его вплотную, внешний прямоугольник встаёт на вставку за край.
+        let mut tracker = SnapTracker::default();
+        assert_eq!(
+            pull_inset(&mut tracker, (300, 200), (-1, 200), inset),
+            Some(window_at(-7, 200))
+        );
+
+        // Собственный перенос окна приходит эхом и запоминается прошлой
+        // позицией: иначе первое движение от края сравнивалось бы с местом
+        // до прилипания.
+        assert_eq!(
+            tracker.snap(window_at(-7, 200), work_area(), inset, 6),
+            None
+        );
+
+        // Один пиксель от края отпускает окно: свободного хода нет.
+        assert_eq!(
+            tracker.snap(window_at(-6, 200), work_area(), inset, 6),
+            None
+        );
+    }
+
+    #[test]
+    fn resizing_does_not_snap() {
+        let mut tracker = SnapTracker::default();
+        assert_eq!(
+            tracker.snap(window_at(300, 200), work_area(), Inset::default(), 6),
+            None
+        );
+
+        // Изменение размера у левого края: окно уже в трёх пикселях, но это
+        // не перетаскивание, и магнит молчит.
+        let mut resized = window_at(3, 200);
+        resized.width = 1200;
+        assert_eq!(
+            tracker.snap(resized, work_area(), Inset::default(), 6),
+            None
+        );
     }
 
     #[test]
@@ -967,13 +1163,20 @@ mod tests {
             bottom: 7,
         };
 
-        let left = snapped(window_at(0, 200), work_area(), inset, 12);
-        assert_eq!(left.x, -7);
+        // Видимая граница окна в трёх пикселях от края: внешний прямоугольник
+        // встаёт за рабочую область на вставку.
+        let mut left = SnapTracker::default();
+        assert_eq!(
+            pull_inset(&mut left, (300, 200), (-4, 200), inset),
+            Some(window_at(-7, 200))
+        );
 
-        // 1040 − 700 + 7: внешний прямоугольник выступает за рабочую область
-        // на вставку, чтобы её нижняя граница совпала с верхом панели задач.
-        let bottom = snapped(window_at(300, 345), work_area(), inset, 12);
-        assert_eq!(bottom.y, 347);
+        // 1040 - 700 + 7: низ видимой границы совпадает с верхом панели задач.
+        let mut bottom = SnapTracker::default();
+        assert_eq!(
+            pull_inset(&mut bottom, (300, 200), (300, 345), inset),
+            Some(window_at(300, 347))
+        );
     }
 
     #[test]
@@ -985,30 +1188,34 @@ mod tests {
             height: 1000,
         };
 
+        let mut tracker = SnapTracker::default();
+        tracker.snap(window_at(300, 200), area, Inset::default(), 6);
         assert_eq!(
-            snapped(window_at(300, 44), area, Inset::default(), 12).y,
-            40
+            tracker.snap(window_at(300, 44), area, Inset::default(), 6),
+            Some(window_at(300, 40))
         );
     }
 
     #[test]
     fn window_larger_than_the_area_is_not_aligned_on_that_axis() {
-        // Окно шире рабочей области: по горизонтали прижать его к обоим краям
-        // нельзя, ось пропускается. По вертикали оно помещается, но стоит
-        // вдали от краёв.
         let narrow = Rect {
             x: 0,
             y: 0,
             width: 900,
             height: 1040,
         };
-        let wide = Rect {
-            x: 3,
+
+        // Окно шире рабочей области: горизонтальную ось прижать к обоим краям
+        // нельзя, поэтому она пропускается, даже когда край рядом.
+        let wide = |x: i32| Rect {
+            x,
             y: 200,
             width: 1000,
             height: 1000,
         };
-        assert_eq!(snapped(wide, narrow, Inset::default(), 12).x, 3);
+        let mut wider = SnapTracker::default();
+        assert_eq!(wider.snap(wide(10), narrow, Inset::default(), 6), None);
+        assert_eq!(wider.snap(wide(3), narrow, Inset::default(), 6), None);
 
         // То же по вертикали: окно выше рабочей области.
         let short = Rect {
@@ -1017,13 +1224,47 @@ mod tests {
             width: 1920,
             height: 600,
         };
-        let tall = Rect {
+        let tall = |y: i32| Rect {
             x: 300,
-            y: 4,
+            y,
             width: 1000,
             height: 700,
         };
-        assert_eq!(snapped(tall, short, Inset::default(), 12).y, 4);
+        let mut taller = SnapTracker::default();
+        assert_eq!(taller.snap(tall(10), short, Inset::default(), 6), None);
+        assert_eq!(taller.snap(tall(4), short, Inset::default(), 6), None);
+    }
+
+    /// Два события перетаскивания: окно было в `from`, стало в `to`.
+    fn pull(
+        tracker: &mut SnapTracker,
+        from: (i32, i32),
+        to: (i32, i32),
+        threshold: i32,
+    ) -> Option<Rect> {
+        tracker.snap(
+            window_at(from.0, from.1),
+            work_area(),
+            Inset::default(),
+            threshold,
+        );
+        tracker.snap(
+            window_at(to.0, to.1),
+            work_area(),
+            Inset::default(),
+            threshold,
+        )
+    }
+
+    /// То же со вставкой видимой границы.
+    fn pull_inset(
+        tracker: &mut SnapTracker,
+        from: (i32, i32),
+        to: (i32, i32),
+        inset: Inset,
+    ) -> Option<Rect> {
+        tracker.snap(window_at(from.0, from.1), work_area(), inset, 6);
+        tracker.snap(window_at(to.0, to.1), work_area(), inset, 6)
     }
 
     /// Вставка снизу, измеренная на этой машине: 7 px невидимой рамки.

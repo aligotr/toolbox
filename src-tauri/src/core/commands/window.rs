@@ -9,7 +9,7 @@
 use std::sync::Arc;
 
 use serde_json::Value;
-use tauri::{AppHandle, Manager, State, WebviewWindow, WindowEvent};
+use tauri::{AppHandle, Manager, PhysicalPosition, Position, State, WebviewWindow, WindowEvent};
 
 use crate::core::infra::error::AppResult;
 use crate::core::runtime::Runtime;
@@ -57,7 +57,7 @@ pub(crate) fn show_main_window(app: &AppHandle) {
 
     // Прилипание не зависит от хранилища: окно ведёт себя одинаково,
     // даже когда папка программы недоступна.
-    start_snapping(&window);
+    start_snapping(app, &window);
 
     // Без хранилища сохранять некуда: при блокировке папка недоступна,
     // и поток записи только тратил бы время.
@@ -120,12 +120,13 @@ fn restore_geometry(app: &AppHandle, window: &WebviewWindow) -> bool {
 ///
 /// Подписка отдельная и стоит раньше сохранения геометрии: так прилипание
 /// работает и без хранилища, а снимок берётся уже с выровненного окна.
-fn start_snapping(window: &WebviewWindow) {
+fn start_snapping(app: &AppHandle, window: &WebviewWindow) {
     window.on_window_event({
+        let app = app.clone();
         let window = window.clone();
         move |event| {
             if matches!(event, WindowEvent::Moved(_)) {
-                snap_window(&window);
+                snap_window(&app, &window);
             }
         }
     });
@@ -174,8 +175,30 @@ fn start_geometry_saver(app: &AppHandle, window: &WebviewWindow) {
 ///
 /// Отказ только отлаживается: прилипание - удобство, и сбой чтения монитора
 /// не должен мешать движению окна или его закрытию.
-fn snap_window(window: &WebviewWindow) {
-    if let Err(error) = window::snap_to_edges(window) {
+///
+/// Замок состояния отпускается до переноса окна: собственный сдвиг приходит
+/// событием `Moved` внутри `set_position`, и захват замка на это время
+/// остановил бы приложение.
+fn snap_window(app: &AppHandle, window: &WebviewWindow) {
+    let target = {
+        let runtime = app.state::<Runtime>();
+        let mut tracker = runtime.snap.lock().expect("snap lock");
+        match window::snap_target(window, &mut tracker) {
+            Ok(target) => target,
+            Err(error) => {
+                log::debug!("Прилипание окна пропущено: {error}");
+                return;
+            }
+        }
+    };
+
+    let Some(target) = target else {
+        return;
+    };
+
+    if let Err(error) = window.set_position(Position::Physical(PhysicalPosition::new(
+        target.x, target.y,
+    ))) {
         log::debug!("Прилипание окна пропущено: {error}");
     }
 }

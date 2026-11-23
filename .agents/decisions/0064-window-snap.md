@@ -2,6 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-20
+- **Уточнено:** ADR 0065 (порог и отрыв)
 - **Область:** `src-tauri/src/core/services/window.rs`,
   `src-tauri/src/core/commands/window.rs`, `src-tauri/Cargo.toml`
 
