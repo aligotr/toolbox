@@ -1,134 +1,18 @@
 /* Стили инструмента DNS.
  *
- * Здесь оболочка экрана и таблица: их видят сразу несколько частей модуля.
- * Селекторы начинаются с `dns` и `dns-table`, поэтому файл не задевает
- * соседние инструменты. Стили диалогов остаются в своих компонентах.
+ * Общая раскладка экрана и таблицы живёт в `src/ui/tool-layout.css`:
+ * шапка, строка добавления, фильтры, рамка таблицы и кнопки строки.
+ * Здесь остаётся только своё: список резолверов, серверные колонки,
+ * ячейки с записями и подсветка строк. Стили диалогов остаются
+ * в своих компонентах.
  */
 
 .dns {
-  /* Ширины строки добавления. Поле домена - главный ввод, оно шире
-     общего поля. Поле типа - общий токен с полем типа в таблице; самый
-     длинный тип CNAME влезает вместе со стрелкой. Список резолверов
-     вмещает два чипа и счётчик «+N». */
-  --dns-name-width: 320px;
-  --dns-type-width: 104px;
+  /* Список резолверов вмещает два чипа и счётчик «+N». */
   --dns-servers-width: 290px;
-
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
 }
 
-.dns__body {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: var(--ag-space-lg);
-  min-width: 0;
-  min-height: 0;
-}
-
-.dns__body > :not(.dns__table) {
-  flex: none;
-}
-
-.dns__table {
-  flex: 0 1 auto;
-}
-
-.dns__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ag-space-sm) var(--ag-space-md);
-  margin-block-end: var(--ag-space-heading);
-}
-
-.dns__title {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin: 0;
-  overflow: hidden;
-  font-size: var(--ag-text-xl);
-  line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dns__preset-bar {
-  display: flex;
-  flex: 0 1 auto;
-  align-items: center;
-  gap: var(--ag-space-xs);
-  min-width: 0;
-  max-width: 100%;
-  margin-left: auto;
-}
-
-.dns__preset-state {
-  display: flex;
-  align-items: center;
-  gap: var(--ag-space-xs);
-}
-
-.dns__preset-state--hidden {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.dns__preset-button {
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 240px;
-}
-
-.dns__preset-button .p-button-label {
-  overflow: hidden;
-  min-width: 0;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dns__preset-button:not(:first-child) {
-  margin-inline-start: var(--ag-space-sm);
-}
-
-.dns__toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ag-space-md);
-}
-
-.dns__add {
-  flex: 0 0 auto;
-  min-width: 0;
-}
-
-/* Ширина полей задана точнее темы: `.p-inputgroup .p-inputtext` из пресета
-   растягивает поля группы, и без этого правила домен и тип идут по содержимому. */
-.dns__add .p-inputgroup .p-inputtext {
-  flex: 0 0 var(--dns-name-width);
-  min-width: 0;
-}
-
-.dns__add .p-inputgroup .p-select {
-  flex: 0 0 var(--dns-type-width);
-  min-width: var(--dns-type-width);
-}
-
-/* Стрелка уже пресетной: место отдаётся тексту типа (CNAME влезает целиком),
-   и стрелка совпадает со стрелкой поля типа в таблице. */
-.dns__add .p-select .p-select-dropdown {
-  width: 24px;
-}
-
-.dns__add .p-inputtext.p-invalid::placeholder {
-  color: var(--ag-danger);
-}
-
+/* Строка серверов сжимается по содержимому, как и поле резолверов. */
 .dns__servers-row {
   display: flex;
   flex: 1 1 auto;
@@ -158,13 +42,12 @@
 .dns__run {
   flex: none;
   margin-left: auto;
-  white-space: nowrap;
 }
 
 /* Чипы ниже строки поля: список резолверов одной высоты с соседними
    полями, а не выше их на высоту чипа. */
 .dns__servers .p-chip {
-  height: 21px;
+  height: var(--tool-chip-height);
   padding: 0 var(--ag-space-xs);
   font-size: var(--ag-text-xs);
 }
@@ -173,213 +56,12 @@
   color: var(--p-text-muted-color);
 }
 
-/* Ритм фильтров один со строкой добавления: общий шаг 12 px. */
-.dns__filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ag-space-md);
-}
-
-.dns__preset-changed {
-  color: var(--ag-warn);
-  font-size: var(--ag-text-xs);
-  white-space: nowrap;
-}
-
-.dns__search {
-  flex: 0 1 var(--ag-field-width);
-  min-width: 160px;
-}
-
-.dns__status {
-  min-width: 150px;
-}
-
-.dns__table-actions {
-  display: flex;
-  gap: var(--ag-space-sm);
-  margin-left: auto;
-}
-
 .dns__check {
   display: inline-flex;
   align-items: center;
   gap: var(--ag-space-sm);
   color: var(--p-text-muted-color);
   font-size: var(--ag-text-sm);
-}
-
-.dns__hint {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--ag-space-sm);
-  margin: 0;
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-sm);
-}
-
-.dns-table {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  border: 1px solid var(--ag-border);
-  border-radius: var(--ag-radius-md);
-  overflow: hidden;
-}
-
-.dns-table--empty {
-  min-height: 200px;
-}
-
-.dns-table__notices {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  gap: var(--ag-space-xs);
-  padding: var(--ag-space-sm) var(--ag-space-md);
-  border-bottom: 1px solid var(--ag-border);
-  background: color-mix(in srgb, var(--ag-danger) 7%, transparent);
-}
-
-.dns-table__notice {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--ag-space-sm);
-  margin: 0;
-  color: var(--ag-danger);
-  font-size: var(--ag-text-sm);
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.dns-table .p-datatable {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.dns-table .p-datatable-table-container {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.dns-table .p-datatable-frozen-column + .p-datatable-frozen-column {
-  inset-inline-start: var(--dns-domain-width, 0px) !important;
-}
-
-.dns-table--empty .p-datatable-table {
-  height: 100%;
-}
-
-.dns-table .p-datatable-empty-message > td {
-  padding: 0;
-}
-
-.dns-table__empty {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: var(--ag-space-sm);
-  height: 100%;
-  padding: var(--ag-space-2xl) var(--ag-space-lg);
-  box-sizing: border-box;
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-sm);
-}
-
-.dns-table__empty i {
-  font-size: var(--ag-text-xl);
-}
-
-.dns-table__empty p {
-  margin: 0;
-}
-
-.dns-table__domain {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ag-space-xs);
-  min-width: 0;
-
-  cursor: grab;
-}
-
-.dns-table__domain :is(span, small, button) {
-  cursor: auto;
-}
-
-.dns-table__domain-main {
-  display: flex;
-  align-items: center;
-  gap: var(--ag-space-xs);
-  min-width: 0;
-}
-
-.dns-table__name {
-  flex: 0 1 auto;
-
-  margin-right: auto;
-  overflow: hidden;
-  font-size: var(--ag-text-sm);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Кнопки строки таблицы размером с иконку: строка данных остаётся плотной,
-   а не тянется до высоты контролов формы. */
-.dns-table .dns-table__domain-main .p-button {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-}
-
-.dns-table__expand {
-  margin-left: -4px;
-}
-
-.dns-table__expand .p-button-icon {
-  font-size: var(--ag-text-xs);
-  transition: transform 120ms ease;
-}
-
-.dns-table__expand--open .p-button-icon {
-  transform: rotate(90deg);
-}
-
-.dns-table__normalized {
-  overflow: hidden;
-  padding-left: var(--ag-space-xl);
-  color: var(--p-text-muted-color);
-  font-family: var(--ag-font-mono);
-  font-size: var(--ag-text-xs);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.dns-table__delete {
-  flex-shrink: 0;
-  color: var(--p-text-muted-color);
-}
-
-.dns-table__delete:not(:disabled):hover {
-  color: var(--ag-danger);
-}
-
-.dns-table__domains {
-  white-space: nowrap;
-}
-
-.dns-table__count {
-  margin-inline-start: var(--ag-space-sm);
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-xs);
-  font-weight: 600;
-  line-height: 0;
 }
 
 .dns-table__server {

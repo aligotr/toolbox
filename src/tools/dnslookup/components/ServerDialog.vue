@@ -10,7 +10,7 @@ import Dialog from "primevue/dialog";
 import InputText from "primevue/inputtext";
 import { computed, ref, watch } from "vue";
 import { t } from "@/core/infra/i18n";
-import { DIALOG_WIDTH } from "../constants";
+import { TOOL_DIALOG_MAX_WIDTH, TOOL_DIALOG_WIDTH } from "@/ui/toolLayout";
 import { parseServerAddress } from "../normalize";
 import type { ServerOption } from "../types";
 
@@ -79,7 +79,7 @@ function remove(serverId: string): void {
     modal
     dismissable-mask
     :draggable="false"
-    :style="{ width: DIALOG_WIDTH, maxWidth: '92vw' }"
+    :style="{ width: TOOL_DIALOG_WIDTH, maxWidth: TOOL_DIALOG_MAX_WIDTH }"
     @update:visible="emit('update:visible', $event)"
   >
     <div class="servers" autofocus tabindex="-1">

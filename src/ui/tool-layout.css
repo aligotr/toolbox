@@ -1,0 +1,350 @@
+/* Общая раскладка инструментов с таблицей.
+ *
+ * Экран инструмента собирается из одинаковых частей: шапка с названием
+ * и пресетом, строка добавления, фильтры и таблица. Эти части одинаковы
+ * у DNSlookup, Ping и следующих инструментов, поэтому их устройство живёт
+ * здесь. Инструмент ставит классы `tool*` и оставляет себе только данные
+ * и собственные правила.
+ *
+ * Токены `--tool-*` - размеры контролов, строк и таблицы. Локальные стили
+ * берут их вместо литералов: правка размера не расходится по файлам.
+ */
+
+:root {
+  /* Главное поле строки добавления: домен, цель. */
+  --tool-field-width: 320px;
+  /* Компактный список рядом с полем: тип записи, семейство адресов. */
+  --tool-compact-width: 104px;
+  /* Поле числового параметра: период, число пакетов, таймаут. */
+  --tool-param-width: 92px;
+  /* Нижняя граница поля поиска: уже неё строка фильтров ломается. */
+  --tool-search-min-width: 160px;
+  /* Кнопка строки таблицы размером с иконку: строка остаётся плотной. */
+  --tool-row-button: 24px;
+  /* Стрелка списка уже пресетной: место отдаётся тексту значения. */
+  --tool-select-arrow: 24px;
+  /* Высота чипа в списке: одной высоты с соседними полями. */
+  --tool-chip-height: 21px;
+  /* Пустая таблица не схлопывается в одну строку. */
+  --tool-table-empty-height: 200px;
+  /* Подпись пресета не растягивает шапку. */
+  --tool-preset-max-width: 240px;
+}
+
+.tool {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.tool__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--ag-space-lg);
+  min-width: 0;
+  min-height: 0;
+}
+
+.tool__body > :not(.tool-table) {
+  flex: none;
+}
+
+/* Шапка: название слева, пресет справа. */
+.tool__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-sm) var(--ag-space-md);
+  margin-block-end: var(--ag-space-heading);
+}
+
+.tool__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--ag-text-xl);
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool__preset-bar {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: var(--ag-space-xs);
+  min-width: 0;
+  max-width: 100%;
+  margin-left: auto;
+}
+
+.tool__preset-state {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-xs);
+}
+
+/* Скрытая подпись сохраняет место: шапка не прыгает при правке настроек. */
+.tool__preset-state--hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.tool__preset-button {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: var(--tool-preset-max-width);
+}
+
+.tool__preset-button .p-button-label {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool__preset-changed {
+  color: var(--ag-warn);
+  font-size: var(--ag-text-xs);
+  white-space: nowrap;
+}
+
+/* Строка добавления: ввод, его список и действие. */
+.tool__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-md);
+}
+
+.tool__add {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/* Ширина полей задана точнее темы: `.p-inputgroup` из пресета растягивает
+   поля группы, и без этого правила они идут по содержимому. */
+.tool__add .p-inputgroup .p-inputtext {
+  flex: 0 0 var(--tool-field-width);
+  min-width: 0;
+}
+
+.tool__add .p-inputgroup .p-select {
+  flex: 0 0 var(--tool-compact-width);
+  min-width: var(--tool-compact-width);
+}
+
+/* Стрелка уже пресетной: место отдаётся тексту значения. */
+.tool__add .p-select .p-select-dropdown {
+  width: var(--tool-select-arrow);
+}
+
+.tool__add .p-inputtext.p-invalid::placeholder {
+  color: var(--ag-danger);
+}
+
+.tool__run {
+  white-space: nowrap;
+}
+
+/* Строка фильтров: поиск, отборы и действия над таблицей. */
+.tool__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-md);
+}
+
+.tool__search {
+  flex: 0 1 var(--ag-field-width);
+  min-width: var(--tool-search-min-width);
+}
+
+.tool__filter-status {
+  min-width: 150px;
+}
+
+.tool__table-actions {
+  display: flex;
+  gap: var(--ag-space-sm);
+  margin-left: auto;
+}
+
+.tool__hint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ag-space-sm);
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-sm);
+}
+
+/* Таблица: одна рамка на всю область, прокрутка внутри. */
+.tool-table {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--ag-border);
+  border-radius: var(--ag-radius-md);
+  overflow: hidden;
+}
+
+.tool-table--empty {
+  min-height: var(--tool-table-empty-height);
+}
+
+.tool-table__notices {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--ag-space-xs);
+  padding: var(--ag-space-sm) var(--ag-space-md);
+  border-bottom: 1px solid var(--ag-border);
+  background: color-mix(in srgb, var(--ag-danger) 7%, transparent);
+}
+
+.tool-table__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ag-space-sm);
+  margin: 0;
+  color: var(--ag-danger);
+  font-size: var(--ag-text-sm);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.tool-table .p-datatable {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tool-table .p-datatable-table-container {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Отступ второй закреплённой колонки: PrimeVue считает его один раз, поэтому
+   ширина первой передаётся сюда при каждом изменении размера таблицы. */
+.tool-table .p-datatable-frozen-column + .p-datatable-frozen-column {
+  inset-inline-start: var(--tool-frozen-offset, 0px) !important;
+}
+
+.tool-table--empty .p-datatable-table {
+  height: 100%;
+}
+
+.tool-table .p-datatable-empty-message > td {
+  padding: 0;
+}
+
+.tool-table__empty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--ag-space-sm);
+  height: 100%;
+  padding: var(--ag-space-2xl) var(--ag-space-lg);
+  box-sizing: border-box;
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-sm);
+}
+
+.tool-table__empty i {
+  font-size: var(--ag-text-xl);
+}
+
+.tool-table__empty p {
+  margin: 0;
+}
+
+/* Ячейка имени в закреплённой колонке: подпись и строка под ней. */
+.tool-table__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-xs);
+  min-width: 0;
+  cursor: grab;
+}
+
+.tool-table__cell :is(span, small, button) {
+  cursor: auto;
+}
+
+.tool-table__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-xs);
+  min-width: 0;
+}
+
+.tool-table__name {
+  flex: 0 1 auto;
+  margin-right: auto;
+  overflow: hidden;
+  font-size: var(--ag-text-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Кнопки строки размером с иконку: строка данных остаётся плотной,
+   а не тянется до высоты контролов формы. */
+.tool-table .tool-table__row .p-button {
+  flex-shrink: 0;
+  width: var(--tool-row-button);
+  height: var(--tool-row-button);
+  padding: 0;
+}
+
+.tool-table__expand {
+  margin-left: -4px;
+}
+
+.tool-table__expand .p-button-icon {
+  font-size: var(--ag-text-xs);
+  transition: transform 120ms ease;
+}
+
+.tool-table__expand--open .p-button-icon {
+  transform: rotate(90deg);
+}
+
+.tool-table__normalized {
+  overflow: hidden;
+  padding-left: var(--ag-space-xl);
+  color: var(--p-text-muted-color);
+  font-family: var(--ag-font-mono);
+  font-size: var(--ag-text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-table__delete {
+  flex-shrink: 0;
+  color: var(--p-text-muted-color);
+}
+
+.tool-table__delete:not(:disabled):hover {
+  color: var(--ag-danger);
+}
+
+.tool-table__heading {
+  white-space: nowrap;
+}
+
+.tool-table__count {
+  margin-inline-start: var(--ag-space-sm);
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
+  font-weight: 600;
+  line-height: 0;
+}

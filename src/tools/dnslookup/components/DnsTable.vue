@@ -70,7 +70,7 @@ const root = ref<HTMLElement | null>(null);
 // не трогает таблицу, а для удаления функции достаточно этой строки.
 useRowDrag(root, {
   enabled: () => props.reorderable === true,
-  grab: ".dns-table__domain",
+  grab: ".tool-table__cell",
   count: () => props.rows.length,
   reorder: (from, to) => emit("reorder", from, to),
 });
@@ -186,9 +186,9 @@ watch(
 <template>
   <div
     ref="root"
-    class="dns-table"
-    :class="{ 'dns-table--empty': rows.length === 0 }"
-    :style="{ '--dns-domain-width': domainWidth }"
+    class="dns-table tool-table"
+    :class="{ 'tool-table--empty': rows.length === 0 }"
+    :style="{ '--tool-frozen-offset': domainWidth }"
   >
     <slot name="notice" />
     <DataTable
@@ -200,7 +200,7 @@ watch(
       size="small"
     >
       <template #empty>
-        <div class="dns-table__empty">
+        <div class="tool-table__empty">
           <i class="pi pi-search" aria-hidden="true" />
           <p v-if="totalRows === 0">{{ t("dnslookup.table.emptyAdd") }}</p>
           <p v-else>{{ t("dnslookup.table.emptyFiltered") }}</p>
@@ -223,28 +223,28 @@ watch(
         }"
       >
         <template #header>
-          <span class="dns-table__domains">
+          <span class="tool-table__heading">
             <span>{{ t("dnslookup.table.domains") }}</span>
-            <sup v-if="totalRows > 0" class="dns-table__count">{{ totalRows }}</sup>
+            <sup v-if="totalRows > 0" class="tool-table__count">{{ totalRows }}</sup>
           </span>
         </template>
         <template #body="{ data }">
-          <div class="dns-table__domain">
-            <div class="dns-table__domain-main">
+          <div class="tool-table__cell">
+            <div class="tool-table__row">
               <Button
                 icon="pi pi-chevron-right"
                 size="small"
                 text
                 severity="secondary"
-                class="dns-table__expand"
-                :class="{ 'dns-table__expand--open': isExpanded(data.id) }"
+                class="tool-table__expand"
+                :class="{ 'tool-table__expand--open': isExpanded(data.id) }"
                 :aria-expanded="isExpanded(data.id)"
                 :aria-label="
                   isExpanded(data.id) ? t('dnslookup.table.collapse') : t('dnslookup.table.expand')
                 "
                 @click="toggle(data.id)"
               />
-              <span class="dns-table__name" :data-row-id="data.id">{{ data.input }}</span>
+              <span class="tool-table__name" :data-row-id="data.id">{{ data.input }}</span>
               <Button
                 icon="pi pi-refresh"
                 size="small"
@@ -259,13 +259,13 @@ watch(
                 size="small"
                 text
                 severity="secondary"
-                class="dns-table__delete"
+                class="tool-table__delete"
                 :aria-label="t('dnslookup.table.delete')"
                 :disabled="busy"
                 @click.stop="emit('delete', data.id)"
               />
             </div>
-            <small v-if="data.name !== data.input" class="dns-table__normalized">
+            <small v-if="data.name !== data.input" class="tool-table__normalized">
               {{ data.name }}
             </small>
           </div>
@@ -277,14 +277,14 @@ watch(
         :header="t('dnslookup.table.type')"
         frozen
         align-frozen="left"
-        :style="{ minWidth: 'calc(var(--dns-type-width) + 12px)' }"
+        :style="{ minWidth: 'calc(var(--tool-compact-width) + 12px)' }"
       >
         <template #body="{ data }">
           <PlainSelect
             :model-value="data.type"
             :options="RECORD_TYPES"
             size="small"
-            :style="{ width: 'var(--dns-type-width)' }"
+            :style="{ width: 'var(--tool-compact-width)' }"
             :disabled="busy"
             :aria-label="t('dnslookup.table.typeAria', { name: data.input })"
             @change="onTypeChange(data.id, $event)"

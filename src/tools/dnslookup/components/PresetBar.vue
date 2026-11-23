@@ -56,12 +56,12 @@ async function revertEdits(): Promise<void> {
 </script>
 
 <template>
-  <header class="dns__head">
-    <h1 class="dns__title">{{ TOOL_TITLE }}</h1>
+  <header class="tool__head">
+    <h1 class="tool__title">{{ TOOL_TITLE }}</h1>
 
-    <div class="dns__preset-bar">
-      <div class="dns__preset-state" :class="{ 'dns__preset-state--hidden': !changed }">
-        <span class="dns__preset-changed">{{ t("dnslookup.preset.changed") }}</span>
+    <div class="tool__preset-bar">
+      <div class="tool__preset-state" :class="{ 'tool__preset-state--hidden': !changed }">
+        <span class="tool__preset-changed">{{ t("dnslookup.preset.changed") }}</span>
         <Button
           v-tooltip.top="t('dnslookup.preset.revertHint')"
           icon="pi pi-undo"
@@ -83,7 +83,7 @@ async function revertEdits(): Promise<void> {
         />
       </div>
       <Button
-        class="dns__preset-button"
+        class="tool__preset-button"
         :label="label"
         :icon="session.presetTitle ? 'pi pi-bookmark-fill' : 'pi pi-bookmark'"
         severity="secondary"

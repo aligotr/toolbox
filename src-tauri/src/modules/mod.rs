@@ -6,6 +6,7 @@
 
 mod busprobe;
 mod dnslookup;
+mod icmp;
 
 use crate::core::infra::bus::MessageBus;
 use crate::core::infra::module::Module;
@@ -18,6 +19,7 @@ use crate::core::infra::module::Module;
 pub fn register_all(bus: &MessageBus) {
     let modules: Vec<Box<dyn Module>> = vec![
         Box::new(dnslookup::DnsLookupModule::new()),
+        Box::new(icmp::IcmpModule::new()),
         Box::new(busprobe::BusprobeModule),
     ];
 

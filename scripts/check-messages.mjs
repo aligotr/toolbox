@@ -35,7 +35,7 @@ const KEY_PATTERNS = [
   /descriptionKey:\s*"([^"]+)"/g,
   /nameKey:\s*"([^"]+)"/g,
   // Код ошибки, уведомления или записи журнала, созданной в интерфейсе.
-  /code:\s*"((?:errors|settings|journal|notifications|dnslookup)\.[^"]+)"/g,
+  /code:\s*"((?:errors|settings|journal|notifications|dnslookup|icmp)\.[^"]+)"/g,
   // Запись журнала передаётся позиционно, а не объектом.
   /\bwrite\(\s*[^,]+,\s*"(?:info|result|error)",\s*"([^"]+)"/g,
   // Код отказа обёртки пресетов: он же ключ словаря.
@@ -103,7 +103,7 @@ function printLimited(prefix, items, describe = (item) => item) {
 }
 
 /** Ключи-исключения капитализации: единицы измерения - символы, не метки. */
-const LOWERCASE_ALLOWED = new Set(["busprobe.unit.ms"]);
+const LOWERCASE_ALLOWED = new Set(["busprobe.unit.ms", "icmp.view.ms"]);
 
 /**
  * Видимый текст начинается с заглавной буквы (i18n.md).

@@ -1,0 +1,163 @@
+/* Стили инструмента Ping.
+ *
+ * Общая раскладка экрана и таблицы живёт в `src/ui/tool-layout.css`:
+ * шапка, строка добавления, фильтры, рамка таблицы и кнопки строки.
+ * Здесь остаётся только своё: параметры прогона, статусы, раскрытие
+ * с адресами и пакетами. Стили диалогов остаются в своих компонентах.
+ */
+
+/* Параметры прогона прижаты к правому краю строки добавления. */
+.icmp__params {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--ag-space-md);
+  margin-left: auto;
+}
+
+.icmp-param {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-xs);
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
+}
+
+.icmp-param__field {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-xs);
+}
+
+.icmp-param__field .p-inputtext {
+  width: var(--tool-param-width);
+}
+
+.icmp-param__unit {
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
+  white-space: nowrap;
+}
+
+.icmp__status {
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Имя цели в строке таблицы - кнопка раскрытия: сброс вида кнопки,
+   остальное берёт общий класс строки. */
+.icmp-table__target {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-family: var(--ag-font-mono);
+  text-align: left;
+  cursor: pointer;
+}
+
+.icmp-table__number {
+  font-variant-numeric: tabular-nums;
+}
+
+.icmp-status {
+  font-size: var(--ag-text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.icmp-status--ok {
+  color: var(--ag-ok);
+}
+
+.icmp-status--loss {
+  color: var(--ag-warn);
+}
+
+.icmp-status--timeout,
+.icmp-status--unreachable,
+.icmp-status--error,
+.icmp-status--unresolved,
+.icmp-status--cancelled,
+.icmp-status--pending {
+  color: var(--p-text-muted-color);
+}
+
+.icmp-status--error,
+.icmp-status--unresolved {
+  color: var(--ag-danger);
+}
+
+.icmp-table .icmp-row--highlight > td {
+  animation: icmp-row-flash 1.6s ease-out;
+}
+
+@keyframes icmp-row-flash {
+  from {
+    background: color-mix(in srgb, var(--ag-warn) 18%, transparent);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+.icmp-expand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-lg);
+  padding: var(--ag-space-sm) var(--ag-space-md) var(--ag-space-md);
+}
+
+.icmp-expand__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-sm);
+  min-width: 0;
+}
+
+.icmp-expand__title {
+  margin: 0;
+  font-size: var(--ag-text-sm);
+  font-weight: 600;
+}
+
+.icmp-expand__note {
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-sm);
+}
+
+.icmp-expand__note[role="alert"] {
+  color: var(--ag-danger);
+}
+
+.icmp-details {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ag-text-xs);
+}
+
+.icmp-details th,
+.icmp-details td {
+  padding: var(--ag-space-xs) var(--ag-space-sm);
+  border-bottom: 1px solid var(--ag-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.icmp-details th {
+  color: var(--p-text-muted-color);
+  font-weight: 600;
+}
+
+.icmp-details__mono {
+  font-family: var(--ag-font-mono);
+}
+
+.icmp-details__number {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}

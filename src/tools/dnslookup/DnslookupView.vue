@@ -260,12 +260,12 @@ async function exportCsv(): Promise<void> {
 </script>
 
 <template>
-  <section class="dns">
+  <section class="tool dns">
     <PresetBar :session="session" @open="presetsOpen = true" @note="presetNote = $event" />
 
-    <div class="dns__body">
-      <div class="dns__toolbar">
-        <div ref="addBox" class="dns__add">
+    <div class="tool__body">
+      <div class="tool__toolbar">
+        <div ref="addBox" class="tool__add">
           <InputGroup>
             <InputText
               v-model="draft"
@@ -342,7 +342,7 @@ async function exportCsv(): Promise<void> {
           </InputGroup>
 
           <Button
-            class="dns__run"
+            class="dns__run tool__run"
             :label="running ? t('dnslookup.view.stop') : t('dnslookup.view.run')"
             :icon="running ? 'pi pi-stop' : 'pi pi-play'"
             :severity="running ? 'contrast' : undefined"
@@ -353,10 +353,10 @@ async function exportCsv(): Promise<void> {
         </div>
       </div>
 
-      <div class="dns__filters">
+      <div class="tool__filters">
         <InputText
           v-model="session.filters.search"
-          class="dns__search"
+          class="tool__search"
           size="small"
           :placeholder="t('dnslookup.view.search')"
           :aria-label="t('dnslookup.view.search')"
@@ -366,7 +366,7 @@ async function exportCsv(): Promise<void> {
           :options="statusFilterOptions()"
           option-label="label"
           option-value="value"
-          class="dns__status"
+          class="tool__filter-status"
           size="small"
           :aria-label="t('dnslookup.view.statusFilter')"
         />
@@ -378,7 +378,7 @@ async function exportCsv(): Promise<void> {
           </span>
         </label>
 
-        <div class="dns__table-actions">
+        <div class="tool__table-actions">
           <Button
             v-tooltip.bottom="t('dnslookup.view.columns')"
             icon="pi pi-table"
@@ -428,7 +428,6 @@ async function exportCsv(): Promise<void> {
       </div>
 
       <DnsTable
-        class="dns__table"
         :rows="visibleRows"
         :total-rows="session.rows.length"
         :servers="columnServers"
@@ -445,11 +444,11 @@ async function exportCsv(): Promise<void> {
         @reorder="moveRow"
       >
         <template #notice>
-          <div v-if="notices.length > 0" class="dns-table__notices">
+          <div v-if="notices.length > 0" class="tool-table__notices">
             <p
               v-for="notice in notices"
               :key="notice.source"
-              class="dns-table__notice"
+              class="tool-table__notice"
               :role="notice.urgent ? 'alert' : undefined"
               :aria-live="notice.urgent ? undefined : 'polite'"
             >
@@ -460,7 +459,7 @@ async function exportCsv(): Promise<void> {
         </template>
       </DnsTable>
 
-      <p v-if="exportNote" class="dns__hint" aria-live="polite">
+      <p v-if="exportNote" class="tool__hint" aria-live="polite">
         <i class="pi pi-file" aria-hidden="true" />
         {{ exportNote }}
       </p>

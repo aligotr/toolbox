@@ -48,10 +48,6 @@ export const DOMAIN_COLUMN_MIN_WIDTH = "240px";
 export const DOMAIN_COLUMN_MAX_WIDTH = "360px";
 export const SERVER_COLUMN_MIN_WIDTH = "144px";
 
-/** Ширина диалогов инструмента и потолок для узкого окна. */
-export const DIALOG_WIDTH = "560px";
-export const DIALOG_MAX_WIDTH = "92vw";
-
 /** Сколько подсвечивается найденный дубликат. */
 export const HIGHLIGHT_MS = 2400;
 

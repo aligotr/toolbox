@@ -21,7 +21,7 @@ import { catalog, t } from "@/core/infra/i18n";
 import { PRESET_TITLE_MAX_LENGTH } from "@/core/services/presets/constants";
 import type { Preset } from "@/core/services/presets";
 import { requireConfirm } from "@/ui/primevue/popup/confirmPopup";
-import { DIALOG_MAX_WIDTH, DIALOG_WIDTH } from "../constants";
+import { TOOL_DIALOG_MAX_WIDTH, TOOL_DIALOG_WIDTH } from "@/ui/toolLayout";
 import {
   adoptPresetTitle,
   applyPreset,
@@ -296,7 +296,7 @@ async function remove(preset: Preset): Promise<void> {
     modal
     dismissable-mask
     :draggable="false"
-    :style="{ width: DIALOG_WIDTH, maxWidth: DIALOG_MAX_WIDTH }"
+    :style="{ width: TOOL_DIALOG_WIDTH, maxWidth: TOOL_DIALOG_MAX_WIDTH }"
     @update:visible="emit('update:visible', $event)"
   >
     <div class="presets" autofocus tabindex="-1">

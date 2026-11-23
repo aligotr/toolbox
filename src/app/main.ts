@@ -9,6 +9,7 @@ import App from "./App.vue";
 import { setupLocale } from "./locales";
 import { toolboxPreset } from "@/ui/primevue/theme";
 import "@/styles/global.css";
+import "@/ui/tool-layout.css";
 
 // Ошибки интерфейса идут в тот же файловый лог, что и отказы Rust.
 //

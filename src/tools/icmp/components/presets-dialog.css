@@ -1,0 +1,39 @@
+/* Стили диалога пресетов Ping.
+ *
+ * Файл подключён через `<style scoped src>`: селекторы остаются в границах
+ * компонента, но разметка диалога не пухнет от десятков строк стилей.
+ */
+
+.presets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-md);
+}
+
+.presets__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.presets__note,
+.presets__error {
+  margin: 0;
+  color: var(--ag-text-muted);
+}
+
+.presets__error {
+  color: var(--ag-danger);
+}
+
+.presets__create {
+  display: flex;
+  gap: var(--ag-space-sm);
+}
+
+.presets__create-input {
+  flex: 1 1 auto;
+}
