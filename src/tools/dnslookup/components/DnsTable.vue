@@ -18,6 +18,7 @@ import Button from "primevue/button";
 import Column from "primevue/column";
 import { t } from "@/core/infra/i18n";
 import PlainSelect from "@/ui/PlainSelect.vue";
+import ToolExpansionHead from "@/ui/tool/ToolExpansionHead.vue";
 import ToolTable from "@/ui/tool/ToolTable.vue";
 import {
   DOMAIN_COLUMN_MAX_WIDTH,
@@ -26,7 +27,14 @@ import {
   SERVER_COLUMN_MIN_WIDTH,
   SYSTEM_SERVER_ID,
 } from "../constants";
-import { extraAnswers, firstAnswer, statusClass, statusLabel, statusShown } from "../cell";
+import {
+  extraAnswers,
+  firstAnswer,
+  statusClass,
+  statusLabel,
+  statusShown,
+  verdictLabel,
+} from "../cell";
 import CellDetails from "./CellDetails.vue";
 import type {
   CellDetailsEntry,
@@ -89,6 +97,17 @@ function detailsOf(rowId: string): CellDetailsEntry[] {
     server,
     cell: cellOf(rowId, server.id),
   }));
+}
+
+/** Подпись вердикта строки; без вердикта - пустая строка. */
+function headVerdict(rowId: string): string {
+  const verdict = props.verdicts.get(rowId);
+  return verdict ? verdictLabel(verdict) : "";
+}
+
+/** Оформление вердикта: расхождение предупреждает, совпадение спокойно. */
+function verdictClass(rowId: string): string {
+  return props.verdicts.get(rowId)?.differs ? "dns-verdict dns-verdict--diff" : "dns-verdict";
 }
 
 /** Классы строки: расхождение и недавний дубликат. */
@@ -264,8 +283,36 @@ function forwardReorder(from: number, to: number): void {
       </Column>
     </template>
 
+    <template #expansion-head="{ data, toggle }">
+      <ToolExpansionHead
+        :row-name="data.input"
+        :collapse-label="t('dnslookup.table.collapseShort')"
+        @collapse="toggle(data.id)"
+      >
+        <span
+          v-if="headVerdict(data.id)"
+          class="tool-table__expansion-status"
+          :class="verdictClass(data.id)"
+        >
+          {{ headVerdict(data.id) }}
+        </span>
+      </ToolExpansionHead>
+    </template>
+
     <template #expansion="{ data }">
       <CellDetails :entries="detailsOf(data.id)" />
     </template>
   </ToolTable>
 </template>
+
+<style scoped>
+/* Вердикт строки: цвет различает совпадение и расхождение,
+   подпись читается и без цвета. */
+.dns-verdict {
+  color: var(--ag-ok);
+}
+
+.dns-verdict--diff {
+  color: var(--ag-warn);
+}
+</style>

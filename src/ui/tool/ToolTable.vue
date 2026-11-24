@@ -8,7 +8,8 @@
 //
 // Раскрытие живёт здесь, а не в инструменте: шеврон и клик по имени должны
 // менять одно состояние. Наружу оно отдаётся слотами: `default` получает
-// `isExpanded` и `toggle`, `expansion` - строку.
+// `isExpanded` и `toggle`, `expansion-head` - строку и переключатель,
+// `expansion` - строку.
 //
 // Подсветка ищет маркер `data-tool-row` внутри строки: сама строка PrimeVue
 // не имеет идентификатора, а прокручивать нужно именно её.
@@ -157,9 +158,7 @@ watch(
 
       <template #expansion="scope">
         <div class="tool-table__expansion">
-          <div v-if="$slots['expansion-head']" class="tool-table__expansion-head">
-            <slot name="expansion-head" v-bind="{ ...scope, isExpanded, toggle }" />
-          </div>
+          <slot name="expansion-head" v-bind="{ ...scope, isExpanded, toggle }" />
           <slot name="expansion" v-bind="scope" />
         </div>
       </template>

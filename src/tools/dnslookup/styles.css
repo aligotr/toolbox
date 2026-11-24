@@ -10,9 +10,10 @@
 .dns {
   /* Список резолверов вмещает два чипа и счётчик «+N». */
   --dns-servers-width: 290px;
-  /* Сравнительная таблица раскрытия: пять колонок дышат, но не
-     растягиваются на всю ширину строки. */
-  --dns-details-max-width: 720px;
+  /* Сравнительная таблица раскрытия: серверу нужно место под имя и адрес,
+     ответу - под длинную запись. */
+  --dns-details-server-width: 160px;
+  --dns-details-answer-width: 220px;
 }
 
 /* Строка серверов сжимается по содержимому, как и поле резолверов. */
@@ -169,8 +170,8 @@
 }
 
 /* Сравнительная таблица раскрытия: серверы строками, записи колонками.
-   Ширина умеренная: тесная таблица слипается, а на всю строку - разъезжается.
-   Длинный ответ переносится внутри ячейки. */
+   Прокрутка остаётся у таблицы: длинные записи и много серверов
+   не должны растягивать строку списка. */
 .dns-details-wrap {
   overflow-x: auto;
   min-width: 0;
@@ -178,14 +179,13 @@
 
 .dns-details {
   width: 100%;
-  max-width: var(--dns-details-max-width);
   border-collapse: collapse;
   font-size: var(--ag-text-xs);
 }
 
 .dns-details th,
 .dns-details td {
-  padding: var(--ag-space-xs) var(--ag-space-sm);
+  padding: var(--ag-space-xs);
   border-bottom: 1px solid var(--ag-border);
   text-align: left;
   vertical-align: top;
@@ -199,6 +199,7 @@
 }
 
 .dns-details__server {
+  min-width: var(--dns-details-server-width);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -208,7 +209,10 @@
   display: block;
 }
 
+/* Место под адрес занято и у системного сервера: без второй строки
+   он выглядит ниже остальных, хотя отличается только отсутствием адреса. */
 .dns-details__meta {
+  min-height: 1lh;
   color: var(--p-text-muted-color);
   font-family: var(--ag-font-mono);
   font-size: var(--ag-text-xs);
@@ -217,6 +221,10 @@
 
 .dns-details__status {
   white-space: nowrap;
+}
+
+.dns-details__answer {
+  min-width: var(--dns-details-answer-width);
 }
 
 .dns-details__answer code {

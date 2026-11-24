@@ -151,8 +151,7 @@ export interface DnsPresetPayload {
 
 /** Итог сравнения строки с ответом системного сервера. */
 export interface RowVerdict {
-  matched: number;
-  total: number;
+  /** Хотя бы один сервер ответил иначе, чем системный. */
   differs: boolean;
 }
 

@@ -490,6 +490,7 @@ export const ruMessages: Messages = {
   "dnslookup.table.typeAria": "Тип записи для {name}",
   "dnslookup.table.expand": "Подробности",
   "dnslookup.table.collapse": "Свернуть подробности",
+  "dnslookup.table.collapseShort": "Свернуть",
   "dnslookup.table.repeat": "Повторить строку",
   "dnslookup.table.delete": "Удалить строку",
   "dnslookup.table.cellExtra": "{value} и ещё {count}",
@@ -499,6 +500,11 @@ export const ruMessages: Messages = {
   "dnslookup.details.answer": "Ответ",
   "dnslookup.details.ttl": "TTL, с",
   "dnslookup.details.elapsed": "Время ответа",
+
+  // ── DNSlookup: вердикт строки ─────────────────────────────────────────────
+  // Одна подпись на шапку раскрытия и столбец «Совпадение» в CSV.
+  "dnslookup.verdict.matches": "OK",
+  "dnslookup.verdict.differs": "Записи расходятся",
 
   // ── DNSlookup: ячейка и статусы ──────────────────────────────────────────
   "dnslookup.cell.noData": "Нет данных",
@@ -651,8 +657,6 @@ export const ruMessages: Messages = {
   "dnslookup.csv.domain": "Домен",
   "dnslookup.csv.type": "Тип",
   "dnslookup.csv.match": "Совпадение",
-  "dnslookup.csv.differs": "Расходится у {count} из {total}",
-  "dnslookup.csv.matches": "Совпадает у {count} из {total}",
   "dnslookup.csv.saveFailed": "Не удалось сохранить CSV и скопировать его в буфер",
 
   // ── Ping: экран ──────────────────────────────────────────────────────────

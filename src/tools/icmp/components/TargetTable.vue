@@ -19,6 +19,7 @@ import Column from "primevue/column";
 import { t } from "@/core/infra/i18n";
 import ToolDetails from "@/ui/tool/ToolDetails.vue";
 import ToolDetailsSection from "@/ui/tool/ToolDetailsSection.vue";
+import ToolExpansionHead from "@/ui/tool/ToolExpansionHead.vue";
 import ToolTable from "@/ui/tool/ToolTable.vue";
 import {
   LATENCY_COLUMN_MIN_WIDTH,
@@ -221,29 +222,25 @@ function packetTime(packet: PacketRecord): string {
     </template>
 
     <template #expansion-head="{ data, toggle }">
-      <strong class="tool-table__expansion-name">
-        {{ data.input }}
-        <sup
-          v-if="data.addresses.length > 1"
-          class="tool-table__count"
-          :title="t('icmp.table.addressCount', { count: data.addresses.length })"
-          :aria-label="t('icmp.table.addressCount', { count: data.addresses.length })"
-        >
-          {{ data.addresses.length }}
-        </sup>
-      </strong>
-      <span class="tool-table__expansion-status" :class="statusClass(targetStatus(data, busy))">
-        {{ statusText(targetStatus(data, busy)) }}
-      </span>
-      <Button
-        class="tool-table__expansion-collapse"
-        :label="t('icmp.table.collapseShort')"
-        icon="pi pi-chevron-up"
-        size="small"
-        text
-        severity="secondary"
-        @click="toggle(data.id)"
-      />
+      <ToolExpansionHead
+        :row-name="data.input"
+        :collapse-label="t('icmp.table.collapseShort')"
+        @collapse="toggle(data.id)"
+      >
+        <template #name-addon>
+          <sup
+            v-if="data.addresses.length > 1"
+            class="tool-table__count"
+            :title="t('icmp.table.addressCount', { count: data.addresses.length })"
+            :aria-label="t('icmp.table.addressCount', { count: data.addresses.length })"
+          >
+            {{ data.addresses.length }}
+          </sup>
+        </template>
+        <span class="tool-table__expansion-status" :class="statusClass(targetStatus(data, busy))">
+          {{ statusText(targetStatus(data, busy)) }}
+        </span>
+      </ToolExpansionHead>
     </template>
 
     <template #expansion="{ data }">

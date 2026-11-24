@@ -8,7 +8,7 @@
 // что окно приложения не всегда сообщает о блокировке скачивания.
 
 import { t } from "@/core/infra/i18n";
-import { statusText } from "../cell";
+import { statusText, verdictLabel } from "../cell";
 import { resultKey } from "./session";
 import type { DnsAnswer, DnsCell, DnsRow, DnsSession, RowVerdict, ServerOption } from "../types";
 
@@ -43,17 +43,7 @@ export function buildCsv(
 
   const lines = rows.map((row) => {
     const verdict = verdicts.get(row.id);
-    const verdictText = verdict
-      ? verdict.differs
-        ? t("dnslookup.csv.differs", {
-            count: verdict.total - verdict.matched,
-            total: verdict.total,
-          })
-        : t("dnslookup.csv.matches", {
-            count: verdict.matched,
-            total: verdict.total,
-          })
-      : "";
+    const verdictText = verdict ? verdictLabel(verdict) : "";
 
     return [
       row.input,

@@ -4,6 +4,10 @@
 // с ответом системного. TTL, порядок записей, регистр и завершающая точка
 // не важны — они не меняют того, что увидит пользователь.
 //
+// Системный сервер участвует в сравнении наравне с остальными: себя он
+// повторяет и потому разойтись не может. Одного сервера мало: без второго
+// сравнивать не с чем, и вердикта нет.
+//
 // Вердикт не считается, пока хотя бы одна ячейка не ответила: иначе строка
 // на миг «расходилась» бы из-за порядка ответов.
 
@@ -35,11 +39,10 @@ export function matchesStatus(session: DnsSession, rowId: string, filter: Status
   });
 }
 
-/** Считает вердикты по всем строкам: без системного сервера их нет. */
+/** Считает вердикты по всем строкам: без системного сервера и без второго их нет. */
 export function buildVerdicts(session: DnsSession): Map<string, RowVerdict> {
   const result = new Map<string, RowVerdict>();
-  const others = session.servers.filter((id) => id !== SYSTEM_SERVER_ID);
-  if (!session.servers.includes(SYSTEM_SERVER_ID) || others.length === 0) {
+  if (!session.servers.includes(SYSTEM_SERVER_ID) || session.servers.length <= 1) {
     return result;
   }
 
@@ -49,23 +52,20 @@ export function buildVerdicts(session: DnsSession): Map<string, RowVerdict> {
       continue;
     }
 
-    let matched = 0;
     let ready = true;
-    for (const serverId of others) {
+    let differs = false;
+    for (const serverId of session.servers) {
+      if (serverId === SYSTEM_SERVER_ID) continue;
       const cell = session.cells.get(resultKey(row.id, serverId));
       if (!cell || cell.status === "pending" || cell.status === "cancelled") {
         ready = false;
         break;
       }
-      if (cellsMatch(base, cell)) matched += 1;
+      if (!cellsMatch(base, cell)) differs = true;
     }
     if (!ready) continue;
 
-    result.set(row.id, {
-      matched,
-      total: others.length,
-      differs: matched < others.length,
-    });
+    result.set(row.id, { differs });
   }
   return result;
 }

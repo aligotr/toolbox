@@ -60,7 +60,7 @@ test("без системного сервера вердиктов нет", () 
   assert.equal(buildVerdicts(session).size, 0);
 });
 
-test("совпадение с системным сервером даёт полный вердикт", () => {
+test("совпадение с системным сервером даёт вердикт без расхождения", () => {
   const session = sessionOf(
     ["system", "yandex"],
     ["a"],
@@ -70,7 +70,7 @@ test("совпадение с системным сервером даёт по�
     ],
   );
 
-  assert.deepEqual(buildVerdicts(session).get("a"), { matched: 1, total: 1, differs: false });
+  assert.deepEqual(buildVerdicts(session).get("a"), { differs: false });
 });
 
 test("расхождение с системным сервером помечает строку", () => {
@@ -83,7 +83,13 @@ test("расхождение с системным сервером помеча
     ],
   );
 
-  assert.deepEqual(buildVerdicts(session).get("a"), { matched: 0, total: 1, differs: true });
+  assert.deepEqual(buildVerdicts(session).get("a"), { differs: true });
+});
+
+test("одного резолвера для вердикта мало", () => {
+  const session = sessionOf(["system"], ["a"], [["a:system", cellOf("ok", ["1.1.1.1"])]]);
+
+  assert.equal(buildVerdicts(session).size, 0);
 });
 
 test("незавершённая проверка откладывает вердикт", () => {

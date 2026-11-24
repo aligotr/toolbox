@@ -1,14 +1,15 @@
-// Показ результата ячейки DNS.
+// Показ результата DNS.
 //
 // Одна ячейка читается в двух местах: в таблице (первая запись и статус)
 // и в раскрытии строки (все записи с TTL). Правила чтения одни и те же,
-// поэтому живут здесь, а не дублируются в компонентах.
+// поэтому живут здесь, а не дублируются в компонентах. Здесь же - подпись
+// вердикта строки: её видят шапка раскрытия и выгрузка CSV.
 //
 // Пока идёт повторная проверка, показываются прошлые записи приглушённо:
 // пустая ячейка на время запроса выглядела бы потерей данных.
 
 import { t } from "@/core/infra/i18n";
-import type { CellStatus, DnsAnswer, DnsCell } from "./types";
+import type { CellStatus, DnsAnswer, DnsCell, RowVerdict } from "./types";
 
 /** Записи для показа: текущие, а во время проверки — прошлые. */
 export function answersOf(cell: DnsCell | undefined): DnsAnswer[] {
@@ -89,4 +90,11 @@ export function noteFor(cell: DnsCell | undefined): string {
   if (cell.status === "cancelled") return t("dnslookup.cell.cancelled");
   if (cell.error) return cell.error;
   return t("dnslookup.cell.empty");
+}
+
+/** Подпись вердикта строки: совпадает с системным или нет.
+    Одна подпись на шапку раскрытия и столбец «Совпадение» в CSV
+    (счёт серверов не нужен: его видно по строкам). */
+export function verdictLabel(verdict: RowVerdict): string {
+  return verdict.differs ? t("dnslookup.verdict.differs") : t("dnslookup.verdict.matches");
 }

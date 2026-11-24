@@ -56,7 +56,7 @@ function elapsedText(value: number): string {
 </script>
 
 <template>
-  <ToolDetails>
+  <ToolDetails nested>
     <div class="dns-details-wrap">
       <table class="dns-details">
         <thead>
@@ -73,9 +73,7 @@ function elapsedText(value: number): string {
             <tr v-for="(answer, index) in group.answers" :key="`${group.server.id}:${index}`">
               <th v-if="index === 0" scope="row" :rowspan="group.span" class="dns-details__server">
                 <span class="dns-details__name">{{ group.server.label }}</span>
-                <span v-if="group.server.address" class="dns-details__meta">
-                  {{ group.server.address }}
-                </span>
+                <span class="dns-details__meta">{{ group.server.address ?? "" }}</span>
               </th>
               <td v-if="index === 0" :rowspan="group.span" class="dns-details__status">
                 <span class="cell__status" :class="statusClass(group.cell)">
