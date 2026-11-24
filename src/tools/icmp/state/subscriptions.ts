@@ -38,7 +38,7 @@ export async function ensureSubscriptions(): Promise<boolean> {
       for (const session of sessions.values()) {
         session.status.run.error = subscriptionError;
       }
-      write(JOURNAL_SOURCE, "error", "journal.icmp.subscribeError", {
+      write(JOURNAL_SOURCE, "error", "icmp.run.subscribeFailed", {
         reason: appErrorOf(error),
       });
     });

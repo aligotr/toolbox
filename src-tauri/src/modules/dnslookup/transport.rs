@@ -81,7 +81,7 @@ impl Outcome {
 pub fn resolve(addresses: &[SocketAddr], name: &Name, record_type: RecordType) -> Outcome {
     if addresses.is_empty() {
         return Outcome::bad(AppError::new(
-            "errors.dnslookup.noResolvers",
+            "dnslookup.servers.systemMissing",
             "Системные резолверы не найдены",
         ));
     }

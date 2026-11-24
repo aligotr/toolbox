@@ -235,7 +235,7 @@ onMounted(() => {
           />
           <Button
             type="submit"
-            :label="t('settings.profiles.submit')"
+            :label="t('common.create')"
             size="small"
             :loading="status.create.loading"
             :disabled="!newTitle.trim()"
@@ -312,29 +312,29 @@ onMounted(() => {
         <div class="profile-row__actions" @click.stop>
           <template v-if="renamingId === profile.id">
             <Button
-              v-tooltip.top="t('settings.profiles.renameSave')"
+              v-tooltip.top="t('common.renameSave')"
               icon="pi pi-check"
               size="small"
               text
-              :aria-label="t('settings.profiles.renameSave')"
+              :aria-label="t('common.renameSave')"
               :loading="status.rename.loading"
               :disabled="!canSaveRename(profile)"
               @click="submitRename(profile)"
             />
             <Button
-              v-tooltip.top="t('settings.profiles.renameCancel')"
+              v-tooltip.top="t('common.renameCancel')"
               icon="pi pi-times"
               severity="secondary"
               size="small"
               text
-              :aria-label="t('settings.profiles.renameCancel')"
+              :aria-label="t('common.renameCancel')"
               :disabled="status.rename.loading"
               @click="cancelRename"
             />
           </template>
           <template v-else>
             <Button
-              :label="t('settings.profiles.rename')"
+              :label="t('common.rename')"
               size="small"
               severity="secondary"
               text

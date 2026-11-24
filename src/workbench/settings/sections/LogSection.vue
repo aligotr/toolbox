@@ -54,7 +54,7 @@ function requestPrune(event: MouseEvent): void {
   requireConfirm(confirm, {
     target,
     message: t("settings.log.pruneMessage", { count: keepDays.value }),
-    acceptLabel: t("settings.log.pruneAccept"),
+    acceptLabel: t("common.clear"),
     rejectLabel: t("common.cancel"),
     accept: async () => {
       const removed = await pruneLogs();
@@ -72,7 +72,7 @@ onMounted(() => {
 <template>
   <section class="log wb-section">
     <header class="wb-section__head">
-      <h2 class="wb-section__title">{{ t("settings.section.log") }}</h2>
+      <h2 class="wb-section__title">{{ t("common.journal") }}</h2>
       <p class="wb-section__lead">{{ t("settings.log.lead") }}</p>
     </header>
 

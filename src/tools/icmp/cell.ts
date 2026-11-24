@@ -11,9 +11,9 @@ import type { AddressFamily, PacketStatus, SeriesStatus } from "./types";
 export function statusText(status: SeriesStatus): string {
   switch (status) {
     case "ok":
-      return t("icmp.status.ok");
+      return t("common.ok");
     case "loss":
-      return t("icmp.status.loss");
+      return t("icmp.table.loss");
     case "timeout":
       return t("icmp.status.timeout");
     case "unreachable":
@@ -21,7 +21,7 @@ export function statusText(status: SeriesStatus): string {
     case "unresolved":
       return t("icmp.status.unresolved");
     case "error":
-      return t("icmp.status.error");
+      return t("common.error");
     case "cancelled":
       return t("icmp.status.cancelled");
     default:
@@ -33,13 +33,13 @@ export function statusText(status: SeriesStatus): string {
 export function packetStatusText(status: PacketStatus): string {
   switch (status) {
     case "ok":
-      return t("icmp.status.ok");
+      return t("common.ok");
     case "timeout":
       return t("icmp.status.timeout");
     case "unreachable":
       return t("icmp.status.unreachable");
     default:
-      return t("icmp.status.error");
+      return t("common.error");
   }
 }
 

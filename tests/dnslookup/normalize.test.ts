@@ -31,7 +31,7 @@ test("пустой ввод — отказ emptyAddress", () => {
   for (const input of ["", "   "]) {
     assert.deepEqual(parseAddressInput(input, "A"), {
       ok: false,
-      code: "dnslookup.validate.emptyAddress",
+      code: "common.hostEmpty",
       params: {},
     });
   }

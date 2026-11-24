@@ -59,13 +59,13 @@ function presetLine(id: string): string | undefined {
 <template>
   <section class="empty wb-screen">
     <header class="wb-screen__head">
-      <h1 class="wb-screen__title">{{ t("workspace.empty.title") }}</h1>
+      <h1 class="wb-screen__title">{{ t("common.newTab") }}</h1>
       <p class="wb-screen__lead">{{ t("workspace.empty.lead") }}</p>
     </header>
 
     <div class="wb-screen__body empty__body">
       <section class="wb-section">
-        <h2 class="wb-section__title">{{ t("workspace.empty.tools") }}</h2>
+        <h2 class="wb-section__title">{{ t("common.tools") }}</h2>
 
         <div v-if="toolItems.length" class="empty__grid empty__grid--tools">
           <CatalogCard
@@ -85,7 +85,7 @@ function presetLine(id: string): string | undefined {
       </section>
 
       <section class="wb-section">
-        <h2 class="wb-section__title">{{ t("workspace.empty.app") }}</h2>
+        <h2 class="wb-section__title">{{ t("common.app") }}</h2>
 
         <div class="empty__grid">
           <CatalogCard

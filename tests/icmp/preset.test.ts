@@ -9,6 +9,7 @@ import test from "node:test";
 import { installBuiltin } from "../../src/core/infra/i18n/catalog.ts";
 import { ruMessages } from "../../src/core/infra/i18n/messages.ts";
 import type { IcmpSession } from "../../src/tools/icmp/types.ts";
+import { startNewPreset } from "../../src/tools/icmp/presets/apply.ts";
 import { icmpPresetBinding } from "../../src/tools/icmp/presets/binding.ts";
 import { capturePresetPayload, parsePresetPayload } from "../../src/tools/icmp/presets/format.ts";
 import { totalsOf } from "../../src/tools/icmp/summary.ts";
@@ -185,4 +186,27 @@ test("испорченный снимок не роняет откат", () => {
     icmpPresetBinding.readSnapshot({ ...sessionOf(), presetSnapshot: "{не json" }),
     null,
   );
+});
+
+test("новый пресет очищает вход и снимает привязку", async () => {
+  const session = sessionOf();
+  session.presetId = "p1";
+  session.presetTitle = "Старый пресет";
+  session.presetSnapshot = "{}";
+  session.highlightTargetId = "t1";
+
+  await startNewPreset(session);
+
+  assert.deepEqual(session.targets, []);
+  assert.equal(session.family, "auto");
+  assert.equal(session.periodMs, 1000);
+  assert.equal(session.count, 4);
+  assert.equal(session.endless, false);
+  assert.equal(session.timeoutMs, 1000);
+  assert.deepEqual(session.filters, { search: "", status: "all", family: "all" });
+  assert.equal(session.highlightTargetId, null);
+  assert.equal(session.progress.targets, 0);
+  assert.equal(session.presetId, null);
+  assert.equal(session.presetTitle, null);
+  assert.equal(session.presetSnapshot, null);
 });

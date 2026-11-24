@@ -351,7 +351,7 @@ mod tests {
         let error =
             prune(&workspaces, &profiles).expect_err("без списка профилей уборка запрещена");
 
-        assert_eq!(error.code, "errors.profiles.read");
+        assert_eq!(error.code, "errors.files.read");
         assert!(workspaces.join("work.json").is_file(), "вкладки не тронуты");
     }
 }

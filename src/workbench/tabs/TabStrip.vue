@@ -70,8 +70,8 @@ const { canScrollLeft, canScrollRight, scrollTabs, updateScrollState } = useStri
       icon="pi pi-plus"
       text
       size="small"
-      :aria-label="t('tab.empty.title')"
-      v-tooltip.bottom="t('tab.empty.title')"
+      :aria-label="t('common.newTab')"
+      v-tooltip.bottom="t('common.newTab')"
       @click="openEmptyTab"
     />
   </nav>

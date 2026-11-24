@@ -225,21 +225,21 @@ pub struct PreparedRun {
 /// Проверяет запрос и превращает его в план выполнения.
 pub fn prepare(run: &IcmpRun) -> AppResult<PreparedRun> {
     if run.run_id.trim().is_empty() {
-        return fail!("errors.icmp.runId", "Не указан идентификатор проверки");
+        return fail!("errors.run.idMissing", "Не указан идентификатор проверки");
     }
     if run.targets.is_empty() {
         return fail!("errors.icmp.emptyTargets", "Список целей пуст");
     }
     if run.targets.len() > MAX_TARGETS {
         return fail!(
-            "errors.icmp.tooManyTargets",
+            "icmp.validate.targetLimit",
             format!("Целей больше предела в {MAX_TARGETS}"),
             limit = MAX_TARGETS,
         );
     }
     if !(MIN_PERIOD_MS..=MAX_PERIOD_MS).contains(&run.period_ms) {
         return fail!(
-            "errors.icmp.period",
+            "icmp.run.period",
             format!("Период вне пределов {MIN_PERIOD_MS}..{MAX_PERIOD_MS} мс"),
             min = MIN_PERIOD_MS,
             max = MAX_PERIOD_MS,
@@ -247,7 +247,7 @@ pub fn prepare(run: &IcmpRun) -> AppResult<PreparedRun> {
     }
     if run.count != ENDLESS_COUNT && !(MIN_COUNT..=MAX_COUNT).contains(&run.count) {
         return fail!(
-            "errors.icmp.count",
+            "icmp.run.count",
             format!("Число проверок: от {MIN_COUNT} до {MAX_COUNT}"),
             min = MIN_COUNT,
             max = MAX_COUNT,
@@ -255,7 +255,7 @@ pub fn prepare(run: &IcmpRun) -> AppResult<PreparedRun> {
     }
     if !(MIN_TIMEOUT_MS..=MAX_TIMEOUT_MS).contains(&run.timeout_ms) {
         return fail!(
-            "errors.icmp.timeout",
+            "icmp.run.timeout",
             format!("Таймаут вне пределов {MIN_TIMEOUT_MS}..{MAX_TIMEOUT_MS} мс"),
             min = MIN_TIMEOUT_MS,
             max = MAX_TIMEOUT_MS,
@@ -348,7 +348,7 @@ mod tests {
 
         assert_eq!(
             prepare(&run).expect_err("слишком много целей").code,
-            "errors.icmp.tooManyTargets"
+            "icmp.validate.targetLimit"
         );
     }
 
@@ -360,7 +360,7 @@ mod tests {
 
             assert_eq!(
                 prepare(&run).expect_err("период вне пределов").code,
-                "errors.icmp.period"
+                "icmp.run.period"
             );
         }
     }
@@ -372,7 +372,7 @@ mod tests {
 
         assert_eq!(
             prepare(&run).expect_err("количество вне пределов").code,
-            "errors.icmp.count"
+            "icmp.run.count"
         );
     }
 
@@ -393,7 +393,7 @@ mod tests {
 
             assert_eq!(
                 prepare(&run).expect_err("таймаут вне пределов").code,
-                "errors.icmp.timeout"
+                "icmp.run.timeout"
             );
         }
     }

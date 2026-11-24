@@ -1,10 +1,11 @@
 <script setup lang="ts">
 // Диалог пресетов настроек инструмента.
 //
-// Здесь пресетами управляют: загрузить, переименовать, дублировать, удалить,
-// сохранить текущие настройки и отменить правки. Загрузка и удаление
-// спрашивают подтверждение: первое заменяет работу сеанса, второе защищает
-// от промаха.
+// Здесь пресетами управляют: создать с чистых настроек, загрузить,
+// переименовать, дублировать, удалить, сохранить текущие настройки
+// и отменить правки. Загрузка, создание поверх несохранённых правок
+// и удаление спрашивают подтверждение: первое заменяет работу сеанса,
+// второе теряет несохранённое, третье защищает от промаха.
 //
 // Диалог не держит настройки сам: снимок и применение приносит инструмент
 // через `source`. Здесь только разметка и короткие обработчики.
@@ -209,6 +210,51 @@ async function revertChanges(): Promise<void> {
   emit("applied");
 }
 
+/**
+ * Создаёт пресет с чистых настроек: привязка снимается, сеанс возвращается
+ * к умолчаниям, диалог закрывается.
+ */
+async function startNew(): Promise<void> {
+  note.value = null;
+
+  try {
+    await props.source.startNew();
+  } catch (error) {
+    note.value = t(props.texts.notes.startNewFailed, { reason: describeError(error) });
+    return;
+  }
+
+  emit("applied");
+  emit("update:visible", false);
+}
+
+/** Несохранённая работа: правки открытого пресета или ввод без привязки. */
+function hasUnsavedWork(): boolean {
+  return props.source.bound ? props.source.changed : props.source.occupied;
+}
+
+/** Очистка теряет несохранённое: тогда сначала спрашиваем. */
+function requestStartNew(event: MouseEvent): void {
+  if (!hasUnsavedWork()) {
+    void startNew();
+    return;
+  }
+
+  const target = event.currentTarget;
+  if (!(target instanceof HTMLElement)) return;
+
+  requireConfirm(confirm, {
+    target,
+    message: t(props.texts.confirm.startNewMessage),
+    acceptLabel: t(props.texts.confirm.startNewAccept),
+    rejectLabel: t(props.texts.confirm.cancel),
+    acceptProps: CONFIRM_PRIMARY_ACCEPT,
+    accept: () => {
+      void startNew();
+    },
+  });
+}
+
 /** Создаёт новый пресет из текущих настроек. */
 async function createNew(): Promise<void> {
   const title = newTitle.value.trim();
@@ -367,7 +413,17 @@ async function remove(preset: Preset): Promise<void> {
     </div>
 
     <template #footer>
-      <Button :label="t(texts.close)" text @click="emit('update:visible', false)" />
+      <div class="presets__footer">
+        <Button
+          class="presets__footer-new"
+          :label="t(texts.create.startNew)"
+          icon="pi pi-file-plus"
+          severity="secondary"
+          text
+          @click="requestStartNew"
+        />
+        <Button :label="t(texts.close)" text @click="emit('update:visible', false)" />
+      </div>
     </template>
   </Dialog>
 </template>

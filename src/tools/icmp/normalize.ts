@@ -29,7 +29,7 @@ export type TargetInputResult = { ok: true } | { ok: false; code: string; params
 export function parseTargetInput(input: string): TargetInputResult {
   const raw = input.trim();
   if (raw === "") {
-    return { ok: false, code: "icmp.validate.emptyTarget", params: {} };
+    return { ok: false, code: "common.hostEmpty", params: {} };
   }
 
   const literal = parseLiteral(raw);

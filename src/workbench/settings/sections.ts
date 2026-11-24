@@ -19,8 +19,8 @@ export interface SettingsSectionMeta {
 /** Порядок разделов: настройка, обслуживание, сведения. */
 export const SETTINGS_SECTIONS: SettingsSectionMeta[] = [
   { id: "profiles", titleKey: "settings.section.profiles", icon: "pi pi-users" },
-  { id: "language", titleKey: "settings.section.language", icon: "pi pi-globe" },
+  { id: "language", titleKey: "common.language", icon: "pi pi-globe" },
   { id: "window", titleKey: "settings.section.window", icon: "pi pi-window-maximize" },
-  { id: "log", titleKey: "settings.section.log", icon: "pi pi-file" },
+  { id: "log", titleKey: "common.journal", icon: "pi pi-file" },
   { id: "app", titleKey: "settings.section.app", icon: "pi pi-info-circle" },
 ];

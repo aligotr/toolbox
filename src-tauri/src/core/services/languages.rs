@@ -5,7 +5,7 @@
 //!
 //! Встроенных словарей два, `ru` и `en`, и они живут в интерфейсе (ADR 0057).
 //! Здесь - только внешние файлы: приложение их **не перезаписывает**.
-//! Единственное, что оно пишет само, - файл дополнений `<code>.missing.jsonc`.
+//! Единственное, что оно пишет само, - файл изменений `<code>.updates.jsonc`.
 
 use std::fs;
 use std::io::ErrorKind;
@@ -81,7 +81,7 @@ pub fn catalog(dir: &Path) -> AppResult<Vec<CatalogEntry>> {
         let Some(code) = path.file_stem().and_then(|value| value.to_str()) else {
             continue;
         };
-        // Служебные файлы (`ru.template.jsonc`, `en.missing.jsonc`) словарями
+        // Служебные файлы (`ru.template.jsonc`, `en.updates.jsonc`) словарями
         // не считаются: точка в основе имени означает не код языка.
         if code.contains('.') {
             continue;
@@ -153,8 +153,8 @@ pub fn export(dir: &Path, code: &str, document: &Value) -> AppResult<PathBuf> {
     let text = format!(
         "// Образец словаря ToolBox.\n\
          //\n\
-         // Ключи переименовывать нельзя: это контракт. Подстановки вида {{name}}\n\
-         // оставить как есть. Файл можно комментировать и дополнять;\n\
+         // Ключи и подстановки оставьте как есть: по ним программа находит перевод.\n\
+         // Файл можно комментировать и дополнять;\n\
          // приложение его не перезаписывает.\n\
          {body}\n"
     );
@@ -192,8 +192,8 @@ pub fn export_language(dir: &Path, code: &str, document: &Value) -> AppResult<Pa
         "// Словарь ToolBox.\n\
          //\n\
          // Внешний файл принадлежит пользователю: приложение его не перезаписывает.\n\
-         // Ключи переименовывать нельзя, подстановки вида {{name}} оставить как есть.\n\
-         // Недостающие ключи выгружаются отдельным файлом <code>.missing.jsonc.\n\
+         // Ключи и подстановки оставьте как есть: по ним программа находит перевод.\n\
+         // Недостающие и устаревшие ключи выгружаются отдельным файлом <code>.updates.jsonc.\n\
          {body}\n"
     );
     write_atomic(&target, &text)?;
@@ -202,8 +202,8 @@ pub fn export_language(dir: &Path, code: &str, document: &Value) -> AppResult<Pa
 
 /// Возвращает встроенный язык: переносит внешний файл в корзину.
 ///
-/// Файл дополнений убирается до переноса: если перенос не удался, словарь
-/// остаётся, а список недостающих ключей можно построить заново.
+/// Файл изменений убирается до переноса: если перенос не удался, словарь
+/// остаётся, а список изменений можно построить заново.
 pub fn revert(dir: &Path, trash_dir: &Path, code: &str) -> AppResult<PathBuf> {
     validate_code(code)?;
     let source = file_path(dir, code);
@@ -219,7 +219,7 @@ pub fn revert(dir: &Path, trash_dir: &Path, code: &str) -> AppResult<PathBuf> {
     let target = trash_dir.join(free_file_name(trash_dir, code));
     fs::rename(&source, &target).map_err(|error| {
         AppError::new(
-            "errors.languages.move",
+            "errors.files.move",
             format!(
                 "Не удалось перенести '{}' в '{}': {error}",
                 source.display(),
@@ -236,89 +236,121 @@ pub fn revert(dir: &Path, trash_dir: &Path, code: &str) -> AppResult<PathBuf> {
     Ok(target)
 }
 
-/// Возвращает встроенный язык вместе с уборкой файла дополнений.
+/// Возвращает встроенный язык вместе с уборкой файла изменений.
 ///
-/// Порядок задан здесь, а не в команде: файл дополнений относится
+/// Порядок задан здесь, а не в команде: файл изменений относится
 /// к внешнему словарю и устаревает раньше, чем словарь покидает папку.
 /// При отказе переноса описание исчезнувшего словаря не остаётся.
 pub fn revert_builtin(dir: &Path, trash_dir: &Path, code: &str) -> AppResult<PathBuf> {
-    missing_write(dir, code, None)?;
+    updates_write(dir, code, None)?;
     revert(dir, trash_dir, code)
 }
 
-/// Итог записи файла дополнений.
+/// Итог записи файла изменений.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct MissingResult {
-    /// Путь файла; `None`, если недостающих ключей нет и файл убран.
+pub struct UpdatesResult {
+    /// Путь файла; `None`, если изменений нет и файл убран.
     pub path: Option<String>,
     /// Файл создан или обновлён; ложь - уже был актуален.
     pub written: bool,
-    /// Сколько ключей в файле дополнений; ноль, если файла нет.
+    /// Сколько строк в файле изменений; ноль, если файла нет.
     pub count: usize,
+    /// Сколько ключей добавить.
+    pub added: usize,
+    /// Сколько ключей убрать.
+    pub removed: usize,
 }
 
-/// Путь файла дополнений: `<code>.missing.jsonc`.
-pub fn missing_path(dir: &Path, code: &str) -> PathBuf {
+/// Путь файла изменений: `<code>.updates.jsonc`.
+pub fn updates_path(dir: &Path, code: &str) -> PathBuf {
+    dir.join(format!("{code}.updates.{EXTENSION}"))
+}
+
+/// Путь прежнего файла дополнений: `<code>.missing.jsonc`.
+fn legacy_missing_path(dir: &Path, code: &str) -> PathBuf {
     dir.join(format!("{code}.missing.{EXTENSION}"))
 }
 
-/// Пишет файл недостающих ключей или убирает его, если писать нечего.
+/// Убирает файл, если он есть: отсутствие не ошибка.
+fn remove_if_exists(path: &Path) -> AppResult<()> {
+    match fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(AppError::new(
+            "errors.languages.updatesRemove",
+            format!("Не удалось убрать '{}': {error}", path.display()),
+        )
+        .with("path", path.display())
+        .with("reason", error)),
+    }
+}
+
+/// Пишет файл изменений или убирает его, если писать нечего.
 ///
-/// Текст детерминирован, поэтому актуальный файл сравнивается побайтово
-/// и не перезаписывается. Это не словарь: каталог его пропускает.
-pub fn missing_write(dir: &Path, code: &str, document: Option<&Value>) -> AppResult<MissingResult> {
+/// `messages` - что добавить, `obsolete` - что убрать. Текст детерминирован,
+/// поэтому актуальный файл сравнивается побайтово и не перезаписывается.
+/// Это не словарь: каталог его пропускает.
+pub fn updates_write(dir: &Path, code: &str, document: Option<&Value>) -> AppResult<UpdatesResult> {
     validate_code(code)?;
-    let target = missing_path(dir, code);
+    let target = updates_path(dir, code);
+
+    // Прежний файл дополнений больше не нужен: его место занял файл изменений.
+    remove_if_exists(&legacy_missing_path(dir, code))?;
 
     let Some(document) = document else {
-        if target.exists() {
-            fs::remove_file(&target).map_err(|error| {
-                AppError::new(
-                    "errors.languages.missingRemove",
-                    format!("Не удалось убрать '{}': {error}", target.display()),
-                )
-                .with("path", target.display())
-                .with("reason", error)
-            })?;
-        }
-        return Ok(MissingResult {
+        remove_if_exists(&target)?;
+        return Ok(UpdatesResult {
             path: None,
             written: false,
             count: 0,
+            added: 0,
+            removed: 0,
         });
     };
 
-    let count = document
+    let added = document
         .get("messages")
         .and_then(Value::as_object)
         .map(Map::len)
         .unwrap_or(0);
+    let removed = document
+        .get("obsolete")
+        .and_then(Value::as_array)
+        .map(Vec::len)
+        .unwrap_or(0);
+    let count = added + removed;
 
     let body = serialize_document(document)?;
     let text = format!(
-        "// Недостающие ключи словаря.\n\
+        "// Изменения словаря ToolBox.\n\
          //\n\
          // Файл создаёт программа; правки будут перезаписаны.\n\
-         // Скопируйте нужные строки в свой словарь.\n\
+         // messages - ключи, которых нет в словаре или у которых не хватает форм:\n\
+         // перенесите их в свой словарь.\n\
+         // obsolete - ключи, которых больше нет в программе: удалите их из словаря.\n\
          {body}\n"
     );
 
     if let Ok(current) = fs::read_to_string(&target)
         && current == text
     {
-        return Ok(MissingResult {
+        return Ok(UpdatesResult {
             path: Some(target.display().to_string()),
             written: false,
             count,
+            added,
+            removed,
         });
     }
 
     ensure_dir(dir)?;
     write_atomic(&target, &text)?;
-    Ok(MissingResult {
+    Ok(UpdatesResult {
         path: Some(target.display().to_string()),
         written: true,
         count,
+        added,
+        removed,
     })
 }
 
@@ -395,7 +427,7 @@ fn read(path: &Path, code: &str) -> AppResult<Language> {
 /// Отказ чтения с путём: без пути причину не найти.
 fn read_error(path: &Path, error: &std::io::Error) -> AppError {
     AppError::new(
-        "errors.languages.read",
+        "errors.files.read",
         format!("Не удалось прочитать '{}': {error}", path.display()),
     )
     .with("path", path.display())
@@ -427,7 +459,7 @@ fn describe_parse_error(error: json5::Error) -> AppError {
         .with("line", position.line + 1)
         .with("column", position.column + 1)
         .with("reason", reason),
-        None => AppError::new("errors.languages.parsePlain", reason.to_owned())
+        None => AppError::new("errors.core.unexpected", reason.to_owned())
             .with("reason", reason),
     }
 }
@@ -583,7 +615,8 @@ mod tests {
         fs::write(dir.join("en.jsonc"), SAMPLE).expect("словарь");
         fs::write(dir.join("broken.jsonc"), "{").expect("битый словарь");
         fs::write(dir.join("legacy.json"), SAMPLE).expect("старый .json");
-        fs::write(dir.join("en.missing.jsonc"), "{}").expect("файл дополнений");
+        fs::write(dir.join("en.updates.jsonc"), "{}").expect("файл изменений");
+        fs::write(dir.join("en.missing.jsonc"), "{}").expect("прежний файл дополнений");
         fs::write(dir.join("notes.txt"), "не словарь").expect("чужой файл");
 
         let items = catalog(&dir).expect("каталог");
@@ -702,60 +735,79 @@ mod tests {
     }
 
     #[test]
-    fn revert_builtin_removes_missing_file_with_dictionary() {
+    fn revert_builtin_removes_updates_file_with_dictionary() {
         let root = temp_dir("revert-builtin");
         let dir = root.join("languages");
         let trash = root.join("trash").join("languages");
         fs::create_dir_all(&dir).expect("папка словарей");
         fs::write(dir.join("en.jsonc"), SAMPLE).expect("словарь");
-        let missing = dir.join("en.missing.jsonc");
-        fs::write(&missing, "{}").expect("файл дополнений");
+        let updates = dir.join("en.updates.jsonc");
+        let legacy = dir.join("en.missing.jsonc");
+        fs::write(&updates, "{}").expect("файл изменений");
+        fs::write(&legacy, "{}").expect("прежний файл дополнений");
 
         let target = revert_builtin(&dir, &trash, "en").expect("словарь возвращён");
 
-        assert!(!missing.exists(), "файл дополнений убран");
+        assert!(!updates.exists(), "файл изменений убран");
+        assert!(!legacy.exists(), "прежний файл дополнений убран");
         assert!(!dir.join("en.jsonc").exists(), "внешний файл убран");
         assert!(target.is_file(), "словарь лежит в корзине");
     }
 
     #[test]
-    fn revert_builtin_clears_missing_before_move_fails() {
-        // Порядок: файл дополнений убирается до проверки словаря.
+    fn revert_builtin_clears_updates_before_move_fails() {
+        // Порядок: файлы изменений убираются до проверки словаря.
         let root = temp_dir("revert-builtin-order");
         let dir = root.join("languages");
         let trash = root.join("trash").join("languages");
         fs::create_dir_all(&dir).expect("папка словарей");
-        let missing = dir.join("en.missing.jsonc");
-        fs::write(&missing, "{}").expect("файл дополнений");
+        let updates = dir.join("en.updates.jsonc");
+        let legacy = dir.join("en.missing.jsonc");
+        fs::write(&updates, "{}").expect("файл изменений");
+        fs::write(&legacy, "{}").expect("прежний файл дополнений");
 
         let error = revert_builtin(&dir, &trash, "en").expect_err("словаря нет");
 
         assert_eq!(error.code, "errors.languages.missingFile");
-        assert!(!missing.exists(), "файл дополнений убран до отказа переноса");
+        assert!(!updates.exists(), "файл изменений убран до отказа переноса");
+        assert!(!legacy.exists(), "прежний файл дополнений убран");
     }
 
     #[test]
-    fn missing_write_is_deterministic_and_removed() {
-        let dir = temp_dir("missing-write");
+    fn updates_write_is_deterministic_and_removed() {
+        let dir = temp_dir("updates-write");
         let document = serde_json::json!({
             "name": "English",
-            "messages": { "title": "Settings" }
+            "messages": { "title": "Settings" },
+            "obsolete": ["old.title"]
         });
 
-        let first = missing_write(&dir, "en", Some(&document)).expect("файл записан");
+        let legacy = dir.join("en.missing.jsonc");
+        fs::write(&legacy, "{}").expect("прежний файл дополнений");
+
+        let first = updates_write(&dir, "en", Some(&document)).expect("файл записан");
         assert!(first.written, "первый раз файл создан");
         assert!(first.path.is_some());
-        assert_eq!(first.count, 1, "посчитан один недостающий ключ");
+        assert_eq!(first.added, 1, "посчитан один новый ключ");
+        assert_eq!(first.removed, 1, "посчитан один устаревший ключ");
+        assert_eq!(first.count, 2, "в файле две строки изменений");
+        assert!(!legacy.exists(), "прежний файл дополнений убран");
+        assert!(
+            fs::read_to_string(updates_path(&dir, "en"))
+                .expect("файл изменений")
+                .contains("obsolete"),
+            "в шапке объяснены оба раздела"
+        );
 
-        let second = missing_write(&dir, "en", Some(&document)).expect("файл актуален");
+        let second = updates_write(&dir, "en", Some(&document)).expect("файл актуален");
         assert!(!second.written, "актуальный файл не переписывается");
-        assert_eq!(second.count, 1);
+        assert_eq!(second.count, 2);
 
-        let removed = missing_write(&dir, "en", None).expect("файл убран");
+        let removed = updates_write(&dir, "en", None).expect("файл убран");
         assert!(!removed.written);
         assert!(removed.path.is_none());
-        assert_eq!(removed.count, 0, "у удалённого файла ключей нет");
-        assert!(!missing_path(&dir, "en").exists());
+        assert_eq!(removed.count, 0, "у удалённого файла строк нет");
+        assert!(!updates_path(&dir, "en").exists());
     }
 
     #[test]

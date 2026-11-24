@@ -37,7 +37,7 @@ export function extraAnswers(cell: DnsCell | undefined): number {
 export function statusText(status: CellStatus): string {
   switch (status) {
     case "ok":
-      return t("dnslookup.status.ok");
+      return t("common.ok");
     case "nodata":
       return t("dnslookup.status.nodata");
     case "nxdomain":
@@ -57,9 +57,9 @@ export function statusText(status: CellStatus): string {
     case "bad_response":
       return t("dnslookup.status.badResponse");
     case "cancelled":
-      return t("dnslookup.status.cancelled");
+      return t("common.dash");
     default:
-      return t("dnslookup.status.pending");
+      return t("common.dash");
   }
 }
 
@@ -96,5 +96,5 @@ export function noteFor(cell: DnsCell | undefined): string {
     Одна подпись на шапку раскрытия
     (счёт серверов не нужен: его видно по строкам). */
 export function verdictLabel(verdict: RowVerdict): string {
-  return verdict.differs ? t("dnslookup.verdict.differs") : t("dnslookup.verdict.matches");
+  return verdict.differs ? t("dnslookup.verdict.differs") : t("common.ok");
 }

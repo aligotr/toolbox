@@ -25,12 +25,12 @@ export interface SingletonTabMeta {
 /** Журнал и настройки: их открывает сайдбар, а полоса вкладок показывает наравне с рабочими. */
 export const SINGLETON_TABS: Record<SingletonKind, SingletonTabMeta> = {
   journal: {
-    titleKey: "tab.journal.title",
+    titleKey: "common.journal",
     descriptionKey: "workspace.empty.journalDescription",
     icon: "pi pi-history",
   },
   settings: {
-    titleKey: "tab.settings.title",
+    titleKey: "common.settings",
     descriptionKey: "workspace.empty.settingsDescription",
     icon: "pi pi-cog",
   },

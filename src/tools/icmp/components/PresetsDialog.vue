@@ -16,6 +16,7 @@ import {
   releaseDeletedPreset,
   revertPresetChanges,
   savePresetToCurrent,
+  startNewPreset,
 } from "../presets";
 import type { IcmpSession } from "../types";
 import { ICMP_PRESET_DIALOG_TEXTS } from "./presetTexts";
@@ -49,11 +50,12 @@ const source: PresetDialogSource = {
     return props.session.status.run.loading;
   },
   load: (preset) => applyPreset(props.session, preset),
+  startNew: () => startNewPreset(props.session),
   revert: async () => {
     const result = await revertPresetChanges(props.session);
     return {
       error: result.error,
-      message: result.cleared ? t("icmp.preset.revertedCleared") : t("icmp.preset.reverted"),
+      message: result.cleared ? t("icmp.preset.revertedCleared") : t("presets.reverted"),
     };
   },
   save: () => savePresetToCurrent(props.session),

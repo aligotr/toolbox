@@ -128,7 +128,7 @@ export async function runTargets(session: IcmpSession, targetIds: string[]): Pro
     // для неизвестного `run_id` безопасна, но не даёт проверке идти впустую.
     void cancelIcmp(runId).catch(() => {});
     failRun(session, runId, {
-      text: t("icmp.run.notStarted", { reason: describeError(error) }),
+      text: t("common.runNotStarted", { reason: describeError(error) }),
       code: "journal.icmp.startFailed",
       params: { reason: appErrorOf(error) },
     });
@@ -155,7 +155,7 @@ interface RunFailure {
 function rejectAcceptedRun(session: IcmpSession, runId: string, error: AppError | null): void {
   if (error === null) {
     failRun(session, runId, {
-      text: t("icmp.run.rejected"),
+      text: t("common.runRejected"),
       code: "journal.icmp.startRejected",
       params: {},
     });
@@ -247,7 +247,7 @@ export async function abortSessionRun(session: IcmpSession): Promise<void> {
   try {
     await cancelIcmp(runId);
   } catch (error) {
-    session.status.run.error = t("icmp.run.stopFailed", { reason: describeError(error) });
+    session.status.run.error = t("common.runStopFailed", { reason: describeError(error) });
     write(JOURNAL_SOURCE, "error", "journal.icmp.stopFailed", {
       reason: appErrorOf(error),
     });
@@ -266,7 +266,7 @@ export async function stopRun(session: IcmpSession): Promise<void> {
   try {
     await cancelIcmp(session.runId);
   } catch (error) {
-    session.status.run.error = t("icmp.run.stopFailed", { reason: describeError(error) });
+    session.status.run.error = t("common.runStopFailed", { reason: describeError(error) });
     write(JOURNAL_SOURCE, "error", "journal.icmp.stopFailed", {
       reason: appErrorOf(error),
     });

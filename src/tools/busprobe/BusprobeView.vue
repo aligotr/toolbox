@@ -66,7 +66,7 @@ onUnmounted(() => {
       </p>
 
       <section v-if="reply" class="reply">
-        <h2 class="busprobe__section-title">{{ t("busprobe.view.replyTitle") }}</h2>
+        <h2 class="busprobe__section-title">{{ t("common.answer") }}</h2>
 
         <dl class="reply__facts">
           <div class="reply__fact">

@@ -15,7 +15,7 @@ import { idle, type OperationStatus } from "../../infra/status";
 import {
   BUILTIN_LANGUAGES,
   missingKeysOf,
-  sourceFor,
+  obsoleteKeysOf,
   type BuiltinLanguage,
   type DictionaryFile,
   type LanguageEntry,
@@ -33,12 +33,12 @@ export const languages = reactive<LanguagesState>({
   loaded: false,
 });
 
-/** Состояния операций: каталог, выгрузка, возврат, дополнения. */
-export const status = reactive<Record<"list" | "export" | "revert" | "missing", OperationStatus>>({
+/** Состояния операций: каталог, выгрузка, возврат, изменения. */
+export const status = reactive<Record<"list" | "export" | "revert" | "updates", OperationStatus>>({
   list: idle(),
   export: idle(),
   revert: idle(),
-  missing: idle(),
+  updates: idle(),
 });
 
 /** Прочитанные внешние словари: переключение не перечитывает файл. */
@@ -80,7 +80,7 @@ async function readLanguages(): Promise<void> {
             nameKey: language.nameKey,
             problem: null,
             missing: 0,
-            extra: 0,
+            obsolete: 0,
             builtin: true,
             overrides: false,
             messages: null,
@@ -109,7 +109,7 @@ function entryOfFile(file: CatalogEntry, builtin: BuiltinLanguage | null): Langu
     ...(builtin ? { nameKey: builtin.nameKey } : {}),
     problem: file.problem,
     missing: 0,
-    extra: 0,
+    obsolete: 0,
     builtin: builtin !== null,
     overrides: builtin !== null,
     messages: file.messages,
@@ -135,6 +135,6 @@ function entryOfFile(file: CatalogEntry, builtin: BuiltinLanguage | null): Langu
   return {
     ...base,
     missing: missingKeysOf(file.code, file.messages).length,
-    extra: Object.keys(file.messages).filter((key) => !(key in sourceFor(file.code))).length,
+    obsolete: obsoleteKeysOf(file.code, file.messages).length,
   };
 }

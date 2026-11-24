@@ -18,7 +18,7 @@ import {
   checkLanguageFile,
   exportLanguage,
   exportLanguageSample,
-  exportMissing,
+  exportUpdates,
   languages,
   loadLanguages,
   revertLanguage,
@@ -156,7 +156,7 @@ onUnmounted(() => {
 <template>
   <section class="language wb-section">
     <header class="wb-section__head">
-      <h2 class="wb-section__title">{{ t("settings.language.title") }}</h2>
+      <h2 class="wb-section__title">{{ t("common.language") }}</h2>
       <p class="wb-section__lead">{{ t("settings.language.lead") }}</p>
     </header>
 
@@ -196,10 +196,10 @@ onUnmounted(() => {
             <span v-if="item.problem !== null" class="language__badge language__badge--bad">
               {{ t("settings.language.broken") }}
             </span>
-            <span v-else-if="item.overrides" class="language__badge">
-              {{ t("settings.language.override") }}
-            </span>
-            <span v-else-if="item.builtin" class="language__badge language__badge--ok">
+            <span
+              v-else-if="item.builtin && !item.overrides"
+              class="language__badge language__badge--ok"
+            >
               {{ t("settings.language.builtin") }}
             </span>
             <span v-else class="language__badge">
@@ -216,6 +216,9 @@ onUnmounted(() => {
             </span>
             <span v-if="item.problem === null && item.missing > 0" class="language__badge">
               {{ t("settings.language.missingCount", { count: item.missing }) }}
+            </span>
+            <span v-if="item.problem === null && item.obsolete > 0" class="language__badge">
+              {{ t("settings.language.obsoleteCount", { count: item.obsolete }) }}
             </span>
           </span>
         </span>
@@ -243,27 +246,25 @@ onUnmounted(() => {
           />
           <Button
             v-if="(item.overrides || !item.builtin) && item.problem === null"
-            :label="t('settings.language.missingExport')"
+            :label="t('settings.language.updatesExport')"
             icon="pi pi-file-export"
             size="small"
             severity="secondary"
             text
-            :loading="status.missing.loading"
-            @click.stop.prevent="exportMissing(item)"
+            :loading="status.updates.loading"
+            @click.stop.prevent="exportUpdates(item)"
           />
         </span>
       </div>
     </div>
 
     <p
-      v-if="active !== null && active.problem === null && active.missing > 0"
+      v-if="
+        active !== null && active.problem === null && (active.missing > 0 || active.obsolete > 0)
+      "
       class="language__hint"
     >
-      {{ t("settings.language.partial", { count: active.missing }) }}
-    </p>
-
-    <p v-if="active !== null && active.extra > 0" class="language__hint">
-      {{ t("settings.language.extra", { count: active.extra }) }}
+      {{ t("settings.language.updatesHint") }}
     </p>
 
     <p v-if="status.list.error" class="language__error">
@@ -272,8 +273,8 @@ onUnmounted(() => {
     <p v-if="status.revert.error" class="language__error">
       {{ status.revert.error }}
     </p>
-    <p v-if="status.missing.error" class="language__error">
-      {{ status.missing.error }}
+    <p v-if="status.updates.error" class="language__error">
+      {{ status.updates.error }}
     </p>
 
     <div class="language__actions">

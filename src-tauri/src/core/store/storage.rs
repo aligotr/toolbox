@@ -309,7 +309,7 @@ impl Storage {
             )
             .with("path", path.display()),
             _ => AppError::new(
-                "errors.storage.write",
+                "errors.files.write",
                 format!("Не удалось записать '{}': {error}", path.display()),
             )
             .with("path", path.display())

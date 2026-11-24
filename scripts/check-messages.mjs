@@ -43,7 +43,7 @@ const KEY_PATTERNS = [
   // Ключ подписи, переданной общему компоненту данными:
   // `dialogTitle: "dnslookup.preset.dialogTitle"`; универсальные действия
   // приходят так же: `close: "common.close"` (ADR 0078).
-  /:\s*"((?:(?:dnslookup|icmp)\.preset|common)\.[\w.]+)"/g,
+  /:\s*"((?:(?:dnslookup|icmp)\.preset|common|presets)\.[\w.]+)"/g,
 ];
 
 /** Все исходники интерфейса. */
@@ -104,6 +104,32 @@ function printLimited(prefix, items, describe = (item) => item) {
   if (items.length > LIST_LIMIT) {
     console.warn(`  … и ещё ${items.length - LIST_LIMIT}`);
   }
+}
+
+/**
+ * Одинаковые тексты в одном словаре.
+ *
+ * Дубль прячет общий смысл: правка одного места оставляет второе устаревшим.
+ * Пока ключи не опубликованы, дубли сливаются напрямую, без baseline.
+ */
+function checkDuplicates(code, messages) {
+  const groups = new Map();
+  for (const [key, message] of Object.entries(messages)) {
+    const text = JSON.stringify(message);
+    const keys = groups.get(text) ?? [];
+    keys.push(key);
+    groups.set(text, keys);
+  }
+
+  const duplicates = [...groups.values()].filter((keys) => keys.length > 1);
+  if (duplicates.length === 0) {
+    console.log(`Словарь «${code}»: одинаковых текстов нет.`);
+    return true;
+  }
+
+  console.error(`Словарь «${code}»: одинаковые тексты (i18n.md):`);
+  for (const keys of duplicates) console.error(`  ${keys.join(", ")}`);
+  return false;
 }
 
 /** Ключи-исключения капитализации: единица измерения - символ, не метка. */
@@ -209,7 +235,7 @@ for (const file of walkRust(path.join(root, "src-tauri", "src"))) {
   const text = readFileSync(file, "utf8");
   const relative = path.relative(root, file).replaceAll("\\", "/");
 
-  for (const match of text.matchAll(/"(?:errors|notifications)\.[\w.]+"/g)) {
+  for (const match of text.matchAll(/"(?:errors|notifications|dnslookup|icmp|common)\.[\w.]+"/g)) {
     const key = match[0].slice(1, -1);
     if (!used.has(key)) used.set(key, relative);
   }
@@ -249,6 +275,8 @@ if (unused.length > 0) {
 console.log(`Русский словарь полон: ${used.size} ключей.`);
 
 if (!checkCapitalization("ru", ruMessages)) process.exit(1);
+if (!checkDuplicates("ru", ruMessages)) process.exit(1);
 
 if (!checkBuiltin("en", enMessages)) process.exit(1);
 if (!checkCapitalization("en", enMessages)) process.exit(1);
+if (!checkDuplicates("en", enMessages)) process.exit(1);

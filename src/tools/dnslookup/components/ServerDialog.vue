@@ -107,7 +107,7 @@ function remove(serverId: string): void {
 
       <section class="servers__form">
         <label class="servers__field">
-          <span class="servers__field-label">{{ t("dnslookup.servers.address") }}</span>
+          <span class="servers__field-label">{{ t("common.address") }}</span>
           <InputText
             v-model="address"
             placeholder="10.0.0.53:53"

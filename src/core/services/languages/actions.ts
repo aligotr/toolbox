@@ -1,11 +1,11 @@
-// Действия со словарями: выгрузка, возврат, файл дополнений и образец.
+// Действия со словарями: выгрузка, возврат, файл изменений и образец.
 //
 // Внешний файл принадлежит пользователю и не перезаписывается. Файл
-// дополнений - артефакт программы: его пишет ядро, оно же уведомляет
+// изменений - артефакт программы: его пишет ядро, оно же уведомляет
 // о записи (ADR 0057, ADR 0058).
 
 import { invoke } from "@tauri-apps/api/core";
-import type { MissingResult } from "@/contracts/languages";
+import type { UpdatesResult } from "@/contracts/languages";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { appErrorOf, describeError } from "../../infra/errors";
 import { ruMessages } from "../../infra/i18n/messages";
@@ -15,7 +15,7 @@ import {
   BUILTIN_LANGUAGE,
   BUILTIN_LANGUAGE_NAME,
   builtinLanguage,
-  missingDocument,
+  updatesDocument,
   type LanguageEntry,
 } from "./model";
 import { loadLanguages, status } from "./state";
@@ -84,46 +84,46 @@ export async function revertLanguage(code: string): Promise<string | null> {
   }
 }
 
-/** Итог записи файла дополнений из ядра. */
-export type { MissingResult };
+/** Итог записи файла изменений из ядра. */
+export type { UpdatesResult };
 
 /**
- * Выгружает недостающие ключи внешнего словаря.
+ * Выгружает изменения словаря: что добавить и что убрать.
  *
  * `document` = `null` убирает устаревший файл. Запись и уведомление
- * о ней делает ядро: файл дополнений - его артефакт. Исходы без записи
+ * о ней делает ядро: файл изменений - его артефакт. Исходы без записи
  * уведомляет интерфейс, чтобы каждое нажатие получало ответ.
  */
-export async function exportMissing(entry: LanguageEntry): Promise<MissingResult | null> {
-  if (status.missing.loading) return null;
+export async function exportUpdates(entry: LanguageEntry): Promise<UpdatesResult | null> {
+  if (status.updates.loading) return null;
 
-  status.missing.loading = true;
-  status.missing.error = null;
+  status.updates.loading = true;
+  status.updates.error = null;
   try {
-    const result = await invoke<MissingResult>("language_missing_write", {
+    const result = await invoke<UpdatesResult>("language_updates_write", {
       code: entry.code,
-      document: missingDocument(entry),
+      document: updatesDocument(entry),
     });
 
     // О записи файла уведомляет ядро. Здесь - исходы без записи: файл
-    // уже актуален или недостающих ключей нет и устаревший файл убран.
+    // уже актуален или изменений нет и устаревший файл убран.
     if (!result.written) {
-      const group = `language-missing-${entry.code}`;
+      const group = `language-updates-${entry.code}`;
       if (result.path === null) {
-        notify({ kind: "info", code: "notifications.languages.missingNone", group });
+        notify({ kind: "info", code: "notifications.languages.updatesNone", group });
       } else {
-        notify({ kind: "info", code: "notifications.languages.missingActual", group });
+        notify({ kind: "info", code: "notifications.languages.updatesActual", group });
       }
     }
     return result;
   } catch (error) {
-    status.missing.error = describeError(error);
-    write(JOURNAL_CORE_SOURCE, "error", "journal.languages.missingError", {
+    status.updates.error = describeError(error);
+    write(JOURNAL_CORE_SOURCE, "error", "journal.languages.updatesError", {
       reason: error,
     });
     return null;
   } finally {
-    status.missing.loading = false;
+    status.updates.loading = false;
   }
 }
 

@@ -148,7 +148,7 @@ function onDraftFamilyChange(event: { value: unknown }): void {
 
 // Кнопка добавления стоит в строке фильтров: экран открывает черновик
 // через ref, а состояние строки остаётся у таблицы.
-defineExpose({ openDraft });
+defineExpose({ openDraft, closeDraft });
 
 /** Классы строки: черновик и недавний дубликат. */
 function rowClass(target: IcmpTarget): string {
@@ -227,7 +227,7 @@ function packetTime(packet: PacketRecord): string {
             v-model="draftText"
             size="small"
             :class="{ 'p-invalid': draftError }"
-            :placeholder="t('icmp.view.targetPlaceholder')"
+            :placeholder="t('common.host')"
             :aria-invalid="draftError !== null"
             :aria-label="t('icmp.view.targetAria')"
             @keyup.enter="submitDraft"
@@ -249,7 +249,7 @@ function packetTime(packet: PacketRecord): string {
         <div class="icmp-table__draft-actions">
           <ToolDraftActions
             :disabled="busy"
-            :cancel-label="t('icmp.view.cancelAdd')"
+            :cancel-label="t('common.cancelAdd')"
             @accept="submitDraft"
             @cancel="closeDraft"
           />
@@ -289,7 +289,7 @@ function packetTime(packet: PacketRecord): string {
                 :class="{ 'tool-table__expand--open': isExpanded(data.id) }"
                 :aria-expanded="isExpanded(data.id)"
                 :aria-label="
-                  isExpanded(data.id) ? t('icmp.table.collapse') : t('icmp.table.expand')
+                  isExpanded(data.id) ? t('common.collapseDetails') : t('common.details')
                 "
                 @click="toggle(data.id)"
               />
@@ -358,7 +358,7 @@ function packetTime(packet: PacketRecord): string {
         </template>
       </Column>
 
-      <Column :header="t('icmp.table.status')" :style="{ minWidth: STATUS_COLUMN_MIN_WIDTH }">
+      <Column :header="t('common.status')" :style="{ minWidth: STATUS_COLUMN_MIN_WIDTH }">
         <template #body="{ data }">
           <span v-if="!isDraft(data.id)" :class="statusClass(targetStatus(data, busy))">
             {{ statusText(targetStatus(data, busy)) }}
@@ -370,7 +370,7 @@ function packetTime(packet: PacketRecord): string {
     <template #expansion-head="{ data, toggle }">
       <ToolExpansionHead
         :row-name="data.input"
-        :collapse-label="t('icmp.table.collapseShort')"
+        :collapse-label="t('common.collapse')"
         @collapse="toggle(data.id)"
       >
         <template #name-addon>
@@ -397,7 +397,7 @@ function packetTime(packet: PacketRecord): string {
             <table class="icmp-details">
               <thead>
                 <tr>
-                  <th scope="col">{{ t("icmp.table.address") }}</th>
+                  <th scope="col">{{ t("common.address") }}</th>
                   <th scope="col">{{ t("icmp.table.family") }}</th>
                   <th scope="col">{{ t("icmp.table.sent") }}</th>
                   <th scope="col">{{ t("icmp.table.received") }}</th>
@@ -406,7 +406,7 @@ function packetTime(packet: PacketRecord): string {
                   <th scope="col">{{ t("icmp.table.avg") }}</th>
                   <th scope="col">{{ t("icmp.table.max") }}</th>
                   <th scope="col">{{ t("icmp.table.last") }}</th>
-                  <th scope="col">{{ t("icmp.table.status") }}</th>
+                  <th scope="col">{{ t("common.status") }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -453,10 +453,10 @@ function packetTime(packet: PacketRecord): string {
             <table class="icmp-details">
               <thead>
                 <tr>
-                  <th scope="col">{{ t("icmp.table.address") }}</th>
+                  <th scope="col">{{ t("common.address") }}</th>
                   <th scope="col">{{ t("icmp.table.family") }}</th>
                   <th scope="col">{{ t("icmp.table.sequence") }}</th>
-                  <th scope="col">{{ t("icmp.table.status") }}</th>
+                  <th scope="col">{{ t("common.status") }}</th>
                   <th scope="col">{{ t("icmp.table.rtt") }}</th>
                   <th scope="col">{{ t("icmp.table.ttl") }}</th>
                   <th scope="col">{{ t("icmp.table.time") }}</th>

@@ -144,7 +144,7 @@ fn normalize(servers: &[StoredServer]) -> AppResult<Vec<StoredServer>> {
         let address = parse_server_address(&server.address)?;
         if addresses.contains(&address) {
             return fail!(
-                "errors.dnslookup.servers.duplicateAddress",
+                "dnslookup.run.duplicateServer",
                 format!("Сервер {address} указан дважды"),
                 address = address,
             );

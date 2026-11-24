@@ -13,6 +13,7 @@ import {
   capturePresetPayload,
   parsePresetPayload,
 } from "../../src/tools/dnslookup/presets/format.ts";
+import { startNewPreset } from "../../src/tools/dnslookup/presets/apply.ts";
 import type { DnsSession } from "../../src/tools/dnslookup/types.ts";
 
 installBuiltin(ruMessages);
@@ -86,6 +87,46 @@ test("неизвестные фильтры заменяются умолчан�
   });
 
   assert.deepEqual(parsed?.payload.filters, { search: "", status: "all", diffOnly: false });
+});
+
+test("новый пресет очищает вход и снимает привязку", async () => {
+  const session = {
+    rows: [{ id: "r1", input: "example.test", name: "example.test", type: "A" }],
+    servers: ["system", "google"],
+    defaultType: "MX",
+    cells: new Map([["r1:system", { status: "ok", answers: [], elapsedMs: null, error: null }]]),
+    customServers: [{ id: "custom", label: "Свой", address: "1.1.1.1:53", kind: "custom" }],
+    systemAddresses: ["10.0.0.1"],
+    serversBroken: false,
+    runId: null,
+    progress: { total: 1, done: 1 },
+    status: {
+      run: { loading: false, error: "прошлый отказ" },
+      servers: { loading: false, error: null },
+      serversSave: { loading: false, error: null },
+    },
+    filters: { search: "example", status: "error", diffOnly: true },
+    hiddenServers: ["google"],
+    highlightRowId: "r1",
+    presetId: "p1",
+    presetTitle: "Старый пресет",
+    presetSnapshot: "{}",
+  } as unknown as DnsSession;
+
+  await startNewPreset(session);
+
+  assert.deepEqual(session.rows, []);
+  assert.equal(session.cells.size, 0);
+  assert.deepEqual(session.servers, ["system", "yandex"]);
+  assert.equal(session.defaultType, "A");
+  assert.deepEqual(session.filters, { search: "", status: "all", diffOnly: false });
+  assert.deepEqual(session.hiddenServers, []);
+  assert.equal(session.highlightRowId, null);
+  assert.equal(session.progress.done, 0);
+  assert.equal(session.presetId, null);
+  assert.equal(session.presetTitle, null);
+  assert.equal(session.presetSnapshot, null);
+  assert.equal(session.customServers.length, 1);
 });
 
 test("снимок сеанса разбирается обратно без изменений", () => {

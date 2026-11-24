@@ -29,6 +29,8 @@ export interface PresetDialogSource {
   readonly running: boolean;
   /** Загружает пресет в сеанс. */
   load(preset: Preset): Promise<PresetApplyResult>;
+  /** Снимает пресет и очищает настройки сеанса до умолчаний. */
+  startNew(): Promise<void>;
   /** Отменяет правки по снимку открытого пресета. */
   revert(): Promise<PresetRevertOutcome>;
   /** Сохраняет настройки в открытый пресет. */
@@ -39,6 +41,17 @@ export interface PresetDialogSource {
   adoptTitle(preset: Preset): void;
   /** Снимает привязку после удаления открытого пресета. */
   releaseDeleted(presetId: string): void;
+}
+
+/** Подписи подтверждения без доменных замен строк и целей. */
+export type PresetConfirmTexts = Omit<
+  PresetDialogTexts["confirm"],
+  "replaceMessage" | "replaceRunningMessage"
+>;
+
+/** Общие подписи диалога: доменные подтверждения добавляет инструмент. */
+export interface PresetDialogBaseTexts extends Omit<PresetDialogTexts, "confirm"> {
+  confirm: PresetConfirmTexts;
 }
 
 /** Подписи панели пресета: ключи словаря инструмента. */
@@ -67,7 +80,6 @@ export interface PresetDialogTexts {
     empty: string;
   };
   row: {
-    badgeDefault: string;
     unknownSavedAt: string;
     renameAria: string;
     renameSave: string;
@@ -87,6 +99,8 @@ export interface PresetDialogTexts {
   create: {
     newTitle: string;
     saveAs: string;
+    /** Кнопка «Пустой пресет»: очищает настройки и закрывает диалог. */
+    startNew: string;
   };
   confirm: {
     loadAccept: string;
@@ -95,6 +109,8 @@ export interface PresetDialogTexts {
     deleteMessage: string;
     replaceMessage: string;
     replaceRunningMessage: string;
+    startNewAccept: string;
+    startNewMessage: string;
   };
   notes: {
     defaultError: string;
@@ -106,6 +122,7 @@ export interface PresetDialogTexts {
     saved: string;
     notSaved: string;
     revertFailed: string;
+    startNewFailed: string;
     created: string;
     notCreated: string;
     renamed: string;

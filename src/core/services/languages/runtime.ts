@@ -6,13 +6,13 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import type { AppError } from "@/contracts/errors";
-import type { LanguageDocument, MissingResult } from "@/contracts/languages";
+import type { LanguageDocument, UpdatesResult } from "@/contracts/languages";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { appErrorOf } from "../../infra/errors";
 import { isLocaleTag, setCatalog, type Messages } from "../../infra/i18n";
 import { ruMessages } from "../../infra/i18n/messages";
 import { write } from "../../infra/journal";
-import { BUILTIN_LANGUAGE, builtinMessages, mergeMessages, missingDocumentFor } from "./model";
+import { BUILTIN_LANGUAGE, builtinMessages, mergeMessages, updatesDocumentFor } from "./model";
 import { cache, languages } from "./state";
 
 /**
@@ -45,7 +45,7 @@ export async function activateLanguage(code: string | null): Promise<string> {
 /**
  * Проверяет активный внешний словарь при запуске.
  *
- * Недостающие ключи пишет и сравнивает ядро: совпавший файл не переписывается
+ * Файл изменений пишет и сравнивает ядро: совпавший файл не переписывается
  * и уведомления не даёт, поэтому повторный старт молчит (ADR 0057).
  */
 export async function checkLanguageFile(code: string | null): Promise<void> {
@@ -57,24 +57,25 @@ export async function checkLanguageFile(code: string | null): Promise<void> {
 
   const external = await readExternal(wanted);
 
-  // Битый файл и отсутствие внешнего файла: дополнять нечего.
+  // Битый файл и отсутствие внешнего файла: изменений не построить.
   if (external.problem !== null || external.messages === null) return;
 
-  const document = missingDocumentFor(wanted, external.name ?? wanted, external.messages);
+  const document = updatesDocumentFor(wanted, external.name ?? wanted, external.messages);
 
   try {
-    const result = await invoke<MissingResult>("language_missing_write", {
+    const result = await invoke<UpdatesResult>("language_updates_write", {
       code: wanted,
       document,
     });
     if (result.written) {
-      write(JOURNAL_CORE_SOURCE, "info", "journal.languages.missingFound", {
+      write(JOURNAL_CORE_SOURCE, "info", "journal.languages.updatesFound", {
         code: wanted,
-        count: result.count,
+        added: result.added,
+        removed: result.removed,
       });
     }
   } catch (error) {
-    write(JOURNAL_CORE_SOURCE, "error", "journal.languages.missingError", {
+    write(JOURNAL_CORE_SOURCE, "error", "journal.languages.updatesError", {
       reason: error,
     });
   }

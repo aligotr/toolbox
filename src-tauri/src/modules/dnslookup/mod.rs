@@ -165,7 +165,7 @@ fn start_run(bus: &MessageBus, runs: &ActiveRuns, event: &DnsRun) -> DnsRunAccep
             false,
             0,
             Some(AppError::new(
-                "errors.dnslookup.runId",
+                "errors.run.idMissing",
                 "Не указан идентификатор проверки",
             )),
         );
@@ -191,7 +191,7 @@ fn start_run(bus: &MessageBus, runs: &ActiveRuns, event: &DnsRun) -> DnsRunAccep
                     false,
                     0,
                     Some(AppError::new(
-                        "errors.dnslookup.runExists",
+                        "errors.run.exists",
                         "Проверка с этим идентификатором уже идёт",
                     )),
                 );
@@ -203,7 +203,7 @@ fn start_run(bus: &MessageBus, runs: &ActiveRuns, event: &DnsRun) -> DnsRunAccep
                 false,
                 0,
                 Some(AppError::new(
-                    "errors.dnslookup.registry",
+                    "errors.run.registry",
                     "Реестр проверок недоступен",
                 )),
             );
@@ -315,7 +315,7 @@ fn run_query(
     let outcome = if matches!(query.target, Target::System) && addresses.is_empty() {
         transport::Outcome::bad(system_error.clone().unwrap_or_else(|| {
             AppError::new(
-                "errors.dnslookup.noResolvers",
+                "dnslookup.servers.systemMissing",
                 "Системные резолверы не найдены",
             )
         }))

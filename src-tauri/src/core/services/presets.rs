@@ -81,7 +81,7 @@ pub fn list(root: &Path, tool: &str) -> AppResult<PresetList> {
         }
         Err(error) => {
             return fail!(
-                "errors.presets.read",
+                "errors.files.read",
                 format!("Не удалось прочитать '{}': {error}", dir.display()),
                 path = dir.display(),
                 reason = error,
@@ -95,7 +95,7 @@ pub fn list(root: &Path, tool: &str) -> AppResult<PresetList> {
     for entry in entries {
         let entry = entry.map_err(|error| {
             AppError::new(
-                "errors.presets.read",
+                "errors.files.read",
                 format!("Не удалось прочитать '{}': {error}", dir.display()),
             )
             .with("path", dir.display())
@@ -154,7 +154,7 @@ pub fn create(root: &Path, tool: &str, title: &str, payload: Value) -> AppResult
     let dir = tool_dir(root, tool);
     fs::create_dir_all(&dir).map_err(|error| {
         AppError::new(
-            "errors.presets.create",
+            "errors.files.create",
             format!("Не удалось создать '{}': {error}", dir.display()),
         )
         .with("path", dir.display())
@@ -272,7 +272,7 @@ pub fn delete(
 
     fs::rename(&path, &target).map_err(|error| {
         AppError::new(
-            "errors.presets.move",
+            "errors.files.move",
             format!(
                 "Не удалось перенести '{}' в '{}': {error}",
                 path.display(),

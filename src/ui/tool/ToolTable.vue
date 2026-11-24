@@ -57,7 +57,9 @@ const draftBanner = ref<HTMLElement | null>(null);
 
 useRowDrag(root, {
   enabled: () => props.reorderable,
-  grab: ".tool-table__cell",
+  // Зона захвата - вся первая ячейка, а не только её содержимое: строка
+  // тянется и за поля ячейки, куда не попадает текст или контрол.
+  grab: "td:first-child",
   count: () => props.rows.length,
   reorder: (from, to) => emit("reorder", from, to),
 });
@@ -228,6 +230,7 @@ watch(
     :class="{
       'tool-table--empty': rows.length === 0,
       'tool-table--mark-expanded': markExpanded,
+      'tool-table--reorderable': reorderable,
     }"
     :style="{ '--tool-frozen-offset': frozenWidth }"
   >

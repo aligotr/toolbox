@@ -11,5 +11,5 @@ import { t } from "@/core/infra/i18n";
 /** Подпись вкладки для полосы и диалогов. */
 export function tabTitle(tab: WorkspaceTab): string {
   if (tab.kind !== "workspace") return t(SINGLETON_TABS[tab.kind].titleKey);
-  return tab.title || t("tab.empty.title");
+  return tab.title || t("common.newTab");
 }

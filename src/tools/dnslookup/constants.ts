@@ -95,8 +95,8 @@ export const EMPTY_STATUSES: CellStatus[] = ["nodata", "nxdomain"];
 /** Варианты фильтра по статусу: подписи читаются из словаря при показе. */
 export function statusFilterOptions(): { label: string; value: StatusFilter }[] {
   return [
-    { label: t("dnslookup.filter.all"), value: "all" },
+    { label: t("common.allStatuses"), value: "all" },
     { label: t("dnslookup.filter.error"), value: "error" },
-    { label: t("dnslookup.filter.empty"), value: "empty" },
+    { label: t("common.noAnswer"), value: "empty" },
   ];
 }

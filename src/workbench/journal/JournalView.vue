@@ -70,7 +70,7 @@ function requestClear(event: MouseEvent): void {
   requireConfirm(confirm, {
     target: event.currentTarget as HTMLElement,
     message: t("journal.clear.message"),
-    acceptLabel: t("journal.clear.accept"),
+    acceptLabel: t("common.clear"),
     rejectLabel: t("common.cancel"),
     accept: () => {
       clearJournal();
@@ -85,7 +85,7 @@ function requestClear(event: MouseEvent): void {
 <template>
   <section class="journal wb-screen">
     <header class="wb-screen__head journal__head">
-      <h1 class="wb-screen__title">{{ t("journal.view.title") }}</h1>
+      <h1 class="wb-screen__title">{{ t("common.journal") }}</h1>
       <span v-if="total > 0" class="journal__shown">
         {{ t("journal.view.shown", { shown, total }) }}
       </span>
@@ -131,7 +131,7 @@ function requestClear(event: MouseEvent): void {
 
         <Button
           class="journal__clear"
-          :label="t('journal.view.clear')"
+          :label="t('common.clear')"
           icon="pi pi-trash"
           severity="danger"
           text
@@ -171,7 +171,7 @@ function requestClear(event: MouseEvent): void {
                 </template>
               </span>
               <span v-if="row.entry.kind === 'error'" class="journal__kind">
-                {{ t("journal.kind.error") }}
+                {{ t("common.error") }}
               </span>
             </li>
           </template>

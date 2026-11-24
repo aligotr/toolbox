@@ -141,7 +141,7 @@ fn start_run(
                     false,
                     0,
                     Some(AppError::new(
-                        "errors.icmp.runExists",
+                        "errors.run.exists",
                         "Проверка с этим идентификатором уже идёт",
                     )),
                 );
@@ -153,7 +153,7 @@ fn start_run(
                 false,
                 0,
                 Some(AppError::new(
-                    "errors.icmp.registry",
+                    "errors.run.registry",
                     "Реестр проверок недоступен",
                 )),
             );
@@ -828,7 +828,7 @@ mod tests {
             )
             .expect("второй запуск");
         assert_eq!(second["accepted"], false);
-        assert_eq!(second["error"]["code"], "errors.icmp.runExists");
+        assert_eq!(second["error"]["code"], "errors.run.exists");
 
         bus.stop();
     }

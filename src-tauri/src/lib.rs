@@ -318,7 +318,7 @@ pub fn run() {
             commands::languages::language_export,
             commands::languages::language_export_file,
             commands::languages::language_revert,
-            commands::languages::language_missing_write,
+            commands::languages::language_updates_write,
             commands::info::app_info,
             commands::info::logs_prune,
             commands::info::open_folder,

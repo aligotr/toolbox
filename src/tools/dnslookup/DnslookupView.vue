@@ -78,7 +78,7 @@ const systemHint = computed<string>(() => {
   if (!session.servers.includes(SYSTEM_SERVER_ID)) return "";
   if (session.status.servers.loading) return t("dnslookup.view.systemLoading");
   if (session.systemAddresses.length === 0) {
-    return t("dnslookup.view.systemMissing");
+    return t("dnslookup.servers.systemMissing");
   }
   return t("dnslookup.view.systemList", {
     list: session.systemAddresses.join(", "),
@@ -126,6 +126,12 @@ function openParams(event: MouseEvent): void {
 /** Закрывает поповер выбора серверов. */
 function closeParams(): void {
   paramsMenu.value?.hide();
+}
+
+/** Пресет заменил вход: заметка о прошлом действии и черновик больше не нужны. */
+function onPresetsApplied(): void {
+  presetNote.value = null;
+  table.value?.closeDraft();
 }
 
 /** Включает или выключает сервер; больше предела выбрать нельзя. */
@@ -238,7 +244,7 @@ function toggleColumns(event: Event): void {
         option-value="value"
         class="tool__filter-select"
         size="small"
-        :aria-label="t('dnslookup.view.statusFilter')"
+        :aria-label="t('common.statusFilter')"
       />
       <label class="dns__check">
         <Checkbox v-model="session.filters.diffOnly" binary :disabled="!canCompare" />
@@ -285,7 +291,7 @@ function toggleColumns(event: Event): void {
         />
         <Button
           class="dns__run tool__run"
-          :label="running ? t('dnslookup.view.stop') : t('dnslookup.view.run')"
+          :label="running ? t('common.stop') : t('dnslookup.view.run')"
           :icon="running ? 'pi pi-stop' : 'pi pi-play'"
           :severity="running ? 'contrast' : undefined"
           size="small"
@@ -349,7 +355,7 @@ function toggleColumns(event: Event): void {
           </p>
           <div class="dns-params__actions">
             <Button
-              :label="t('dnslookup.view.customServers')"
+              :label="t('dnslookup.servers.title')"
               icon="pi pi-pencil"
               severity="secondary"
               text
@@ -409,11 +415,7 @@ function toggleColumns(event: Event): void {
         @remove="deleteServer"
       />
 
-      <PresetsDialog
-        v-model:visible="presetsOpen"
-        :session="session"
-        @applied="presetNote = null"
-      />
+      <PresetsDialog v-model:visible="presetsOpen" :session="session" @applied="onPresetsApplied" />
     </template>
   </ToolScreen>
 </template>

@@ -13,7 +13,13 @@ import type {
   PresetProblem,
   PresetRevertResult,
 } from "@/core/services/presets";
-import { DEFAULT_SERVER_IDS, JOURNAL_SOURCE, SERVER_LIMIT, SYSTEM_SERVER_ID } from "../constants";
+import {
+  DEFAULT_RECORD_TYPE,
+  DEFAULT_SERVER_IDS,
+  JOURNAL_SOURCE,
+  SERVER_LIMIT,
+  SYSTEM_SERVER_ID,
+} from "../constants";
 import { abortSessionRun, runAllRows } from "../state/run";
 import { allServers, refreshServers } from "../state/servers";
 import type { DnsPresetPayload, DnsSession } from "../types";
@@ -59,7 +65,7 @@ export async function applyPreset(session: DnsSession, preset: Preset): Promise<
   if (!parsed) {
     return {
       error: {
-        code: "dnslookup.preset.loadFailed",
+        code: "presets.loadFailed",
         params: { title: preset.title },
       },
       warnings: [],
@@ -127,6 +133,31 @@ export async function applyPreset(session: DnsSession, preset: Preset): Promise<
 }
 
 /**
+ * Начинает новый пресет с чистых настроек.
+ *
+ * Сеанс отвязывается от открытого пресета, строки и результаты уходят,
+ * возвращаются умолчания нового сеанса. Файл прежнего пресета не трогается:
+ * его можно загрузить снова. Свои серверы профиля остаются.
+ */
+export async function startNewPreset(session: DnsSession): Promise<void> {
+  await abortSessionRun(session);
+
+  session.rows = [];
+  session.cells.clear();
+  session.servers = [...DEFAULT_SERVER_IDS];
+  session.defaultType = DEFAULT_RECORD_TYPE;
+  session.hiddenServers = [];
+  session.filters.search = "";
+  session.filters.status = "all";
+  session.filters.diffOnly = false;
+  session.highlightRowId = null;
+  session.runId = null;
+  session.status.run.error = null;
+  session.progress = { total: 0, done: 0 };
+  dnsPresetBinding.detach(session);
+}
+
+/**
  * Совпадает ли состав запросов: строки по идентификатору, имени и типу
  * плюс набор серверов.
  *
@@ -180,7 +211,7 @@ function restoreSettings(session: DnsSession, payload: DnsPresetPayload): void {
 export async function revertPresetChanges(session: DnsSession): Promise<DnsPresetRevertResult> {
   if (session.presetId === null || session.presetSnapshot === null) {
     return {
-      error: t("dnslookup.preset.notReverted"),
+      error: t("presets.notReverted"),
       restarted: false,
     };
   }
@@ -188,7 +219,7 @@ export async function revertPresetChanges(session: DnsSession): Promise<DnsPrese
   const payload = dnsPresetBinding.readSnapshot(session);
   if (!payload) {
     return {
-      error: t("dnslookup.preset.snapshotBroken"),
+      error: t("presets.snapshotBroken"),
       restarted: false,
     };
   }

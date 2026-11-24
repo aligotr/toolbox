@@ -74,10 +74,10 @@ export function familyOptions(): { label: string; value: Family }[] {
 /** Варианты фильтра по статусу: подписи читаются при показе. */
 export function statusFilterOptions(): { label: string; value: StatusFilter }[] {
   return [
-    { label: t("icmp.filter.all"), value: "all" },
+    { label: t("common.allStatuses"), value: "all" },
     { label: t("icmp.filter.ok"), value: "ok" },
     { label: t("icmp.filter.loss"), value: "loss" },
-    { label: t("icmp.filter.failed"), value: "failed" },
+    { label: t("common.noAnswer"), value: "failed" },
   ];
 }
 

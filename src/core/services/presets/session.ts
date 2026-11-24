@@ -43,6 +43,8 @@ export interface SessionPresets<TSession extends PresetBinding, TPayload> {
   createFromSession(session: TSession, title: string): Promise<Preset | null>;
   /** Привязывает сеанс к пресету и запоминает снимок текущих настроек. */
   adopt(session: TSession, preset: Preset): void;
+  /** Снимает привязку: сеанс больше не считается настройками пресета. */
+  detach(session: TSession): void;
   /** Обновляет название привязки после переименования открытого пресета. */
   adoptTitle(session: TSession, preset: Preset): void;
   /** Снимает привязку, если удалён открытый пресет. */
@@ -98,15 +100,19 @@ export function createSessionPresets<TSession extends PresetBinding, TPayload>(
     return created;
   }
 
+  function detach(session: TSession): void {
+    session.presetId = null;
+    session.presetTitle = null;
+    session.presetSnapshot = null;
+  }
+
   function adoptTitle(session: TSession, preset: Preset): void {
     if (session.presetId === preset.id) session.presetTitle = preset.title;
   }
 
   function releaseDeleted(session: TSession, presetId: string): void {
     if (session.presetId !== presetId) return;
-    session.presetId = null;
-    session.presetTitle = null;
-    session.presetSnapshot = null;
+    detach(session);
   }
 
   function readSnapshot(session: TSession): TPayload | null {
@@ -126,6 +132,7 @@ export function createSessionPresets<TSession extends PresetBinding, TPayload>(
     saveCurrent,
     createFromSession,
     adopt,
+    detach,
     adoptTitle,
     releaseDeleted,
     snapshotOf,

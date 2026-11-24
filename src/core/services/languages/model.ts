@@ -1,14 +1,13 @@
-// Модель языков: встроенные словари, цепочка отката и файл дополнений.
+// Модель языков: встроенные словари, цепочка отката и файл изменений.
 //
-// Чистые функции без Vue и Tauri: по ним считаются пропуски, собирается
-// документ дополнений и накладывается внешний файл на встроенный
-// (ADR 0039, ADR 0057). Состояние и команды живут рядом, в `state.ts`,
-// `runtime.ts` и `actions.ts`.
+// Чистые функции без Vue и Tauri: по ним считаются пропуски и устаревшие
+// ключи, собирается документ изменений и накладывается внешний файл
+// на встроенный (ADR 0039, ADR 0057). Состояние и команды живут рядом,
+// в `state.ts`, `runtime.ts` и `actions.ts`.
 
 import type { AppError } from "@/contracts/errors";
-import type { DictionaryMessage } from "@/contracts/languages";
 import { DEFAULT_LOCALE, pluralCategories } from "../../infra/i18n/locale";
-import type { Messages, PluralCategory } from "../../infra/i18n/types";
+import type { Message, Messages, PluralCategory } from "../../infra/i18n/types";
 import { enMessages } from "../../infra/i18n/messages.en";
 import { ruMessages } from "../../infra/i18n/messages";
 
@@ -64,8 +63,8 @@ export interface LanguageEntry {
   problem: AppError | null;
   /** Ключи источника, которых нет или у которых не хватает форм. */
   missing: number;
-  /** Ключи файла, которых нет в источнике. */
-  extra: number;
+  /** Ключи файла, которых нет в источнике: их пора удалить. */
+  obsolete: number;
   /** Язык встроен в программу. */
   builtin: boolean;
   /** Внешний файл перекрывает встроенный язык с тем же кодом. */
@@ -78,6 +77,12 @@ export interface LanguageEntry {
 export interface DictionaryFile {
   name: string;
   messages: Messages;
+}
+
+/** Изменения словаря: что добавить и что убрать. */
+export interface DictionaryUpdates extends DictionaryFile {
+  /** Ключи, которых больше нет в программе. */
+  obsolete: string[];
 }
 
 /** Источник для сравнения: встроенный язык того же кода, иначе русский. */
@@ -111,20 +116,16 @@ export function mergeMessages(builtin: Messages | null, external: Messages | nul
  * У строки сравнивать нечего, а у набора форм проверяется полнота по
  * категориям языка файла: английскому хватает `one` и `other`, русскому
  * нужны ещё `few` и `many`. Пропущенная категория - это пропуск, иначе
- * бейдж «переведён полностью» врал бы.
+ * бейдж «Полный» врал бы.
  */
-function isTranslated(
-  key: string,
-  messages: Record<string, DictionaryMessage>,
+function isComplete(
+  value: Message | undefined,
+  reference: Message | undefined,
   categories: PluralCategory[],
-  source: Messages,
 ): boolean {
-  const reference = source[key];
-  const value = messages[key];
-
-  if (value === undefined) return false;
+  if (value === undefined || reference === undefined) return false;
   if (typeof reference !== "object") return true;
-  if (typeof value !== "object") return false;
+  if (typeof value !== "object" || Array.isArray(value)) return false;
 
   return categories.every((category) => typeof value[category] === "string");
 }
@@ -134,27 +135,43 @@ export function missingKeysOf(code: string, messages: Messages): string[] {
   const source = sourceFor(code);
   const categories = pluralCategories(code);
 
-  return Object.keys(source).filter((key) => !isTranslated(key, messages, categories, source));
+  return Object.keys(source).filter((key) => !isComplete(messages[key], source[key], categories));
 }
 
-/** Документ дополнений: недостающие ключи с текстом источника. */
-export function missingDocumentFor(
+/** Ключи файла, которых больше нет в источнике. */
+export function obsoleteKeysOf(code: string, messages: Messages): string[] {
+  const source = sourceFor(code);
+
+  return Object.keys(messages)
+    .filter((key) => !(key in source))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+/**
+ * Документ изменений: что добавить в словарь и что из него убрать.
+ *
+ * `messages` содержит недостающие ключи с текстом источника: их нужно
+ * перенести в свой словарь. `obsolete` перечисляет ключи, которых больше
+ * нет в программе: их нужно удалить.
+ */
+export function updatesDocumentFor(
   code: string,
   name: string,
   messages: Messages,
-): DictionaryFile | null {
+): DictionaryUpdates | null {
   const keys = missingKeysOf(code, messages);
-  if (keys.length === 0) return null;
+  const obsolete = obsoleteKeysOf(code, messages);
+  if (keys.length === 0 && obsolete.length === 0) return null;
 
   const source = sourceFor(code);
   const document: Messages = {};
   for (const key of keys) document[key] = source[key];
 
-  return { name, messages: document };
+  return { name, messages: document, obsolete };
 }
 
-/** Документ для файла дополнений: только недостающие ключи. */
-export function missingDocument(entry: LanguageEntry): DictionaryFile | null {
+/** Документ изменений для строки списка языков. */
+export function updatesDocument(entry: LanguageEntry): DictionaryUpdates | null {
   if (entry.problem !== null || entry.messages === null) return null;
-  return missingDocumentFor(entry.code, entry.name, entry.messages);
+  return updatesDocumentFor(entry.code, entry.name, entry.messages);
 }

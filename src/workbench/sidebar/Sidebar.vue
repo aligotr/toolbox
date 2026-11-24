@@ -125,8 +125,8 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
       </button>
     </header>
 
-    <nav class="nav" :aria-label="t('shell.sidebar.tools')">
-      <span v-if="!collapsed" class="nav__label">{{ t("shell.sidebar.tools") }}</span>
+    <nav class="nav" :aria-label="t('common.tools')">
+      <span v-if="!collapsed" class="nav__label">{{ t("common.tools") }}</span>
 
       <RailItem
         v-for="tool in toolItems"
@@ -146,8 +146,8 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
       </p>
     </nav>
 
-    <nav class="nav" :aria-label="t('shell.sidebar.app')">
-      <span v-if="!collapsed" class="nav__label">{{ t("shell.sidebar.app") }}</span>
+    <nav class="nav" :aria-label="t('common.app')">
+      <span v-if="!collapsed" class="nav__label">{{ t("common.app") }}</span>
 
       <RailItem
         v-for="tool in appToolItems"

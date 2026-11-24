@@ -16,6 +16,7 @@ import {
   releaseDeletedPreset,
   revertPresetChanges,
   savePresetToCurrent,
+  startNewPreset,
 } from "../presets";
 import type { DnsSession } from "../types";
 import { DNS_PRESET_DIALOG_TEXTS } from "./presetTexts";
@@ -49,13 +50,12 @@ const source: PresetDialogSource = {
     return props.session.status.run.loading;
   },
   load: (preset) => applyPreset(props.session, preset),
+  startNew: () => startNewPreset(props.session),
   revert: async () => {
     const result = await revertPresetChanges(props.session);
     return {
       error: result.error,
-      message: result.restarted
-        ? t("dnslookup.preset.revertedRestarted")
-        : t("dnslookup.preset.reverted"),
+      message: result.restarted ? t("dnslookup.preset.revertedRestarted") : t("presets.reverted"),
     };
   },
   save: () => savePresetToCurrent(props.session),

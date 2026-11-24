@@ -78,39 +78,40 @@ pub(crate) fn language_revert(
     Ok(target.display().to_string())
 }
 
-/// Пишет файл недостающих ключей; `document` = `null` убирает его.
+/// Пишет файл изменений словаря; `document` = `null` убирает его.
 ///
 /// Файл создаётся программой, поэтому уведомление отправляется отсюда,
 /// а не из интерфейса: факт принадлежит ядру (ADR 0058).
 #[tauri::command]
-pub(crate) fn language_missing_write(
+pub(crate) fn language_updates_write(
     runtime: State<'_, Runtime>,
     bus: State<'_, MessageBus>,
     code: String,
     document: Option<Value>,
-) -> AppResult<languages::MissingResult> {
+) -> AppResult<languages::UpdatesResult> {
     let storage = runtime.require_storage()?;
-    let result = languages::missing_write(&storage.languages_dir(), &code, document.as_ref())?;
+    let result = languages::updates_write(&storage.languages_dir(), &code, document.as_ref())?;
 
     if result.written {
         // Имя файла, а не полный путь: тост должен назвать выгруженный файл,
         // но длинный путь в нём не помещается.
-        let file = languages::missing_path(&storage.languages_dir(), &code)
+        let file = languages::updates_path(&storage.languages_dir(), &code)
             .file_name()
             .map(|name| name.to_string_lossy().into_owned())
             .unwrap_or_default();
 
         let mut params = Map::new();
-        params.insert("count".to_owned(), Value::from(result.count));
         params.insert("file".to_owned(), Value::from(file));
+        params.insert("added".to_owned(), Value::from(result.added));
+        params.insert("removed".to_owned(), Value::from(result.removed));
         notifications::send(
             &bus,
             Notification::new(
                 NotificationKind::Info,
-                "notifications.languages.missingWritten",
+                "notifications.languages.updatesWritten",
             )
             .with_params(params)
-            .with_group(format!("language-missing-{code}")),
+            .with_group(format!("language-updates-{code}")),
         );
     }
 

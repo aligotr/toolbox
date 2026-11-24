@@ -17,7 +17,14 @@ import type {
   PresetProblem,
   PresetRevertResult,
 } from "@/core/services/presets";
-import { JOURNAL_SOURCE, MAX_TARGETS } from "../constants";
+import {
+  DEFAULT_COUNT,
+  DEFAULT_FAMILY,
+  DEFAULT_PERIOD_MS,
+  DEFAULT_TIMEOUT_MS,
+  JOURNAL_SOURCE,
+  MAX_TARGETS,
+} from "../constants";
 import { abortSessionRun } from "../state/run";
 import type { IcmpPresetPayload, IcmpSession } from "../types";
 import { icmpPresetBinding } from "./binding";
@@ -69,7 +76,7 @@ export async function applyPreset(
   if (!parsed) {
     return {
       error: {
-        code: "icmp.preset.loadFailed",
+        code: "presets.loadFailed",
         params: { title: preset.title },
       },
       warnings: [],
@@ -102,6 +109,32 @@ export async function applyPreset(
   });
 
   return { error: null, warnings };
+}
+
+/**
+ * Начинает новый пресет с чистых настроек.
+ *
+ * Сеанс отвязывается от открытого пресета, цели и пакеты уходят,
+ * возвращаются умолчания нового сеанса. Файл прежнего пресета не трогается:
+ * его можно загрузить снова.
+ */
+export async function startNewPreset(session: IcmpSession): Promise<void> {
+  await abortSessionRun(session);
+
+  session.targets = [];
+  session.family = DEFAULT_FAMILY;
+  session.periodMs = DEFAULT_PERIOD_MS;
+  session.count = DEFAULT_COUNT;
+  session.endless = false;
+  session.timeoutMs = DEFAULT_TIMEOUT_MS;
+  session.filters.search = "";
+  session.filters.status = "all";
+  session.filters.family = "all";
+  session.highlightTargetId = null;
+  session.runId = null;
+  session.status.run.error = null;
+  session.progress = { targets: 0, addresses: 0, sent: 0, received: 0 };
+  icmpPresetBinding.detach(session);
 }
 
 /** Совпадает ли вход проверки: цели и параметры. Фильтры не считаются. */
@@ -137,12 +170,12 @@ function sameInputs(current: IcmpPresetPayload, expected: IcmpPresetPayload): bo
  */
 export async function revertPresetChanges(session: IcmpSession): Promise<IcmpPresetRevertResult> {
   if (session.presetId === null || session.presetSnapshot === null) {
-    return { error: t("icmp.preset.notReverted"), cleared: false };
+    return { error: t("presets.notReverted"), cleared: false };
   }
 
   const payload = icmpPresetBinding.readSnapshot(session);
   if (!payload) {
-    return { error: t("icmp.preset.snapshotBroken"), cleared: false };
+    return { error: t("presets.snapshotBroken"), cleared: false };
   }
 
   if (sameInputs(icmpPresetBinding.capture(session), payload)) {

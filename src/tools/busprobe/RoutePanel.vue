@@ -66,7 +66,7 @@ const outcomeText = computed(() => {
     case "timeout":
       return t("busprobe.route.outcomeTimeout");
     default:
-      return t("busprobe.route.outcomeError");
+      return t("common.error");
   }
 });
 
@@ -82,7 +82,7 @@ const outcomeTone = computed<string>(() => {
 });
 
 function actorOf(name: string): string {
-  return actors.value[name] ?? t("busprobe.actor.core");
+  return actors.value[name] ?? t("common.core");
 }
 
 function explanationOf(name: string): string {

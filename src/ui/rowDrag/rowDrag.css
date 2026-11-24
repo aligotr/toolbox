@@ -16,11 +16,31 @@
   opacity: 0.55;
 }
 
-/* Место вставки: полоса цветом действия темы. */
-.row-drag__line-top > td {
-  box-shadow: inset 0 2px 0 0 var(--p-primary-color);
+/* Место вставки: полоса цветом действия темы.
+   Рисуется псевдоэлементом, а не тенью ячейки: у строк с расхождением
+   и раскрытием своя тень на первой ячейке, и она перекрывала линию. */
+.row-drag__line-top > td::before,
+.row-drag__line-bottom > td::before {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--p-primary-color);
+  content: "";
+  pointer-events: none;
 }
 
-.row-drag__line-bottom > td {
-  box-shadow: inset 0 -2px 0 0 var(--p-primary-color);
+.row-drag__line-top > td::before {
+  top: 0;
+}
+
+.row-drag__line-bottom > td::before {
+  bottom: 0;
+}
+
+/* Псевдоэлемент позиционируется от ячейки; закреплённые ячейки уже
+   позиционированы сами, а `relative` снял бы с них `sticky`. */
+.row-drag__line-top > td:not(.p-datatable-frozen-column),
+.row-drag__line-bottom > td:not(.p-datatable-frozen-column) {
+  position: relative;
 }

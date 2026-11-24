@@ -160,7 +160,7 @@ fn profile_dirs(dir: &Path) -> AppResult<Vec<(String, PathBuf)>> {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(error) => {
             return fail!(
-                "errors.profiles.read",
+                "errors.files.read",
                 format!("Не удалось прочитать '{}': {error}", dir.display()),
                 path = dir.display(),
                 reason = error,
@@ -172,7 +172,7 @@ fn profile_dirs(dir: &Path) -> AppResult<Vec<(String, PathBuf)>> {
     for entry in entries {
         let entry = entry.map_err(|error| {
             AppError::new(
-                "errors.profiles.read",
+                "errors.files.read",
                 format!("Не удалось прочитать '{}': {error}", dir.display()),
             )
             .with("path", dir.display())
@@ -216,7 +216,7 @@ pub fn create_with(
 
     fs::create_dir_all(&path).map_err(|error| {
         AppError::new(
-            "errors.profiles.create",
+            "errors.files.create",
             format!("Не удалось создать '{}': {error}", path.display()),
         )
         .with("path", path.display())
@@ -290,7 +290,7 @@ pub fn delete(
 
     fs::create_dir_all(trash_dir).map_err(|error| {
         AppError::new(
-            "errors.profiles.create",
+            "errors.files.create",
             format!("Не удалось создать '{}': {error}", trash_dir.display()),
         )
         .with("path", trash_dir.display())
@@ -300,7 +300,7 @@ pub fn delete(
     let target = trash_dir.join(names::unique_id(trash_dir, id));
     fs::rename(&path, &target).map_err(|error| {
         AppError::new(
-            "errors.profiles.move",
+            "errors.files.move",
             format!(
                 "Не удалось перенести '{}' в '{}': {error}",
                 path.display(),
@@ -327,7 +327,7 @@ pub fn delete(
 pub fn ensure_default(dir: &Path) -> AppResult<Option<Profile>> {
     fs::create_dir_all(dir).map_err(|error| {
         AppError::new(
-            "errors.profiles.create",
+            "errors.files.create",
             format!("Не удалось создать '{}': {error}", dir.display()),
         )
         .with("path", dir.display())
@@ -341,7 +341,7 @@ pub fn ensure_default(dir: &Path) -> AppResult<Option<Profile>> {
     let path = dir.join(DEFAULT_PROFILE);
     fs::create_dir_all(&path).map_err(|error| {
         AppError::new(
-            "errors.profiles.create",
+            "errors.files.create",
             format!("Не удалось создать '{}': {error}", path.display()),
         )
         .with("path", path.display())

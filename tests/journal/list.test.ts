@@ -156,7 +156,7 @@ test("записи разных дней дают заголовок перед 
 
 test("счётчик новых считает только подходящие записи", () => {
   const items = [
-    entry(4, DAY_ONE, "dnslookup", "error", "journal.dnslookup.serversBrokenFile"),
+    entry(4, DAY_ONE, "dnslookup", "error", "dnslookup.servers.brokenFile"),
     coreInfo(3),
     coreInfo(2),
     coreInfo(1),

@@ -96,7 +96,7 @@ export function journalText(entry: JournalEntry): string {
 
 /** Подпись источника: служебное ядро переводится, модули называются как есть. */
 export function journalSource(source: string): string {
-  if (source === "core") return t("journal.source.core");
+  if (source === "core") return t("common.core");
   return source;
 }
 

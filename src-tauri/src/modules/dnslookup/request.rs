@@ -249,7 +249,7 @@ pub struct PreparedRun {
 pub fn prepare(run: &DnsRun) -> AppResult<PreparedRun> {
     if run.run_id.trim().is_empty() {
         return fail!(
-            "errors.dnslookup.runId",
+            "errors.run.idMissing",
             "Не указан идентификатор проверки"
         );
     }
@@ -298,7 +298,7 @@ pub fn prepare(run: &DnsRun) -> AppResult<PreparedRun> {
             })
         {
             return fail!(
-                "errors.dnslookup.duplicateServer",
+                "dnslookup.run.duplicateServer",
                 format!("Сервер {address} указан дважды"),
                 address = address,
             );
@@ -314,7 +314,7 @@ pub fn prepare(run: &DnsRun) -> AppResult<PreparedRun> {
             .map(|(_, target)| *target)
             .ok_or_else(|| {
                 AppError::new(
-                    "errors.dnslookup.unknownServer",
+                    "dnslookup.run.unknownServer",
                     format!("Неизвестный сервер '{}'", query.server_id),
                 )
                 .with("id", &query.server_id)
@@ -437,7 +437,7 @@ pub fn parse_server_address(input: &str) -> AppResult<SocketAddr> {
         SocketAddr::new(ip, DEFAULT_PORT)
     } else {
         return fail!(
-            "errors.dnslookup.badAddress",
+            "dnslookup.validate.badServer",
             format!("Некорректный адрес сервера '{text}'"),
             address = text,
         );
@@ -445,7 +445,7 @@ pub fn parse_server_address(input: &str) -> AppResult<SocketAddr> {
 
     if address.port() == 0 {
         return fail!(
-            "errors.dnslookup.badPort",
+            "dnslookup.validate.badPort",
             format!("Некорректный порт в адресе '{text}'"),
             address = text,
         );

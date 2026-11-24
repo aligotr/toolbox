@@ -157,7 +157,7 @@ function onDraftTypeChange(event: { value: unknown }): void {
 
 // Кнопка добавления стоит в строке фильтров: экран открывает черновик
 // через ref, а состояние строки остаётся у таблицы.
-defineExpose({ openDraft });
+defineExpose({ openDraft, closeDraft });
 
 /** Результат ячейки по паре «строка × сервер». */
 function cellOf(rowId: string, serverId: string): DnsCell | undefined {
@@ -249,7 +249,7 @@ function forwardReorder(from: number, to: number): void {
             :class="{ 'p-invalid': draftError }"
             :placeholder="draftPlaceholder"
             :aria-invalid="draftError !== null"
-            :aria-label="t('dnslookup.view.inputAria')"
+            :aria-label="t('common.host')"
             @keyup.enter="submitDraft"
             @keyup.esc.stop.prevent="closeDraft"
           />
@@ -269,7 +269,7 @@ function forwardReorder(from: number, to: number): void {
         <div class="dns-table__draft-actions">
           <ToolDraftActions
             :disabled="busy"
-            :cancel-label="t('dnslookup.view.cancelAdd')"
+            :cancel-label="t('common.cancelAdd')"
             @accept="submitDraft"
             @cancel="closeDraft"
           />
@@ -314,7 +314,7 @@ function forwardReorder(from: number, to: number): void {
                 :class="{ 'tool-table__expand--open': isExpanded(data.id) }"
                 :aria-expanded="isExpanded(data.id)"
                 :aria-label="
-                  isExpanded(data.id) ? t('dnslookup.table.collapse') : t('dnslookup.table.expand')
+                  isExpanded(data.id) ? t('common.collapseDetails') : t('common.details')
                 "
                 @click="toggle(data.id)"
               />
@@ -424,7 +424,7 @@ function forwardReorder(from: number, to: number): void {
     <template #expansion-head="{ data, toggle }">
       <ToolExpansionHead
         :row-name="data.input"
-        :collapse-label="t('dnslookup.table.collapseShort')"
+        :collapse-label="t('common.collapse')"
         @collapse="toggle(data.id)"
       >
         <span

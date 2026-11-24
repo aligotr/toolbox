@@ -7,7 +7,7 @@ import test from "node:test";
 import type { Messages } from "../../src/core/infra/i18n/types.ts";
 import { enMessages } from "../../src/core/infra/i18n/messages.en.ts";
 import { ruMessages } from "../../src/core/infra/i18n/messages.ts";
-import { mergeMessages, missingDocumentFor } from "../../src/core/services/languages/model.ts";
+import { mergeMessages, updatesDocumentFor } from "../../src/core/services/languages/model.ts";
 
 test("пропущенные формы берутся из встроенного языка", () => {
   const merged = mergeMessages(
@@ -32,34 +32,56 @@ test("формы внешнего файла перекрывают строку
   assert.deepEqual(merged, { count: { one: "1 file", other: "files" } });
 });
 
-test("документ дополнений содержит только пропущенный ключ", () => {
+test("документ изменений содержит только пропущенный ключ", () => {
   const partial: Messages = { ...enMessages };
-  delete partial["settings.language.title"];
+  delete partial["common.language"];
 
-  const document = missingDocumentFor("en", "English", partial);
+  const document = updatesDocumentFor("en", "English", partial);
 
   assert.equal(document?.name, "English");
   assert.deepEqual(document?.messages, {
-    "settings.language.title": "Language",
+    "common.language": "Language",
   });
+  assert.deepEqual(document?.obsolete, []);
 });
 
-test("неполные формы попадают в документ дополнений целиком", () => {
+test("неполные формы попадают в документ изменений целиком", () => {
   const partial: Messages = { ...ruMessages };
-  partial["settings.language.partial"] = { one: "одна строка" };
+  partial["journal.view.limit"] = { one: "одна запись" };
 
-  const document = missingDocumentFor("ru", "Русский", partial);
+  const document = updatesDocumentFor("ru", "Русский", partial);
 
   assert.deepEqual(document?.messages, {
-    "settings.language.partial": {
-      one: "Не хватает одной строки перевода - вместо неё показывается встроенный текст.",
-      few: "Не хватает {count} строк перевода - вместо них показывается встроенный текст.",
-      many: "Не хватает {count} строк перевода - вместо них показывается встроенный текст.",
-      other: "Не хватает {count} строки перевода - вместо них показывается встроенный текст.",
+    "journal.view.limit": {
+      one: "Хранится последняя {count} запись",
+      few: "Хранятся последние {count} записи",
+      many: "Хранятся последние {count} записей",
+      other: "Хранятся последние {count} записей",
     },
   });
+  assert.deepEqual(document?.obsolete, []);
 });
 
-test("полный словарь не даёт файла дополнений", () => {
-  assert.equal(missingDocumentFor("en", "English", enMessages), null);
+test("ключ, которого больше нет в программе, попадает в устаревшие", () => {
+  const extra: Messages = { ...enMessages, "old.key": "Old text" };
+
+  const document = updatesDocumentFor("en", "English", extra);
+
+  assert.deepEqual(document?.messages, {});
+  assert.deepEqual(document?.obsolete, ["old.key"]);
+});
+
+test("переименованный ключ виден и как новый, и как устаревший", () => {
+  const partial: Messages = { ...enMessages };
+  delete partial["common.language"];
+  partial["settings.language.old"] = "Language";
+
+  const document = updatesDocumentFor("en", "English", partial);
+
+  assert.deepEqual(document?.messages, { "common.language": "Language" });
+  assert.deepEqual(document?.obsolete, ["settings.language.old"]);
+});
+
+test("полный словарь не даёт файла изменений", () => {
+  assert.equal(updatesDocumentFor("en", "English", enMessages), null);
 });

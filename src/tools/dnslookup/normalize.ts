@@ -46,7 +46,7 @@ export type AddressResult =
 export function parseAddressInput(input: string, type: RecordType): AddressResult {
   const raw = input.trim();
   if (raw === "") {
-    return { ok: false, code: "dnslookup.validate.emptyAddress", params: {} };
+    return { ok: false, code: "common.hostEmpty", params: {} };
   }
 
   const ip = canonicalIp(raw);

@@ -163,7 +163,7 @@ async function writeServers(session: DnsSession, servers: ServerOption[]): Promi
     // Запись поверх испорченного файла потеряла бы то, что ещё можно
     // восстановить руками: сначала пользователь чинит или удаляет файл.
     const text = t("dnslookup.servers.brokenFile");
-    write(JOURNAL_SOURCE, "error", "journal.dnslookup.serversBrokenFile");
+    write(JOURNAL_SOURCE, "error", "dnslookup.servers.brokenFile");
     throw new Error(text);
   }
 

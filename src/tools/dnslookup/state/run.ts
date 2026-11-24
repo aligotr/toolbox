@@ -43,7 +43,7 @@ export function ensureSubscriptions(): void {
     for (const session of sessions.values()) {
       session.status.run.error = text;
     }
-    write(JOURNAL_SOURCE, "error", "journal.dnslookup.subscribeError", {
+    write(JOURNAL_SOURCE, "error", "dnslookup.run.subscribeFailed", {
       reason: error,
     });
   });
@@ -203,16 +203,16 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
               params: { reason: accepted.error },
             }
           : {
-              text: t("dnslookup.run.rejected"),
-              code: "dnslookup.run.rejected",
+              text: t("common.runRejected"),
+              code: "common.runRejected",
               params: {},
             },
       );
     }
   } catch (error) {
     failRun(session, runId, rows, servers, {
-      text: t("dnslookup.run.notStarted", { reason: describeError(error) }),
-      code: "journal.dnslookup.startFailed",
+      text: t("common.runNotStarted", { reason: describeError(error) }),
+      code: "common.runNotStarted",
       params: { reason: appErrorOf(error) },
     });
   }
@@ -306,10 +306,10 @@ export async function abortSessionRun(session: DnsSession): Promise<void> {
   try {
     await cancelDns(runId);
   } catch (error) {
-    session.status.run.error = t("dnslookup.run.stopFailed", {
+    session.status.run.error = t("common.runStopFailed", {
       reason: describeError(error),
     });
-    write(JOURNAL_SOURCE, "error", "journal.dnslookup.stopFailed", {
+    write(JOURNAL_SOURCE, "error", "common.runStopFailed", {
       reason: appErrorOf(error),
     });
   }
@@ -327,10 +327,10 @@ export async function stopRun(session: DnsSession): Promise<void> {
   try {
     await cancelDns(session.runId);
   } catch (error) {
-    session.status.run.error = t("dnslookup.run.stopFailed", {
+    session.status.run.error = t("common.runStopFailed", {
       reason: describeError(error),
     });
-    write(JOURNAL_SOURCE, "error", "journal.dnslookup.stopFailed", {
+    write(JOURNAL_SOURCE, "error", "common.runStopFailed", {
       reason: appErrorOf(error),
     });
   }

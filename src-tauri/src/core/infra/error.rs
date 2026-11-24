@@ -67,7 +67,7 @@ pub type AppResult<T> = Result<T, AppError>;
 
 /// Отказ из кода, русского текста и подстановок.
 ///
-/// `fail!("errors.profiles.read", format!("..."), path = path.display())`
+/// `fail!("errors.files.read", format!("..."), path = path.display())`
 /// возвращает `Err(AppError)`: текст и параметры задаются в одном месте.
 macro_rules! fail {
     ($code:expr, $fallback:expr $(, $name:ident = $value:expr)* $(,)?) => {
@@ -86,17 +86,17 @@ mod tests {
 
     #[test]
     fn error_carries_code_params_and_fallback() {
-        let error = AppError::new("errors.profiles.read", "Не удалось прочитать")
+        let error = AppError::new("errors.files.read", "Не удалось прочитать")
             .with("path", "/tmp/profiles");
 
-        assert_eq!(error.code, "errors.profiles.read");
+        assert_eq!(error.code, "errors.files.read");
         assert_eq!(error.params["path"], "/tmp/profiles");
         assert_eq!(error.fallback, "Не удалось прочитать");
     }
 
     #[test]
     fn display_is_russian_fallback() {
-        let error = AppError::new("errors.profiles.read", "Не удалось прочитать");
+        let error = AppError::new("errors.files.read", "Не удалось прочитать");
 
         assert_eq!(error.to_string(), "Не удалось прочитать");
         assert!(error.to_string().contains("прочитать"));
@@ -113,7 +113,7 @@ mod tests {
     #[test]
     fn fail_macro_collects_params() {
         let value: AppResult<()> = fail!(
-            "errors.profiles.read",
+            "errors.files.read",
             "Не удалось прочитать '{path}'",
             path = "/tmp",
         );

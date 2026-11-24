@@ -119,10 +119,11 @@ function forgetParamsSnapshot(): void {
   paramsSnapshot = null;
 }
 
-/** Пресет заменил вход: прошлая заметка о быстрых действиях больше не нужна. */
+/** Пресет заменил вход: заметка, снимок параметров и черновик больше не нужны. */
 function forgetPresetNote(): void {
   presetNote.value = null;
   forgetParamsSnapshot();
+  table.value?.closeDraft();
 }
 
 function restoreParams(): void {
@@ -203,7 +204,7 @@ function toggleRun(): void {
         option-value="value"
         class="tool__filter-select"
         size="small"
-        :aria-label="t('icmp.view.statusFilter')"
+        :aria-label="t('common.statusFilter')"
       />
 
       <div class="tool__table-actions">
@@ -234,7 +235,7 @@ function toggleRun(): void {
         />
         <Button
           class="tool__run"
-          :label="running ? t('icmp.view.stop') : runLabel"
+          :label="running ? t('common.stop') : runLabel"
           :icon="running ? 'pi pi-stop' : 'pi pi-play'"
           :severity="running ? 'contrast' : undefined"
           size="small"

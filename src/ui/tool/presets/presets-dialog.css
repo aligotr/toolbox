@@ -37,6 +37,21 @@
   gap: var(--ag-space-sm);
 }
 
+/* Подвал: «Пустой пресет» слева, «Закрыть» справа. */
+.presets__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ag-space-md);
+  width: 100%;
+}
+
+/* Левая кнопка начинает содержимое с того же края, что карточки и поле:
+   её собственное поле не сдвигает иконку вправо. */
+.presets__footer-new.p-button {
+  padding-left: 0;
+}
+
 .presets__create-input {
   flex: 1 1 auto;
 }

@@ -78,9 +78,6 @@ function defaultLabel(): string {
       >
         <span class="preset-row__title-row">
           <span class="preset-row__title">{{ preset.title }}</span>
-          <span v-if="isDefault" class="preset-row__default">
-            {{ t(texts.badgeDefault) }}
-          </span>
         </span>
         <small class="preset-row__meta">{{ savedAt }}</small>
       </button>
@@ -177,15 +174,6 @@ function defaultLabel(): string {
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.preset-row__default {
-  flex: none;
-  padding: 0 var(--ag-space-sm);
-  border-radius: var(--ag-radius-sm);
-  background: color-mix(in srgb, var(--ag-warn) 12%, transparent);
-  color: var(--ag-warn);
-  font-size: var(--ag-text-xs);
 }
 
 .preset-row__meta {

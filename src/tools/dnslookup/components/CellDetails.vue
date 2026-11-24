@@ -62,8 +62,8 @@ function elapsedText(value: number): string {
         <thead>
           <tr>
             <th scope="col">{{ t("dnslookup.details.server") }}</th>
-            <th scope="col">{{ t("dnslookup.details.status") }}</th>
-            <th scope="col">{{ t("dnslookup.details.answer") }}</th>
+            <th scope="col">{{ t("common.status") }}</th>
+            <th scope="col">{{ t("common.answer") }}</th>
             <th scope="col">{{ t("dnslookup.details.ttl") }}</th>
             <th scope="col">{{ t("dnslookup.details.elapsed") }}</th>
           </tr>

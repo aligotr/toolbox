@@ -93,7 +93,7 @@ export function useBusprobe() {
       status.error = t("busprobe.view.subscribeFailed", {
         reason: describeError(error),
       });
-      write(JOURNAL_SOURCE, "error", "journal.busprobe.subscribeError", {
+      write(JOURNAL_SOURCE, "error", "busprobe.view.subscribeFailed", {
         reason: error,
       });
     }

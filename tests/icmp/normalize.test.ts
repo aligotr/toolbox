@@ -22,7 +22,7 @@ test("пустая цель - отказ emptyTarget", () => {
   for (const input of ["", "   "]) {
     assert.deepEqual(parseTargetInput(input), {
       ok: false,
-      code: "icmp.validate.emptyTarget",
+      code: "common.hostEmpty",
       params: {},
     });
   }

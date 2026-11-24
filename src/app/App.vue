@@ -76,7 +76,7 @@ onMounted(async () => {
   unlistenSettings = await startSettingsSync();
 
   // Стартовая проверка активного внешнего словаря не задерживает первый кадр:
-  // совпавший файл дополнений ядро не переписывает и молчит (ADR 0057).
+  // совпавший файл изменений ядро не переписывает и молчит (ADR 0057).
   void checkLanguageFile(settings.current?.ui.language ?? null);
 });
 

@@ -13,11 +13,11 @@
 import { createDefaultPresetLoader } from "@/core/services/presets/defaultSession";
 import { JOURNAL_SOURCE } from "../constants";
 import type { DnsSession } from "../types";
-import { applyPreset, revertPresetChanges } from "./apply";
+import { applyPreset, revertPresetChanges, startNewPreset } from "./apply";
 import { dnsPresetBinding, dnsPresets } from "./binding";
 
 export { dnsPresets };
-export { applyPreset, revertPresetChanges };
+export { applyPreset, revertPresetChanges, startNewPreset };
 export type { DnsPresetRevertResult } from "./apply";
 
 /** Изменены ли настройки относительно сохранённого пресета. */

@@ -310,10 +310,23 @@
   flex-direction: column;
   gap: var(--ag-space-xs);
   min-width: 0;
+}
+
+/* Ручка переноса - вся первая ячейка, включая поля: курсор захвата
+   держится на ней целиком и не мерцает при движении по строкам. */
+.tool-table--reorderable
+  tbody
+  tr:not(.p-datatable-row-expansion):not(.p-datatable-empty-message)
+  > td:first-child {
   cursor: grab;
 }
 
-.tool-table__cell :is(span, small, button) {
+/* Текст и контролы остаются для выделения и нажатий: им - обычный курсор. */
+.tool-table--reorderable
+  tbody
+  tr
+  > td:first-child
+  :is(span, small, button, a, input, textarea, select) {
   cursor: auto;
 }
 

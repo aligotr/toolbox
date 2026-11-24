@@ -33,12 +33,16 @@ export interface LanguageDocument {
   messages: Record<string, DictionaryMessage>;
 }
 
-/** Итог записи файла дополнений из `language_missing_write`. */
-export interface MissingResult {
-  /** Путь файла; `null`, если недостающих ключей нет и файл убран. */
+/** Итог записи файла изменений из `language_updates_write`. */
+export interface UpdatesResult {
+  /** Путь файла; `null`, если изменений нет и файл убран. */
   path: string | null;
   /** Файл создан или обновлён; ложь - уже был актуален. */
   written: boolean;
-  /** Сколько ключей в файле дополнений; ноль, если файла нет. */
+  /** Сколько строк в файле изменений; ноль, если файла нет. */
   count: number;
+  /** Сколько ключей добавить. */
+  added: number;
+  /** Сколько ключей убрать. */
+  removed: number;
 }

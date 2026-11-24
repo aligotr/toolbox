@@ -19,11 +19,11 @@ import {
   JOURNAL_SOURCE,
 } from "../constants";
 import type { IcmpSession } from "../types";
-import { applyPreset, revertPresetChanges } from "./apply";
+import { applyPreset, revertPresetChanges, startNewPreset } from "./apply";
 import { icmpPresetBinding, icmpPresets } from "./binding";
 
 export { icmpPresets };
-export { applyPreset, revertPresetChanges };
+export { applyPreset, revertPresetChanges, startNewPreset };
 export type { IcmpPresetRevertResult } from "./apply";
 
 /** Изменены ли настройки относительно сохранённого пресета. */
