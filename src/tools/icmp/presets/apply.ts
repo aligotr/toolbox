@@ -10,41 +10,23 @@
 // и пресет не должен тратить пакеты без ведома пользователя.
 
 import { t } from "@/core/infra/i18n";
-import type { MessageParams } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
-import type { Preset } from "@/core/services/presets";
+import type {
+  Preset,
+  PresetApplyResult,
+  PresetProblem,
+  PresetRevertResult,
+} from "@/core/services/presets";
 import { JOURNAL_SOURCE, MAX_TARGETS } from "../constants";
 import { abortSessionRun } from "../state/run";
 import type { IcmpPresetPayload, IcmpSession } from "../types";
-import { capturePresetPayload, parsePresetPayload, parseSnapshot, snapshotOf } from "./format";
-
-/** Замечание о загрузке пресета: код словаря и данные подстановки. */
-export interface PresetProblem {
-  code: string;
-  params: MessageParams;
-}
-
-/** Итог загрузки пресета: ошибка разбора или замечания о неполной загрузке. */
-export interface PresetApplyResult {
-  /** Настройки не разобраны: сеанс не тронут. */
-  error: PresetProblem | null;
-  /** Что пришлось пропустить: цели, предел списка. */
-  warnings: PresetProblem[];
-}
+import { icmpPresetBinding } from "./binding";
+import { parsePresetPayload } from "./format";
 
 /** Итог отката изменений: причина отказа или признак очистки результатов. */
-export interface PresetRevertResult {
-  /** Откат не выполнен: сеанс не тронут. */
-  error: string | null;
+export interface IcmpPresetRevertResult extends PresetRevertResult {
   /** Вход изменился: пакеты очищены. */
   cleared: boolean;
-}
-
-/** Привязывает сеанс к пресету и запоминает снимок сохранённых настроек. */
-export function adoptPreset(session: IcmpSession, preset: Preset, snapshot: string): void {
-  session.presetId = preset.id;
-  session.presetTitle = preset.title;
-  session.presetSnapshot = snapshot;
 }
 
 /** Переносит настройки пресета в сеанс и очищает пакеты. */
@@ -111,7 +93,7 @@ export async function applyPreset(
   }
 
   applyPayload(session, payload);
-  adoptPreset(session, preset, snapshotOf(session));
+  icmpPresetBinding.adopt(session, preset);
 
   write(JOURNAL_SOURCE, "result", "journal.icmp.presetLoaded", {
     title: preset.title,
@@ -151,17 +133,17 @@ function sameInputs(current: IcmpPresetPayload, expected: IcmpPresetPayload): bo
  * Изменившийся вход обесценивает результаты: идущая проверка останавливается
  * и пакеты очищаются.
  */
-export async function revertPresetChanges(session: IcmpSession): Promise<PresetRevertResult> {
+export async function revertPresetChanges(session: IcmpSession): Promise<IcmpPresetRevertResult> {
   if (session.presetId === null || session.presetSnapshot === null) {
     return { error: t("icmp.preset.notReverted"), cleared: false };
   }
 
-  const payload = parseSnapshot(session.presetSnapshot);
+  const payload = icmpPresetBinding.readSnapshot(session);
   if (!payload) {
     return { error: t("icmp.preset.snapshotBroken"), cleared: false };
   }
 
-  if (sameInputs(capturePresetPayload(session), payload)) {
+  if (sameInputs(icmpPresetBinding.capture(session), payload)) {
     session.family = payload.family;
     session.filters.search = payload.filters.search;
     session.filters.status = payload.filters.status;

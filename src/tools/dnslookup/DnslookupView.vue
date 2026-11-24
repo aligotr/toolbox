@@ -478,7 +478,11 @@ async function exportCsv(): Promise<void> {
         @remove="deleteServer"
       />
 
-      <PresetsDialog v-model:visible="presetsOpen" :session="session" />
+      <PresetsDialog
+        v-model:visible="presetsOpen"
+        :session="session"
+        @applied="presetNote = null"
+      />
     </template>
   </ToolScreen>
 </template>

@@ -95,24 +95,3 @@ export function capturePresetPayload(session: DnsSession): DnsPresetPayload {
     },
   };
 }
-
-/** Строка снимка для сравнения: порядок полей задан сборкой снимка. */
-export function snapshotOfPayload(payload: DnsPresetPayload): string {
-  return JSON.stringify(payload);
-}
-
-/** Снимок настроек сеанса в виде строки. */
-export function snapshotOf(session: DnsSession): string {
-  return snapshotOfPayload(capturePresetPayload(session));
-}
-
-/** Разбирает снимок настроек, снятый при загрузке или сохранении пресета. */
-export function parseSnapshot(snapshot: string): DnsPresetPayload | null {
-  try {
-    return parsePresetPayload(JSON.parse(snapshot))?.payload ?? null;
-  } catch {
-    // Снимок собран этим же модулем, но испорченное значение не должно
-    // ронять экран: откат просто откажет.
-    return null;
-  }
-}

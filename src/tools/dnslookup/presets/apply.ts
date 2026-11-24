@@ -6,42 +6,24 @@
 // снимок берётся сразу после применения, пока сеанс совпадает с файлом.
 
 import { t } from "@/core/infra/i18n";
-import type { MessageParams } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
-import type { Preset } from "@/core/services/presets";
+import type {
+  Preset,
+  PresetApplyResult,
+  PresetProblem,
+  PresetRevertResult,
+} from "@/core/services/presets";
 import { DEFAULT_SERVER_IDS, JOURNAL_SOURCE, SERVER_LIMIT, SYSTEM_SERVER_ID } from "../constants";
 import { abortSessionRun, runAllRows } from "../state/run";
 import { allServers, refreshServers } from "../state/servers";
 import type { DnsPresetPayload, DnsSession } from "../types";
-import { capturePresetPayload, parsePresetPayload, parseSnapshot, snapshotOf } from "./format";
-
-/** Замечание о загрузке пресета: код словаря и данные подстановки. */
-export interface PresetProblem {
-  code: string;
-  params: MessageParams;
-}
-
-/** Итог загрузки пресета: ошибка разбора или замечания о неполной загрузке. */
-export interface PresetApplyResult {
-  /** Настройки не разобраны: сеанс не тронут. */
-  error: PresetProblem | null;
-  /** Что пришлось пропустить: серверы, строки, лишние колонки. */
-  warnings: PresetProblem[];
-}
+import { dnsPresetBinding } from "./binding";
+import { parsePresetPayload } from "./format";
 
 /** Итог отката изменений: причина отказа или признак перезапуска. */
-export interface PresetRevertResult {
-  /** Откат не выполнен: сеанс не тронут. */
-  error: string | null;
+export interface DnsPresetRevertResult extends PresetRevertResult {
   /** Таблица запросов изменилась: результаты очищены и проверка идёт заново. */
   restarted: boolean;
-}
-
-/** Привязывает сеанс к пресету и запоминает снимок сохранённых настроек. */
-export function adoptPreset(session: DnsSession, preset: Preset, snapshot: string): void {
-  session.presetId = preset.id;
-  session.presetTitle = preset.title;
-  session.presetSnapshot = snapshot;
 }
 
 /**
@@ -131,7 +113,7 @@ export async function applyPreset(session: DnsSession, preset: Preset): Promise<
 
   applyPayload(session, payload, servers);
 
-  adoptPreset(session, preset, snapshotOf(session));
+  dnsPresetBinding.adopt(session, preset);
 
   write(JOURNAL_SOURCE, "result", "journal.dnslookup.presetLoaded", {
     title: preset.title,
@@ -195,7 +177,7 @@ function restoreSettings(session: DnsSession, payload: DnsPresetPayload): void {
  * остаются. Изменившиеся запросы обесценивают ответы: идущая проверка
  * останавливается, ячейки очищаются и проверка запускается заново.
  */
-export async function revertPresetChanges(session: DnsSession): Promise<PresetRevertResult> {
+export async function revertPresetChanges(session: DnsSession): Promise<DnsPresetRevertResult> {
   if (session.presetId === null || session.presetSnapshot === null) {
     return {
       error: t("dnslookup.preset.notReverted"),
@@ -203,7 +185,7 @@ export async function revertPresetChanges(session: DnsSession): Promise<PresetRe
     };
   }
 
-  const payload = parseSnapshot(session.presetSnapshot);
+  const payload = dnsPresetBinding.readSnapshot(session);
   if (!payload) {
     return {
       error: t("dnslookup.preset.snapshotBroken"),
@@ -211,7 +193,7 @@ export async function revertPresetChanges(session: DnsSession): Promise<PresetRe
     };
   }
 
-  if (sameQueries(capturePresetPayload(session), payload)) {
+  if (sameQueries(dnsPresetBinding.capture(session), payload)) {
     restoreSettings(session, payload);
     write(JOURNAL_SOURCE, "info", "journal.dnslookup.reverted");
     return { error: null, restarted: false };

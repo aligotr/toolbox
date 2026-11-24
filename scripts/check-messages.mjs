@@ -35,11 +35,14 @@ const KEY_PATTERNS = [
   /descriptionKey:\s*"([^"]+)"/g,
   /nameKey:\s*"([^"]+)"/g,
   // Код ошибки, уведомления или записи журнала, созданной в интерфейсе.
-  /code:\s*"((?:errors|settings|journal|notifications|dnslookup|icmp)\.[^"]+)"/g,
+  /\b(?:code|missingCode):\s*"((?:errors|settings|journal|notifications|dnslookup|icmp)\.[^"]+)"/g,
   // Запись журнала передаётся позиционно, а не объектом.
   /\bwrite\(\s*[^,]+,\s*"(?:info|result|error)",\s*"([^"]+)"/g,
   // Код отказа обёртки пресетов: он же ключ словаря.
   /\b(?:attempt|presetAction)\(\s*"((?:journal)\.[^"]+)"/g,
+  // Ключ подписи, переданной общему компоненту данными:
+  // `dialogTitle: "dnslookup.preset.dialogTitle"`.
+  /:\s*"((?:dnslookup|icmp)\.preset\.[\w.]+)"/g,
 ];
 
 /** Все исходники интерфейса. */

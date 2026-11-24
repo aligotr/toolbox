@@ -9,12 +9,8 @@ import test from "node:test";
 import { installBuiltin } from "../../src/core/infra/i18n/catalog.ts";
 import { ruMessages } from "../../src/core/infra/i18n/messages.ts";
 import type { IcmpSession } from "../../src/tools/icmp/types.ts";
-import {
-  capturePresetPayload,
-  parsePresetPayload,
-  parseSnapshot,
-  snapshotOf,
-} from "../../src/tools/icmp/presets/format.ts";
+import { icmpPresetBinding } from "../../src/tools/icmp/presets/binding.ts";
+import { capturePresetPayload, parsePresetPayload } from "../../src/tools/icmp/presets/format.ts";
 
 installBuiltin(ruMessages);
 
@@ -139,11 +135,17 @@ test("снимок сеанса не содержит результатов", (
 
 test("снимок сеанса разбирается обратно без изменений", () => {
   const session = sessionOf();
-  const snapshot = snapshotOf(session);
+  const snapshot = icmpPresetBinding.snapshotOf(session);
 
-  assert.deepEqual(parseSnapshot(snapshot), capturePresetPayload(session));
+  assert.deepEqual(
+    icmpPresetBinding.readSnapshot({ ...session, presetSnapshot: snapshot }),
+    capturePresetPayload(session),
+  );
 });
 
 test("испорченный снимок не роняет откат", () => {
-  assert.equal(parseSnapshot("{не json"), null);
+  assert.equal(
+    icmpPresetBinding.readSnapshot({ ...sessionOf(), presetSnapshot: "{не json" }),
+    null,
+  );
 });

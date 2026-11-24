@@ -14,7 +14,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { reactive } from "vue";
 import type { StoredPreset, StoredPresetDefault, StoredPresetList } from "@/contracts/presets";
-import { t } from "@/core/infra/i18n";
+import { t, type MessageParams } from "@/core/infra/i18n";
 import { JOURNAL_CORE_SOURCE } from "../../infra/constants";
 import { write, type JournalFact, type JournalParams } from "../../infra/journal";
 import type { OperationStatus } from "../../infra/status";
@@ -28,6 +28,26 @@ export interface Preset {
   savedAt: string;
   /** Настройки инструмента: разбирает инструмент, не ядро. */
   payload: unknown;
+}
+
+/** Замечание о загрузке пресета: код словаря и данные подстановки. */
+export interface PresetProblem {
+  code: string;
+  params: MessageParams;
+}
+
+/** Итог загрузки пресета: ошибка разбора или замечания о неполной загрузке. */
+export interface PresetApplyResult {
+  /** Настройки не разобраны: сеанс не тронут. */
+  error: PresetProblem | null;
+  /** Что пришлось пропустить: строки, серверы, цели или предел списка. */
+  warnings: PresetProblem[];
+}
+
+/** Итог отката изменений: причина отказа; успех описывает инструмент. */
+export interface PresetRevertResult {
+  /** Откат не выполнен: сеанс не тронут. */
+  error: string | null;
 }
 
 /** Операции над пресетами: отказ удаления не блокирует сохранение. */

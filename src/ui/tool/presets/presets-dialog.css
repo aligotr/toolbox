@@ -1,4 +1,4 @@
-/* Стили диалога пресетов Ping.
+/* Стили диалога пресетов.
  *
  * Файл подключён через `<style scoped src>`: селекторы остаются в границах
  * компонента, но разметка диалога не пухнет от десятков строк стилей.
@@ -21,6 +21,9 @@
 
 .presets__note,
 .presets__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ag-space-sm);
   margin: 0;
   color: var(--ag-text-muted);
 }

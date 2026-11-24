@@ -114,6 +114,12 @@ function forgetParamsSnapshot(): void {
   paramsSnapshot = null;
 }
 
+/** Пресет заменил вход: прошлая заметка о быстрых действиях больше не нужна. */
+function forgetPresetNote(): void {
+  presetNote.value = null;
+  forgetParamsSnapshot();
+}
+
 /** Снимок живёт, пока фокус внутри блока параметров. */
 function forgetParams(event: FocusEvent): void {
   const box = event.currentTarget as HTMLElement | null;
@@ -393,11 +399,7 @@ async function saveExport(
     </p>
 
     <template #overlays>
-      <PresetsDialog
-        v-model:visible="presetsOpen"
-        :session="session"
-        @applied="forgetParamsSnapshot"
-      />
+      <PresetsDialog v-model:visible="presetsOpen" :session="session" @applied="forgetPresetNote" />
     </template>
   </ToolScreen>
 </template>

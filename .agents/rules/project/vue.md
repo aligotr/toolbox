@@ -79,8 +79,9 @@ status: {
   Глобальный CSS содержит только базу и раскладку оболочки.
 - Общие части каркаса с поведением - компоненты `src/ui/tool/`:
   `ToolScreen`, `ToolTable`, `ToolDetails`, `ToolDetailsSection`,
-  `ToolExpansionHead`, `ToolNumberField`. Инструмент не копирует их разметку,
-  перенос строк и состояние раскрытия.
+  `ToolExpansionHead`, `ToolNumberField`. Общий интерфейс пресетов -
+  `src/ui/tool/presets/`: панель, диалог, строка и текущий пресет.
+  Инструмент не копирует их разметку, перенос строк и состояние раскрытия.
 - Тема — `src/ui/primevue/theme.ts` (preset). Переключение темы — классом на `html`,
   не правкой компонентов.
 
