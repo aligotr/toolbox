@@ -22,7 +22,7 @@ export function useProfiles() {
       header: t("settings.profiles.switchHeader"),
       message: t("settings.profiles.switchMessage", { title: profile.title }),
       acceptLabel: t("settings.profiles.switchAccept"),
-      rejectLabel: t("settings.profiles.switchReject"),
+      rejectLabel: t("common.cancel"),
       rejectProps: CONFIRM_CALM_REJECT,
       reject: onCancel,
       // Esc и клик мимо диалога тоже отказ: отметка не должна остаться
@@ -50,8 +50,8 @@ export function useProfiles() {
     requireConfirm(confirm, {
       target,
       message: t("settings.profiles.deleteMessage", { title: profile.title }),
-      acceptLabel: t("settings.profiles.deleteAccept"),
-      rejectLabel: t("settings.profiles.deleteReject"),
+      acceptLabel: t("common.delete"),
+      rejectLabel: t("common.cancel"),
       accept: () => void deleteProfile(profile),
     });
   }

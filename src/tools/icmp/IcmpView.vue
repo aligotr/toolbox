@@ -11,11 +11,10 @@
 
 import Button from "primevue/button";
 import Checkbox from "primevue/checkbox";
-import InputGroup from "primevue/inputgroup";
 import InputText from "primevue/inputtext";
 import Popover from "primevue/popover";
 import Select from "primevue/select";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import type { ToolCellProps } from "@/contracts/tools";
 import { catalog, formatNumber, t } from "@/core/infra/i18n";
 import { anchorOverlay } from "@/ui/primevue/popup/anchoredOverlay";
@@ -23,7 +22,6 @@ import ToolNumberField from "@/ui/tool/ToolNumberField.vue";
 import ToolScreen from "@/ui/tool/ToolScreen.vue";
 import {
   familyFilterOptions,
-  familyOptions,
   MAX_COUNT,
   MAX_PERIOD_MS,
   MAX_TIMEOUT_MS,
@@ -58,17 +56,10 @@ const {
   moveTarget,
 } = useIcmp(props);
 
-const draft = ref("");
-const addError = ref<string | null>(null);
-const addBox = ref<HTMLElement | null>(null);
 const presetsOpen = ref(false);
 const presetNote = ref<string | null>(null);
 const paramsMenu = ref<InstanceType<typeof Popover> | null>(null);
-
-/** Правка цели снимает прошлую ошибку добавления: сообщение не висит зря. */
-watch(draft, () => {
-  addError.value = null;
-});
+const table = ref<InstanceType<typeof TargetTable> | null>(null);
 
 // Новая вкладка открывается с пресетом по умолчанию. Признак свежести ячейки
 // гасится внутри загрузки, поэтому повторный показ вкладки пресет не тронет.
@@ -171,25 +162,6 @@ function onParamsHide(): void {
   paramsSnapshot = null;
 }
 
-function focusInput(): void {
-  addBox.value?.querySelector<HTMLInputElement>("input")?.focus();
-}
-
-/** Добавляет цель; запуск остаётся за кнопкой. */
-function submitTarget(): void {
-  if (running.value) return;
-
-  const result = addTarget(draft.value, session.family);
-  if (result.kind === "error") {
-    addError.value = result.message;
-    return;
-  }
-
-  addError.value = null;
-  draft.value = "";
-  focusInput();
-}
-
 /** Запуск и остановка - одно действие: во время проверки кнопка отменяет. */
 function toggleRun(): void {
   if (running.value) {
@@ -206,42 +178,6 @@ function toggleRun(): void {
     <template #preset>
       <PresetBar :session="session" @open="presetsOpen = true" @note="presetNote = $event" />
     </template>
-
-    <div class="tool__toolbar">
-      <div ref="addBox" class="tool__add">
-        <InputGroup>
-          <InputText
-            v-model="draft"
-            size="small"
-            :class="{ 'p-invalid': addError }"
-            :placeholder="addError ?? t('icmp.view.targetPlaceholder')"
-            :aria-invalid="addError !== null"
-            :aria-label="t('icmp.view.targetAria')"
-            :disabled="running"
-            @keyup.enter="submitTarget"
-          />
-          <Select
-            v-model="session.family"
-            size="small"
-            :options="familyOptions()"
-            option-label="label"
-            option-value="value"
-            :aria-label="t('icmp.view.familyAria')"
-            :disabled="running"
-          />
-          <Button
-            v-tooltip.top="t('icmp.view.addHint')"
-            icon="pi pi-plus"
-            severity="secondary"
-            outlined
-            size="small"
-            :aria-label="t('icmp.view.addHint')"
-            :disabled="running"
-            @click="submitTarget"
-          />
-        </InputGroup>
-      </div>
-    </div>
 
     <div class="tool__filters">
       <InputText
@@ -271,6 +207,19 @@ function toggleRun(): void {
       />
 
       <div class="tool__table-actions">
+        <!-- Плюс в ряду иконочных действий: единственный вход в черновик,
+             в том же стиле, что настройки. -->
+        <Button
+          v-tooltip.top="t('common.add')"
+          class="icmp__add-icon"
+          icon="pi pi-plus"
+          severity="secondary"
+          text
+          size="small"
+          :aria-label="t('common.add')"
+          :disabled="running"
+          @click="table?.openDraft()"
+        />
         <Button
           class="icmp-params__open"
           icon="pi pi-cog"
@@ -296,10 +245,13 @@ function toggleRun(): void {
     </div>
 
     <TargetTable
+      ref="table"
       :targets="visibleTargets"
       :total-targets="session.targets.length"
       :highlight-target-id="session.highlightTargetId"
       :busy="running"
+      v-model:family="session.family"
+      :add="addTarget"
       @repeat="runTarget"
       @delete="removeTarget"
       @reorder="moveTarget"
@@ -390,14 +342,14 @@ function toggleRun(): void {
           </div>
           <div class="icmp-params__actions">
             <Button
-              :label="t('icmp.view.cancel')"
+              :label="t('common.cancel')"
               severity="secondary"
               text
               size="small"
               @click="cancelParams"
             />
             <Button
-              :label="t('icmp.view.paramsDone')"
+              :label="t('common.done')"
               size="small"
               :disabled="paramsInvalid"
               @click="applyParams"

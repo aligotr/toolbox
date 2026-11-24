@@ -131,7 +131,7 @@ function requestRevert(event: Event, entry: LanguageEntry): void {
     target,
     message: t("settings.language.revertMessage", { code: entry.code }),
     acceptLabel: t("settings.language.revertAccept"),
-    rejectLabel: t("settings.language.revertCancel"),
+    rejectLabel: t("common.cancel"),
     accept: () => {
       void restoreBuiltin(entry);
     },

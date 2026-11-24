@@ -11,6 +11,15 @@ import type { Messages } from "./types.ts";
 
 /** Русский встроенный словарь. */
 export const ruMessages: Messages = {
+  // ── Общие системные тексты ──────────────────────────────────────────────
+  // Действие без предмета: один текст на все места (ADR 0078).
+  "common.add": "Добавить",
+  "common.cancel": "Отмена",
+  "common.close": "Закрыть",
+  "common.delete": "Удалить",
+  "common.done": "Готово",
+  "common.save": "Сохранить",
+
   // ── Блокирующий экран ───────────────────────────────────────────────────
   "startup.title": "Программа не может начать работу",
   "startup.lead":
@@ -67,7 +76,6 @@ export const ruMessages: Messages = {
   "settings.language.revert": "Вернуть встроенный",
   "settings.language.revertMessage": "Удалить файл словаря «{code}» и вернуться к встроенному?",
   "settings.language.revertAccept": "Вернуть",
-  "settings.language.revertCancel": "Отмена",
   "settings.language.missingExport": "Выгрузить недостающие",
 
   // ── Уведомления ──────────────────────────────────────────────────────────
@@ -147,7 +155,6 @@ export const ruMessages: Messages = {
   "journal.source.core": "Ядро",
   "journal.clear.message": "Очистить записи?",
   "journal.clear.accept": "Очистить",
-  "journal.clear.reject": "Отмена",
 
   // Записи журнала: формулировку можно менять, код — нет.
   "journal.settings.readError": "Настройки не прочитаны: {reason}",
@@ -317,7 +324,6 @@ export const ruMessages: Messages = {
     other: "Удалить файлы лога старше {count} дня?",
   },
   "settings.log.pruneAccept": "Очистить",
-  "settings.log.pruneReject": "Отмена",
   "settings.log.pruned": "Удалено файлов: {count}. Свежие записи на месте.",
 
   // ── Окно ─────────────────────────────────────────────────────────────────
@@ -341,7 +347,6 @@ export const ruMessages: Messages = {
   "settings.window.resetMessage":
     "Размер и положение окна вернутся к значениям по умолчанию.\nСбросить?",
   "settings.window.resetAccept": "Сбросить",
-  "settings.window.resetReject": "Отмена",
 
   // ── Программа ────────────────────────────────────────────────────────────
   "settings.app.lead":
@@ -361,7 +366,6 @@ export const ruMessages: Messages = {
   "settings.profiles.titlePlaceholder": "Название профиля",
   "settings.profiles.titleAria": "Название нового профиля",
   "settings.profiles.submit": "Создать",
-  "settings.profiles.cancel": "Отмена",
   "settings.profiles.loading": "Список профилей читается…",
   "settings.profiles.empty":
     "Профилей нет. Создайте первый — приложение работает только внутри профиля.",
@@ -372,14 +376,10 @@ export const ruMessages: Messages = {
   "settings.profiles.unnamedHint":
     "Файл profile.json отсутствует или повреждён: показано имя папки",
   "settings.profiles.rename": "Переименовать",
-  "settings.profiles.delete": "Удалить",
   "settings.profiles.switchHeader": "Переключение профиля",
   "settings.profiles.switchMessage": "Открыть профиль «{title}»? Приложение перезапустится.",
   "settings.profiles.switchAccept": "Переключить",
-  "settings.profiles.switchReject": "Отмена",
   "settings.profiles.deleteMessage": "Удалить профиль «{title}»?",
-  "settings.profiles.deleteAccept": "Удалить",
-  "settings.profiles.deleteReject": "Отмена",
 
   // ── Умолчания данных ─────────────────────────────────────────────────────
   "profiles.defaultTitle": "Работа",
@@ -450,12 +450,11 @@ export const ruMessages: Messages = {
   "dnslookup.view.placeholderPtr": "IP-адрес или reverse-имя",
   "dnslookup.view.inputAria": "Домен или IP-адрес",
   "dnslookup.view.typeAria": "Тип записи по умолчанию",
-  "dnslookup.view.addHint": "Добавить запись",
+  "dnslookup.view.cancelAdd": "Отменить добавление",
   "dnslookup.view.customServers": "Свои DNS-серверы",
   "dnslookup.view.paramsTitle": "Серверы проверки",
   "dnslookup.view.paramsCount": "Выбрано {count} из {limit}",
   "dnslookup.view.paramsLimit": "Больше {limit} серверов выбрать нельзя",
-  "dnslookup.view.paramsDone": "Готово",
   "dnslookup.view.paramsSystemAddress": "Адреса из системы",
   "dnslookup.view.run": "Проверить",
   "dnslookup.view.stop": "Остановить",
@@ -530,8 +529,6 @@ export const ruMessages: Messages = {
   "dnslookup.servers.blocked":
     "Сохранение запрещено: исправьте или удалите файл своих серверов в профиле.",
   "dnslookup.servers.duplicate": "Адрес уже добавлен",
-  "dnslookup.servers.add": "Добавить",
-  "dnslookup.servers.cancel": "Отмена",
   "dnslookup.servers.brokenFile":
     "Файл своих серверов повреждён: запись запрещена до исправления или удаления",
   "dnslookup.servers.saveFailed": "Не удалось сохранить свои серверы",
@@ -573,8 +570,6 @@ export const ruMessages: Messages = {
   "dnslookup.preset.removed": "Пресет «{title}» удалён.",
   "dnslookup.preset.notRemoved": "Пресет не удалён.",
   "dnslookup.preset.loadAccept": "Загрузить",
-  "dnslookup.preset.deleteAccept": "Удалить",
-  "dnslookup.preset.cancel": "Отмена",
   "dnslookup.preset.deleteMessage": "Удалить пресет «{title}»?",
   "dnslookup.preset.replaceMessage":
     "Текущие строки и результаты будут заменены пресетом «{title}».",
@@ -589,7 +584,6 @@ export const ruMessages: Messages = {
     "Пресетов пока нет. Настройте инструмент и сохраните настройки первым пресетом.",
   "dnslookup.preset.newTitle": "Название нового пресета",
   "dnslookup.preset.saveAs": "Сохранить как пресет",
-  "dnslookup.preset.close": "Закрыть",
   "dnslookup.preset.renameAria": "Новое название пресета",
   "dnslookup.preset.renameSave": "Сохранить название",
   "dnslookup.preset.renameCancel": "Отменить переименование",
@@ -600,9 +594,7 @@ export const ruMessages: Messages = {
   "dnslookup.preset.renameTipAria": "Переименовать пресет",
   "dnslookup.preset.duplicateTip": "Дублировать",
   "dnslookup.preset.duplicateAria": "Дублировать пресет",
-  "dnslookup.preset.deleteTip": "Удалить",
   "dnslookup.preset.deleteAria": "Удалить пресет",
-  "dnslookup.preset.saveChanges": "Сохранить",
   "dnslookup.preset.warnRows": "Пропущено строк: {count}",
   "dnslookup.preset.warnServers": "Не найдены серверы: {list}",
   "dnslookup.preset.warnServerLimit": {
@@ -645,20 +637,18 @@ export const ruMessages: Messages = {
   "icmp.view.targetPlaceholder": "Домен или IP-адрес",
   "icmp.view.targetAria": "Домен или IP-адрес цели",
   "icmp.view.familyAria": "Семейство адресов для новой цели",
-  "icmp.view.addHint": "Добавить цель",
+  "icmp.view.cancelAdd": "Отменить добавление",
   "icmp.view.periodMs": "Период, мс",
   "icmp.view.count": "Число проверок, пакетов",
   "icmp.view.endless": "Бесконечно",
   "icmp.view.infinity": "∞",
   "icmp.view.timeoutMs": "Таймаут, мс",
   "icmp.view.paramsTitle": "Параметры проверки",
-  "icmp.view.paramsDone": "Готово",
   "icmp.view.runCount": "Проверить, {count} пак.",
   "icmp.view.stop": "Остановить",
   "icmp.view.search": "Поиск по цели",
   "icmp.view.statusFilter": "Фильтр по статусу",
   "icmp.view.familyFilter": "Фильтр по семейству",
-  "icmp.view.cancel": "Отмена",
   "icmp.view.progress":
     "Целей: {targets}, адресов: {addresses}, отправлено: {sent}, получено: {received}",
 
@@ -720,6 +710,7 @@ export const ruMessages: Messages = {
   "icmp.run.notStarted": "Проверка не запущена: {reason}",
   "icmp.run.stopFailed": "Не удалось остановить проверку: {reason}",
   "icmp.run.subscribeFailed": "Подписка на события Ping не создана: {reason}",
+  "icmp.validate.badTarget": "Введите корректный домен или IP-адрес",
   "icmp.validate.emptyTarget": "Введите домен или IP-адрес",
   "icmp.validate.targetLimit": "Целей больше предела в {limit}",
 
@@ -756,8 +747,6 @@ export const ruMessages: Messages = {
   "icmp.preset.removed": "Пресет «{title}» удалён.",
   "icmp.preset.notRemoved": "Пресет не удалён.",
   "icmp.preset.loadAccept": "Загрузить",
-  "icmp.preset.deleteAccept": "Удалить",
-  "icmp.preset.cancel": "Отмена",
   "icmp.preset.deleteMessage": "Удалить пресет «{title}»?",
   "icmp.preset.replaceMessage": "Текущие цели и результаты будут заменены пресетом «{title}».",
   "icmp.preset.replaceRunningMessage":
@@ -771,7 +760,6 @@ export const ruMessages: Messages = {
     "Пресетов пока нет. Настройте инструмент и сохраните настройки первым пресетом.",
   "icmp.preset.newTitle": "Название нового пресета",
   "icmp.preset.saveAs": "Сохранить как пресет",
-  "icmp.preset.close": "Закрыть",
   "icmp.preset.renameAria": "Новое название пресета",
   "icmp.preset.renameSave": "Сохранить название",
   "icmp.preset.renameCancel": "Отменить переименование",
@@ -782,9 +770,7 @@ export const ruMessages: Messages = {
   "icmp.preset.renameTipAria": "Переименовать пресет",
   "icmp.preset.duplicateTip": "Дублировать",
   "icmp.preset.duplicateAria": "Дублировать пресет",
-  "icmp.preset.deleteTip": "Удалить",
   "icmp.preset.deleteAria": "Удалить пресет",
-  "icmp.preset.saveChanges": "Сохранить",
   "icmp.preset.warnTargets": "Пропущено целей: {count}",
   "icmp.preset.warnLimit": "Список ограничен {limit} целями",
 

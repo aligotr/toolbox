@@ -14,7 +14,7 @@ import { computed, watch } from "vue";
 import type { ToolCellProps } from "@/contracts/tools";
 import { buildVerdicts } from "./state/compare";
 import { STANDALONE_CELL_KEY, SYSTEM_SERVER_ID } from "./constants";
-import { addRow, filterRows, moveRow, removeRow, resetRow } from "./state/rows";
+import { addRow, changeRowType, filterRows, moveRow, removeRow } from "./state/rows";
 import { ensureSubscriptions, runAllRows, runRows, stopRun } from "./state/run";
 import {
   addCustomServer,
@@ -110,11 +110,8 @@ export function useDnslookup(props: ToolCellProps) {
       void stopRun(session);
     },
     changeType: (rowId: string, type: RecordType): void => {
-      const row = session.rows.find((item) => item.id === rowId);
-      if (!row || row.type === type) return;
-      row.type = type;
-      resetRow(session, rowId);
-      void runRows(session, [rowId]);
+      const result = changeRowType(session, rowId, type);
+      if (!result.ok) session.status.run.error = result.message ?? null;
     },
     removeRow: (rowId: string): void => removeRow(session, rowId),
     moveRow: (from: number, to: number): void => moveRow(session, visibleRows.value, from, to),

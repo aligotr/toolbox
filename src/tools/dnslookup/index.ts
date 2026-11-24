@@ -12,7 +12,7 @@ export const dnslookupTool: ToolDescriptor<typeof DnslookupView> = {
   title: TOOL_TITLE,
   descriptionKey: "tools.dnslookup.description",
   icon: "pi pi-globe",
-  order: 20,
+  order: 30,
   // Разные вкладки — разные наборы доменов и серверов, это осознанный
   // сценарий. Обычный выбор ведёт в последнюю активную вкладку, а жест
   // «ещё одна вкладка» открывает рядом новую (ADR 0042).

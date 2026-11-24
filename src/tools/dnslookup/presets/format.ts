@@ -10,6 +10,7 @@
 // загружаться.
 
 import { RECORD_TYPES } from "../constants";
+import { parseAddressInput } from "../normalize";
 import type { DnsPresetPayload, DnsRow, DnsSession, RecordType, StatusFilter } from "../types";
 
 /** Разобранные настройки и число отброшенных неполных строк. */
@@ -28,7 +29,7 @@ function isStatusFilter(value: unknown): value is StatusFilter {
   return value === "all" || value === "error" || value === "empty";
 }
 
-/** Разбирает строку пресета; неполная строка отбрасывается целиком. */
+/** Разбирает строку пресета; неполная или недопустимая строка отбрасывается. */
 function parseRow(value: unknown): DnsRow | null {
   if (typeof value !== "object" || value === null) return null;
   const row = value as Record<string, unknown>;
@@ -36,7 +37,13 @@ function parseRow(value: unknown): DnsRow | null {
   if (typeof row.input !== "string" || row.input.trim() === "") return null;
   if (typeof row.name !== "string" || row.name.trim() === "") return null;
   if (!isRecordType(row.type)) return null;
-  return { id: row.id, input: row.input, name: row.name, type: row.type };
+
+  // Значение пересобирается из ввода: имя из файла могло устареть или
+  // не подходить типу. Строка, которая ядру заведомо не годится, отбрасывается,
+  // а не остаётся в таблице ради ошибки при запуске.
+  const parsed = parseAddressInput(row.input, row.type);
+  if (!parsed.ok) return null;
+  return { id: row.id, input: parsed.value.display, name: parsed.value.name, type: row.type };
 }
 
 /**

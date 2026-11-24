@@ -10,6 +10,7 @@
 
 import { t } from "@/core/infra/i18n";
 import { HIGHLIGHT_MS, MAX_TARGETS } from "../constants";
+import { parseTargetInput } from "../normalize";
 import { matchesFamily, matchesStatus, targetStatus } from "../summary";
 import type { AddTargetResult, Family, IcmpSession, IcmpTarget } from "../types";
 
@@ -72,8 +73,9 @@ function highlightTarget(session: IcmpSession, targetId: string): void {
 /** Добавляет цель в начало таблицы; дубликат не создаётся. */
 export function addTarget(session: IcmpSession, input: string, family: Family): AddTargetResult {
   const value = input.trim();
-  if (value === "") {
-    return { kind: "error", message: t("icmp.validate.emptyTarget") };
+  const parsed = parseTargetInput(value);
+  if (!parsed.ok) {
+    return { kind: "error", message: t(parsed.code, parsed.params) };
   }
 
   if (session.targets.length >= MAX_TARGETS) {

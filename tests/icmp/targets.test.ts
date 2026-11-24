@@ -96,6 +96,15 @@ test("пустая цель не добавляется", () => {
   assert.equal(session.targets.length, 0);
 });
 
+test("мусор вместо адреса не добавляется", () => {
+  const session = sessionOf();
+
+  const result = addTarget(session, "!!!", "auto");
+
+  assert.equal(result.kind, "error");
+  assert.equal(session.targets.length, 0);
+});
+
 test("дубликат не создаёт вторую строку", () => {
   const session = sessionOf();
   const first = addTarget(session, "Example.Test", "auto");

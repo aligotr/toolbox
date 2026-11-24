@@ -10,11 +10,10 @@
 
 import Button from "primevue/button";
 import Checkbox from "primevue/checkbox";
-import InputGroup from "primevue/inputgroup";
 import InputText from "primevue/inputtext";
 import Popover from "primevue/popover";
 import Select from "primevue/select";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import type { ToolCellProps } from "@/contracts/tools";
 import { t } from "@/core/infra/i18n";
 import { anchorOverlay } from "@/ui/primevue/popup/anchoredOverlay";
@@ -24,7 +23,6 @@ import PresetBar from "./components/PresetBar.vue";
 import PresetsDialog from "./components/PresetsDialog.vue";
 import ServerDialog from "./components/ServerDialog.vue";
 import {
-  RECORD_TYPES,
   SERVER_LIMIT,
   STANDALONE_CELL_KEY,
   statusFilterOptions,
@@ -61,36 +59,19 @@ const {
   refreshServers,
 } = useDnslookup(props);
 
-const draft = ref("");
-const addError = ref<string | null>(null);
-const addBox = ref<HTMLElement | null>(null);
 const serversOpen = ref(false);
 const presetsOpen = ref(false);
 const presetNote = ref<string | null>(null);
 const serverError = ref<string | null>(null);
 const columnMenu = ref<InstanceType<typeof Popover> | null>(null);
 const paramsMenu = ref<InstanceType<typeof Popover> | null>(null);
-
-/** Правка домена снимает прошлую ошибку добавления: сообщение не висит зря. */
-watch(draft, () => {
-  addError.value = null;
-});
+const table = ref<InstanceType<typeof DnsTable> | null>(null);
 
 // Новая вкладка открывается с пресетом по умолчанию. Признак свежести ячейки
 // гасится внутри загрузки, поэтому повторный показ вкладки пресет не тронет.
 onMounted(() => {
   void applyDefaultPreset(session, props.cellKey ?? STANDALONE_CELL_KEY);
 });
-
-// Тип в поле добавления — значение по умолчанию для новых строк,
-// а не фильтр таблицы. Отдельного состояния нет: загруженный пресет
-// меняет `session.defaultType`, и поле показывает то же значение.
-
-const placeholder = computed(() =>
-  session.defaultType === "PTR"
-    ? t("dnslookup.view.placeholderPtr")
-    : t("dnslookup.view.placeholderDomain"),
-);
 
 /** Подсказка о системных резолверах: адреса приходят от ОС, не из настроек. */
 const systemHint = computed<string>(() => {
@@ -195,25 +176,6 @@ const notices = computed<DataNotice[]>(() => {
   return list;
 });
 
-function focusInput(): void {
-  addBox.value?.querySelector<HTMLInputElement>("input")?.focus();
-}
-
-/** Добавляет строку; успешное добавление сразу запускает её проверку. */
-function submitRow(): void {
-  if (running.value) return;
-
-  const result = addRow(draft.value, session.defaultType);
-  if (result.kind === "error") {
-    addError.value = result.message;
-    return;
-  }
-
-  addError.value = null;
-  if (result.kind === "added") draft.value = "";
-  focusInput();
-}
-
 /** Запуск и остановка — одно действие: во время проверки кнопка отменяет. */
 function toggleRun(): void {
   if (running.value) {
@@ -261,40 +223,6 @@ function toggleColumns(event: Event): void {
       <PresetBar :session="session" @open="presetsOpen = true" @note="presetNote = $event" />
     </template>
 
-    <div class="tool__toolbar">
-      <div ref="addBox" class="tool__add">
-        <InputGroup>
-          <InputText
-            v-model="draft"
-            size="small"
-            :class="{ 'p-invalid': addError }"
-            :placeholder="addError ?? placeholder"
-            :aria-invalid="addError !== null"
-            :aria-label="t('dnslookup.view.inputAria')"
-            :disabled="running"
-            @keyup.enter="submitRow"
-          />
-          <Select
-            v-model="session.defaultType"
-            size="small"
-            :options="RECORD_TYPES"
-            :aria-label="t('dnslookup.view.typeAria')"
-            :disabled="running"
-          />
-          <Button
-            v-tooltip.top="t('dnslookup.view.addHint')"
-            icon="pi pi-plus"
-            severity="secondary"
-            outlined
-            size="small"
-            :aria-label="t('dnslookup.view.addHint')"
-            :disabled="running"
-            @click="submitRow"
-          />
-        </InputGroup>
-      </div>
-    </div>
-
     <div class="tool__filters">
       <InputText
         v-model="session.filters.search"
@@ -321,8 +249,21 @@ function toggleColumns(event: Event): void {
       </label>
 
       <div class="tool__table-actions">
+        <!-- Плюс в ряду иконочных действий: единственный вход в черновик,
+             в том же стиле, что колонки и настройки. -->
         <Button
-          v-tooltip.bottom="t('dnslookup.view.columns')"
+          v-tooltip.top="t('common.add')"
+          class="dns__add-icon"
+          icon="pi pi-plus"
+          severity="secondary"
+          text
+          size="small"
+          :aria-label="t('common.add')"
+          :disabled="running"
+          @click="table?.openDraft()"
+        />
+        <Button
+          v-tooltip.top="t('dnslookup.view.columns')"
           icon="pi pi-table"
           severity="secondary"
           text
@@ -415,13 +356,14 @@ function toggleColumns(event: Event): void {
               size="small"
               @click="openServers"
             />
-            <Button :label="t('dnslookup.view.paramsDone')" size="small" @click="closeParams" />
+            <Button :label="t('common.done')" size="small" @click="closeParams" />
           </div>
         </div>
       </Popover>
     </div>
 
     <DnsTable
+      ref="table"
       :rows="visibleRows"
       :total-rows="session.rows.length"
       :servers="columnServers"
@@ -431,6 +373,8 @@ function toggleColumns(event: Event): void {
       :highlight-row-id="session.highlightRowId"
       :system-hint="systemHint"
       :busy="running"
+      v-model:default-type="session.defaultType"
+      :add="addRow"
       reorderable
       @type-changed="changeType"
       @repeat="runRow"

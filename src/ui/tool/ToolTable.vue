@@ -33,12 +33,15 @@ const props = withDefaults(
     reorderable?: boolean;
     /** Подсвечивать раскрытую строку: инструмент включает сам. */
     markExpanded?: boolean;
+    /** Черновик открыт: над первой строкой рисуется полоса формы. */
+    draftOpen?: boolean;
   }>(),
   {
     highlightId: null,
     rowClass: undefined,
     reorderable: true,
     markExpanded: false,
+    draftOpen: false,
   },
 );
 
@@ -50,6 +53,7 @@ const emit = defineEmits<{
 /** Раскрытые строки: объект по идентификатору - так их ждёт DataTable. */
 const expandedRows = ref<Record<string, boolean>>({});
 const root = ref<HTMLElement | null>(null);
+const draftBanner = ref<HTMLElement | null>(null);
 
 useRowDrag(root, {
   enabled: () => props.reorderable,
@@ -61,6 +65,7 @@ useRowDrag(root, {
 /** Ширина первой закреплённой колонки: от неё стоит отступ второй. */
 const frozenWidth = ref("0px");
 let resizeFrame = 0;
+let draftFrame = 0;
 
 /** Пересчёт отступа закреплённой колонки по шапке таблицы. */
 function syncFrozenOffset(): void {
@@ -69,22 +74,110 @@ function syncFrozenOffset(): void {
   if (width !== frozenWidth.value) frozenWidth.value = width;
 }
 
+/** Контейнер прокрутки таблицы: у него видны границы и ширина. */
+function tableScroller(): HTMLElement | null {
+  return root.value?.querySelector<HTMLElement>(".p-datatable-table-container") ?? null;
+}
+
+/**
+ * Полоса черновика встаёт поверх первой строки.
+ *
+ * Строка черновика пустая и служит только запасом высоты: её высоту задаёт
+ * измеренная полоса, поэтому ошибка растёт вниз, не наезжая на данные.
+ * Слева и по ширине полоса повторяет видимую часть таблицы, так что кнопки
+ * не уезжают при горизонтальной прокрутке.
+ */
+function syncDraft(): void {
+  const banner = draftBanner.value;
+  const rootEl = root.value;
+  if (!banner || !rootEl) return;
+
+  const row = rootEl.querySelector<HTMLElement>("tbody tr.tool-table__row--draft");
+  const scroller = tableScroller();
+  if (!row || !scroller) return;
+
+  const rootRect = rootEl.getBoundingClientRect();
+  const rowRect = row.getBoundingClientRect();
+  const scrollerRect = scroller.getBoundingClientRect();
+
+  // Абсолютная полоса отсчитывается от внутреннего края рамки таблицы,
+  // а не от внешнего: без поправки на рамку она уезжает на пиксель.
+  banner.style.top = `${rowRect.top - rootRect.top - rootEl.clientTop}px`;
+  banner.style.left = `${scrollerRect.left - rootRect.left - rootEl.clientLeft}px`;
+  banner.style.width = `${scroller.clientWidth}px`;
+
+  const height = `${banner.offsetHeight}px`;
+  if (row.style.height !== height) row.style.height = height;
+}
+
+/** Пересчёт полосы в следующем кадре: обновления идут пачкой. */
+function scheduleDraft(): void {
+  cancelAnimationFrame(draftFrame);
+  draftFrame = requestAnimationFrame(syncDraft);
+}
+
 const resizeObserver = new ResizeObserver(() => {
   cancelAnimationFrame(resizeFrame);
-  resizeFrame = requestAnimationFrame(syncFrozenOffset);
+  resizeFrame = requestAnimationFrame(() => {
+    syncFrozenOffset();
+    syncDraft();
+  });
 });
+
+/** Полоса меняет высоту от ошибки: строку нужно догонять сразу. */
+const draftObserver = new ResizeObserver(scheduleDraft);
+
+watch(draftBanner, (current, previous) => {
+  if (previous) draftObserver.unobserve(previous);
+  if (current) draftObserver.observe(current);
+});
+
+// Черновик стоит первой строкой: открытие возвращает таблицу к началу,
+// иначе форма осталась бы за верхним краем прокрутки.
+watch(
+  () => props.draftOpen,
+  (open) => {
+    if (!open) return;
+    void nextTick(() => {
+      tableScroller()?.scrollTo({ top: 0 });
+      scheduleDraft();
+    });
+  },
+);
+
+/** Прокрутка двигает строку под полосой: её верх идёт следом. */
+let scroller: HTMLElement | null = null;
+
+function bindScroller(): void {
+  const next = tableScroller();
+  if (next === scroller) return;
+  scroller?.removeEventListener("scroll", scheduleDraft);
+  scroller = next;
+  scroller?.addEventListener("scroll", scheduleDraft, { passive: true });
+}
 
 onMounted(() => {
   if (root.value) resizeObserver.observe(root.value);
-  void nextTick(syncFrozenOffset);
+  void nextTick(() => {
+    syncFrozenOffset();
+    bindScroller();
+    scheduleDraft();
+  });
 });
 
 // Ширина меняется и без ресайза: новые строки и колонки переставляют содержимое.
-onUpdated(syncFrozenOffset);
+onUpdated(() => {
+  syncFrozenOffset();
+  bindScroller();
+  scheduleDraft();
+});
 
 onBeforeUnmount(() => {
   resizeObserver.disconnect();
+  draftObserver.disconnect();
+  scroller?.removeEventListener("scroll", scheduleDraft);
   cancelAnimationFrame(resizeFrame);
+  cancelAnimationFrame(draftFrame);
 });
 
 /** Строка раскрыта: шеврон развёрнут. */
@@ -139,6 +232,13 @@ watch(
     :style="{ '--tool-frozen-offset': frozenWidth }"
   >
     <slot name="notice" />
+
+    <!-- Полоса черновика: форма на всю видимую ширину таблицы. Стоит в начале
+         разметки, чтобы порядок обхода совпадал с верхом таблицы. -->
+    <div v-if="draftOpen" ref="draftBanner" class="tool-table__draft-banner">
+      <slot name="draft" />
+    </div>
+
     <DataTable
       v-model:expanded-rows="expandedRows"
       :value="rows"

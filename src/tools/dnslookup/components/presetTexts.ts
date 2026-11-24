@@ -1,8 +1,8 @@
 // Ключи видимых текстов пресетов DNS.
 //
-// Общие компоненты пресетов берут подписи данными: ключи остаются
-// у инструмента, поэтому внешние словари не ломаются при унификации
-// интерфейса (ADR 0039, ADR 0072).
+// Общие компоненты пресетов берут подписи данными. Контекстные тексты
+// остаются у инструмента, а универсальные действия берутся из `common`
+// (ADR 0039, ADR 0072, ADR 0078).
 
 import type { PresetBarTexts, PresetDialogTexts } from "@/ui/tool/presets/types";
 
@@ -17,13 +17,13 @@ export const DNS_PRESET_BAR_TEXTS: PresetBarTexts = {
 
 export const DNS_PRESET_DIALOG_TEXTS: PresetDialogTexts = {
   dialogTitle: "dnslookup.preset.dialogTitle",
-  close: "dnslookup.preset.close",
+  close: "common.close",
   current: {
     changed: "dnslookup.preset.currentChanged",
     none: "dnslookup.preset.none",
     noneHint: "dnslookup.preset.noneHint",
     revertHint: "dnslookup.preset.revertHint",
-    saveChanges: "dnslookup.preset.saveChanges",
+    saveChanges: "common.save",
   },
   list: {
     loading: "dnslookup.preset.listLoading",
@@ -42,7 +42,7 @@ export const DNS_PRESET_DIALOG_TEXTS: PresetDialogTexts = {
     renameTipAria: "dnslookup.preset.renameTipAria",
     duplicateTip: "dnslookup.preset.duplicateTip",
     duplicateAria: "dnslookup.preset.duplicateAria",
-    deleteTip: "dnslookup.preset.deleteTip",
+    deleteTip: "common.delete",
     deleteAria: "dnslookup.preset.deleteAria",
     makeDefault: "dnslookup.preset.makeDefault",
     clearDefault: "dnslookup.preset.clearDefault",
@@ -53,8 +53,8 @@ export const DNS_PRESET_DIALOG_TEXTS: PresetDialogTexts = {
   },
   confirm: {
     loadAccept: "dnslookup.preset.loadAccept",
-    deleteAccept: "dnslookup.preset.deleteAccept",
-    cancel: "dnslookup.preset.cancel",
+    deleteAccept: "common.delete",
+    cancel: "common.cancel",
     deleteMessage: "dnslookup.preset.deleteMessage",
     replaceMessage: "dnslookup.preset.replaceMessage",
     replaceRunningMessage: "dnslookup.preset.replaceRunningMessage",

@@ -142,13 +142,13 @@ function remove(serverId: string): void {
 
     <template #footer>
       <Button
-        :label="t('dnslookup.servers.cancel')"
+        :label="t('common.cancel')"
         text
         :disabled="locked"
         @click="emit('update:visible', false)"
       />
       <Button
-        :label="t('dnslookup.servers.add')"
+        :label="t('common.add')"
         icon="pi pi-plus"
         :loading="saving"
         :disabled="locked || address.trim() === ''"

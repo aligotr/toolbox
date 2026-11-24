@@ -1,8 +1,8 @@
 // Ключи видимых текстов пресетов Ping.
 //
-// Общие компоненты пресетов берут подписи данными: ключи остаются
-// у инструмента, поэтому внешние словари не ломаются при унификации
-// интерфейса (ADR 0039, ADR 0072).
+// Общие компоненты пресетов берут подписи данными. Контекстные тексты
+// остаются у инструмента, а универсальные действия берутся из `common`
+// (ADR 0039, ADR 0072, ADR 0078).
 
 import type { PresetBarTexts, PresetDialogTexts } from "@/ui/tool/presets/types";
 
@@ -17,13 +17,13 @@ export const ICMP_PRESET_BAR_TEXTS: PresetBarTexts = {
 
 export const ICMP_PRESET_DIALOG_TEXTS: PresetDialogTexts = {
   dialogTitle: "icmp.preset.dialogTitle",
-  close: "icmp.preset.close",
+  close: "common.close",
   current: {
     changed: "icmp.preset.currentChanged",
     none: "icmp.preset.none",
     noneHint: "icmp.preset.noneHint",
     revertHint: "icmp.preset.revertHint",
-    saveChanges: "icmp.preset.saveChanges",
+    saveChanges: "common.save",
   },
   list: {
     loading: "icmp.preset.listLoading",
@@ -42,7 +42,7 @@ export const ICMP_PRESET_DIALOG_TEXTS: PresetDialogTexts = {
     renameTipAria: "icmp.preset.renameTipAria",
     duplicateTip: "icmp.preset.duplicateTip",
     duplicateAria: "icmp.preset.duplicateAria",
-    deleteTip: "icmp.preset.deleteTip",
+    deleteTip: "common.delete",
     deleteAria: "icmp.preset.deleteAria",
     makeDefault: "icmp.preset.makeDefault",
     clearDefault: "icmp.preset.clearDefault",
@@ -53,8 +53,8 @@ export const ICMP_PRESET_DIALOG_TEXTS: PresetDialogTexts = {
   },
   confirm: {
     loadAccept: "icmp.preset.loadAccept",
-    deleteAccept: "icmp.preset.deleteAccept",
-    cancel: "icmp.preset.cancel",
+    deleteAccept: "common.delete",
+    cancel: "common.cancel",
     deleteMessage: "icmp.preset.deleteMessage",
     replaceMessage: "icmp.preset.replaceMessage",
     replaceRunningMessage: "icmp.preset.replaceRunningMessage",

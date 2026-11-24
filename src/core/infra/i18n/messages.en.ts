@@ -11,6 +11,14 @@ import type { Messages } from "./types.ts";
 
 /** Встроенный английский перевод. */
 export const enMessages: Messages = {
+  // Action without an object: one text for every place (ADR 0078).
+  "common.add": "Add",
+  "common.cancel": "Cancel",
+  "common.close": "Close",
+  "common.delete": "Delete",
+  "common.done": "Done",
+  "common.save": "Save",
+
   "startup.title": "The program cannot start",
   "startup.lead":
     "ToolBox keeps its settings and logs next to the program so the folder can be moved to another computer together with the data. Right now the files could not be written, so work has stopped.",
@@ -59,7 +67,6 @@ export const enMessages: Messages = {
   "settings.language.revertMessage":
     "Delete the dictionary file “{code}” and return to the built-in one?",
   "settings.language.revertAccept": "Restore",
-  "settings.language.revertCancel": "Cancel",
   "settings.language.missingExport": "Export missing keys",
 
   "notifications.languages.exported": "Dictionary “{code}” exported: {file}",
@@ -123,7 +130,6 @@ export const enMessages: Messages = {
   "journal.source.core": "Core",
   "journal.clear.message": "Clear entries?",
   "journal.clear.accept": "Clear",
-  "journal.clear.reject": "Cancel",
   "journal.settings.readError": "Could not read the settings: {reason}",
   "journal.settings.saveError": "Could not save the settings (section “{section}”): {reason}",
   "journal.settings.logLevel": "Log level: {level}",
@@ -263,7 +269,6 @@ export const enMessages: Messages = {
     other: "Delete log files older than {count} days?",
   },
   "settings.log.pruneAccept": "Clear",
-  "settings.log.pruneReject": "Cancel",
   "settings.log.pruned": "Files deleted: {count}. Recent entries are still here.",
   "settings.window.lead":
     "The size and position are remembered between launches.\nIf the window ends up off screen, reset returns it to the monitor working area.",
@@ -285,7 +290,6 @@ export const enMessages: Messages = {
   "settings.window.resetMessage":
     "The window size and position will return to their defaults.\nReset?",
   "settings.window.resetAccept": "Reset",
-  "settings.window.resetReject": "Cancel",
   "settings.app.lead":
     "Build details and the place where settings, the log and profiles live. All state is stored next to the executable.",
   "settings.app.debug": "Debug (cargo run / tauri dev)",
@@ -301,7 +305,6 @@ export const enMessages: Messages = {
   "settings.profiles.titlePlaceholder": "Profile name",
   "settings.profiles.titleAria": "New profile name",
   "settings.profiles.submit": "Create",
-  "settings.profiles.cancel": "Cancel",
   "settings.profiles.loading": "Reading the profile list…",
   "settings.profiles.empty":
     "There are no profiles. Create the first one - the program only works inside a profile.",
@@ -312,14 +315,10 @@ export const enMessages: Messages = {
   "settings.profiles.unnamedHint":
     "The profile.json file is missing or damaged: the folder name is shown",
   "settings.profiles.rename": "Rename",
-  "settings.profiles.delete": "Delete",
   "settings.profiles.switchHeader": "Switch profile",
   "settings.profiles.switchMessage": "Open profile “{title}”? The program will restart.",
   "settings.profiles.switchAccept": "Switch",
-  "settings.profiles.switchReject": "Cancel",
   "settings.profiles.deleteMessage": "Delete profile “{title}”?",
-  "settings.profiles.deleteAccept": "Delete",
-  "settings.profiles.deleteReject": "Cancel",
   "profiles.defaultTitle": "Work",
   "presets.copySuffix": " (copy)",
   "tools.open.anotherTab": "Ctrl+click for another tab",
@@ -374,12 +373,11 @@ export const enMessages: Messages = {
   "dnslookup.view.placeholderPtr": "IP address or reverse name",
   "dnslookup.view.inputAria": "Domain or IP address",
   "dnslookup.view.typeAria": "Default record type",
-  "dnslookup.view.addHint": "Add record",
+  "dnslookup.view.cancelAdd": "Cancel adding",
   "dnslookup.view.customServers": "Custom DNS servers",
   "dnslookup.view.paramsTitle": "Check servers",
   "dnslookup.view.paramsCount": "Selected {count} of {limit}",
   "dnslookup.view.paramsLimit": "You cannot select more than {limit} servers",
-  "dnslookup.view.paramsDone": "Done",
   "dnslookup.view.paramsSystemAddress": "System addresses",
   "dnslookup.view.run": "Check",
   "dnslookup.view.stop": "Stop",
@@ -445,8 +443,6 @@ export const enMessages: Messages = {
   "dnslookup.servers.blocked":
     "Saving is disabled: fix or delete the custom servers file in the profile.",
   "dnslookup.servers.duplicate": "The address is already added",
-  "dnslookup.servers.add": "Add",
-  "dnslookup.servers.cancel": "Cancel",
   "dnslookup.servers.brokenFile":
     "The custom servers file is damaged: saving is disabled until it is fixed or deleted",
   "dnslookup.servers.saveFailed": "Could not save the custom servers",
@@ -488,8 +484,6 @@ export const enMessages: Messages = {
   "dnslookup.preset.removed": "Preset “{title}” was deleted.",
   "dnslookup.preset.notRemoved": "The preset was not deleted.",
   "dnslookup.preset.loadAccept": "Load",
-  "dnslookup.preset.deleteAccept": "Delete",
-  "dnslookup.preset.cancel": "Cancel",
   "dnslookup.preset.deleteMessage": "Delete preset “{title}”?",
   "dnslookup.preset.replaceMessage":
     "The current rows and results will be replaced by preset “{title}”.",
@@ -504,7 +498,6 @@ export const enMessages: Messages = {
     "There are no presets yet. Configure the tool and save the settings as the first preset.",
   "dnslookup.preset.newTitle": "New preset name",
   "dnslookup.preset.saveAs": "Save as preset",
-  "dnslookup.preset.close": "Close",
   "dnslookup.preset.renameAria": "New preset name",
   "dnslookup.preset.renameSave": "Save the name",
   "dnslookup.preset.renameCancel": "Cancel renaming",
@@ -515,9 +508,7 @@ export const enMessages: Messages = {
   "dnslookup.preset.renameTipAria": "Rename preset",
   "dnslookup.preset.duplicateTip": "Duplicate",
   "dnslookup.preset.duplicateAria": "Duplicate preset",
-  "dnslookup.preset.deleteTip": "Delete",
   "dnslookup.preset.deleteAria": "Delete preset",
-  "dnslookup.preset.saveChanges": "Save",
   "dnslookup.preset.warnRows": "Rows skipped: {count}",
   "dnslookup.preset.warnServers": "Servers not found: {list}",
   "dnslookup.preset.warnServerLimit": {
@@ -552,20 +543,18 @@ export const enMessages: Messages = {
   "icmp.view.targetPlaceholder": "Domain or IP address",
   "icmp.view.targetAria": "Target domain or IP address",
   "icmp.view.familyAria": "Address family for a new target",
-  "icmp.view.addHint": "Add target",
+  "icmp.view.cancelAdd": "Cancel adding",
   "icmp.view.periodMs": "Period, ms",
   "icmp.view.count": "Checks, packets",
   "icmp.view.endless": "Endless",
   "icmp.view.infinity": "∞",
   "icmp.view.timeoutMs": "Timeout, ms",
   "icmp.view.paramsTitle": "Check settings",
-  "icmp.view.paramsDone": "Done",
   "icmp.view.runCount": "Check, {count} packets",
   "icmp.view.stop": "Stop",
   "icmp.view.search": "Search by target",
   "icmp.view.statusFilter": "Status filter",
   "icmp.view.familyFilter": "Family filter",
-  "icmp.view.cancel": "Cancel",
   "icmp.view.progress":
     "Targets: {targets}, addresses: {addresses}, sent: {sent}, received: {received}",
   "icmp.table.emptyAdd": "Add a domain or IP address",
@@ -621,6 +610,7 @@ export const enMessages: Messages = {
   "icmp.run.notStarted": "The check did not start: {reason}",
   "icmp.run.stopFailed": "Could not stop the check: {reason}",
   "icmp.run.subscribeFailed": "The Ping event subscription was not created: {reason}",
+  "icmp.validate.badTarget": "Enter a valid domain or IP address",
   "icmp.validate.emptyTarget": "Enter a domain or IP address",
   "icmp.validate.targetLimit": "There are more targets than the limit of {limit}",
   "icmp.preset.buttonEmpty": "Presets",
@@ -655,8 +645,6 @@ export const enMessages: Messages = {
   "icmp.preset.removed": "Preset “{title}” deleted.",
   "icmp.preset.notRemoved": "The preset was not deleted.",
   "icmp.preset.loadAccept": "Load",
-  "icmp.preset.deleteAccept": "Delete",
-  "icmp.preset.cancel": "Cancel",
   "icmp.preset.deleteMessage": "Delete preset “{title}”?",
   "icmp.preset.replaceMessage":
     "The current targets and results will be replaced by preset “{title}”.",
@@ -671,7 +659,6 @@ export const enMessages: Messages = {
     "There are no presets yet. Configure the tool and save the settings as the first preset.",
   "icmp.preset.newTitle": "New preset name",
   "icmp.preset.saveAs": "Save as preset",
-  "icmp.preset.close": "Close",
   "icmp.preset.renameAria": "New preset name",
   "icmp.preset.renameSave": "Save the name",
   "icmp.preset.renameCancel": "Cancel renaming",
@@ -682,9 +669,7 @@ export const enMessages: Messages = {
   "icmp.preset.renameTipAria": "Rename preset",
   "icmp.preset.duplicateTip": "Duplicate",
   "icmp.preset.duplicateAria": "Duplicate preset",
-  "icmp.preset.deleteTip": "Delete",
   "icmp.preset.deleteAria": "Delete preset",
-  "icmp.preset.saveChanges": "Save",
   "icmp.preset.warnTargets": "Skipped targets: {count}",
   "icmp.preset.warnLimit": "The list is limited to {limit} targets",
   "errors.core.unexpected": "{reason}",

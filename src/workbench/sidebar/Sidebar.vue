@@ -20,6 +20,7 @@ import { SINGLETON_TABS } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
 import { activeProfile, loadProfiles, profiles, status } from "@/core/services/profiles";
 import { openSingleton, workspace } from "@/core/services/workspace/index";
+import brandMark from "@/assets/brand.png";
 import RailItem from "./RailItem.vue";
 import { openToolOnAuxClick, openToolOnClick, openToolOnKeydown } from "../toolGestures";
 import { openSettingsSection } from "../settings/navigation";
@@ -109,7 +110,7 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
   <aside class="sidebar" :class="{ 'sidebar--rail': collapsed }">
     <header class="sidebar__head">
       <div v-if="!collapsed" class="brand">
-        <span class="brand__mark">TB</span>
+        <img class="brand__mark" :src="brandMark" alt="" />
         <strong class="brand__name">ToolBox</strong>
       </div>
 
@@ -244,11 +245,10 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
   border-radius: var(--ag-radius-md);
 }
 
+/* Знак приложения - его собственный цвет: подложка не спорит с логотипом
+   и не тратит основной акцент на украшение шапки (ADR 0019). */
 .brand__mark {
-  background: var(--p-primary-color);
-  color: var(--p-primary-contrast-color);
-  font-size: var(--ag-text-xs);
-  font-weight: 700;
+  object-fit: contain;
 }
 
 .brand__name {

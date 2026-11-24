@@ -14,7 +14,7 @@ export const icmpTool: ToolDescriptor<typeof IcmpView> = {
   title: TOOL_TITLE,
   descriptionKey: "tools.icmp.description",
   icon: "pi pi-wifi",
-  order: 30,
+  order: 20,
   // Разные вкладки - разные списки целей и параметры, это осознанный
   // сценарий. Обычный выбор ведёт в последнюю активную вкладку, а жест
   // «ещё одна вкладка» открывает рядом новую (ADR 0042).

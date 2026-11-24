@@ -179,7 +179,7 @@ function requestReset(event: MouseEvent): void {
     target,
     message: t("settings.window.resetMessage"),
     acceptLabel: t("settings.window.resetAccept"),
-    rejectLabel: t("settings.window.resetReject"),
+    rejectLabel: t("common.cancel"),
     acceptProps: CONFIRM_PRIMARY_ACCEPT,
     accept: () =>
       void resetWindow().then(() => {

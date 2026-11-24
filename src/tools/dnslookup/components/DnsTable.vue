@@ -16,8 +16,11 @@
 
 import Button from "primevue/button";
 import Column from "primevue/column";
+import InputText from "primevue/inputtext";
+import { computed, nextTick, ref, watch } from "vue";
 import { t } from "@/core/infra/i18n";
 import PlainSelect from "@/ui/PlainSelect.vue";
+import ToolDraftActions from "@/ui/tool/ToolDraftActions.vue";
 import ToolExpansionHead from "@/ui/tool/ToolExpansionHead.vue";
 import ToolTable from "@/ui/tool/ToolTable.vue";
 import {
@@ -37,6 +40,7 @@ import {
 } from "../cell";
 import CellDetails from "./CellDetails.vue";
 import type {
+  AddRowResult,
   CellDetailsEntry,
   DnsCell,
   DnsRow,
@@ -44,6 +48,9 @@ import type {
   RowVerdict,
   ServerOption,
 } from "../types";
+
+/** Идентификатор черновой строки: настоящие строки приходят с UUID. */
+const DRAFT_ROW_ID = "__draft__";
 
 const props = defineProps<{
   rows: DnsRow[];
@@ -59,17 +66,98 @@ const props = defineProps<{
   systemHint: string;
   /** Идёт проверка: смена типа и повтор строки недоступны. */
   busy: boolean;
+  /** Тип новой строки: он же значение поля в черновике. */
+  defaultType: RecordType;
+  /** Добавляет строку: результат решает, закрыть черновик или показать ошибку. */
+  add: (input: string, type: RecordType) => AddRowResult;
   /** Перестановка строк перетаскиванием: выключена, пока не включена явно. */
   reorderable?: boolean;
 }>();
 
 const emit = defineEmits<{
   "type-changed": [rowId: string, type: RecordType];
+  "update:defaultType": [type: RecordType];
   repeat: [rowId: string];
   delete: [rowId: string];
   /** Новый порядок строк: индексы приходят после переноса. */
   reorder: [from: number, to: number];
 }>();
+
+/** Черновик: строка добавления живёт первой строкой таблицы. */
+const draftOpen = ref(false);
+const draftText = ref("");
+const draftError = ref<string | null>(null);
+const draftBox = ref<HTMLElement | null>(null);
+
+/** Строки таблицы с черновиком сверху: новая запись встаёт первой. */
+const tableRows = computed<DnsRow[]>(() =>
+  draftOpen.value
+    ? [{ id: DRAFT_ROW_ID, input: "", name: "", type: props.defaultType }, ...props.rows]
+    : props.rows,
+);
+
+const draftPlaceholder = computed(() =>
+  props.defaultType === "PTR"
+    ? t("dnslookup.view.placeholderPtr")
+    : t("dnslookup.view.placeholderDomain"),
+);
+
+/** Правка домена снимает прошлую ошибку добавления: сообщение не висит зря. */
+watch(draftText, () => {
+  draftError.value = null;
+});
+
+// Запуск проверки закрывает черновик: строка добавления не спорит с работой.
+watch(
+  () => props.busy,
+  (busy) => {
+    if (busy) closeDraft();
+  },
+);
+
+/** Строка черновика, а не запись сеанса. */
+function isDraft(rowId: string): boolean {
+  return rowId === DRAFT_ROW_ID;
+}
+
+/** Открывает черновик и ставит фокус в поле домена. */
+function openDraft(): void {
+  if (props.busy) return;
+  draftOpen.value = true;
+  draftError.value = null;
+  void nextTick(() => {
+    draftBox.value?.querySelector<HTMLInputElement>("input")?.focus();
+  });
+}
+
+/** Закрывает черновик без добавления. */
+function closeDraft(): void {
+  draftOpen.value = false;
+  draftText.value = "";
+  draftError.value = null;
+}
+
+/** Добавляет строку: успех закрывает черновик, ошибка остаётся под полем. */
+function submitDraft(): void {
+  if (props.busy) return;
+
+  const result = props.add(draftText.value, props.defaultType);
+  if (result.kind === "error") {
+    draftError.value = result.message;
+    return;
+  }
+
+  closeDraft();
+}
+
+/** Тип в черновике - значение по умолчанию для следующих строк. */
+function onDraftTypeChange(event: { value: unknown }): void {
+  emit("update:defaultType", event.value as RecordType);
+}
+
+// Кнопка добавления стоит в строке фильтров: экран открывает черновик
+// через ref, а состояние строки остаётся у таблицы.
+defineExpose({ openDraft });
 
 /** Результат ячейки по паре «строка × сервер». */
 function cellOf(rowId: string, serverId: string): DnsCell | undefined {
@@ -113,6 +201,7 @@ function verdictClass(rowId: string): string {
 /** Классы строки: расхождение и недавний дубликат. */
 function rowClass(row: DnsRow): string {
   const classes: string[] = [];
+  if (isDraft(row.id)) classes.push("tool-table__row--draft");
   if (props.verdicts.get(row.id)?.differs) classes.push("dns-row--diff");
   if (props.highlightRowId === row.id) classes.push("dns-row--highlight");
   return classes.join(" ");
@@ -132,18 +221,63 @@ function forwardReorder(from: number, to: number): void {
 <template>
   <ToolTable
     class="dns-table"
-    :rows="rows"
+    :rows="tableRows"
     :total="totalRows"
     :empty-add="t('dnslookup.table.emptyAdd')"
     :empty-filtered="t('dnslookup.table.emptyFiltered')"
     :highlight-id="highlightRowId"
     :row-class="rowClass"
-    :reorderable="reorderable === true"
+    :reorderable="reorderable === true && !draftOpen"
+    :draft-open="draftOpen"
     mark-expanded
     @reorder="forwardReorder"
   >
     <template #notice>
       <slot name="notice" />
+    </template>
+
+    <!-- Полоса черновика: поле домена стоит над своей колонкой, тип - ровно
+         под заголовком «Тип», кнопки прижаты к правому краю. Ошибка идёт
+         отдельной строкой на всю ширину таблицы. -->
+    <template #draft>
+      <div class="dns-table__draft">
+        <div ref="draftBox" class="dns-table__draft-field">
+          <InputText
+            v-model="draftText"
+            size="small"
+            :style="{ width: '100%' }"
+            :class="{ 'p-invalid': draftError }"
+            :placeholder="draftPlaceholder"
+            :aria-invalid="draftError !== null"
+            :aria-label="t('dnslookup.view.inputAria')"
+            @keyup.enter="submitDraft"
+            @keyup.esc.stop.prevent="closeDraft"
+          />
+        </div>
+        <div class="dns-table__draft-field dns-table__draft-field--type">
+          <PlainSelect
+            :model-value="defaultType"
+            :options="RECORD_TYPES"
+            size="small"
+            :style="{ width: 'var(--tool-compact-width)' }"
+            :disabled="busy"
+            :aria-label="t('dnslookup.view.typeAria')"
+            @change="onDraftTypeChange"
+          />
+        </div>
+        <span class="dns-table__draft-fill" aria-hidden="true" />
+        <div class="dns-table__draft-actions">
+          <ToolDraftActions
+            :disabled="busy"
+            :cancel-label="t('dnslookup.view.cancelAdd')"
+            @accept="submitDraft"
+            @cancel="closeDraft"
+          />
+        </div>
+      </div>
+      <small v-if="draftError" class="dns-table__draft-error tool-table__draft-error" role="alert">
+        {{ draftError }}
+      </small>
     </template>
 
     <template #default="{ isExpanded, toggle }">
@@ -169,7 +303,7 @@ function forwardReorder(from: number, to: number): void {
           </span>
         </template>
         <template #body="{ data }">
-          <div class="tool-table__cell">
+          <div v-if="!isDraft(data.id)" class="tool-table__cell">
             <div class="tool-table__row">
               <Button
                 icon="pi pi-chevron-right"
@@ -214,6 +348,8 @@ function forwardReorder(from: number, to: number): void {
         </template>
       </Column>
 
+      <!-- Ширина колонки задаётся шапкой и данными; черновик на неё
+           не влияет, поэтому нижняя граница остаётся компактной. -->
       <Column
         field="type"
         :header="t('dnslookup.table.type')"
@@ -223,6 +359,7 @@ function forwardReorder(from: number, to: number): void {
       >
         <template #body="{ data }">
           <PlainSelect
+            v-if="!isDraft(data.id)"
             :model-value="data.type"
             :options="RECORD_TYPES"
             size="small"
@@ -254,6 +391,7 @@ function forwardReorder(from: number, to: number): void {
 
         <template #body="{ data }">
           <button
+            v-if="!isDraft(data.id)"
             type="button"
             class="cell"
             :aria-expanded="isExpanded(data.id)"
@@ -306,6 +444,35 @@ function forwardReorder(from: number, to: number): void {
 </template>
 
 <style scoped>
+/* Полоса черновика: поле стоит над «Доменами», тип - ровно под «Типом»,
+   кнопки прижаты к правому краю. Третья дорожка забирает остаток ширины,
+   поэтому кнопки не уезжают за край. */
+.dns-table__draft {
+  display: grid;
+  grid-template-columns: var(--tool-frozen-offset, 240px) auto minmax(0, 1fr) auto;
+  align-items: center;
+  min-width: 0;
+  padding-block: var(--ag-space-sm);
+}
+
+.dns-table__draft-field {
+  min-width: 0;
+  padding-inline: var(--ag-space-sm);
+}
+
+.dns-table__draft-fill {
+  min-width: 0;
+}
+
+.dns-table__draft-actions {
+  padding-inline: var(--ag-space-sm);
+}
+
+/* Ошибка занимает всю ширину полосы, а не одну колонку. */
+.dns-table__draft-error {
+  padding: 0 var(--ag-space-sm) var(--ag-space-sm);
+}
+
 /* Вердикт строки: цвет различает совпадение и расхождение,
    подпись читается и без цвета. */
 .dns-verdict {

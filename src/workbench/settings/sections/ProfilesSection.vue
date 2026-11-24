@@ -227,7 +227,7 @@ onMounted(() => {
         <div class="profiles__create-actions">
           <Button
             type="button"
-            :label="t('settings.profiles.cancel')"
+            :label="t('common.cancel')"
             size="small"
             severity="secondary"
             text
@@ -343,7 +343,7 @@ onMounted(() => {
             />
             <Button
               v-if="profile.id !== profiles.active"
-              :label="t('settings.profiles.delete')"
+              :label="t('common.delete')"
               size="small"
               severity="danger"
               text

@@ -101,6 +101,40 @@ export function addRow(session: DnsSession, input: string, type: RecordType): Ad
   return { kind: "added", rowId: row.id };
 }
 
+/** Итог смены типа: причина отказа или успех. */
+export interface ChangeTypeResult {
+  ok: boolean;
+  message?: string;
+}
+
+/**
+ * Меняет тип строки, только если значение ему подходит.
+ *
+ * Строка не должна оставаться с типом, которому её значение противоречит:
+ * IP допустим только для PTR, reverse-имя - только для PTR. Отказ не трогает
+ * ни тип, ни результаты: строка остаётся прежней, а причина возвращается
+ * вызывающему для показа.
+ */
+export function changeRowType(
+  session: DnsSession,
+  rowId: string,
+  type: RecordType,
+): ChangeTypeResult {
+  const row = session.rows.find((item) => item.id === rowId);
+  if (!row || row.type === type) return { ok: true };
+
+  const parsed = parseAddressInput(row.input, type);
+  if (!parsed.ok) {
+    return { ok: false, message: t(parsed.code, parsed.params) };
+  }
+
+  row.type = type;
+  row.name = parsed.value.name;
+  resetRow(session, rowId);
+  void runRows(session, [rowId]);
+  return { ok: true };
+}
+
 /** Строки, которые видит пользователь: поиск, статус и расхождения. */
 export function filterRows(session: DnsSession, verdicts: Map<string, RowVerdict>): DnsRow[] {
   const search = session.filters.search.trim().toLowerCase();

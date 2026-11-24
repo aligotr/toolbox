@@ -49,6 +49,16 @@ test("IP допустим только для PTR", () => {
   });
 });
 
+test("сокращённый и числовой адрес - тоже IP, а не имя", () => {
+  for (const input of ["127.1", "12345", "0x7f.1"]) {
+    assert.deepEqual(parseAddressInput(input, "A"), {
+      ok: false,
+      code: "dnslookup.validate.ipPtrOnly",
+      params: {},
+    });
+  }
+});
+
 test("PTR принимает только reverse-зону", () => {
   assert.deepEqual(parseAddressInput("example.com", "PTR"), {
     ok: false,
@@ -86,6 +96,14 @@ test("недопустимый символ в метке — отказ badChar
     ok: false,
     code: "dnslookup.validate.badChar",
     params: { label: "a$b" },
+  });
+});
+
+test("мусор вместо имени - отказ badChar", () => {
+  assert.deepEqual(parseAddressInput("!!!", "A"), {
+    ok: false,
+    code: "dnslookup.validate.badChar",
+    params: { label: "!!!" },
   });
 });
 

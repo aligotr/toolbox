@@ -71,7 +71,7 @@ function requestClear(event: MouseEvent): void {
     target: event.currentTarget as HTMLElement,
     message: t("journal.clear.message"),
     acceptLabel: t("journal.clear.accept"),
-    rejectLabel: t("journal.clear.reject"),
+    rejectLabel: t("common.cancel"),
     accept: () => {
       clearJournal();
       // Лента могла стоять на паузе со снимком: его тоже пора отпустить,

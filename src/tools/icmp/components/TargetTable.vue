@@ -16,12 +16,17 @@
 
 import Button from "primevue/button";
 import Column from "primevue/column";
+import InputText from "primevue/inputtext";
+import { computed, nextTick, ref, watch } from "vue";
 import { t } from "@/core/infra/i18n";
+import PlainSelect from "@/ui/PlainSelect.vue";
 import ToolDetails from "@/ui/tool/ToolDetails.vue";
 import ToolDetailsSection from "@/ui/tool/ToolDetailsSection.vue";
+import ToolDraftActions from "@/ui/tool/ToolDraftActions.vue";
 import ToolExpansionHead from "@/ui/tool/ToolExpansionHead.vue";
 import ToolTable from "@/ui/tool/ToolTable.vue";
 import {
+  familyOptions,
   LATENCY_COLUMN_MIN_WIDTH,
   PACKET_COLUMN_MIN_WIDTH,
   STATUS_COLUMN_MIN_WIDTH,
@@ -37,7 +42,10 @@ import {
   statusClass,
   statusText,
 } from "../cell";
-import type { IcmpAddress, IcmpTarget, PacketRecord } from "../types";
+import type { AddTargetResult, Family, IcmpAddress, IcmpTarget, PacketRecord } from "../types";
+
+/** Идентификатор черновой строки: настоящие цели приходят с UUID. */
+const DRAFT_ROW_ID = "__draft__";
 
 const props = defineProps<{
   targets: IcmpTarget[];
@@ -45,18 +53,109 @@ const props = defineProps<{
   highlightTargetId: string | null;
   /** Идёт проверка: повтор и удаление недоступны. */
   busy: boolean;
+  /** Семейство новой цели: оно же значение поля в черновике. */
+  family: Family;
+  /** Добавляет цель: результат решает, закрыть черновик или показать ошибку. */
+  add: (input: string, family: Family) => AddTargetResult;
 }>();
 
 const emit = defineEmits<{
+  "update:family": [family: Family];
   repeat: [targetId: string];
   delete: [targetId: string];
   /** Новый порядок целей: индексы приходят после переноса. */
   reorder: [from: number, to: number];
 }>();
 
-/** Классы строки: недавний дубликат. */
+/** Черновик: строка добавления живёт первой строкой таблицы. */
+const draftOpen = ref(false);
+const draftText = ref("");
+const draftError = ref<string | null>(null);
+const draftBox = ref<HTMLElement | null>(null);
+
+/** Строки таблицы с черновиком сверху: новая цель встаёт первой. */
+const tableRows = computed<IcmpTarget[]>(() =>
+  draftOpen.value
+    ? [
+        {
+          id: DRAFT_ROW_ID,
+          input: "",
+          family: props.family,
+          normalized: null,
+          addresses: [],
+          error: null,
+          active: false,
+          cancelled: false,
+          failed: false,
+        },
+        ...props.targets,
+      ]
+    : props.targets,
+);
+
+/** Правка цели снимает прошлую ошибку добавления: сообщение не висит зря. */
+watch(draftText, () => {
+  draftError.value = null;
+});
+
+// Запуск проверки закрывает черновик: строка добавления не спорит с работой.
+watch(
+  () => props.busy,
+  (busy) => {
+    if (busy) closeDraft();
+  },
+);
+
+/** Строка черновика, а не цель сеанса. */
+function isDraft(targetId: string): boolean {
+  return targetId === DRAFT_ROW_ID;
+}
+
+/** Открывает черновик и ставит фокус в поле цели. */
+function openDraft(): void {
+  if (props.busy) return;
+  draftOpen.value = true;
+  draftError.value = null;
+  void nextTick(() => {
+    draftBox.value?.querySelector<HTMLInputElement>("input")?.focus();
+  });
+}
+
+/** Закрывает черновик без добавления. */
+function closeDraft(): void {
+  draftOpen.value = false;
+  draftText.value = "";
+  draftError.value = null;
+}
+
+/** Добавляет цель: успех закрывает черновик, ошибка остаётся под полем. */
+function submitDraft(): void {
+  if (props.busy) return;
+
+  const result = props.add(draftText.value, props.family);
+  if (result.kind === "error") {
+    draftError.value = result.message;
+    return;
+  }
+
+  closeDraft();
+}
+
+/** Семейство в черновике - значение по умолчанию для следующих целей. */
+function onDraftFamilyChange(event: { value: unknown }): void {
+  emit("update:family", event.value as Family);
+}
+
+// Кнопка добавления стоит в строке фильтров: экран открывает черновик
+// через ref, а состояние строки остаётся у таблицы.
+defineExpose({ openDraft });
+
+/** Классы строки: черновик и недавний дубликат. */
 function rowClass(target: IcmpTarget): string {
-  return props.highlightTargetId === target.id ? "icmp-row--highlight" : "";
+  const classes: string[] = [];
+  if (isDraft(target.id)) classes.push("tool-table__row--draft");
+  if (props.highlightTargetId === target.id) classes.push("icmp-row--highlight");
+  return classes.join(" ");
 }
 
 /** Перенос строки приходит из общей таблицы и уходит экрану как есть. */
@@ -103,17 +202,62 @@ function packetTime(packet: PacketRecord): string {
 <template>
   <ToolTable
     class="icmp-table"
-    :rows="targets"
+    :rows="tableRows"
     :total="totalTargets"
     :empty-add="t('icmp.table.emptyAdd')"
     :empty-filtered="t('icmp.table.emptyFiltered')"
     :highlight-id="highlightTargetId"
     :row-class="rowClass"
+    :reorderable="!draftOpen"
+    :draft-open="draftOpen"
     mark-expanded
     @reorder="forwardReorder"
   >
     <template #notice>
       <slot name="notice" />
+    </template>
+
+    <!-- Полоса черновика: поле цели растёт до свободного места, семейство
+         идёт следом, кнопки прижаты к правому краю. Ошибка занимает
+         отдельную строку на всю ширину таблицы. -->
+    <template #draft>
+      <div class="icmp-table__draft">
+        <div ref="draftBox" class="icmp-table__draft-field">
+          <InputText
+            v-model="draftText"
+            size="small"
+            :class="{ 'p-invalid': draftError }"
+            :placeholder="t('icmp.view.targetPlaceholder')"
+            :aria-invalid="draftError !== null"
+            :aria-label="t('icmp.view.targetAria')"
+            @keyup.enter="submitDraft"
+            @keyup.esc.stop.prevent="closeDraft"
+          />
+        </div>
+        <PlainSelect
+          class="icmp-table__draft-family"
+          :model-value="family"
+          :options="familyOptions()"
+          option-label="label"
+          option-value="value"
+          size="small"
+          :style="{ width: 'var(--tool-compact-width)' }"
+          :disabled="busy"
+          :aria-label="t('icmp.view.familyAria')"
+          @change="onDraftFamilyChange"
+        />
+        <div class="icmp-table__draft-actions">
+          <ToolDraftActions
+            :disabled="busy"
+            :cancel-label="t('icmp.view.cancelAdd')"
+            @accept="submitDraft"
+            @cancel="closeDraft"
+          />
+        </div>
+      </div>
+      <small v-if="draftError" class="icmp-table__draft-error tool-table__draft-error" role="alert">
+        {{ draftError }}
+      </small>
     </template>
 
     <template #default="{ isExpanded, toggle }">
@@ -134,7 +278,7 @@ function packetTime(packet: PacketRecord): string {
           </span>
         </template>
         <template #body="{ data }">
-          <div class="tool-table__cell">
+          <div v-if="!isDraft(data.id)" class="tool-table__cell">
             <div class="tool-table__row">
               <Button
                 icon="pi pi-chevron-right"
@@ -200,7 +344,7 @@ function packetTime(packet: PacketRecord): string {
 
       <Column :header="t('icmp.table.packetPair')" :style="{ minWidth: PACKET_COLUMN_MIN_WIDTH }">
         <template #body="{ data }">
-          <span class="tool-table__number">
+          <span v-if="!isDraft(data.id)" class="tool-table__number">
             {{ targetStats(data).sent }}/{{ targetStats(data).received }}
           </span>
         </template>
@@ -208,13 +352,15 @@ function packetTime(packet: PacketRecord): string {
 
       <Column :header="t('icmp.table.avgLatency')" :style="{ minWidth: LATENCY_COLUMN_MIN_WIDTH }">
         <template #body="{ data }">
-          <span class="tool-table__number">{{ formatRtt(targetStats(data).avg) }}</span>
+          <span v-if="!isDraft(data.id)" class="tool-table__number">
+            {{ formatRtt(targetStats(data).avg) }}
+          </span>
         </template>
       </Column>
 
       <Column :header="t('icmp.table.status')" :style="{ minWidth: STATUS_COLUMN_MIN_WIDTH }">
         <template #body="{ data }">
-          <span :class="statusClass(targetStatus(data, busy))">
+          <span v-if="!isDraft(data.id)" :class="statusClass(targetStatus(data, busy))">
             {{ statusText(targetStatus(data, busy)) }}
           </span>
         </template>
@@ -337,3 +483,39 @@ function packetTime(packet: PacketRecord): string {
     </template>
   </ToolTable>
 </template>
+
+<style scoped>
+/* Полоса черновика: поле растёт до свободного места, семейство идёт следом,
+   кнопки прижаты к правому краю. Зазор шире обычного: поле и семейство
+   читаются как разные поля, а не как одно составное. */
+.icmp-table__draft {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-xl);
+  min-width: 0;
+  padding: var(--ag-space-sm);
+}
+
+.icmp-table__draft-field {
+  flex: 0 1 var(--tool-field-width);
+  min-width: 0;
+}
+
+.icmp-table__draft-field :deep(.p-inputtext) {
+  width: 100%;
+}
+
+.icmp-table__draft-family {
+  flex: 0 0 auto;
+}
+
+.icmp-table__draft-actions {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* Ошибка занимает всю ширину полосы, а не одну колонку. */
+.icmp-table__draft-error {
+  padding: 0 var(--ag-space-sm) var(--ag-space-sm);
+}
+</style>

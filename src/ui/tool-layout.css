@@ -17,6 +17,8 @@
   --tool-compact-width: 96px;
   /* Поле числового параметра: период, число пакетов, таймаут. */
   --tool-param-width: 72px;
+  /* Поле поиска уже общего поля: строка фильтров не отбирает место у таблицы. */
+  --tool-search-width: 224px;
   /* Нижняя граница поля поиска: уже неё строка фильтров ломается. */
   --tool-search-min-width: 160px;
   /* Кнопка строки таблицы размером с иконку: строка остаётся плотной. */
@@ -113,42 +115,61 @@
   white-space: nowrap;
 }
 
-/* Строка добавления: ввод, его список и действие. */
-.tool__toolbar {
+/* Подпись колонки: не переносится, а счётчик остаётся степенью. */
+.tool-table__heading {
+  white-space: nowrap;
+}
+
+/* Заголовок колонки - подпись, а не акцент: жирность остаётся у имён
+   серверов и числа адресов в строке. */
+.tool-table .p-datatable thead th {
+  font-weight: 400;
+}
+
+/* Полоса черновика: форма на всю видимую ширину таблицы, а не внутри ячеек.
+   Ширину и место над первой строкой задаёт замер в `ToolTable`: полоса
+   повторяет видимую часть таблицы и не уезжает при горизонтальной прокрутке. */
+.tool-table__draft-banner {
+  position: absolute;
+  z-index: 3;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--ag-space-md);
+  flex-direction: column;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--ag-border);
+  background: var(--ag-surface);
 }
 
-.tool__add {
-  flex: 0 0 auto;
-  min-width: 0;
+/* Строка черновика пустая: она держит высоту полосы. Высоту задаёт замер,
+   поэтому содержимое на неё не влияет. */
+.tool-table .tool-table__row--draft > td {
+  padding: 0;
+  border: 0;
 }
 
-/* Ширина полей задана точнее темы: `.p-inputgroup` из пресета растягивает
-   поля группы, и без этого правила они идут по содержимому. */
-.tool__add .p-inputgroup .p-inputtext {
-  flex: 0 0 var(--tool-field-width);
-  min-width: 0;
+/* Действия черновика стоят парой и друг от друга:
+   принять и отклонить - контурные кнопки размера поля.
+   Заливка делала их похожими на флажок рядом со списком. */
+.tool-table__draft-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--ag-space-sm);
 }
 
-.tool__add .p-inputgroup .p-select {
-  flex: 0 0 var(--tool-compact-width);
-  min-width: var(--tool-compact-width);
+.tool-table__draft-actions .p-button {
+  width: var(--ag-control-h);
+  height: var(--ag-control-h);
+  padding: 0;
 }
 
-/* Стрелка уже пресетной: место отдаётся тексту значения. */
-.tool__add .p-select .p-select-dropdown {
-  width: var(--tool-select-arrow);
-}
-
-.tool__add .p-inputtext.p-invalid::placeholder {
+.tool-table__draft-error {
   color: var(--ag-danger);
+  font-size: var(--ag-text-xs);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .tool__run {
+  margin-left: var(--ag-space-xs);
   white-space: nowrap;
 }
 
@@ -180,7 +201,7 @@
 }
 
 .tool__search {
-  flex: 0 1 var(--ag-field-width);
+  flex: 0 1 var(--tool-search-width);
   min-width: var(--tool-search-min-width);
 }
 
@@ -189,14 +210,18 @@
   min-width: var(--tool-filter-width);
 }
 
+/* Действия над таблицей: иконочные кнопки стоят плотной группой, а главное
+   действие отделено от них прежним зазором. */
 .tool__table-actions {
   display: flex;
-  gap: var(--ag-space-sm);
+  gap: var(--ag-space-xs);
   margin-left: auto;
 }
 
-/* Таблица: одна рамка на всю область, прокрутка внутри. */
+/* Таблица: одна рамка на всю область, прокрутка внутри.
+   `position: relative` нужен полосе черновика: она стоит поверх строки. */
 .tool-table {
+  position: relative;
   display: flex;
   flex: 0 1 auto;
   flex-direction: column;
@@ -392,18 +417,19 @@
   font-weight: 600;
 }
 
-.tool-table__heading {
-  white-space: nowrap;
-}
-
 /* Счётчик при имени: подпись колонки и число адресов цели.
    Отступ половинный: индекс уже отделён подъёмом, полный шаг его отрывает. */
 .tool-table__count {
   margin-inline-start: var(--ag-space-xs);
   color: var(--p-text-muted-color);
   font-size: var(--ag-text-xs);
-  font-weight: 600;
   line-height: 0;
+}
+
+/* Счётчик в заголовке колонки - часть подписи, а не акцент:
+   жирность остаётся только у числа адресов в строке данных. */
+.tool-table__heading .tool-table__count {
+  font-weight: 400;
 }
 
 /* Раскрытие: разделы и подтаблицы.

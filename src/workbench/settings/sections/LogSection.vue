@@ -55,7 +55,7 @@ function requestPrune(event: MouseEvent): void {
     target,
     message: t("settings.log.pruneMessage", { count: keepDays.value }),
     acceptLabel: t("settings.log.pruneAccept"),
-    rejectLabel: t("settings.log.pruneReject"),
+    rejectLabel: t("common.cancel"),
     accept: async () => {
       const removed = await pruneLogs();
       if (removed !== null) pruned.value = removed;

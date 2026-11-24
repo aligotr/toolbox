@@ -2,7 +2,7 @@
 //
 // Пресет хранит вход инструмента: цели и параметры, но не пакеты.
 // Разбор снисходителен: обязательны только цели, неизвестное поле
-// заменяется умолчанием, неполная цель отбрасывается целиком.
+// заменяется умолчанием, неполная или недопустимая цель отбрасывается целиком.
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -79,6 +79,20 @@ test("неполная цель отбрасывается, остальные �
   assert.equal(parsed.payload.targets.length, 1);
   assert.equal(parsed.droppedTargets, 3);
   assert.equal(parsed.payload.targets[0]?.input, "a.test");
+});
+
+test("цель с мусором вместо адреса отбрасывается", () => {
+  const parsed = parsePresetPayload({
+    targets: [
+      { id: "t1", input: "!!!", family: "auto" },
+      { id: "t2", input: " example.test ", family: "auto" },
+    ],
+  });
+
+  assert.ok(parsed);
+  assert.equal(parsed.payload.targets.length, 1);
+  assert.equal(parsed.droppedTargets, 1);
+  assert.equal(parsed.payload.targets[0]?.input, "example.test");
 });
 
 test("неизвестное семейство цели заменяется умолчанием", () => {

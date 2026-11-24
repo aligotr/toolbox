@@ -12,7 +12,7 @@ import {
   cellsMatch,
   matchesStatus,
 } from "../../src/tools/dnslookup/state/compare.ts";
-import { moveRow, removeRow } from "../../src/tools/dnslookup/state/rows.ts";
+import { addRow, changeRowType, moveRow, removeRow } from "../../src/tools/dnslookup/state/rows.ts";
 
 /** Ячейка с ответом: статус и значения задаёт тест. */
 function cellOf(status: CellStatus, values: string[] = [], ttl = 60): DnsCell {
@@ -176,4 +176,73 @@ test("удаление строки убирает её результаты и 
   );
   assert.deepEqual([...session.cells.keys()], ["b:system"]);
   assert.equal(session.highlightRowId, null);
+});
+
+/** Полный сеанс для проверок добавления и смены типа. */
+function workingSession(rows: DnsRow[] = []): DnsSession {
+  return {
+    rows,
+    servers: [],
+    defaultType: "A",
+    cells: new Map(),
+    customServers: [],
+    systemAddresses: [],
+    serversBroken: false,
+    runId: null,
+    progress: { total: 0, done: 0 },
+    status: {
+      run: { loading: false, error: null },
+      servers: { loading: false, error: null },
+      serversSave: { loading: false, error: null },
+    },
+    filters: { search: "", status: "all", diffOnly: false },
+    hiddenServers: [],
+    highlightRowId: null,
+    presetId: null,
+    presetTitle: null,
+    presetSnapshot: null,
+  };
+}
+
+test("IP-адрес не добавляется к типу, который спрашивает имя", () => {
+  const session = workingSession();
+
+  const result = addRow(session, "0.1.225.209", "A");
+
+  assert.equal(result.kind, "error");
+  assert.equal(session.rows.length, 0);
+});
+
+test("IP-адрес добавляется только к типу PTR", () => {
+  const session = workingSession();
+
+  const result = addRow(session, "0.1.225.209", "PTR");
+
+  assert.equal(result.kind, "added");
+  assert.equal(session.rows.length, 1);
+  assert.equal(session.rows[0].name, "0.1.225.209");
+  assert.equal(session.rows[0].type, "PTR");
+});
+
+test("смена типа на неподходящий не трогает строку и результаты", () => {
+  const row: DnsRow = { id: "r1", input: "0.1.225.209", name: "0.1.225.209", type: "PTR" };
+  const session = workingSession([row]);
+  session.cells.set("r1:system", cellOf("ok", ["0.1.225.209"]));
+
+  const result = changeRowType(session, "r1", "A");
+
+  assert.equal(result.ok, false);
+  assert.equal(session.rows[0].type, "PTR");
+  assert.deepEqual([...session.cells.keys()], ["r1:system"]);
+});
+
+test("смена типа на подходящий обновляет имя и тип", () => {
+  const row: DnsRow = { id: "r1", input: "example.com", name: "example.com", type: "A" };
+  const session = workingSession([row]);
+
+  const result = changeRowType(session, "r1", "MX");
+
+  assert.equal(result.ok, true);
+  assert.equal(session.rows[0].type, "MX");
+  assert.equal(session.rows[0].name, "example.com");
 });

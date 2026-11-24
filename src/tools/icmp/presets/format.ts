@@ -7,7 +7,8 @@
 //
 // Разбор снисходителен к прошлому: обязателен только список целей, остальные
 // поля могли появиться позже. Неизвестное значение заменяется умолчанием,
-// а неполная цель отбрасывается целиком - старый пресет обязан загружаться.
+// а неполная или недопустимая цель отбрасывается целиком - старый пресет
+// обязан загружаться, но мусор не должен попасть в таблицу в обход поля.
 
 import {
   DEFAULT_COUNT,
@@ -24,6 +25,7 @@ import {
   MIN_PERIOD_MS,
   MIN_TIMEOUT_MS,
 } from "../constants";
+import { parseTargetInput } from "../normalize";
 import type { Family, IcmpPresetPayload, IcmpSession } from "../types";
 
 /** Разобранные настройки и число отброшенных неполных целей. */
@@ -32,14 +34,15 @@ export interface ParsedPreset {
   droppedTargets: number;
 }
 
-/** Цель пресета: неполная цель отбрасывается целиком. */
+/** Цель пресета: неполная или недопустимая цель отбрасывается целиком. */
 function parseTarget(value: unknown): IcmpPresetPayload["targets"][number] | null {
   if (typeof value !== "object" || value === null) return null;
   const target = value as Record<string, unknown>;
   if (typeof target.id !== "string" || target.id === "") return null;
   if (typeof target.input !== "string" || target.input.trim() === "") return null;
+  if (!parseTargetInput(target.input).ok) return null;
   const family: Family = isFamily(target.family) ? target.family : DEFAULT_FAMILY;
-  return { id: target.id, input: target.input, family };
+  return { id: target.id, input: target.input.trim(), family };
 }
 
 /** Целое в пределах; всё остальное заменяется умолчанием. */

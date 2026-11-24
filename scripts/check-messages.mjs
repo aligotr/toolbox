@@ -41,8 +41,9 @@ const KEY_PATTERNS = [
   // Код отказа обёртки пресетов: он же ключ словаря.
   /\b(?:attempt|presetAction)\(\s*"((?:journal)\.[^"]+)"/g,
   // Ключ подписи, переданной общему компоненту данными:
-  // `dialogTitle: "dnslookup.preset.dialogTitle"`.
-  /:\s*"((?:dnslookup|icmp)\.preset\.[\w.]+)"/g,
+  // `dialogTitle: "dnslookup.preset.dialogTitle"`; универсальные действия
+  // приходят так же: `close: "common.close"` (ADR 0078).
+  /:\s*"((?:(?:dnslookup|icmp)\.preset|common)\.[\w.]+)"/g,
 ];
 
 /** Все исходники интерфейса. */
