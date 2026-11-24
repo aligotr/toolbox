@@ -10,17 +10,14 @@
 
 import Button from "primevue/button";
 import Checkbox from "primevue/checkbox";
-import Chip from "primevue/chip";
 import InputGroup from "primevue/inputgroup";
 import InputText from "primevue/inputtext";
-import MultiSelect from "primevue/multiselect";
 import Popover from "primevue/popover";
 import Select from "primevue/select";
-import { useConfirm } from "primevue/useconfirm";
 import { computed, onMounted, ref, watch } from "vue";
 import type { ToolCellProps } from "@/contracts/tools";
 import { t } from "@/core/infra/i18n";
-import { requireConfirm } from "@/ui/primevue/popup/confirmPopup";
+import { anchorOverlay } from "@/ui/primevue/popup/anchoredOverlay";
 import ToolScreen from "@/ui/tool/ToolScreen.vue";
 import DnsTable from "./components/DnsTable.vue";
 import PresetBar from "./components/PresetBar.vue";
@@ -28,18 +25,17 @@ import PresetsDialog from "./components/PresetsDialog.vue";
 import ServerDialog from "./components/ServerDialog.vue";
 import {
   RECORD_TYPES,
-  SERVER_LABEL_LIMIT,
   SERVER_LIMIT,
   STANDALONE_CELL_KEY,
   statusFilterOptions,
   SYSTEM_SERVER_ID,
 } from "./constants";
 import { applyDefaultPreset } from "./presets";
+import type { ServerOption } from "./types";
 import { useDnslookup } from "./useDnslookup";
 import "./styles.css";
 
 const props = defineProps<ToolCellProps>();
-const confirm = useConfirm();
 
 const {
   session,
@@ -56,11 +52,9 @@ const {
   addRow,
   addCustomServer,
   removeCustomServer,
-  exportCsv: exportCsvAction,
   runAll,
   runRow,
   cancel,
-  clear,
   changeType,
   removeRow,
   moveRow,
@@ -74,8 +68,8 @@ const serversOpen = ref(false);
 const presetsOpen = ref(false);
 const presetNote = ref<string | null>(null);
 const serverError = ref<string | null>(null);
-const exportNote = ref<string | null>(null);
 const columnMenu = ref<InstanceType<typeof Popover> | null>(null);
+const paramsMenu = ref<InstanceType<typeof Popover> | null>(null);
 
 /** Правка домена снимает прошлую ошибку добавления: сообщение не висит зря. */
 watch(draft, () => {
@@ -115,13 +109,54 @@ const compareHint = computed(() =>
   hasSystem.value ? t("dnslookup.view.needMoreServer") : t("dnslookup.view.needSystemServer"),
 );
 
-/** Первые выбранные серверы в поле: остальные скрыты за многоточием. */
-const shownServerIds = computed(() => session.servers.slice(0, SERVER_LABEL_LIMIT));
+/** Предел выбора достигнут: невыбранные серверы в поповере недоступны. */
+const atServerLimit = computed(() => session.servers.length >= SERVER_LIMIT);
 
-/** Сколько выбранных серверов не поместилось в поле. */
-const overflowServerCount = computed(() =>
-  Math.max(session.servers.length - SERVER_LABEL_LIMIT, 0),
-);
+/** Адрес сервера в списке: у системного показывается первый адрес. */
+function serverAddress(server: ServerOption): string {
+  if (server.kind !== "system") return server.address ?? "";
+  if (session.systemAddresses.length === 0) {
+    return t("dnslookup.view.paramsSystemAddress");
+  }
+  return session.systemAddresses[0] ?? "";
+}
+
+/** Сколько ещё адресов у системного сервера. */
+function serverMore(server: ServerOption): number {
+  return server.kind === "system" ? Math.max(session.systemAddresses.length - 1, 0) : 0;
+}
+
+/** Полный адрес для подсказки: системный сервер отдаёт все адреса ОС. */
+function serverAddressTitle(server: ServerOption): string {
+  if (server.kind !== "system") return server.address ?? "";
+  return session.systemAddresses.length > 0
+    ? session.systemAddresses.join(", ")
+    : t("dnslookup.view.paramsSystemAddress");
+}
+
+/** Открывает поповер выбора серверов у шестерёнки. */
+function openParams(event: MouseEvent): void {
+  paramsMenu.value?.toggle(event);
+
+  const target = event.currentTarget;
+  if (target instanceof HTMLElement) anchorOverlay(target, "popover");
+}
+
+/** Закрывает поповер выбора серверов. */
+function closeParams(): void {
+  paramsMenu.value?.hide();
+}
+
+/** Включает или выключает сервер; больше предела выбрать нельзя. */
+function toggleServer(serverId: string, selected: boolean): void {
+  if (selected) {
+    if (session.servers.includes(serverId) || atServerLimit.value) return;
+    session.servers = [...session.servers, serverId];
+    return;
+  }
+
+  session.servers = session.servers.filter((id) => id !== serverId);
+}
 
 /** Сообщение о состоянии данных: причина отказа или заметка о пресете. */
 interface DataNotice {
@@ -160,17 +195,6 @@ const notices = computed<DataNotice[]>(() => {
   return list;
 });
 
-/** Подпись сервера по идентификатору: своего сервера может уже не быть. */
-function serverLabel(serverId: string): string {
-  return availableServers.value.find((server) => server.id === serverId)?.label ?? serverId;
-}
-
-/** Крестик чипа снимает выбор и не открывает список. */
-function unselectServer(serverId: string, event: Event): void {
-  event.stopPropagation();
-  session.servers = session.servers.filter((id) => id !== serverId);
-}
-
 function focusInput(): void {
   addBox.value?.querySelector<HTMLInputElement>("input")?.focus();
 }
@@ -199,20 +223,8 @@ function toggleRun(): void {
   }
 }
 
-/** Спрашивает подтверждение очистки всплывающим блоком у кнопки. */
-function requestClear(event: MouseEvent): void {
-  requireConfirm(confirm, {
-    target: event.currentTarget as HTMLElement,
-    message: t("dnslookup.view.clearMessage"),
-    acceptLabel: t("dnslookup.view.clearAccept"),
-    rejectLabel: t("dnslookup.view.cancel"),
-    accept: () => {
-      void clear();
-    },
-  });
-}
-
 function openServers(): void {
+  paramsMenu.value?.hide();
   serverError.value = null;
   serversOpen.value = true;
   // Список читается заново: файл профиля могли поправить руками.
@@ -240,23 +252,6 @@ function setColumnVisible(serverId: string, visible: boolean): void {
 
 function toggleColumns(event: Event): void {
   columnMenu.value?.toggle(event);
-}
-
-async function exportCsv(): Promise<void> {
-  exportNote.value = null;
-  try {
-    const result = await exportCsvAction();
-    exportNote.value =
-      result.method === "clipboard"
-        ? t("dnslookup.view.exportClipboard", { count: result.rows })
-        : result.copied
-          ? t("dnslookup.view.exportWithCopy", { count: result.rows })
-          : t("dnslookup.view.exportDone", { count: result.rows });
-  } catch (error) {
-    exportNote.value = t("dnslookup.view.exportFailed", {
-      reason: String(error),
-    });
-  }
 }
 </script>
 
@@ -298,61 +293,6 @@ async function exportCsv(): Promise<void> {
           />
         </InputGroup>
       </div>
-
-      <div class="dns__servers-row">
-        <InputGroup class="dns__servers">
-          <MultiSelect
-            v-model="session.servers"
-            size="small"
-            :options="availableServers"
-            option-label="label"
-            option-value="id"
-            display="chip"
-            :selection-limit="SERVER_LIMIT"
-            :placeholder="t('dnslookup.view.serversPlaceholder')"
-            :aria-label="t('dnslookup.view.serversAria')"
-          >
-            <template #value="{ placeholder }">
-              <template v-if="session.servers.length > 0">
-                <Chip
-                  v-for="serverId in shownServerIds"
-                  :key="serverId"
-                  :label="serverLabel(serverId)"
-                  removable
-                  @remove="unselectServer(serverId, $event)"
-                />
-                <span
-                  v-if="overflowServerCount > 0"
-                  class="dns__servers-more"
-                  :aria-label="t('dnslookup.view.serversMore', { count: overflowServerCount })"
-                >
-                  +{{ overflowServerCount }}
-                </span>
-              </template>
-              <template v-else>{{ placeholder }}</template>
-            </template>
-          </MultiSelect>
-          <Button
-            v-tooltip.top="t('dnslookup.view.customServers')"
-            icon="pi pi-pencil"
-            severity="secondary"
-            outlined
-            size="small"
-            :aria-label="t('dnslookup.view.customServers')"
-            @click="openServers"
-          />
-        </InputGroup>
-
-        <Button
-          class="dns__run tool__run"
-          :label="running ? t('dnslookup.view.stop') : t('dnslookup.view.run')"
-          :icon="running ? 'pi pi-stop' : 'pi pi-play'"
-          :severity="running ? 'contrast' : undefined"
-          size="small"
-          :disabled="!running && !canRun"
-          @click="toggleRun"
-        />
-      </div>
     </div>
 
     <div class="tool__filters">
@@ -392,24 +332,24 @@ async function exportCsv(): Promise<void> {
           @click="toggleColumns"
         />
         <Button
-          v-tooltip.bottom="t('dnslookup.view.export')"
-          icon="pi pi-download"
-          severity="secondary"
+          class="dns__params__open"
+          icon="pi pi-cog"
+          :severity="session.servers.length === 0 ? 'danger' : 'secondary'"
           text
           size="small"
-          :aria-label="t('dnslookup.view.export')"
-          :disabled="visibleRows.length === 0"
-          @click="exportCsv"
+          v-tooltip.top="t('dnslookup.view.paramsTitle')"
+          :aria-label="t('dnslookup.view.paramsTitle')"
+          aria-haspopup="true"
+          @click="openParams"
         />
         <Button
-          v-tooltip.bottom="t('dnslookup.view.clear')"
-          icon="pi pi-trash"
-          severity="danger"
-          text
+          class="dns__run tool__run"
+          :label="running ? t('dnslookup.view.stop') : t('dnslookup.view.run')"
+          :icon="running ? 'pi pi-stop' : 'pi pi-play'"
+          :severity="running ? 'contrast' : undefined"
           size="small"
-          :aria-label="t('dnslookup.view.clear')"
-          :disabled="session.rows.length === 0 && !session.status.run.error"
-          @click="requestClear"
+          :disabled="!running && !canRun"
+          @click="toggleRun"
         />
       </div>
       <Popover ref="columnMenu">
@@ -426,6 +366,58 @@ async function exportCsv(): Promise<void> {
             </label>
           </li>
         </ul>
+      </Popover>
+      <Popover ref="paramsMenu">
+        <div class="dns-params">
+          <p class="dns-params__title">{{ t("dnslookup.view.paramsTitle") }}</p>
+          <p class="dns-params__count">
+            {{
+              t("dnslookup.view.paramsCount", {
+                count: session.servers.length,
+                limit: SERVER_LIMIT,
+              })
+            }}
+          </p>
+          <ul class="dns-params__list">
+            <li v-for="server in availableServers" :key="server.id">
+              <label
+                class="dns-params__item"
+                :class="{ 'dns-params__item--on': session.servers.includes(server.id) }"
+                :for="`dns-server-${server.id}`"
+              >
+                <Checkbox
+                  :input-id="`dns-server-${server.id}`"
+                  binary
+                  :model-value="session.servers.includes(server.id)"
+                  :disabled="!session.servers.includes(server.id) && atServerLimit"
+                  @update:model-value="toggleServer(server.id, $event)"
+                />
+                <span class="dns-params__name" :title="server.label">{{ server.label }}</span>
+                <span class="dns-params__sep" aria-hidden="true" />
+                <span class="dns-params__address" :title="serverAddressTitle(server)">
+                  {{ serverAddress(server) }}
+                </span>
+                <span v-if="serverMore(server) > 0" class="dns-params__extra">
+                  +{{ serverMore(server) }}
+                </span>
+              </label>
+            </li>
+          </ul>
+          <p v-if="atServerLimit" class="dns-params__limit">
+            {{ t("dnslookup.view.paramsLimit", { limit: SERVER_LIMIT }) }}
+          </p>
+          <div class="dns-params__actions">
+            <Button
+              :label="t('dnslookup.view.customServers')"
+              icon="pi pi-pencil"
+              severity="secondary"
+              text
+              size="small"
+              @click="openServers"
+            />
+            <Button :label="t('dnslookup.view.paramsDone')" size="small" @click="closeParams" />
+          </div>
+        </div>
       </Popover>
     </div>
 
@@ -460,11 +452,6 @@ async function exportCsv(): Promise<void> {
         </div>
       </template>
     </DnsTable>
-
-    <p v-if="exportNote" class="tool__hint" aria-live="polite">
-      <i class="pi pi-file" aria-hidden="true" />
-      {{ exportNote }}
-    </p>
 
     <template #overlays>
       <ServerDialog

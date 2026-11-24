@@ -1,6 +1,7 @@
 # ADR 0068: Ping через ICMP и переносимый транспорт
 
-- **Статус:** принято
+- **Статус:** принято; CSV уточнён ADR 0073, бесконечная серия и хранение
+  пакетов - ADR 0075
 - **Дата:** 2026-11-23
 - **Область:** `src-tauri/src/modules/icmp/`, `src-tauri/src/modules/mod.rs`,
   `src-tauri/Cargo.toml`, `src/tools/icmp/`, `src/app/tools.ts`

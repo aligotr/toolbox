@@ -1,7 +1,7 @@
 // Проверки сводки Ping: потери, задержки, статусы цели и адреса.
 //
 // Сводка - это ответ на вопросы «отвечает ли узел», «сколько теряется»
-// и «как быстро». Правила общие для таблицы, фильтра и CSV, поэтому
+// и «как быстро». Правила общие для таблицы и фильтра, поэтому
 // проверяются без Vue и без сети.
 
 import assert from "node:assert/strict";
@@ -14,12 +14,15 @@ import type {
 } from "../../src/tools/icmp/types.ts";
 import {
   addressCaption,
+  addressStats,
   addressStatus,
   matchesFamily,
   matchesStatus,
+  recordPacket,
   statsOf,
   targetStats,
   targetStatus,
+  totalsOf,
 } from "../../src/tools/icmp/summary.ts";
 
 /** Пакет с заданным статусом и задержкой. */
@@ -45,6 +48,7 @@ function addressOf(
     scopeId: 0,
     expected: packets.length,
     cancelled: false,
+    totals: totalsOf(packets),
     packets,
     ...extra,
   };
@@ -233,4 +237,46 @@ test("фильтр семейства смотрит на адреса цели"
 test("адрес link-local показывается со scope id", () => {
   assert.equal(addressCaption({ ip: "fe80::1", scopeId: 12 }), "fe80::1%12");
   assert.equal(addressCaption({ ip: "192.0.2.1", scopeId: 0 }), "192.0.2.1");
+});
+
+test("вытесненные пакеты не искажают счётчики адреса", () => {
+  const kept = [packet("ok", 10, 300, 3)];
+  const address = addressOf("192.0.2.1", kept, "ipv4", {
+    expected: 3,
+    totals: totalsOf([packet("ok", 5, 100, 1), packet("timeout", null, 200, 2), kept[0]!]),
+  });
+
+  const stats = addressStats(address);
+  assert.equal(stats.sent, 3);
+  assert.equal(stats.received, 2);
+  assert.equal(stats.loss, 33);
+  assert.equal(stats.avg, 7.5);
+  assert.equal(address.packets.length, 1);
+});
+
+test("бесконечная серия показывает результат сразу", () => {
+  const address = addressOf("192.0.2.1", [packet("ok", 3)], "ipv4", { expected: null });
+
+  assert.equal(addressStatus(address, true), "ok");
+});
+
+test("остановка бесконечной серии даёт отмену", () => {
+  const address = addressOf("192.0.2.1", [packet("ok", 3)], "ipv4", {
+    expected: null,
+    cancelled: true,
+  });
+
+  assert.equal(addressStatus(address, false), "cancelled");
+});
+
+test("раскрытие хранит последние пакеты, итог не теряется", () => {
+  const address = addressOf("192.0.2.1", [], "ipv4", { expected: null });
+  for (let sequence = 1; sequence <= 12; sequence += 1) {
+    recordPacket(address, packet("ok", sequence, sequence, sequence), 10);
+  }
+
+  assert.equal(address.packets.length, 10);
+  assert.equal(address.packets[0]?.sequence, 3);
+  assert.equal(address.totals.sent, 12);
+  assert.equal(addressStats(address).received, 12);
 });

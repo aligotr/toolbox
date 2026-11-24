@@ -27,8 +27,8 @@ use crate::core::infra::error::AppError;
 use crate::core::infra::module::Module;
 
 use request::{
-    AddressDto, IcmpCancel, IcmpFinished, IcmpPacket, IcmpResolved, IcmpRun, IcmpRunAccepted,
-    MAX_ADDRESSES, PreparedRun, PreparedTarget,
+    AddressDto, ENDLESS_COUNT, IcmpCancel, IcmpFinished, IcmpPacket, IcmpResolved, IcmpRun,
+    IcmpRunAccepted, MAX_ADDRESSES, PreparedRun, PreparedTarget,
 };
 use resolve::{ResolveOutcome, SystemResolver, TargetResolver};
 use transport::{CheckAddress, EchoReply, EchoStatus, EchoTransport, platform_transport};
@@ -408,7 +408,8 @@ fn send_series(
     sent: &AtomicUsize,
     received: &AtomicUsize,
 ) {
-    for sequence in 1..=count {
+    let mut sequence: u32 = 1;
+    loop {
         if cancelled.load(Ordering::SeqCst) {
             return;
         }
@@ -435,10 +436,16 @@ fn send_series(
             return;
         }
 
+        // Ноль - серия без ограничения: её заканчивает только отмена.
+        if count != ENDLESS_COUNT && sequence >= count {
+            return;
+        }
+
         let elapsed = started.elapsed();
         if elapsed < period {
             sleep_unless_cancelled(period - elapsed, cancelled);
         }
+        sequence = sequence.wrapping_add(1);
     }
 }
 
@@ -733,6 +740,55 @@ mod tests {
             .expect("завершение");
         assert!(cancelled);
         assert!(sent < 200, "отправлено: {sent}");
+
+        bus.stop();
+    }
+
+    #[test]
+    fn endless_run_stops_on_cancel() {
+        let transport = Arc::new(FakeTransport::new(
+            Duration::from_millis(2),
+            Duration::from_millis(50),
+        ));
+        let resolver = Arc::new(FakeResolver::new(vec![("example.test", local_addresses())]));
+        let bus = MessageBus::new(Deps::new());
+        module(transport.clone(), resolver).register(&bus);
+
+        let (tx_packet, rx_packet) = mpsc::channel();
+        bus.subscribe_event::<IcmpPacket>(move |event, _deps| {
+            let _ = tx_packet.send(event.sequence);
+        });
+        let (tx_finished, rx_finished) = mpsc::channel();
+        bus.subscribe_event::<IcmpFinished>(move |event, _deps| {
+            let _ = tx_finished.send((event.cancelled, event.sent));
+        });
+
+        bus.start();
+        let accepted = bus
+            .ask(
+                IcmpRun::TOPIC,
+                IcmpRunAccepted::TOPIC,
+                run_payload(
+                    json!([{ "target_id": "t1", "input": "example.test", "family": "auto" }]),
+                    200,
+                    0,
+                ),
+                Duration::from_secs(2),
+            )
+            .expect("ответ на запуск");
+        assert_eq!(accepted["accepted"], true);
+
+        rx_packet
+            .recv_timeout(Duration::from_secs(2))
+            .expect("первый пакет");
+        bus.dispatch_command(IcmpCancel::TOPIC, json!({ "run_id": "run-1" }))
+            .expect("команда отмены");
+
+        let (cancelled, sent) = rx_finished
+            .recv_timeout(Duration::from_secs(3))
+            .expect("завершение");
+        assert!(cancelled);
+        assert!(sent >= 1, "отправлено: {sent}");
 
         bus.stop();
     }

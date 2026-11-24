@@ -236,7 +236,6 @@ export const ruMessages: Messages = {
   "journal.dnslookup.stopped": "Проверка остановлена: получено {done} из {total}",
   "journal.dnslookup.stopFailed": "Не удалось остановить проверку: {reason}",
   "journal.dnslookup.runTooMany": "Слишком много запросов: {total} при пределе {limit}",
-  "journal.dnslookup.cleared": "Таблица очищена",
   "journal.dnslookup.leaveStopError": "Проверка покинутой вкладки не остановлена: {reason}",
   "journal.dnslookup.systemServersFailed": "Системные резолверы не прочитаны: {reason}",
   "journal.dnslookup.customServersFailed": "Свои серверы не прочитаны: {reason}",
@@ -246,8 +245,6 @@ export const ruMessages: Messages = {
     "Файл своих серверов повреждён: запись запрещена до исправления или удаления",
   "journal.dnslookup.serverAdded": "Свой сервер добавлен: {address}",
   "journal.dnslookup.serverRemoved": "Свой сервер удалён",
-  "journal.dnslookup.csvFile": "CSV выгружен: строк — {rows}, файл",
-  "journal.dnslookup.csvClipboard": "CSV выгружен: строк — {rows}, буфер обмена",
   "journal.dnslookup.defaultPresetMissing":
     "Пресет по умолчанию «{id}» не найден: вкладка открыта пустой",
   "journal.dnslookup.presetLoaded":
@@ -258,6 +255,7 @@ export const ruMessages: Messages = {
   "journal.icmp.subscribed": "Подписка на события Ping активна",
   "journal.icmp.subscribeError": "Подписка на события Ping не создана: {reason}",
   "journal.icmp.started": "Проверка Ping запущена: целей - {targets}, пакетов на адрес - {count}",
+  "journal.icmp.startedEndless": "Проверка Ping запущена без ограничения: целей - {targets}",
   "journal.icmp.finished":
     "Проверка Ping завершена: целей - {targets}, адресов - {addresses}, отправлено - {sent}, получено - {received}, время - {elapsed} мс",
   "journal.icmp.cancelled":
@@ -267,15 +265,12 @@ export const ruMessages: Messages = {
   "journal.icmp.startRejected": "Проверка Ping не запущена: ядро отклонило запрос",
   "journal.icmp.stopped": "Проверка Ping остановлена: отправлено - {sent}, получено - {received}",
   "journal.icmp.stopFailed": "Не удалось остановить проверку Ping: {reason}",
-  "journal.icmp.cleared": "Список целей Ping очищен",
   "journal.icmp.leaveStopError": "Проверка Ping покинутой вкладки не остановлена: {reason}",
   "journal.icmp.defaultPresetMissing":
     "Пресет Ping по умолчанию «{id}» не найден: вкладка открыта пустой",
   "journal.icmp.presetLoaded": "Пресет Ping «{title}» загружен: целей - {targets}",
   "journal.icmp.reverted": "Изменения настроек Ping отменены",
   "journal.icmp.revertedCleared": "Изменения отменены, результаты очищены: целей - {targets}",
-  "journal.icmp.csvFile": "CSV Ping выгружен: строк - {rows}, файл",
-  "journal.icmp.csvClipboard": "CSV Ping выгружен: строк - {rows}, буфер обмена",
 
   // ── Количество ───────────────────────────────────────────────────────────
   "count.presets": {
@@ -456,10 +451,12 @@ export const ruMessages: Messages = {
   "dnslookup.view.inputAria": "Домен или IP-адрес",
   "dnslookup.view.typeAria": "Тип записи по умолчанию",
   "dnslookup.view.addHint": "Добавить запись",
-  "dnslookup.view.serversPlaceholder": "Выберите серверы",
-  "dnslookup.view.serversAria": "DNS-серверы",
-  "dnslookup.view.serversMore": "И ещё {count}",
   "dnslookup.view.customServers": "Свои DNS-серверы",
+  "dnslookup.view.paramsTitle": "Серверы проверки",
+  "dnslookup.view.paramsCount": "Выбрано {count} из {limit}",
+  "dnslookup.view.paramsLimit": "Больше {limit} серверов выбрать нельзя",
+  "dnslookup.view.paramsDone": "Готово",
+  "dnslookup.view.paramsSystemAddress": "Адреса из системы",
   "dnslookup.view.run": "Проверить",
   "dnslookup.view.stop": "Остановить",
   "dnslookup.view.serversError": "Серверы: {reason}",
@@ -469,18 +466,9 @@ export const ruMessages: Messages = {
   "dnslookup.view.needMoreServer": "Нужен ещё сервер",
   "dnslookup.view.needSystemServer": "Нужен системный сервер",
   "dnslookup.view.columns": "Отображаемые колонки",
-  "dnslookup.view.export": "Экспорт CSV",
-  "dnslookup.view.clear": "Очистить",
-  "dnslookup.view.clearMessage": "Очистить записи?",
-  "dnslookup.view.clearAccept": "Очистить",
-  "dnslookup.view.cancel": "Отмена",
   "dnslookup.view.systemLoading": "Системные резолверы: загрузка…",
   "dnslookup.view.systemMissing": "Системные резолверы не найдены",
   "dnslookup.view.systemList": "Системные резолверы: {list}",
-  "dnslookup.view.exportClipboard": "Скачивание недоступно: CSV скопирован в буфер, строк: {count}",
-  "dnslookup.view.exportWithCopy": "Экспортировано строк: {count} (копия в буфере)",
-  "dnslookup.view.exportDone": "Экспортировано строк: {count}",
-  "dnslookup.view.exportFailed": "Не удалось выгрузить CSV: {reason}",
 
   // ── DNSlookup: таблица ───────────────────────────────────────────────────
   "dnslookup.table.emptyAdd": "Добавьте домен",
@@ -502,7 +490,7 @@ export const ruMessages: Messages = {
   "dnslookup.details.elapsed": "Время ответа",
 
   // ── DNSlookup: вердикт строки ─────────────────────────────────────────────
-  // Одна подпись на шапку раскрытия и столбец «Совпадение» в CSV.
+  // Одна подпись на шапку раскрытия.
   "dnslookup.verdict.matches": "OK",
   "dnslookup.verdict.differs": "Записи расходятся",
 
@@ -524,7 +512,7 @@ export const ruMessages: Messages = {
   "dnslookup.status.offline": "НЕТ СЕТИ",
   "dnslookup.status.badResponse": "ОШИБКА ОТВЕТА",
   "dnslookup.status.cancelled": "—",
-  "dnslookup.filter.all": "Все",
+  "dnslookup.filter.all": "Все статусы",
   "dnslookup.filter.error": "Есть ошибка",
   "dnslookup.filter.empty": "Без ответа",
 
@@ -653,38 +641,26 @@ export const ruMessages: Messages = {
   "dnslookup.run.stopFailed": "Не удалось остановить проверку: {reason}",
   "dnslookup.run.subscribeFailed": "Подписка на события DNS не создана: {reason}",
 
-  // ── DNSlookup: CSV ───────────────────────────────────────────────────────
-  "dnslookup.csv.domain": "Домен",
-  "dnslookup.csv.type": "Тип",
-  "dnslookup.csv.match": "Совпадение",
-  "dnslookup.csv.saveFailed": "Не удалось сохранить CSV и скопировать его в буфер",
-
   // ── Ping: экран ──────────────────────────────────────────────────────────
   "icmp.view.targetPlaceholder": "Домен или IP-адрес",
   "icmp.view.targetAria": "Домен или IP-адрес цели",
   "icmp.view.familyAria": "Семейство адресов для новой цели",
   "icmp.view.addHint": "Добавить цель",
-  "icmp.view.period": "Период",
-  "icmp.view.ms": "мс",
-  "icmp.view.count": "Пакетов",
-  "icmp.view.timeout": "Таймаут",
-  "icmp.view.run": "Запустить",
+  "icmp.view.periodMs": "Период, мс",
+  "icmp.view.count": "Число проверок, пакетов",
+  "icmp.view.endless": "Бесконечно",
+  "icmp.view.infinity": "∞",
+  "icmp.view.timeoutMs": "Таймаут, мс",
+  "icmp.view.paramsTitle": "Параметры проверки",
+  "icmp.view.paramsDone": "Готово",
+  "icmp.view.runCount": "Проверить, {count} пак.",
   "icmp.view.stop": "Остановить",
   "icmp.view.search": "Поиск по цели",
   "icmp.view.statusFilter": "Фильтр по статусу",
   "icmp.view.familyFilter": "Фильтр по семейству",
-  "icmp.view.exportSummary": "Сводка CSV",
-  "icmp.view.exportPackets": "Пакеты CSV",
-  "icmp.view.clear": "Очистить",
-  "icmp.view.clearMessage": "Очистить цели и результаты?",
-  "icmp.view.clearAccept": "Очистить",
   "icmp.view.cancel": "Отмена",
   "icmp.view.progress":
     "Целей: {targets}, адресов: {addresses}, отправлено: {sent}, получено: {received}",
-  "icmp.view.exportClipboard": "Скачивание недоступно: CSV скопирован в буфер, строк: {count}",
-  "icmp.view.exportWithCopy": "Экспортировано строк: {count} (копия в буфере)",
-  "icmp.view.exportDone": "Экспортировано строк: {count}",
-  "icmp.view.exportFailed": "Не удалось выгрузить CSV: {reason}",
 
   // ── Ping: таблица ────────────────────────────────────────────────────────
   "icmp.table.emptyAdd": "Добавьте домен или IP-адрес",
@@ -729,7 +705,7 @@ export const ruMessages: Messages = {
   "icmp.family.auto": "Авто",
   "icmp.family.ipv4": "IPv4",
   "icmp.family.ipv6": "IPv6",
-  "icmp.filter.all": "Все",
+  "icmp.filter.all": "Все статусы",
   "icmp.filter.ok": "Все ответили",
   "icmp.filter.loss": "Есть потери",
   "icmp.filter.failed": "Без ответа",
@@ -738,7 +714,7 @@ export const ruMessages: Messages = {
   // ── Ping: запуск ─────────────────────────────────────────────────────────
   "icmp.run.noTargets": "Добавьте хотя бы одну цель",
   "icmp.run.period": "Период вне пределов {min}..{max} мс",
-  "icmp.run.count": "Количество вне пределов {min}..{max}",
+  "icmp.run.count": "Число проверок: от {min} до {max}",
   "icmp.run.timeout": "Таймаут вне пределов {min}..{max} мс",
   "icmp.run.rejected": "Проверка отклонена ядром",
   "icmp.run.notStarted": "Проверка не запущена: {reason}",
@@ -746,24 +722,6 @@ export const ruMessages: Messages = {
   "icmp.run.subscribeFailed": "Подписка на события Ping не создана: {reason}",
   "icmp.validate.emptyTarget": "Введите домен или IP-адрес",
   "icmp.validate.targetLimit": "Целей больше предела в {limit}",
-
-  // ── Ping: CSV ────────────────────────────────────────────────────────────
-  "icmp.csv.target": "Цель",
-  "icmp.csv.address": "Адрес",
-  "icmp.csv.family": "Семейство",
-  "icmp.csv.sent": "Отправлено",
-  "icmp.csv.received": "Получено",
-  "icmp.csv.loss": "Потери, %",
-  "icmp.csv.min": "Минимум",
-  "icmp.csv.avg": "Среднее",
-  "icmp.csv.max": "Максимум",
-  "icmp.csv.last": "Последний",
-  "icmp.csv.status": "Статус",
-  "icmp.csv.sequence": "Номер",
-  "icmp.csv.rtt": "Задержка, мс",
-  "icmp.csv.ttl": "TTL",
-  "icmp.csv.time": "Время",
-  "icmp.csv.saveFailed": "Не удалось сохранить CSV и скопировать его в буфер",
 
   // ── Ping: пресеты ────────────────────────────────────────────────────────
   "icmp.preset.buttonEmpty": "Пресеты",
@@ -965,7 +923,7 @@ export const ruMessages: Messages = {
   "errors.icmp.emptyTargets": "Список целей пуст",
   "errors.icmp.tooManyTargets": "Целей больше предела в {limit}",
   "errors.icmp.period": "Период вне пределов {min}..{max} мс",
-  "errors.icmp.count": "Количество вне пределов {min}..{max}",
+  "errors.icmp.count": "Число проверок: от {min} до {max}",
   "errors.icmp.timeout": "Таймаут вне пределов {min}..{max} мс",
   "errors.icmp.targetId": "Не указан идентификатор цели",
   "errors.icmp.emptyTarget": "Пустая цель проверки",

@@ -18,6 +18,12 @@ export const DEFAULT_PERIOD_MS = 1000;
 export const MIN_COUNT = 1;
 export const MAX_COUNT = 100;
 export const DEFAULT_COUNT = 4;
+
+/** Проводное значение «без ограничения» в поле количества. */
+export const ENDLESS_COUNT = 0;
+
+/** Сколько последних пакетов адреса остаётся в таблице. */
+export const KEPT_PACKETS = 10;
 export const MIN_TIMEOUT_MS = 200;
 export const MAX_TIMEOUT_MS = 10000;
 export const DEFAULT_TIMEOUT_MS = 1000;

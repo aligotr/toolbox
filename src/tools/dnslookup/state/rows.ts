@@ -9,33 +9,14 @@
 // остаются на своих позициях.
 
 import { t } from "@/core/infra/i18n";
-import { write } from "@/core/infra/journal";
 import { matchesStatus } from "./compare";
-import { HIGHLIGHT_MS, JOURNAL_SOURCE } from "../constants";
+import { HIGHLIGHT_MS } from "../constants";
 import { parseAddressInput } from "../normalize";
-import { abortSessionRun, runRows } from "./run";
+import { runRows } from "./run";
 import type { AddRowResult, DnsRow, DnsSession, RecordType, RowVerdict } from "../types";
 
 /** Таймеры подсветки дубликатов: по сеансу, чтобы не плодить висящие. */
 const highlightTimers = new WeakMap<DnsSession, ReturnType<typeof setTimeout>>();
-
-/** Очищает строки и результаты; серверы и тип остаются. */
-export async function clearSession(session: DnsSession): Promise<void> {
-  // Запуск отцепляется от сеанса до очистки: результаты отменённой проверки
-  // уже не нужны и не должны вернуть прогресс в чистую таблицу.
-  await abortSessionRun(session);
-
-  session.rows = [];
-  session.cells.clear();
-  session.highlightRowId = null;
-  session.status.run.error = null;
-  session.filters.search = "";
-  session.filters.status = "all";
-  session.filters.diffOnly = false;
-  session.progress = { total: 0, done: 0 };
-
-  write(JOURNAL_SOURCE, "info", "journal.dnslookup.cleared");
-}
 
 /** Сбрасывает результаты одной строки перед сменой типа. */
 export function resetRow(session: DnsSession, rowId: string): void {

@@ -9,29 +9,12 @@
 // проверку начинает кнопка, поэтому добавление не тратит пакеты.
 
 import { t } from "@/core/infra/i18n";
-import { write } from "@/core/infra/journal";
-import { HIGHLIGHT_MS, JOURNAL_SOURCE, MAX_TARGETS } from "../constants";
+import { HIGHLIGHT_MS, MAX_TARGETS } from "../constants";
 import { matchesFamily, matchesStatus, targetStatus } from "../summary";
-import { abortSessionRun } from "./run";
 import type { AddTargetResult, Family, IcmpSession, IcmpTarget } from "../types";
 
 /** Таймеры подсветки дубликатов: по сеансу, чтобы не плодить висящие. */
 const highlightTimers = new WeakMap<IcmpSession, ReturnType<typeof setTimeout>>();
-
-/** Очищает цели и результаты; параметры остаются. */
-export async function clearSession(session: IcmpSession): Promise<void> {
-  await abortSessionRun(session);
-
-  session.targets = [];
-  session.highlightTargetId = null;
-  session.status.run.error = null;
-  session.filters.search = "";
-  session.filters.status = "all";
-  session.filters.family = "all";
-  session.progress = { targets: 0, addresses: 0, sent: 0, received: 0 };
-
-  write(JOURNAL_SOURCE, "info", "journal.icmp.cleared");
-}
 
 /** Удаляет цель вместе с её пакетами. */
 export function removeTarget(session: IcmpSession, targetId: string): void {

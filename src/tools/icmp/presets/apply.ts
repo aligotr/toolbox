@@ -45,6 +45,7 @@ function applyPayload(session: IcmpSession, payload: IcmpPresetPayload): void {
   session.family = payload.family;
   session.periodMs = payload.periodMs;
   session.count = payload.count;
+  session.endless = payload.endless;
   session.timeoutMs = payload.timeoutMs;
   session.filters.search = payload.filters.search;
   session.filters.status = payload.filters.status;
@@ -108,6 +109,7 @@ function sameInputs(current: IcmpPresetPayload, expected: IcmpPresetPayload): bo
   if (
     current.periodMs !== expected.periodMs ||
     current.count !== expected.count ||
+    current.endless !== expected.endless ||
     current.timeoutMs !== expected.timeoutMs
   ) {
     return false;

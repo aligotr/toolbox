@@ -50,7 +50,7 @@ function coreInfo(id: number, at: number = DAY_ONE): JournalEntry {
 
 /** Запись инструмента DNS. */
 function dnsInfo(id: number, at: number = DAY_ONE): JournalEntry {
-  return entry(id, at, "dnslookup", "info", "journal.dnslookup.cleared");
+  return entry(id, at, "dnslookup", "info", "journal.dnslookup.serverAdded");
 }
 
 /** Условия показа без отбора. */

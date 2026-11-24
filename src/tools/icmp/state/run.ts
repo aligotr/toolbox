@@ -15,6 +15,7 @@ import { write, type JournalParams } from "@/core/infra/journal";
 import type { AppError } from "@/contracts/errors";
 import { cancelIcmp, runIcmp } from "../api";
 import {
+  ENDLESS_COUNT,
   JOURNAL_SOURCE,
   MAX_COUNT,
   MAX_PERIOD_MS,
@@ -23,6 +24,7 @@ import {
   MIN_PERIOD_MS,
   MIN_TIMEOUT_MS,
 } from "../constants";
+import { addressIncomplete } from "../summary";
 import { ensureSubscriptions } from "./subscriptions";
 import type { IcmpSession, IcmpTarget, RunTarget } from "../types";
 
@@ -36,7 +38,10 @@ export function validateRun(session: IcmpSession): string | null {
   ) {
     return t("icmp.run.period", { min: MIN_PERIOD_MS, max: MAX_PERIOD_MS });
   }
-  if (!Number.isInteger(session.count) || session.count < MIN_COUNT || session.count > MAX_COUNT) {
+  if (
+    !session.endless &&
+    (!Number.isInteger(session.count) || session.count < MIN_COUNT || session.count > MAX_COUNT)
+  ) {
     return t("icmp.run.count", { min: MIN_COUNT, max: MAX_COUNT });
   }
   if (
@@ -99,7 +104,7 @@ export async function runTargets(session: IcmpSession, targetIds: string[]): Pro
       run_id: runId,
       targets: targets.map(runTarget),
       period_ms: session.periodMs,
-      count: session.count,
+      count: session.endless ? ENDLESS_COUNT : session.count,
       timeout_ms: session.timeoutMs,
     });
 
@@ -108,10 +113,16 @@ export async function runTargets(session: IcmpSession, targetIds: string[]): Pro
       return;
     }
 
-    write(JOURNAL_SOURCE, "info", "journal.icmp.started", {
-      targets: targets.length,
-      count: session.count,
-    });
+    if (session.endless) {
+      write(JOURNAL_SOURCE, "info", "journal.icmp.startedEndless", {
+        targets: targets.length,
+      });
+    } else {
+      write(JOURNAL_SOURCE, "info", "journal.icmp.started", {
+        targets: targets.length,
+        count: session.count,
+      });
+    }
   } catch (error) {
     // Ответ на запуск мог не дойти, а ядро уже приняло запрос: отмена
     // для неизвестного `run_id` безопасна, но не даёт проверке идти впустую.
@@ -220,7 +231,7 @@ export async function abortSessionRun(session: IcmpSession): Promise<void> {
 
     let incomplete = target.addresses.length === 0;
     for (const address of target.addresses) {
-      if (address.packets.length < address.expected) {
+      if (addressIncomplete(address)) {
         address.cancelled = true;
         incomplete = true;
       }

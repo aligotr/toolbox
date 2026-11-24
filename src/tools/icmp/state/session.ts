@@ -33,6 +33,7 @@ function createSession(): IcmpSession {
     family: DEFAULT_FAMILY,
     periodMs: DEFAULT_PERIOD_MS,
     count: DEFAULT_COUNT,
+    endless: false,
     timeoutMs: DEFAULT_TIMEOUT_MS,
     filters: { search: "", status: "all", family: "all" },
     status: { run: idle() },

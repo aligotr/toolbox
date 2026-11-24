@@ -9,9 +9,9 @@ import test from "node:test";
 import { installBuiltin } from "../../src/core/infra/i18n/catalog.ts";
 import { ruMessages } from "../../src/core/infra/i18n/messages.ts";
 import type { IcmpAddress, IcmpSession, IcmpTarget } from "../../src/tools/icmp/types.ts";
+import { totalsOf } from "../../src/tools/icmp/summary.ts";
 import {
   addTarget,
-  clearSession,
   filterTargets,
   moveTarget,
   removeTarget,
@@ -21,22 +21,24 @@ installBuiltin(ruMessages);
 
 /** Адрес цели с пакетами; статус цели считается по ним. */
 function addressOf(ip: string, answered: boolean): IcmpAddress {
+  const packets = [
+    {
+      sequence: 1,
+      status: answered ? ("ok" as const) : ("timeout" as const),
+      rttMs: answered ? 5 : null,
+      ttl: answered ? 64 : null,
+      atMs: 0,
+      error: null,
+    },
+  ];
   return {
     ip,
     family: "ipv4",
     scopeId: 0,
     expected: 1,
     cancelled: false,
-    packets: [
-      {
-        sequence: 1,
-        status: answered ? "ok" : "timeout",
-        rttMs: answered ? 5 : null,
-        ttl: answered ? 64 : null,
-        atMs: 0,
-        error: null,
-      },
-    ],
+    totals: totalsOf(packets),
+    packets,
   };
 }
 
@@ -62,6 +64,7 @@ function sessionOf(targets: IcmpTarget[] = []): IcmpSession {
     family: "auto",
     periodMs: 1000,
     count: 4,
+    endless: false,
     timeoutMs: 1000,
     filters: { search: "", status: "all", family: "all" },
     status: { run: { loading: false, error: null } },
@@ -166,16 +169,4 @@ test("перестановка не трогает скрытые фильтро
     session.targets.map((target) => target.id),
     ["c", "b", "a"],
   );
-});
-
-test("очистка сбрасывает цели, фильтры и прогресс", async () => {
-  const session = sessionOf([targetOf("t1", "a.test", true)]);
-  session.filters.search = "a";
-  session.progress = { targets: 1, addresses: 1, sent: 1, received: 1 };
-
-  await clearSession(session);
-
-  assert.equal(session.targets.length, 0);
-  assert.equal(session.filters.search, "");
-  assert.equal(session.progress.sent, 0);
 });

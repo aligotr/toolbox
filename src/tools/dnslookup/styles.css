@@ -2,62 +2,141 @@
  *
  * Общая раскладка экрана и таблицы живёт в `src/ui/tool-layout.css`:
  * шапка, строка добавления, фильтры, рамка таблицы и кнопки строки.
- * Здесь остаётся только своё: список резолверов, серверные колонки,
+ * Здесь остаётся только своё: выбор серверов, серверные колонки,
  * ячейки с записями и подсветка строк. Стили диалогов остаются
  * в своих компонентах.
  */
 
 .dns {
-  /* Список резолверов вмещает два чипа и счётчик «+N». */
-  --dns-servers-width: 290px;
   /* Сравнительная таблица раскрытия: серверу нужно место под имя и адрес,
      ответу - под длинную запись. */
   --dns-details-server-width: 160px;
   --dns-details-answer-width: 220px;
 }
 
-/* Строка серверов сжимается по содержимому, как и поле резолверов. */
-.dns__servers-row {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: center;
-  gap: var(--ag-space-sm);
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Группа сжимается по содержимому: тема растягивает `.p-inputgroup`
-   на всю строку, а здесь ширину задаёт список. */
-.dns .dns__servers {
-  flex: 0 1 auto;
-  width: auto;
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Список не растягивается на всю строку: ширины хватает двум чипам. */
-.dns__servers .p-inputwrapper.p-multiselect {
-  flex: 0 1 var(--dns-servers-width);
-  width: var(--dns-servers-width);
-  min-width: 160px;
-  max-width: 100%;
-}
-
 .dns__run {
   flex: none;
-  margin-left: auto;
 }
 
-/* Чипы ниже строки поля: список резолверов одной высоты с соседними
-   полями, а не выше их на высоту чипа. */
-.dns__servers .p-chip {
-  height: var(--tool-chip-height);
-  padding: 0 var(--ag-space-xs);
+/* Поповер выбора серверов: список с флажками читается лучше выпадающего. */
+.dns-params {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-md);
+  width: 300px;
+}
+
+.dns-params__title {
+  margin: 0;
+  font-size: var(--ag-text-sm);
+  font-weight: 600;
+}
+
+.dns-params__count,
+.dns-params__limit {
+  margin: 0;
+  color: var(--p-text-muted-color);
   font-size: var(--ag-text-xs);
 }
 
-.dns__servers-more {
+.dns-params__limit {
+  color: var(--ag-warn);
+}
+
+.dns-params__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 260px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.dns-params__item {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-sm);
+  padding: var(--ag-space-xs) var(--ag-space-sm);
+  border: 1px solid transparent;
+  border-radius: var(--ag-radius-sm);
+  cursor: pointer;
+}
+
+.dns-params__item:hover {
+  background: var(--ag-surface-2);
+}
+
+.dns-params__item--on {
+  border-color: var(--ag-border);
+  background: var(--ag-surface-2);
+}
+
+/* Флажок меньше стандартного: список читается строками, а не крупными
+   квадратами, и все серверы помещаются без прокрутки. */
+.dns-params__item .p-checkbox {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.dns-params__item .p-checkbox-box {
+  width: 16px;
+  height: 16px;
+}
+
+.dns-params__item .p-checkbox-icon {
+  font-size: 10px;
+}
+
+.dns-params__name {
+  overflow: hidden;
+  flex: 0 1 auto;
+  max-width: 55%;
+  min-width: 0;
+  font-size: var(--ag-text-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Точка между именем и адресом: строка читается как одна пара, а не как
+   два независимых столбца. */
+.dns-params__sep {
+  flex: 0 0 3px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ag-border-strong);
+}
+
+.dns-params__address {
+  overflow: hidden;
+  flex: 0 1 auto;
+  min-width: 0;
   color: var(--p-text-muted-color);
+  font-family: var(--ag-font-mono);
+  font-size: var(--ag-text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Хвост адресов системного сервера: видно, что список длиннее строки. */
+.dns-params__extra {
+  flex: 0 0 auto;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--ag-surface);
+  color: var(--p-text-muted-color);
+  font-size: var(--ag-text-xs);
+  line-height: 16px;
+}
+
+.dns-params__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ag-space-sm);
 }
 
 .dns__check {

@@ -23,8 +23,6 @@
   --tool-row-button: 24px;
   /* Стрелка списка уже пресетной: место отдаётся тексту значения. */
   --tool-select-arrow: 24px;
-  /* Высота чипа в списке: одной высоты с соседними полями. */
-  --tool-chip-height: 21px;
   /* Пустая таблица не схлопывается в одну строку. */
   --tool-table-empty-height: 200px;
   /* Подпись пресета не растягивает шапку. */
@@ -154,16 +152,6 @@
   white-space: nowrap;
 }
 
-/* Параметры прогона стоят в одной полосе с добавлением, а при нехватке
-   места переносятся целой группой. Поля идут одной полосой: подпись стоит
-   рядом с полем, а не над ним. */
-.tool__params {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ag-space-sm);
-}
-
 /* Поле числового параметра: подпись, значение и единица в одной строке. */
 .tool-param {
   display: inline-flex;
@@ -205,15 +193,6 @@
   display: flex;
   gap: var(--ag-space-sm);
   margin-left: auto;
-}
-
-.tool__hint {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--ag-space-sm);
-  margin: 0;
-  color: var(--p-text-muted-color);
-  font-size: var(--ag-text-sm);
 }
 
 /* Таблица: одна рамка на всю область, прокрутка внутри. */

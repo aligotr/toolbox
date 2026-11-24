@@ -1,6 +1,6 @@
 // Состояние инструмента DNS.
 //
-// Сеанс, серверы, запуск, строки, сравнение и выгрузка разложены по соседним
+// Сеанс, серверы, запуск, строки и сравнение разложены по соседним
 // файлам; здесь остаётся тонкий фасад: он находит сеанс по `cellKey`,
 // собирает производные значения и отдаёт компоненту готовый набор действий.
 // Правила запуска, фильтрации и сравнения живут в своих файлах, а не
@@ -12,11 +12,9 @@
 
 import { computed, watch } from "vue";
 import type { ToolCellProps } from "@/contracts/tools";
-import { write, type JournalFact } from "@/core/infra/journal";
 import { buildVerdicts } from "./state/compare";
-import { JOURNAL_SOURCE, STANDALONE_CELL_KEY, SYSTEM_SERVER_ID } from "./constants";
-import { buildCsv, saveCsv } from "./state/csv";
-import { addRow, clearSession, filterRows, moveRow, removeRow, resetRow } from "./state/rows";
+import { STANDALONE_CELL_KEY, SYSTEM_SERVER_ID } from "./constants";
+import { addRow, filterRows, moveRow, removeRow, resetRow } from "./state/rows";
 import { ensureSubscriptions, runAllRows, runRows, stopRun } from "./state/run";
 import {
   addCustomServer,
@@ -104,30 +102,6 @@ export function useDnslookup(props: ToolCellProps) {
       addCustomServer(session, label, address),
     removeCustomServer: (serverId: string): Promise<string | null> =>
       removeCustomServer(session, serverId),
-    exportCsv: async (): Promise<{
-      method: "download" | "clipboard";
-      copied: boolean;
-      rows: number;
-    }> => {
-      const csv = buildCsv(session, visibleRows.value, columnServers.value, verdicts.value);
-      const saved = await saveCsv(csv);
-      const fact: JournalFact =
-        saved.method === "download"
-          ? {
-              code: "journal.dnslookup.csvFile",
-              params: { rows: visibleRows.value.length },
-            }
-          : {
-              code: "journal.dnslookup.csvClipboard",
-              params: { rows: visibleRows.value.length },
-            };
-      write(JOURNAL_SOURCE, "result", fact.code, fact.params);
-      return {
-        method: saved.method,
-        copied: saved.copied,
-        rows: visibleRows.value.length,
-      };
-    },
     runAll: (): void => runAllRows(session),
     runRow: (rowId: string): void => {
       void runRows(session, [rowId]);
@@ -135,7 +109,6 @@ export function useDnslookup(props: ToolCellProps) {
     cancel: (): void => {
       void stopRun(session);
     },
-    clear: (): Promise<void> => clearSession(session),
     changeType: (rowId: string, type: RecordType): void => {
       const row = session.rows.find((item) => item.id === rowId);
       if (!row || row.type === type) return;

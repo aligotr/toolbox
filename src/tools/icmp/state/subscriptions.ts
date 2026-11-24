@@ -13,7 +13,8 @@ import { appErrorOf, describeError } from "@/core/infra/errors";
 import { t } from "@/core/infra/i18n";
 import { write } from "@/core/infra/journal";
 import { onIcmpFinished, onIcmpPacket, onIcmpResolved } from "../api";
-import { JOURNAL_SOURCE } from "../constants";
+import { JOURNAL_SOURCE, KEPT_PACKETS } from "../constants";
+import { addressIncomplete, emptyTotals, recordPacket } from "../summary";
 import { sessions } from "./session";
 import type { FinishedEvent, IcmpTarget, PacketEvent, ResolvedEvent } from "../types";
 
@@ -83,8 +84,9 @@ function handleResolved(event: ResolvedEvent): void {
       ip: address.address,
       family: address.family,
       scopeId: address.scope_id,
-      expected: session.count,
+      expected: session.endless ? null : session.count,
       cancelled: false,
+      totals: emptyTotals(),
       packets: [],
     }));
     session.progress.addresses += event.addresses.length;
@@ -102,14 +104,15 @@ function handlePacket(event: PacketEvent): void {
     );
     if (!address) continue;
 
-    address.packets.push({
+    const packet = {
       sequence: event.sequence,
       status: event.status,
       rttMs: event.rtt_ms,
       ttl: event.ttl,
       atMs: event.at_ms,
       error: event.error ? describeError(event.error) : null,
-    });
+    };
+    recordPacket(address, packet, KEPT_PACKETS);
     session.progress.sent += 1;
     if (event.status === "ok") session.progress.received += 1;
   }
@@ -178,7 +181,7 @@ function finishTarget(target: IcmpTarget, event: FinishedEvent): void {
 
   let incomplete = target.addresses.length === 0;
   for (const address of target.addresses) {
-    if (address.packets.length < address.expected) {
+    if (addressIncomplete(address)) {
       address.cancelled = true;
       incomplete = true;
     }

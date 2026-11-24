@@ -1,6 +1,6 @@
 // Показ результата проверки Ping.
 //
-// Один статус читается в строке цели, в раскрытии и в CSV. Правила чтения
+// Один статус читается в строке цели и в раскрытии. Правила чтения
 // одни и те же, поэтому живут здесь, а не дублируются в компонентах.
 // Цвет только дополняет подпись: статус всегда виден текстом.
 
@@ -62,10 +62,4 @@ export function formatRtt(value: number | null): string {
 /** Потери в процентах; пока пакетов не было - прочерк. */
 export function formatLoss(loss: number | null): string {
   return loss === null ? "-" : `${loss}%`;
-}
-
-/** Проценты и задержки для CSV: пустая ячейка вместо прочерка. */
-export function csvNumber(value: number | null): string {
-  if (value === null) return "";
-  return String(Math.round(value * 10) / 10);
 }

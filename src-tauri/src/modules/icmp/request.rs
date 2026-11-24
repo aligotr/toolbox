@@ -34,6 +34,9 @@ pub const MIN_COUNT: u32 = 1;
 /// Верхняя граница числа пакетов на адрес.
 pub const MAX_COUNT: u32 = 100;
 
+/// Значение «без ограничения»: серия идёт до отмены.
+pub const ENDLESS_COUNT: u32 = 0;
+
 /// Нижняя граница таймаута одного пакета.
 pub const MIN_TIMEOUT_MS: u64 = 200;
 
@@ -242,10 +245,10 @@ pub fn prepare(run: &IcmpRun) -> AppResult<PreparedRun> {
             max = MAX_PERIOD_MS,
         );
     }
-    if !(MIN_COUNT..=MAX_COUNT).contains(&run.count) {
+    if run.count != ENDLESS_COUNT && !(MIN_COUNT..=MAX_COUNT).contains(&run.count) {
         return fail!(
             "errors.icmp.count",
-            format!("Количество вне пределов {MIN_COUNT}..{MAX_COUNT}"),
+            format!("Число проверок: от {MIN_COUNT} до {MAX_COUNT}"),
             min = MIN_COUNT,
             max = MAX_COUNT,
         );
@@ -364,15 +367,22 @@ mod tests {
 
     #[test]
     fn rejects_count_out_of_bounds() {
-        for count in [0, MAX_COUNT + 1] {
-            let mut run = valid();
-            run.count = count;
+        let mut run = valid();
+        run.count = MAX_COUNT + 1;
 
-            assert_eq!(
-                prepare(&run).expect_err("количество вне пределов").code,
-                "errors.icmp.count"
-            );
-        }
+        assert_eq!(
+            prepare(&run).expect_err("количество вне пределов").code,
+            "errors.icmp.count"
+        );
+    }
+
+    #[test]
+    fn accepts_endless_count() {
+        let mut run = valid();
+        run.count = ENDLESS_COUNT;
+
+        let prepared = prepare(&run).expect("бесконечная проверка принята");
+        assert_eq!(prepared.count, ENDLESS_COUNT);
     }
 
     #[test]

@@ -3,7 +3,7 @@
 // Одна ячейка читается в двух местах: в таблице (первая запись и статус)
 // и в раскрытии строки (все записи с TTL). Правила чтения одни и те же,
 // поэтому живут здесь, а не дублируются в компонентах. Здесь же - подпись
-// вердикта строки: её видят шапка раскрытия и выгрузка CSV.
+// вердикта строки: её видит шапка раскрытия.
 //
 // Пока идёт повторная проверка, показываются прошлые записи приглушённо:
 // пустая ячейка на время запроса выглядела бы потерей данных.
@@ -33,7 +33,7 @@ export function extraAnswers(cell: DnsCell | undefined): number {
   return Math.max(answersOf(cell).length - 1, 0);
 }
 
-/** Подпись статуса для таблицы, раскрытия и выгрузки в CSV. */
+/** Подпись статуса для таблицы и раскрытия. */
 export function statusText(status: CellStatus): string {
   switch (status) {
     case "ok":
@@ -93,7 +93,7 @@ export function noteFor(cell: DnsCell | undefined): string {
 }
 
 /** Подпись вердикта строки: совпадает с системным или нет.
-    Одна подпись на шапку раскрытия и столбец «Совпадение» в CSV
+    Одна подпись на шапку раскрытия
     (счёт серверов не нужен: его видно по строкам). */
 export function verdictLabel(verdict: RowVerdict): string {
   return verdict.differs ? t("dnslookup.verdict.differs") : t("dnslookup.verdict.matches");

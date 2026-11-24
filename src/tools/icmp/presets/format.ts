@@ -88,6 +88,7 @@ export function parsePresetPayload(payload: unknown): ParsedPreset | null {
       family: isFamily(source.family) ? source.family : DEFAULT_FAMILY,
       periodMs: bounded(source.periodMs, MIN_PERIOD_MS, MAX_PERIOD_MS, DEFAULT_PERIOD_MS),
       count: bounded(source.count, MIN_COUNT, MAX_COUNT, DEFAULT_COUNT),
+      endless: source.endless === true,
       timeoutMs: bounded(source.timeoutMs, MIN_TIMEOUT_MS, MAX_TIMEOUT_MS, DEFAULT_TIMEOUT_MS),
       filters: {
         search: typeof filters.search === "string" ? filters.search : "",
@@ -109,6 +110,7 @@ export function capturePresetPayload(session: IcmpSession): IcmpPresetPayload {
     family: session.family,
     periodMs: session.periodMs,
     count: session.count,
+    endless: session.endless,
     timeoutMs: session.timeoutMs,
     filters: {
       search: session.filters.search,

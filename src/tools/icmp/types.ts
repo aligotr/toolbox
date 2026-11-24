@@ -38,15 +38,34 @@ export interface PacketRecord {
   error: string | null;
 }
 
+/** Накопленный итог пакетов адреса: в памяти остаются только последние. */
+export interface PacketTotals {
+  sent: number;
+  received: number;
+  minRttMs: number | null;
+  maxRttMs: number | null;
+  rttSumMs: number;
+  lastRttMs: number | null;
+  lastAtMs: number;
+  lastSequence: number;
+  /** Был отказ вызова: он важнее отмены и виден не по последним пакетам. */
+  hasError: boolean;
+  /** Был статус недоступности: он важнее таймаута. */
+  hasUnreachable: boolean;
+}
+
 /** Адрес проверки и его пакеты. */
 export interface IcmpAddress {
   ip: string;
   family: AddressFamily;
   scopeId: number;
-  /** Сколько пакетов ожидалось на момент запуска. */
-  expected: number;
+  /** Сколько проверок ожидалось; `null` - проверка без ограничения. */
+  expected: number | null;
   /** Серию прервали: недосчитанные пакеты помечаются отменёнными. */
   cancelled: boolean;
+  /** Итог всей серии: пакеты хранятся только последние. */
+  totals: PacketTotals;
+  /** Последние пакеты для раскрытия, не больше `KEPT_PACKETS`. */
   packets: PacketRecord[];
 }
 
@@ -75,6 +94,8 @@ export interface IcmpSession {
   family: Family;
   periodMs: number;
   count: number;
+  /** Проверка идёт до остановки: количество не ограничивает серию. */
+  endless: boolean;
   timeoutMs: number;
   filters: {
     search: string;
@@ -109,6 +130,7 @@ export interface IcmpPresetPayload {
   family: Family;
   periodMs: number;
   count: number;
+  endless: boolean;
   timeoutMs: number;
   filters: {
     search: string;

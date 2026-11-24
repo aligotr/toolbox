@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Таблица Ping: строки - цели, раскрытие - адреса и пакеты.
+// Таблица Ping: строки - цели, раскрытие - адреса и последние пакеты.
 //
 // Компонент отвечает только за показ и раскрытие. Данные приходят готовыми:
 // отфильтрованные цели и флаг идущей проверки. Поэтому таблица не решает,
@@ -28,7 +28,7 @@ import {
   TARGET_COLUMN_MAX_WIDTH,
   TARGET_COLUMN_MIN_WIDTH,
 } from "../constants";
-import { addressStatus, addressCaption, statsOf, targetStats, targetStatus } from "../summary";
+import { addressCaption, addressStats, addressStatus, targetStats, targetStatus } from "../summary";
 import {
   familyText,
   formatLoss,
@@ -267,22 +267,22 @@ function packetTime(packet: PacketRecord): string {
                 <tr v-for="address in data.addresses" :key="`${address.ip}%${address.scopeId}`">
                   <td class="icmp-details__mono">{{ addressCaption(address) }}</td>
                   <td>{{ familyText(address.family) }}</td>
-                  <td class="icmp-details__number">{{ statsOf(address.packets).sent }}</td>
-                  <td class="icmp-details__number">{{ statsOf(address.packets).received }}</td>
+                  <td class="icmp-details__number">{{ addressStats(address).sent }}</td>
+                  <td class="icmp-details__number">{{ addressStats(address).received }}</td>
                   <td class="icmp-details__number">
-                    {{ formatLoss(statsOf(address.packets).loss) }}
+                    {{ formatLoss(addressStats(address).loss) }}
                   </td>
                   <td class="icmp-details__number">
-                    {{ formatRtt(statsOf(address.packets).min) }}
+                    {{ formatRtt(addressStats(address).min) }}
                   </td>
                   <td class="icmp-details__number">
-                    {{ formatRtt(statsOf(address.packets).avg) }}
+                    {{ formatRtt(addressStats(address).avg) }}
                   </td>
                   <td class="icmp-details__number">
-                    {{ formatRtt(statsOf(address.packets).max) }}
+                    {{ formatRtt(addressStats(address).max) }}
                   </td>
                   <td class="icmp-details__number">
-                    {{ formatRtt(statsOf(address.packets).last) }}
+                    {{ formatRtt(addressStats(address).last) }}
                   </td>
                   <td>
                     <span :class="statusClass(addressStatus(address, busy))">

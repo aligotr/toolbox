@@ -11,6 +11,7 @@ import { ruMessages } from "../../src/core/infra/i18n/messages.ts";
 import type { IcmpSession } from "../../src/tools/icmp/types.ts";
 import { icmpPresetBinding } from "../../src/tools/icmp/presets/binding.ts";
 import { capturePresetPayload, parsePresetPayload } from "../../src/tools/icmp/presets/format.ts";
+import { totalsOf } from "../../src/tools/icmp/summary.ts";
 
 installBuiltin(ruMessages);
 
@@ -30,6 +31,9 @@ function sessionOf(): IcmpSession {
             scopeId: 0,
             expected: 4,
             cancelled: false,
+            totals: totalsOf([
+              { sequence: 1, status: "ok", rttMs: 5, ttl: null, atMs: 1, error: null },
+            ]),
             packets: [{ sequence: 1, status: "ok", rttMs: 5, ttl: null, atMs: 1, error: null }],
           },
         ],
@@ -42,6 +46,7 @@ function sessionOf(): IcmpSession {
     family: "ipv4",
     periodMs: 500,
     count: 10,
+    endless: false,
     timeoutMs: 2000,
     filters: { search: "example", status: "ok", family: "ipv6" },
     status: { run: { loading: false, error: null } },
@@ -114,6 +119,23 @@ test("параметры вне пределов заменяются умолч
   assert.equal(parsed?.payload.timeoutMs, 1000);
 });
 
+test("бесконечная проверка сохраняется в пресете", () => {
+  const parsed = parsePresetPayload({
+    targets: [{ id: "t1", input: "a.test" }],
+    count: 10,
+    endless: true,
+  });
+
+  assert.equal(parsed?.payload.endless, true);
+
+  const strict = parsePresetPayload({
+    targets: [{ id: "t1", input: "a.test" }],
+    endless: "yes",
+  });
+
+  assert.equal(strict?.payload.endless, false);
+});
+
 test("неизвестные фильтры заменяются умолчаниями", () => {
   const parsed = parsePresetPayload({
     targets: [{ id: "t1", input: "a.test" }],
@@ -129,6 +151,7 @@ test("снимок сеанса не содержит результатов", (
   assert.deepEqual(payload.targets, [{ id: "t1", input: "example.test", family: "ipv6" }]);
   assert.equal(payload.periodMs, 500);
   assert.equal(payload.count, 10);
+  assert.equal(payload.endless, false);
   assert.equal(payload.timeoutMs, 2000);
   assert.equal("addresses" in (payload.targets[0] ?? {}), false);
 });

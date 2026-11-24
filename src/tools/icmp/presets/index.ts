@@ -55,6 +55,7 @@ function isUntouched(session: IcmpSession): boolean {
     session.family === DEFAULT_FAMILY &&
     session.periodMs === DEFAULT_PERIOD_MS &&
     session.count === DEFAULT_COUNT &&
+    !session.endless &&
     session.timeoutMs === DEFAULT_TIMEOUT_MS &&
     session.filters.search === "" &&
     session.filters.status === "all" &&

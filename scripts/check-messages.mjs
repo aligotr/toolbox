@@ -105,8 +105,8 @@ function printLimited(prefix, items, describe = (item) => item) {
   }
 }
 
-/** Ключи-исключения капитализации: единицы измерения - символы, не метки. */
-const LOWERCASE_ALLOWED = new Set(["busprobe.unit.ms", "icmp.view.ms"]);
+/** Ключи-исключения капитализации: единица измерения - символ, не метка. */
+const LOWERCASE_ALLOWED = new Set(["busprobe.unit.ms"]);
 
 /**
  * Видимый текст начинается с заглавной буквы (i18n.md).
