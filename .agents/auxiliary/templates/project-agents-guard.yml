@@ -27,16 +27,17 @@ git:
   commit_language: ru
 
 quality:
-  typecheck:
+  build:
     required_before: [commit]
-    command: "<команда сборки>"
+    command: "<команда сборки или проверки типов>"
     must_exit_zero: true
   tests:
     required_before: [commit]
     command: "<команда тестов>"
     must_exit_zero: true
+  # Если готовой проверки документации нет, блок docs удаляется.
   docs:
     required_before: [commit]
-    command: "npm run docs:check"
+    command: "<команда проверки документации>"
     must_exit_zero: true
   no_skip_strict: true
