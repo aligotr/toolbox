@@ -57,7 +57,7 @@ SHA256 `ToolBox.exe` внутри архива:
 
 ```powershell
 Get-FileHash .\ToolBox_v26.11.0.zip -Algorithm SHA256
-Get-FileHash .\ToolBox\ToolBox.exe -Algorithm SHA256
+Get-FileHash .\ToolBox.exe -Algorithm SHA256
 ```
 
 ## Известные ограничения
