@@ -10,7 +10,9 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "images:optimize": "node --experimental-strip-types scripts/images-optimizer/images-optimizer.ts",
-    "verify": "npm run test && npm run lint && npm run build && cargo check --manifest-path src-tauri/Cargo.toml && cargo test --lib --manifest-path src-tauri/Cargo.toml",
+    "verify": "npm run test && npm run lint && npm run build && npm run docs:check && cargo check --manifest-path src-tauri/Cargo.toml && cargo test --lib --manifest-path src-tauri/Cargo.toml",
+    "docs:check": "node .agents/scripts/check-docs.mjs",
+    "docs:index": "node .agents/scripts/build-adr-index.mjs",
     "build": "node scripts/check-zones.mjs && node scripts/check-messages.mjs && vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri"

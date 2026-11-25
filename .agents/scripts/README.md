@@ -1,0 +1,25 @@
+# Скрипты документации
+
+- `check-docs.mjs` - проверяет ссылки, пути `.agents/`, поля ADR, указатель
+  ADR, статусы спек, упоминание спек и страниц библиотеки в их README
+  и согласованность глоссария. Проверяются `.agents/`, `AGENTS.md`
+  и `README.md`, если они есть.
+- `build-adr-index.mjs` - пересобирает `.agents/decisions/INDEX.md` по файлам
+  ADR.
+
+Запуск из корня проекта:
+
+```powershell
+node .agents/scripts/check-docs.mjs
+node .agents/scripts/build-adr-index.mjs
+```
+
+В проекте с Node эти команды называются `npm run docs:check` и
+`npm run docs:index`.
+
+Скрипты не входят в ESLint и Prettier: `.agents/` исключён из проверок кода.
+Их проверка - собственный запуск.
+
+`check-docs` завершается с кодом 1, если есть проблемы. Каталоги `skills`,
+`scripts` и `mcp` не проверяются: скилы ставит установщик, скрипты - код,
+MCP-контекст подключается отдельно.

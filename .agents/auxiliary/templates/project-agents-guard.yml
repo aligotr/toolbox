@@ -1,0 +1,42 @@
+# agents-guard configuration (проектный)
+# Запрещено выполнять любую команду из этого списка без явного согласия
+# пользователя. Агент не запускает их «по умолчанию», даже если они
+# синтаксически допустимы.
+
+project: <имя проекта>
+
+commands:
+  allowed:
+    - "<команда сборки>"
+    - "<команда тестов>"
+  denied:
+    patterns:
+      - "rm -rf"
+      - "Remove-Item -Recurse -Force"
+      - "git reset --hard"
+      - "git checkout --"
+      - "git restore ."
+  requires_explicit_request:
+    - "<установка зависимостей>"
+    - "git push"
+
+git:
+  protected_branches: [main, master]
+  block_force_push: true
+  require_stash_before_revert: true
+  commit_language: ru
+
+quality:
+  typecheck:
+    required_before: [commit]
+    command: "<команда сборки>"
+    must_exit_zero: true
+  tests:
+    required_before: [commit]
+    command: "<команда тестов>"
+    must_exit_zero: true
+  docs:
+    required_before: [commit]
+    command: "npm run docs:check"
+    must_exit_zero: true
+  no_skip_strict: true
