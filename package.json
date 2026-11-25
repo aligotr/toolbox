@@ -14,6 +14,8 @@
     "docs:check": "node .agents/auxiliary/scripts/check-docs.mjs",
     "docs:index": "node .agents/auxiliary/scripts/build-adr-index.mjs",
     "clean:target": "node scripts/clean-target.mjs",
+    "dev:cdp": "node scripts/dev-cdp.mjs",
+    "cdp": "node scripts/cdp.mjs",
     "build": "node scripts/check-zones.mjs && node scripts/check-messages.mjs && vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri"
