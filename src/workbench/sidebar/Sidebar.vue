@@ -11,6 +11,9 @@
 // Свёрнутый вид — рейл 64 px с иконками и подсказками. Ширина меняется без
 // анимации: `width` — свойство раскладки, а движение здесь ничего не сообщает
 // пользователю (правила интерфейса).
+//
+// Шапка не повторяет знак и имя приложения: они уже есть в заголовке окна.
+// В шапке остаётся только переключатель свёрнутого вида.
 
 import Menu from "primevue/menu";
 import type { MenuItem } from "primevue/menuitem";
@@ -20,7 +23,6 @@ import { SINGLETON_TABS } from "@/core/constants";
 import { t } from "@/core/infra/i18n";
 import { activeProfile, loadProfiles, profiles, status } from "@/core/services/profiles";
 import { openSingleton, workspace } from "@/core/services/workspace/index";
-import brandMark from "@/assets/brand.png";
 import RailItem from "./RailItem.vue";
 import { openToolOnAuxClick, openToolOnClick, openToolOnKeydown } from "../toolGestures";
 import { openSettingsSection } from "../settings/navigation";
@@ -109,11 +111,6 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 <template>
   <aside class="sidebar" :class="{ 'sidebar--rail': collapsed }">
     <header class="sidebar__head">
-      <div v-if="!collapsed" class="brand">
-        <img class="brand__mark" :src="brandMark" alt="" />
-        <strong class="brand__name">ToolBox</strong>
-      </div>
-
       <button
         class="sidebar__toggle"
         type="button"
@@ -216,7 +213,7 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 .sidebar__head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--ag-space-sm);
   min-height: 40px;
 }
@@ -225,42 +222,17 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
   justify-content: center;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: var(--ag-space-sm);
-  min-width: 0;
-  padding-left: var(--ag-space-xs);
-}
-
-/* Плитки шапки: знак и переключатель занимают одно место, различается
-   только содержимое. */
-.brand__mark,
+/* Переключатель занимает плитку шапки: знак и имя приложения здесь
+   не повторяются, они уже есть в заголовке окна. */
 .sidebar__toggle {
   display: grid;
   place-items: center;
   flex-shrink: 0;
   width: var(--ag-tile-size);
   height: var(--ag-tile-size);
-  border-radius: var(--ag-radius-md);
-}
-
-/* Знак приложения - его собственный цвет: подложка не спорит с логотипом
-   и не тратит основной акцент на украшение шапки (ADR 0019). */
-.brand__mark {
-  object-fit: contain;
-}
-
-.brand__name {
-  overflow: hidden;
-  font-size: var(--ag-text-md);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sidebar__toggle {
   padding: 0;
   border: 0;
+  border-radius: var(--ag-radius-md);
   background: transparent;
   color: var(--p-text-muted-color);
   font-size: var(--ag-text-sm);
