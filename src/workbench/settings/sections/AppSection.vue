@@ -99,7 +99,6 @@ onMounted(() => {
 }
 
 .app__lead {
-  max-width: 68ch;
   margin: 0;
   color: var(--p-text-muted-color);
   font-size: var(--ag-text-sm);
