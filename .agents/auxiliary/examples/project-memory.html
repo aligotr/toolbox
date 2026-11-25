@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Память проекта ToolBox: как устроен .agents</title>
+    <title>Память проекта: переносимая модель</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       .card-shadow {
@@ -27,15 +27,13 @@
   <body class="bg-stone-50 text-slate-900 font-sans antialiased">
     <main class="mx-auto max-w-6xl px-6 py-12 space-y-12">
       <header class="space-y-4">
-        <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Toolbox / память проекта</p>
+        <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Память проекта / переносимая модель</p>
         <h1 class="font-serif text-4xl md:text-5xl leading-tight max-w-3xl">
           Один вход, четыре вида знаний и одноразовый черновик
         </h1>
         <p class="max-w-3xl text-slate-600">
-          Память проекта живёт в <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-sm">.agents</code>.
-          <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-sm">AGENTS.md</code> задаёт вход и приоритеты,
-          ADR, спеки, правила и библиотека хранят долговечное, а <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-sm">.scratch</code>
-          остаётся временной записной книжкой. Ниже - как эти слои связаны и что можно удалить без потери понимания.
+          Модель памяти, которую можно перенести в проект на любом языке. Она отвечает на три вопроса:
+          что считать истиной, что производным, а что черновиком, который удаляется без потери понимания.
         </p>
         <div class="flex flex-wrap gap-4 text-xs text-slate-600">
           <span class="inline-flex items-center gap-2"><span class="h-3 w-3 rounded-sm bg-slate-900"></span> истина</span>
@@ -49,9 +47,9 @@
         <article class="card-shadow rounded-2xl border border-slate-200 bg-white p-6 md:p-8 space-y-6">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 class="font-serif text-2xl">1. AGENTS.md: вход, который читают первым</h2>
+              <h2 class="font-serif text-2xl">1. Вход: AGENTS.md и лестница приоритетов</h2>
               <p class="mt-1 text-sm text-slate-500">
-                Базовые инварианты, порядок чтения и лестница приоритетов
+                Инварианты, порядок чтения и правила разрешения конфликтов
               </p>
             </div>
             <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Strong</span>
@@ -68,11 +66,11 @@
                 <p class="text-center flow-arrow">↓</p>
                 <div class="grid grid-cols-2 gap-2">
                   <div class="rounded border border-slate-400 bg-white p-2 text-xs">
-                    rules/global/*.md
+                    rules/global/
                     <p class="mt-1 text-slate-500">умолчание</p>
                   </div>
                   <div class="rounded border border-slate-400 bg-white p-2 text-xs">
-                    rules/project/**/*.md
+                    rules/project/
                     <p class="mt-1 text-slate-500">стек и продукт</p>
                   </div>
                 </div>
@@ -115,7 +113,7 @@
                 <p class="text-center flow-arrow">главнее</p>
                 <div class="rounded border border-dashed border-slate-300 bg-white p-2 text-slate-500">
                   Skills
-                  <p class="mt-1">применяются только в непротиворечащей части</p>
+                  <p class="mt-1">только в непротиворечащей части</p>
                 </div>
               </div>
             </div>
@@ -135,17 +133,16 @@
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</p>
               <p class="mt-1 text-sm text-slate-600">
-                <code class="font-mono text-xs">AGENTS.md</code> задаёт инварианты и порядок чтения, а
-                <code class="font-mono text-xs">priorities.md</code> объясняет, что главнее при конфликте.
+                <code class="font-mono text-xs">AGENTS.md</code> задаёт инварианты и порядок чтения, а правило приоритетов объясняет, что главнее при конфликте.
               </p>
             </div>
           </div>
 
           <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
-            <li>8 глобальных правил и 1 машинный запрет</li>
-            <li>9 проектных правил, <code class="font-mono text-xs">ui/</code> и 1 машинный запрет</li>
+            <li>global задаёт умолчание, project уточняет стек</li>
             <li>YAML главнее MD: он точнее и проверяем</li>
             <li>проектные правила главнее глобальных</li>
+            <li>базовые инварианты действуют даже без папки памяти</li>
           </ul>
           <p class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
             Если YAML и MD расходятся, действует YAML. О конфликте сообщают владельцу и не продолжают задачу до решения.
@@ -155,238 +152,46 @@
         <article class="card-shadow rounded-2xl border border-slate-200 bg-white p-6 md:p-8 space-y-6">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 class="font-serif text-2xl">2. Карта памяти: один каталог, разные роли</h2>
+              <h2 class="font-serif text-2xl">2. Долговечные знания: пять слоёв</h2>
               <p class="mt-1 text-sm text-slate-500">
-                215 файлов в git, 82 ADR, 98 терминов, 4 страницы библиотеки
-              </p>
-            </div>
-            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Strong</span>
-          </div>
-
-          <div class="grid gap-5 md:grid-cols-2">
-            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
-              <p class="diagram-label text-slate-500 mb-3">Дерево памяти</p>
-              <div class="space-y-1 font-mono text-xs">
-                <div class="flex items-center justify-between rounded border-2 border-slate-800 bg-white px-2 py-1.5">
-                  <span>AGENTS.md</span>
-                  <span class="text-slate-500">вход</span>
-                </div>
-                <div class="tree-line ml-2 space-y-1 pl-3 pt-1">
-                  <div class="flex items-center justify-between rounded border border-slate-300 bg-white px-2 py-1">
-                    <span>.agents/GLOSSARY.md</span><span class="text-slate-500">индекс</span>
-                  </div>
-                  <div class="flex items-center justify-between rounded border border-slate-300 bg-white px-2 py-1">
-                    <span>decisions/</span><span class="text-slate-500">82 ADR + INDEX</span>
-                  </div>
-                  <div class="flex items-center justify-between rounded border border-slate-300 bg-white px-2 py-1">
-                    <span>specs/</span><span class="text-slate-500">1 контракт</span>
-                  </div>
-                  <div class="flex items-center justify-between rounded border border-slate-300 bg-white px-2 py-1">
-                    <span>rules/</span><span class="text-slate-500">global 8, project 9</span>
-                  </div>
-                  <div class="flex items-center justify-between rounded border border-slate-300 bg-white px-2 py-1">
-                    <span>library/</span><span class="text-slate-500">4 страницы</span>
-                  </div>
-                  <div class="flex items-center justify-between rounded border border-slate-300 bg-white px-2 py-1">
-                    <span>glossary/</span><span class="text-slate-500">6 файлов</span>
-                  </div>
-                  <div class="flex items-center justify-between rounded border border-slate-300 bg-white px-2 py-1">
-                    <span>auxiliary/</span><span class="text-slate-500">шаблоны, скрипты, примеры</span>
-                  </div>
-                </div>
-                <div class="mt-2 flex items-center justify-between rounded border-2 border-dashed border-slate-400 bg-white px-2 py-1.5">
-                  <span>.scratch/</span><span class="text-slate-500">черновик, не в git</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
-              <p class="diagram-label text-slate-500 mb-3">Три состояния знания</p>
-              <div class="space-y-3 text-xs">
-                <div class="rounded-lg border border-slate-800 bg-white p-3">
-                  <p class="font-semibold">Истина</p>
-                  <p class="mt-1 text-slate-600">ADR, спеки, правила, библиотека, определения глоссария.</p>
-                  <p class="mt-2 text-emerald-700">Меняется только новым решением или новой версией контракта.</p>
-                </div>
-                <div class="rounded-lg border border-amber-300 bg-amber-50 p-3">
-                  <p class="font-semibold text-amber-950">Производное</p>
-                  <p class="mt-1 text-amber-900">INDEX.md, README-указатели, таблица GLOSSARY.md, списки страниц.</p>
-                  <p class="mt-2 text-amber-800">Пересобирается скриптом, ручные правки теряются.</p>
-                </div>
-                <div class="rounded-lg border-2 border-dashed border-slate-400 bg-white p-3">
-                  <p class="font-semibold">Черновик</p>
-                  <p class="mt-1 text-slate-600">.scratch: план, заметки, вопросы по текущей задаче.</p>
-                  <p class="mt-2 text-slate-500">Удаляется без потери понимания проекта.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid gap-4 md:grid-cols-3">
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Files</p>
-              <p class="mt-1 font-mono text-xs leading-5">.agents/<br />.scratch/<br />AGENTS.md</p>
-            </div>
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</p>
-              <p class="mt-1 text-sm text-slate-600">
-                Без ролей каталог превращается в свалку: черновик выглядит как решение, а производный индекс - как истина.
-              </p>
-            </div>
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</p>
-              <p class="mt-1 text-sm text-slate-600">
-                Каждый каталог отвечает за один вид знания. Производное помечено и собирается, черновик лежит отдельно и не коммитится.
-              </p>
-            </div>
-          </div>
-
-          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
-            <li>истина не переписывается молча</li>
-            <li>производное пересобирается скриптом</li>
-            <li>черновик удаляется свободно</li>
-            <li>инструменты проверяют согласованность</li>
-          </ul>
-        </article>
-
-        <article class="card-shadow rounded-2xl border border-slate-200 bg-white p-6 md:p-8 space-y-6">
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 class="font-serif text-2xl">3. ADR: почему так, и производный INDEX.md</h2>
-              <p class="mt-1 text-sm text-slate-500">
-                82 решения, 7 со статусом «заменено»; индекс собирается из шапок ADR
-              </p>
-            </div>
-            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Immutable</span>
-          </div>
-
-          <div class="grid gap-5 md:grid-cols-2">
-            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
-              <p class="diagram-label text-slate-500 mb-3">Архив и маленький интерфейс</p>
-              <div class="space-y-3">
-                <div class="rounded-lg border-2 border-slate-800 bg-white p-3">
-                  <p class="text-xs font-semibold">INDEX.md</p>
-                  <p class="text-xs text-slate-500">область / статус / ссылка на ADR / заменяющее решение</p>
-                </div>
-                <div class="grid grid-cols-3 gap-2">
-                  <div class="rounded border border-slate-400 bg-white p-2 text-xs">0001<br /><span class="text-emerald-700">действует</span></div>
-                  <div class="rounded border border-slate-400 bg-white p-2 text-xs">0025<br /><span class="text-emerald-700">действует</span></div>
-                  <div class="rounded border border-slate-400 bg-white p-2 text-xs">0039<br /><span class="text-emerald-700">действует</span></div>
-                  <div class="rounded border border-slate-300 bg-slate-100 p-2 text-xs">0006<br /><span class="text-slate-500">заменено</span></div>
-                  <div class="rounded border border-slate-300 bg-slate-100 p-2 text-xs">0015<br /><span class="text-slate-500">заменено</span></div>
-                  <div class="rounded border border-dashed border-slate-300 bg-white p-2 text-xs text-slate-500">...</div>
-                </div>
-                <p class="text-center text-xs text-emerald-700">один вход, файлы ADR не двигаются</p>
-              </div>
-            </div>
-
-            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
-              <p class="diagram-label text-slate-500 mb-3">Путь нового решения</p>
-              <div class="space-y-2 text-xs">
-                <div class="rounded border border-slate-400 bg-white p-2">Вопрос или развилка</div>
-                <p class="text-center flow-arrow">↓</p>
-                <div class="rounded border-2 border-slate-800 bg-white p-2">
-                  Новый ADR NNNN
-                  <p class="mt-1 text-slate-500">почему, что отвергли, какие последствия приняли</p>
-                </div>
-                <p class="text-center flow-arrow">↓</p>
-                <div class="rounded border border-amber-300 bg-amber-50 p-2 text-amber-950">
-                  npm run docs:index
-                  <p class="mt-1 text-amber-800">пересобирает INDEX.md</p>
-                </div>
-                <p class="text-center flow-arrow">↓</p>
-                <div class="rounded border border-slate-400 bg-white p-2">Ссылки из правил, спек и библиотеки</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid gap-4 md:grid-cols-3">
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Files</p>
-              <p class="mt-1 font-mono text-xs leading-5">.agents/decisions/NNNN-*.md<br />.agents/decisions/INDEX.md<br />.agents/auxiliary/scripts/node/build-adr-index.mjs</p>
-            </div>
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</p>
-              <p class="mt-1 text-sm text-slate-600">
-                Статусы и актуальность спрятаны внутри десятков файлов. Чтобы понять, что действует, нужно открыть каждый.
-              </p>
-            </div>
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</p>
-              <p class="mt-1 text-sm text-slate-600">
-                INDEX.md - производный обзор. Источник истины - сами ADR. Статус «заменено» ставит только владелец.
-              </p>
-            </div>
-          </div>
-
-          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
-            <li>номер и заголовок по форме «# ADR NNNN: ...»</li>
-            <li>поля Статус, Дата и Область обязательны</li>
-            <li>заменяющий ADR должен существовать</li>
-            <li>новое решение - новый файл, а не правка старого</li>
-          </ul>
-          <p class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-            Ручные правки INDEX.md теряются при следующем запуске. Меняют ADR, а индекс пересобирают.
-          </p>
-        </article>
-
-        <article class="card-shadow rounded-2xl border border-slate-200 bg-white p-6 md:p-8 space-y-6">
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 class="font-serif text-2xl">4. Спека, правило, библиотека, глоссарий</h2>
-              <p class="mt-1 text-sm text-slate-500">
-                Четыре долговечных слоя вокруг ADR: что, как, из чего и на каком языке
+                Почему, что, как, из чего и на каком языке
               </p>
             </div>
             <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Durable</span>
           </div>
 
-          <div class="grid gap-4 md:grid-cols-2">
-            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
-              <div class="flex items-start justify-between gap-2">
-                <p class="font-semibold">Спека</p>
-                <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700">1</span>
-              </div>
-              <p class="mt-2 text-sm text-slate-600">Сценарии, состояния, ошибки, данные, приёмка.</p>
-              <p class="mt-2 text-xs text-slate-500">Меняется при изменении поведения. При конфликте главнее ADR.</p>
-              <p class="mt-2 font-mono text-xs text-slate-500">.agents/specs/languages.md</p>
+          <div class="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-stone-50">
+            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr]">
+              <p class="font-semibold">ADR</p>
+              <p class="text-sm text-slate-600">Почему сделано так, что отвергли, какие последствия приняли.</p>
+              <p class="text-sm text-slate-500">Неизменяем. Новое решение - новый ADR. Статус «заменено» ставит только владелец.</p>
             </div>
-
-            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
-              <div class="flex items-start justify-between gap-2">
-                <p class="font-semibold">Правило</p>
-                <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700">8 + 9</span>
-              </div>
-              <p class="mt-2 text-sm text-slate-600">Обязательная инструкция: как работать, что можно и что запрещено.</p>
-              <p class="mt-2 text-xs text-slate-500">Не объясняет «почему» и не пересказывает код. Проект главнее global, YAML главнее MD.</p>
-              <p class="mt-2 font-mono text-xs text-slate-500">.agents/rules/global/, .agents/rules/project/</p>
+            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr]">
+              <p class="font-semibold">Спека</p>
+              <p class="text-sm text-slate-600">Сценарии, состояния, ошибки, данные, приёмка.</p>
+              <p class="text-sm text-slate-500">Меняется при изменении поведения. При конфликте главнее ADR.</p>
             </div>
-
-            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
-              <div class="flex items-start justify-between gap-2">
-                <p class="font-semibold">Библиотека</p>
-                <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700">4</span>
-              </div>
-              <p class="mt-2 text-sm text-slate-600">Путь, назначение, интерфейс, подключение, ограничения.</p>
-              <p class="mt-2 text-xs text-slate-500">Проверяется перед новой реализацией: готовый элемент переиспользуется.</p>
-              <p class="mt-2 font-mono text-xs text-slate-500">.agents/library/ui/*.md</p>
+            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr]">
+              <p class="font-semibold">Правило</p>
+              <p class="text-sm text-slate-600">Обязательная инструкция: как работать, что можно и что запрещено.</p>
+              <p class="text-sm text-slate-500">Не объясняет «почему» и не пересказывает код. Проект главнее global.</p>
             </div>
-
-            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
-              <div class="flex items-start justify-between gap-2">
-                <p class="font-semibold">Глоссарий</p>
-                <span class="rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700">98</span>
-              </div>
-              <p class="mt-2 text-sm text-slate-600">Термин и значение; один термин живёт в одном файле.</p>
-              <p class="mt-2 text-xs text-slate-500">GLOSSARY.md - индекс. Термины не дублируются между файлами.</p>
-              <p class="mt-2 font-mono text-xs text-slate-500">.agents/GLOSSARY.md, .agents/glossary/</p>
+            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr]">
+              <p class="font-semibold">Библиотека</p>
+              <p class="text-sm text-slate-600">Путь, назначение, интерфейс, подключение, ограничения готового элемента.</p>
+              <p class="text-sm text-slate-500">Проверяется перед новой реализацией: готовое переиспользуют.</p>
+            </div>
+            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr]">
+              <p class="font-semibold">Глоссарий</p>
+              <p class="text-sm text-slate-600">Термин и значение; один термин живёт в одном файле.</p>
+              <p class="text-sm text-slate-500">Индекс собирает термины. Дубли между файлами запрещены.</p>
             </div>
           </div>
 
           <div class="grid gap-4 md:grid-cols-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Files</p>
-              <p class="mt-1 font-mono text-xs leading-5">.agents/specs/<br />.agents/rules/<br />.agents/library/<br />.agents/glossary/</p>
+              <p class="mt-1 font-mono text-xs leading-5">.agents/decisions/<br />.agents/specs/<br />.agents/rules/<br />.agents/library/<br />.agents/glossary/</p>
             </div>
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</p>
@@ -403,22 +208,105 @@
           </div>
 
           <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
-            <li>спека не дублирует ADR: она описывает поведение</li>
-            <li>правило не объясняет причину решения</li>
+            <li>ADR не переписывается задним числом</li>
+            <li>спека не дублирует причину решения</li>
+            <li>правило не объясняет «почему»</li>
             <li>библиотека экономит новую реализацию</li>
             <li>глоссарий держит единый язык проекта</li>
+            <li>шаблоны - подсказка, а не обязательный каркас</li>
           </ul>
           <p class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-            12 шаблонов в <code class="font-mono text-xs">auxiliary/templates</code> - подсказка, а не обязательный каркас. Лишние разделы удаляются, пустые не заполняются.
+            Шаблоны в <code class="font-mono text-xs">auxiliary/templates</code> задают форму. Лишние разделы удаляются, пустые не заполняются.
           </p>
         </article>
 
         <article class="card-shadow rounded-2xl border border-slate-200 bg-white p-6 md:p-8 space-y-6">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 class="font-serif text-2xl">5. .scratch: временная книжка, а не память</h2>
+              <h2 class="font-serif text-2xl">3. Производное: индексы собираются, а не пишутся</h2>
               <p class="mt-1 text-sm text-slate-500">
-                Одна задача - одна папка; каталог в .gitignore и удаляется свободно
+                Указатели и обзоры над неизменяемыми источниками
+              </p>
+            </div>
+            <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">Derived</span>
+          </div>
+
+          <div class="grid gap-5 md:grid-cols-2">
+            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
+              <p class="diagram-label text-slate-500 mb-3">Источник и указатель</p>
+              <div class="space-y-2 text-xs">
+                <div class="rounded border-2 border-slate-800 bg-white p-3">
+                  Источники
+                  <p class="mt-1 text-slate-500">ADR, спеки, страницы библиотеки, файлы глоссария</p>
+                </div>
+                <p class="text-center flow-arrow">↓</p>
+                <div class="rounded border border-emerald-300 bg-emerald-50 p-3 text-emerald-900">
+                  Команда сборки указателя
+                  <p class="mt-1">читает шапки и списки файлов</p>
+                </div>
+                <p class="text-center flow-arrow">↓</p>
+                <div class="rounded border border-amber-300 bg-amber-50 p-3 text-amber-950">
+                  Производные файлы
+                  <p class="mt-1">INDEX.md, README-указатели, таблица глоссария</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
+              <p class="diagram-label text-slate-500 mb-3">Правило производного</p>
+              <div class="space-y-3 text-xs">
+                <div class="rounded-lg border border-slate-300 bg-white p-3">
+                  <p class="font-semibold">Источник истины</p>
+                  <p class="mt-1 text-slate-600">Сам ADR, спека, страница или файл термина.</p>
+                </div>
+                <div class="rounded-lg border border-amber-300 bg-amber-50 p-3">
+                  <p class="font-semibold text-amber-950">Производное</p>
+                  <p class="mt-1 text-amber-900">Всегда пересобирается. Ручные правки теряются.</p>
+                </div>
+                <div class="rounded-lg border border-slate-300 bg-white p-3">
+                  <p class="font-semibold">Ссылки</p>
+                  <p class="mt-1 text-slate-600">Ведут к источнику, а не к копии.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid gap-4 md:grid-cols-3">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Files</p>
+              <p class="mt-1 font-mono text-xs leading-5">.agents/decisions/INDEX.md<br />.agents/specs/README.md<br />.agents/library/README.md<br />.agents/GLOSSARY.md</p>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</p>
+              <p class="mt-1 text-sm text-slate-600">
+                Указатель легко принять за источник. Тогда появляются две версии правды и расхождение между ними.
+              </p>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</p>
+              <p class="mt-1 text-sm text-slate-600">
+                Указатель помечается производным и собирается командой. Меняют источник, а указатель пересобирают.
+              </p>
+            </div>
+          </div>
+
+          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+            <li>источник не переписывается ради указателя</li>
+            <li>указатель не становится вторым источником</li>
+            <li>ручные правки производного теряются</li>
+            <li>ссылки не ломаются при пересборке</li>
+          </ul>
+          <p class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+            Производный файл не бывает главнее источника. Если они расходятся, прав источник, а указатель пересобирают.
+          </p>
+        </article>
+
+        <article class="card-shadow rounded-2xl border border-slate-200 bg-white p-6 md:p-8 space-y-6">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 class="font-serif text-2xl">4. .scratch: временная книжка, а не память</h2>
+              <p class="mt-1 text-sm text-slate-500">
+                Одна задача - одна папка; каталог не коммитится и удаляется свободно
               </p>
             </div>
             <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">Temporary</span>
@@ -499,119 +387,55 @@
         <article class="card-shadow rounded-2xl border border-slate-200 bg-white p-6 md:p-8 space-y-6">
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 class="font-serif text-2xl">6. Проверки: память проверяет себя</h2>
+              <h2 class="font-serif text-2xl">5. Проверки и перенос</h2>
               <p class="mt-1 text-sm text-slate-500">
-                docs:check, docs:index и docs:conformance; три уровня проверок
+                Проверка соразмерна правке, а каркас отделяется от решений
               </p>
             </div>
-            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Tool</span>
+            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Portable</span>
           </div>
 
           <div class="grid gap-5 md:grid-cols-2">
             <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
-              <p class="diagram-label text-slate-500 mb-3">Универсальный набор скриптов</p>
-              <div class="space-y-1 font-mono text-xs">
-                <div class="rounded border-2 border-slate-800 bg-white px-2 py-1.5">auxiliary/scripts/</div>
-                <div class="tree-line ml-3 space-y-1 pl-3">
-                  <div class="rounded border border-slate-300 bg-white px-2 py-1">conformance.mjs</div>
-                  <div class="rounded border border-slate-300 bg-white px-2 py-1">node/</div>
-                  <div class="tree-line ml-3 space-y-1 pl-3">
-                    <div class="rounded border border-slate-300 bg-white px-2 py-1">manifest.json</div>
-                    <div class="rounded border border-slate-300 bg-white px-2 py-1">check-docs.mjs</div>
-                    <div class="rounded border border-slate-300 bg-white px-2 py-1">build-adr-index.mjs</div>
-                  </div>
+              <p class="diagram-label text-slate-500 mb-3">Три уровня проверок</p>
+              <div class="space-y-2 text-xs">
+                <div class="rounded border border-slate-400 bg-white p-2">
+                  Точечная
+                  <p class="mt-1 text-slate-500">изменённый файл или один сценарий</p>
+                </div>
+                <p class="text-center flow-arrow">↓</p>
+                <div class="rounded border border-slate-400 bg-white p-2">
+                  Областная
+                  <p class="mt-1 text-slate-500">затронутая часть проекта и её зависимости</p>
+                </div>
+                <p class="text-center flow-arrow">↓</p>
+                <div class="rounded border border-slate-800 bg-white p-2">
+                  Полная
+                  <p class="mt-1 text-slate-500">все тесты, линтер, типы, сборка, документация и живая проверка</p>
+                </div>
+                <p class="mt-2 text-xs text-slate-500">
+                  Полный цикл - на контрольных точках, а не после каждой мелкой правки.
+                </p>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
+              <p class="diagram-label text-slate-500 mb-3">Что переносится, а что создаётся</p>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="rounded border border-emerald-300 bg-emerald-50 p-2 text-emerald-900">
+                  Переносится
+                  <p class="mt-1">AGENTS.md, global-правила, auxiliary, глоссарий</p>
+                </div>
+                <div class="rounded border border-slate-300 bg-white p-2">
+                  Создаётся своё
+                  <p class="mt-1">ADR, спеки, библиотека, project-правила</p>
                 </div>
               </div>
-              <p class="mt-3 text-xs text-slate-500">
-                Новая реализация добавляет свой каталог и манифест. Набор копируется целиком.
-              </p>
-            </div>
-
-            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
-              <p class="diagram-label text-slate-500 mb-3">Что проверяется</p>
-              <div class="grid grid-cols-2 gap-2 text-xs">
-                <div class="rounded border border-slate-300 bg-white p-2">ссылки</div>
-                <div class="rounded border border-slate-300 bg-white p-2">пути .agents/</div>
-                <div class="rounded border border-slate-300 bg-white p-2">обязательные файлы</div>
-                <div class="rounded border border-slate-300 bg-white p-2">поля ADR</div>
-                <div class="rounded border border-slate-300 bg-white p-2">статусы спек</div>
-                <div class="rounded border border-slate-300 bg-white p-2">страницы библиотеки</div>
-                <div class="rounded border border-slate-300 bg-white p-2">термины глоссария</div>
-                <div class="rounded border border-slate-300 bg-white p-2">INDEX.md</div>
-              </div>
-              <div class="mt-3 rounded bg-slate-900 p-2 text-xs text-white">
-                conformance: проект, пустой корень, сломанная фикстура, копия решений
-              </div>
-            </div>
-          </div>
-
-          <div class="grid gap-4 md:grid-cols-3">
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Files</p>
-              <p class="mt-1 font-mono text-xs leading-5">.agents/auxiliary/scripts/<br />.agents/rules/global/quality.md<br />package.json</p>
-            </div>
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</p>
-              <p class="mt-1 text-sm text-slate-600">
-                Документация стареет молча, а реализации проверки на разных языках расходятся в текстах и кодах выхода.
-              </p>
-            </div>
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</p>
-              <p class="mt-1 text-sm text-slate-600">
-                docs:check ловит битые ссылки и неполные индексы, conformance сверяет реализации, verify запускает всё.
-              </p>
-            </div>
-          </div>
-
-          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
-            <li>docs:check прошёл на 137 файлах</li>
-            <li>conformance входит в npm run verify</li>
-            <li>точечная, областная и полная проверки</li>
-            <li>живое окно проверяется через CDP</li>
-          </ul>
-          <p class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-            Пока реализация одна, conformance говорит «сверять нечего». При второй реализации расхождение остановит verify.
-          </p>
-        </article>
-
-        <article class="card-shadow rounded-2xl border border-slate-200 bg-white p-6 md:p-8 space-y-6">
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 class="font-serif text-2xl">7. Старт нового проекта: каркас без чужих решений</h2>
-              <p class="mt-1 text-sm text-slate-500">
-                bootstrap.md - пособие, а не правило; память нового проекта начинается с пустого каркаса
-              </p>
-            </div>
-            <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Flow</span>
-          </div>
-
-          <div class="grid gap-5 md:grid-cols-2">
-            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
-              <p class="diagram-label text-slate-500 mb-3">Копировать</p>
-              <div class="grid grid-cols-2 gap-2 text-xs">
-                <div class="rounded border border-slate-400 bg-white p-2">AGENTS.md</div>
-                <div class="rounded border border-slate-400 bg-white p-2">rules/global/</div>
-                <div class="rounded border border-slate-400 bg-white p-2">auxiliary/</div>
-                <div class="rounded border border-slate-400 bg-white p-2">glossary/</div>
-              </div>
-              <p class="mt-3 text-xs text-slate-500">
-                Шаблоны, скрипты и bootstrap переносятся вместе с auxiliary. Набор скриптов универсальный.
-              </p>
-            </div>
-
-            <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
-              <p class="diagram-label text-slate-500 mb-3">Создать своё</p>
-              <div class="grid grid-cols-2 gap-2 text-xs">
-                <div class="rounded border border-emerald-300 bg-emerald-50 p-2 text-emerald-900">decisions/INDEX.md</div>
-                <div class="rounded border border-emerald-300 bg-emerald-50 p-2 text-emerald-900">specs/README.md</div>
-                <div class="rounded border border-emerald-300 bg-emerald-50 p-2 text-emerald-900">library/README.md</div>
-                <div class="rounded border border-emerald-300 bg-emerald-50 p-2 text-emerald-900">GLOSSARY.md</div>
-                <div class="rounded border border-emerald-300 bg-emerald-50 p-2 text-emerald-900">project/quality.md</div>
-                <div class="rounded border border-emerald-300 bg-emerald-50 p-2 text-emerald-900">project/agents-guard.yml</div>
-              </div>
               <p class="mt-3 rounded bg-red-50 p-2 text-xs text-red-800">
-                Не переносить: чужие ADR, спеки, страницы библиотеки, project-правила, skills, mcp, .scratch.
+                Не переносятся чужие решения и команды: они описывают другой продукт.
+              </p>
+              <p class="mt-3 text-xs text-slate-500">
+                Универсальный набор скриптов копируется целиком; реализации на разных языках лежат рядом и сверяются между собой.
               </p>
             </div>
           </div>
@@ -619,62 +443,32 @@
           <div class="grid gap-4 md:grid-cols-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Files</p>
-              <p class="mt-1 font-mono text-xs leading-5">.agents/auxiliary/bootstrap.md<br />.agents/auxiliary/templates/<br />.agents/auxiliary/scripts/</p>
+              <p class="mt-1 font-mono text-xs leading-5">.agents/rules/global/quality.md<br />.agents/auxiliary/bootstrap.md<br />.agents/auxiliary/scripts/</p>
             </div>
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Problem</p>
               <p class="mt-1 text-sm text-slate-600">
-                Новый проект легко тащит чужие ADR и команды. Тогда память описывает не его, а предыдущий продукт.
+                Документация стареет молча, а новый проект тащит чужие решения и команды другого стека.
               </p>
             </div>
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Solution</p>
               <p class="mt-1 text-sm text-slate-600">
-                Копируются только global-правила и шаблоны. ADR, спеки, библиотека и project-правила создаются свои.
+                Проверки ловят битые ссылки и неполные индексы. Переносится каркас, а решения и команды создаются под новый проект.
               </p>
             </div>
           </div>
 
           <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
-            <li>global задаёт умолчание, project уточняет стек</li>
-            <li>версия по CalVer: 26.11.0</li>
-            <li>первый коммит после docs:check</li>
-            <li>признак готовности: в decisions только свои ADR</li>
+            <li>каждая мелкая правка - точечная проверка</li>
+            <li>полный цикл - перед коммитом, «готово» и релизом</li>
+            <li>живое поведение проверяется один раз на сценарий</li>
+            <li>логика без теста оставляет задачу незавершённой</li>
           </ul>
           <p class="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
-            Признак готовности: docs:check проходит, в decisions только свои ADR, в GLOSSARY нет чужих терминов, в library нет чужих элементов.
+            Переносится каркас, а не чужие решения. Новый проект начинает с пустых ADR, спек и библиотеки.
           </p>
         </article>
-      </section>
-
-      <section class="rounded-2xl bg-slate-900 p-8 text-white">
-        <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Формула памяти</p>
-        <h2 class="mt-2 font-serif text-3xl">Один вход, четыре истины, один черновик</h2>
-        <p class="mt-3 max-w-3xl text-slate-300">
-          AGENTS.md ведёт к правилам. ADR, спеки, библиотека и глоссарий хранят долговечное.
-          Производные индексы собираются скриптами. .scratch можно удалить, не потеряв понимание проекта.
-        </p>
-        <div class="mt-6 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-          <div class="rounded-lg bg-white/5 p-3">
-            <p class="font-mono text-lg text-white">82</p>
-            <p class="text-slate-400">ADR, 7 заменённых</p>
-          </div>
-          <div class="rounded-lg bg-white/5 p-3">
-            <p class="font-mono text-lg text-white">98</p>
-            <p class="text-slate-400">терминов глоссария</p>
-          </div>
-          <div class="rounded-lg bg-white/5 p-3">
-            <p class="font-mono text-lg text-white">4</p>
-            <p class="text-slate-400">страницы библиотеки</p>
-          </div>
-          <div class="rounded-lg bg-white/5 p-3">
-            <p class="font-mono text-lg text-white">215</p>
-            <p class="text-slate-400">файлов памяти в git</p>
-          </div>
-        </div>
-        <p class="mt-6 inline-block rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900">
-          Писать в .agents, проверять docs:check, удалять .scratch
-        </p>
       </section>
     </main>
   </body>
