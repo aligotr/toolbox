@@ -64,4 +64,4 @@ Get-FileHash .\ToolBox.exe -Algorithm SHA256
 
 ## Лицензия
 
-MIT. Текст лицензии: [LICENSE](LICENSE).
+MIT. Текст лицензии лежит в файле `LICENSE`.
