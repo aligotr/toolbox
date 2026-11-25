@@ -154,10 +154,10 @@ test("удаление убирает пресет из списка", async () 
 
   assert.equal(removed, true);
   assert.deepEqual(presets.state.items, []);
-  assert.deepEqual(codes(), ["journal.presets.moved", "journal.presets.created"]);
+  assert.deepEqual(codes(), ["presets.removed", "journal.presets.created"]);
 
   // Журнал называет предмет, но не печатает путь служебной корзины.
-  const fact = journal.entries.find((entry) => entry.code === "journal.presets.moved");
+  const fact = journal.entries.find((entry) => entry.code === "presets.removed");
   assert.equal(fact?.params.target, undefined);
 });
 

@@ -106,8 +106,8 @@ async function readServers(session: DnsSession): Promise<void> {
     }
   } else {
     errors.push(
-      t("dnslookup.servers.systemReadError", {
-        reason: describeError(system.reason),
+      t("dnslookup.view.systemStatus", {
+        value: describeError(system.reason),
       }),
     );
     facts.push({

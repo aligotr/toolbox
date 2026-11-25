@@ -245,7 +245,6 @@ export const ruMessages: Messages = {
   "journal.presets.renameError": "Пресет не переименован: {reason}",
   "journal.presets.duplicated": "Пресет «{id}» скопирован как «{title}»",
   "journal.presets.duplicateError": "Пресет не скопирован: {reason}",
-  "journal.presets.moved": "Пресет «{title}» удалён",
   "journal.presets.deleteError": "Пресет не удалён: {reason}",
   "journal.presets.defaultCleared": "Пресет по умолчанию для «{tool}» снят",
   "journal.presets.defaultSet": "Пресет «{title}» выбран по умолчанию для «{tool}»",
@@ -287,10 +286,9 @@ export const ruMessages: Messages = {
 
   "journal.dnslookup.subscribed": "Подписка на события DNS активна",
   "journal.dnslookup.finished": "Проверка завершена: {completed} из {total} за {elapsed} мс",
-  "journal.dnslookup.cancelled": "Проверка остановлена: получено {completed} из {total}",
   "journal.dnslookup.started": "Проверка запущена: запросов — {total}, серверов — {servers}",
   "journal.dnslookup.failed": "Проверка не выполнена: {reason}",
-  "journal.dnslookup.stopped": "Проверка остановлена: получено {done} из {total}",
+  "journal.dnslookup.stopped": "Проверка остановлена: получено {completed} из {total}",
   "journal.dnslookup.runTooMany": "Слишком много запросов: {total} при пределе {limit}",
   "journal.dnslookup.leaveStopError": "Проверка покинутой вкладки не остановлена: {reason}",
   "journal.dnslookup.systemServersFailed": "Системные резолверы не прочитаны: {reason}",
@@ -499,7 +497,7 @@ export const ruMessages: Messages = {
   "dnslookup.view.needSystemServer": "Нужен системный сервер",
   "dnslookup.view.columns": "Отображаемые колонки",
   "dnslookup.view.systemLoading": "Системные резолверы: загрузка…",
-  "dnslookup.view.systemList": "Системные резолверы: {list}",
+  "dnslookup.view.systemStatus": "Системные резолверы: {value}",
 
   // ── DNSlookup: таблица ───────────────────────────────────────────────────
   "dnslookup.table.emptyAdd": "Добавьте домен",
@@ -552,7 +550,6 @@ export const ruMessages: Messages = {
     "Файл своих серверов повреждён: запись запрещена до исправления или удаления",
   "dnslookup.servers.saveFailed": "Не удалось сохранить свои серверы",
   "dnslookup.servers.saving": "Сохранение уже идёт",
-  "dnslookup.servers.systemReadError": "Системные резолверы: {reason}",
   "dnslookup.servers.customReadError": "Свои серверы: {reason}",
   "dnslookup.servers.defaultLabel": "Системный",
   "dnslookup.servers.systemMissing": "Системные резолверы не найдены",

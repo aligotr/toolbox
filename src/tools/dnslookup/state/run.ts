@@ -84,7 +84,7 @@ function handleFinished(event: DnsFinishedEvent): void {
 
     const total = session.progress.total;
     if (event.cancelled) {
-      write(JOURNAL_SOURCE, "info", "journal.dnslookup.cancelled", {
+      write(JOURNAL_SOURCE, "info", "journal.dnslookup.stopped", {
         completed: event.completed,
         total,
       });
@@ -299,7 +299,7 @@ export async function abortSessionRun(session: DnsSession): Promise<void> {
   }
 
   write(JOURNAL_SOURCE, "info", "journal.dnslookup.stopped", {
-    done,
+    completed: done,
     total,
   });
 

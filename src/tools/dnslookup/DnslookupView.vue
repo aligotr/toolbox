@@ -80,8 +80,8 @@ const systemHint = computed<string>(() => {
   if (session.systemAddresses.length === 0) {
     return t("dnslookup.servers.systemMissing");
   }
-  return t("dnslookup.view.systemList", {
-    list: session.systemAddresses.join(", "),
+  return t("dnslookup.view.systemStatus", {
+    value: session.systemAddresses.join(", "),
   });
 });
 

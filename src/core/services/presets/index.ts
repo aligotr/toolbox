@@ -235,7 +235,7 @@ export function createPresets(tool: string): Presets {
     "journal.presets.deleteError",
     (preset: Preset) => invoke<string>("preset_delete", { tool, id: preset.id }),
     (_target, preset) => ({
-      code: "journal.presets.moved",
+      code: "presets.removed",
       params: { tool, title: preset.title },
     }),
   );
