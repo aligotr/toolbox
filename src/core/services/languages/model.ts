@@ -80,9 +80,13 @@ export interface DictionaryFile {
 }
 
 /** Изменения словаря: что добавить и что убрать. */
-export interface DictionaryUpdates extends DictionaryFile {
+export interface DictionaryUpdates {
+  /** Название словаря. */
+  name: string;
+  /** Ключи, которых нет в словаре или у которых не хватает форм. */
+  add: Messages;
   /** Ключи, которых больше нет в программе. */
-  obsolete: string[];
+  remove: string[];
 }
 
 /** Источник для сравнения: встроенный язык того же кода, иначе русский. */
@@ -150,8 +154,8 @@ export function obsoleteKeysOf(code: string, messages: Messages): string[] {
 /**
  * Документ изменений: что добавить в словарь и что из него убрать.
  *
- * `messages` содержит недостающие ключи с текстом источника: их нужно
- * перенести в свой словарь. `obsolete` перечисляет ключи, которых больше
+ * `add` содержит недостающие ключи с текстом источника: их нужно
+ * перенести в свой словарь. `remove` перечисляет ключи, которых больше
  * нет в программе: их нужно удалить.
  */
 export function updatesDocumentFor(
@@ -160,14 +164,14 @@ export function updatesDocumentFor(
   messages: Messages,
 ): DictionaryUpdates | null {
   const keys = missingKeysOf(code, messages);
-  const obsolete = obsoleteKeysOf(code, messages);
-  if (keys.length === 0 && obsolete.length === 0) return null;
+  const remove = obsoleteKeysOf(code, messages);
+  if (keys.length === 0 && remove.length === 0) return null;
 
   const source = sourceFor(code);
   const document: Messages = {};
   for (const key of keys) document[key] = source[key];
 
-  return { name, messages: document, obsolete };
+  return { name, add: document, remove };
 }
 
 /** Документ изменений для строки списка языков. */

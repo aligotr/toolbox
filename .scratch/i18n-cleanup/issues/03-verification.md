@@ -5,7 +5,7 @@
 ## Работа
 
 - ADR 0081 и уточнения ADR 0039, 0057, 0072, 0078.
-- `.agents/rules/project/i18n.md`: ключи до выпуска, дубли,
+- `.agents/rules/project/i18n.md`: ключи и файл изменений, дубли,
   `common`/`presets`, файл изменений.
 - `npm run test`, `npm run build`, `npm run lint`, `cargo check`,
   `cargo test --lib`.

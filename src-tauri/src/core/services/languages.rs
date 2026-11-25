@@ -287,7 +287,7 @@ fn remove_if_exists(path: &Path) -> AppResult<()> {
 
 /// Пишет файл изменений или убирает его, если писать нечего.
 ///
-/// `messages` - что добавить, `obsolete` - что убрать. Текст детерминирован,
+/// `add` - что добавить, `remove` - что убрать. Текст детерминирован,
 /// поэтому актуальный файл сравнивается побайтово и не перезаписывается.
 /// Это не словарь: каталог его пропускает.
 pub fn updates_write(dir: &Path, code: &str, document: Option<&Value>) -> AppResult<UpdatesResult> {
@@ -309,12 +309,12 @@ pub fn updates_write(dir: &Path, code: &str, document: Option<&Value>) -> AppRes
     };
 
     let added = document
-        .get("messages")
+        .get("add")
         .and_then(Value::as_object)
         .map(Map::len)
         .unwrap_or(0);
     let removed = document
-        .get("obsolete")
+        .get("remove")
         .and_then(Value::as_array)
         .map(Vec::len)
         .unwrap_or(0);
@@ -325,9 +325,9 @@ pub fn updates_write(dir: &Path, code: &str, document: Option<&Value>) -> AppRes
         "// Изменения словаря ToolBox.\n\
          //\n\
          // Файл создаёт программа; правки будут перезаписаны.\n\
-         // messages - ключи, которых нет в словаре или у которых не хватает форм:\n\
-         // перенесите их в свой словарь.\n\
-         // obsolete - ключи, которых больше нет в программе: удалите их из словаря.\n\
+         // add - ключи, которых нет в словаре или у которых не хватает форм:\n\
+         // добавьте их в свой словарь.\n\
+         // remove - ключи, которых больше нет в программе: удалите их из словаря.\n\
          {body}\n"
     );
 
@@ -778,8 +778,8 @@ mod tests {
         let dir = temp_dir("updates-write");
         let document = serde_json::json!({
             "name": "English",
-            "messages": { "title": "Settings" },
-            "obsolete": ["old.title"]
+            "add": { "title": "Settings" },
+            "remove": ["old.title"]
         });
 
         let legacy = dir.join("en.missing.jsonc");
@@ -795,7 +795,7 @@ mod tests {
         assert!(
             fs::read_to_string(updates_path(&dir, "en"))
                 .expect("файл изменений")
-                .contains("obsolete"),
+                .contains("remove"),
             "в шапке объяснены оба раздела"
         );
 

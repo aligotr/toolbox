@@ -39,10 +39,10 @@ test("документ изменений содержит только проп
   const document = updatesDocumentFor("en", "English", partial);
 
   assert.equal(document?.name, "English");
-  assert.deepEqual(document?.messages, {
+  assert.deepEqual(document?.add, {
     "common.language": "Language",
   });
-  assert.deepEqual(document?.obsolete, []);
+  assert.deepEqual(document?.remove, []);
 });
 
 test("неполные формы попадают в документ изменений целиком", () => {
@@ -51,7 +51,7 @@ test("неполные формы попадают в документ изме�
 
   const document = updatesDocumentFor("ru", "Русский", partial);
 
-  assert.deepEqual(document?.messages, {
+  assert.deepEqual(document?.add, {
     "journal.view.limit": {
       one: "Хранится последняя {count} запись",
       few: "Хранятся последние {count} записи",
@@ -59,7 +59,7 @@ test("неполные формы попадают в документ изме�
       other: "Хранятся последние {count} записей",
     },
   });
-  assert.deepEqual(document?.obsolete, []);
+  assert.deepEqual(document?.remove, []);
 });
 
 test("ключ, которого больше нет в программе, попадает в устаревшие", () => {
@@ -67,8 +67,8 @@ test("ключ, которого больше нет в программе, по
 
   const document = updatesDocumentFor("en", "English", extra);
 
-  assert.deepEqual(document?.messages, {});
-  assert.deepEqual(document?.obsolete, ["old.key"]);
+  assert.deepEqual(document?.add, {});
+  assert.deepEqual(document?.remove, ["old.key"]);
 });
 
 test("переименованный ключ виден и как новый, и как устаревший", () => {
@@ -78,8 +78,8 @@ test("переименованный ключ виден и как новый, �
 
   const document = updatesDocumentFor("en", "English", partial);
 
-  assert.deepEqual(document?.messages, { "common.language": "Language" });
-  assert.deepEqual(document?.obsolete, ["settings.language.old"]);
+  assert.deepEqual(document?.add, { "common.language": "Language" });
+  assert.deepEqual(document?.remove, ["settings.language.old"]);
 });
 
 test("полный словарь не даёт файла изменений", () => {

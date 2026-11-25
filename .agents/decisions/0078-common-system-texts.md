@@ -67,4 +67,4 @@ ADR 0039 и ADR 0072 закрепили ключи за областью инс�
   `src/tools/icmp/components/presetTexts.ts`
 - правила: `.agents/rules/project/i18n.md`
 - связанные решения: ADR 0039, ADR 0057, ADR 0072 (уточнён),
-  ADR 0081 (ключи до выпуска)
+  ADR 0081 (ключи и файл изменений)

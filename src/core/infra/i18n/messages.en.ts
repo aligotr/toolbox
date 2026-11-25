@@ -116,7 +116,7 @@ export const enMessages: Messages = {
   "settings.section.profiles": "Profiles",
   "settings.section.app": "About",
   "settings.language.lead":
-    "Built-in dictionaries are updated with the program: currently Russian and English.\nExternal dictionaries are your files: the program does not change them.\nThe changes file shows what appeared in the dictionary and what became obsolete.",
+    "Built-in dictionaries are updated with the program: currently Russian and English.\nExternal dictionaries are your files: the program does not change them.\nThe changes file shows new and unused lines.",
   "settings.language.current": "Interface language",
   "settings.language.russian": "Russian",
   "settings.language.english": "English",

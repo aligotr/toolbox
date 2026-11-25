@@ -10,11 +10,11 @@
 - `languages/actions.ts` и `runtime.ts`: `exportUpdates`,
   `language_updates_write`.
 - Раздел «Язык»: «Добавить», «Удалить», «Выгрузить изменения».
-- Rust: `<code>.updates.jsonc`, `messages` и `obsolete`, счётчики
+- Rust: `<code>.updates.jsonc`, `add` и `remove`, счётчики
   `added`/`removed`, шапка файла, удаление старого
   `<code>.missing.jsonc`.
 - Тексты RU/EN: «Внешний», «Полный», изменения словаря.
-- Тесты: старый ключ становится `obsolete`, новый - `messages`.
+- Тесты: старый ключ становится `remove`, новый - `add`.
 
 ## Критерий
 
