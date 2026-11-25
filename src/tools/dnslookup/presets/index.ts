@@ -40,5 +40,5 @@ export const applyDefaultPreset = createDefaultPresetLoader<DnsSession>({
   presets: dnsPresets,
   apply: applyPreset,
   journalSource: JOURNAL_SOURCE,
-  missingCode: "journal.dnslookup.defaultPresetMissing",
+  missingCode: "presets.defaultMissing",
 });

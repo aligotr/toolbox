@@ -188,7 +188,7 @@ test("битый файл списка попадает в журнал, цел�
   const { store, presets } = fresh();
   store.items.push({ id: "p1", title: "Основной", saved_at: "", payload: null });
   store.warnings.push({
-    code: "errors.presets.broken",
+    code: "errors.files.broken",
     params: { name: "p2.json" },
     fallback: "файл не разобран",
   });

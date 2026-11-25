@@ -98,7 +98,7 @@ function defaultLabel(): string {
           severity="secondary"
           size="small"
           text
-          :aria-label="t(texts.loadTipAria)"
+          :aria-label="t(texts.loadAria, { title: preset.title })"
           @click="emit('load', $event)"
         />
         <Button
@@ -111,7 +111,7 @@ function defaultLabel(): string {
           @click="emit('start-rename')"
         />
         <Button
-          v-tooltip.top="t(texts.duplicateTip)"
+          v-tooltip.top="t(texts.duplicateAria)"
           icon="pi pi-copy"
           severity="secondary"
           size="small"

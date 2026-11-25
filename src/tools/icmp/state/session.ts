@@ -58,7 +58,7 @@ export function pruneSessions(): void {
     // Закрытая вкладка бросает сеанс: его проверке уже некому ответить.
     if (session.runId !== null) {
       void cancelIcmp(session.runId).catch((error: unknown) => {
-        write(JOURNAL_SOURCE, "error", "journal.icmp.leaveStopError", {
+        write(JOURNAL_SOURCE, "error", "common.runLeaveStopFailed", {
           reason: appErrorOf(error),
         });
       });

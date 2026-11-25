@@ -34,16 +34,16 @@ export function ensureSubscriptions(): void {
   subscriptions = (async () => {
     await onDnsResult(handleResult);
     await onDnsFinished(handleFinished);
-    write(JOURNAL_SOURCE, "info", "journal.dnslookup.subscribed");
+    write(JOURNAL_SOURCE, "info", "common.subscribed");
   })().catch((error: unknown) => {
     subscriptions = null;
-    const text = t("dnslookup.run.subscribeFailed", {
+    const text = t("common.subscribeFailed", {
       reason: describeError(error),
     });
     for (const session of sessions.values()) {
       session.status.run.error = text;
     }
-    write(JOURNAL_SOURCE, "error", "dnslookup.run.subscribeFailed", {
+    write(JOURNAL_SOURCE, "error", "common.subscribeFailed", {
       reason: error,
     });
   });
@@ -128,8 +128,8 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
       total,
       limit: QUERY_LIMIT,
     });
-    write(JOURNAL_SOURCE, "error", "journal.dnslookup.runTooMany", {
-      total,
+    write(JOURNAL_SOURCE, "error", "errors.dnslookup.tooManyQueries", {
+      count: total,
       limit: QUERY_LIMIT,
     });
     return;
@@ -199,7 +199,7 @@ export async function runRows(session: DnsSession, rowIds: string[]): Promise<vo
         accepted.error
           ? {
               text: describeError(accepted.error),
-              code: "journal.dnslookup.failed",
+              code: "common.runFailed",
               params: { reason: accepted.error },
             }
           : {

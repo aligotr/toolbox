@@ -90,10 +90,10 @@ export function useBusprobe() {
       unlistenTrace = await onTrace(handleTrace);
     } catch (error) {
       stop();
-      status.error = t("busprobe.view.subscribeFailed", {
+      status.error = t("common.subscribeFailed", {
         reason: describeError(error),
       });
-      write(JOURNAL_SOURCE, "error", "busprobe.view.subscribeFailed", {
+      write(JOURNAL_SOURCE, "error", "common.subscribeFailed", {
         reason: error,
       });
     }

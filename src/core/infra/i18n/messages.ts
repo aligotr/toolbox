@@ -23,6 +23,10 @@ export const ruMessages: Messages = {
   "common.runNotStarted": "Проверка не запущена: {reason}",
   "common.runStopFailed": "Не удалось остановить проверку: {reason}",
   "common.runRejected": "Проверка отклонена ядром",
+  "common.runFailed": "Проверка не выполнена: {reason}",
+  "common.runLeaveStopFailed": "Проверка покинутой вкладки не остановлена: {reason}",
+  "common.subscribeFailed": "Подписка на события не создана: {reason}",
+  "common.subscribed": "Подписка на события активна",
   "common.noAnswer": "Без ответа",
   "common.renameSave": "Сохранить название",
   "common.renameCancel": "Отменить переименование",
@@ -61,6 +65,7 @@ export const ruMessages: Messages = {
   "presets.clearDefault": "Снять пресет по умолчанию",
   "presets.unknownSavedAt": "Время не указано",
   "presets.defaultError": "Пресет по умолчанию не изменён.",
+  "presets.defaultMissing": "Пресет по умолчанию «{id}» не найден: вкладка открыта пустой",
   "presets.defaultCleared": "Пресет по умолчанию снят: новые вкладки открываются пустыми.",
   "presets.defaultSet": "Пресет «{title}» будет загружаться в новых вкладках.",
   "presets.loadFailed": "Пресет «{title}» не загружен: настройки не разобраны.",
@@ -72,7 +77,6 @@ export const ruMessages: Messages = {
   "presets.revertFailed": "Изменения не отменены: {reason}",
   "presets.notReverted": "Нет открытого пресета: отменять нечего.",
   "presets.snapshotBroken": "Настройки открытого пресета не разобраны: откат невозможен.",
-  "presets.created": "Сохранён пресет «{title}».",
   "presets.renamed": "Пресет переименован: «{title}».",
   "presets.notRenamed": "Пресет не переименован.",
   "presets.copied": "Создана копия «{title}».",
@@ -92,11 +96,8 @@ export const ruMessages: Messages = {
   "presets.newTitle": "Название нового пресета",
   "presets.saveAs": "Сохранить как пресет",
   "presets.startNew": "Пустой пресет",
-  "presets.renameAria": "Новое название пресета",
   "presets.loadAria": "Загрузить пресет {title}",
-  "presets.loadTipAria": "Загрузить пресет",
   "presets.renameTipAria": "Переименовать пресет",
-  "presets.duplicateTip": "Дублировать",
   "presets.duplicateAria": "Дублировать пресет",
   "presets.deleteAria": "Удалить пресет",
   "presets.notSaved": "Пресет не сохранён.",
@@ -284,43 +285,26 @@ export const ruMessages: Messages = {
   "journal.busprobe.traceRecorded": "Цепочка записана: этапов — {stages}, время — {elapsed} мс",
   "journal.busprobe.traceFailed": "Прогон не завершился: {outcome}",
 
-  "journal.dnslookup.subscribed": "Подписка на события DNS активна",
   "journal.dnslookup.finished": "Проверка завершена: {completed} из {total} за {elapsed} мс",
   "journal.dnslookup.started": "Проверка запущена: запросов — {total}, серверов — {servers}",
-  "journal.dnslookup.failed": "Проверка не выполнена: {reason}",
   "journal.dnslookup.stopped": "Проверка остановлена: получено {completed} из {total}",
-  "journal.dnslookup.runTooMany": "Слишком много запросов: {total} при пределе {limit}",
-  "journal.dnslookup.leaveStopError": "Проверка покинутой вкладки не остановлена: {reason}",
   "journal.dnslookup.systemServersFailed": "Системные резолверы не прочитаны: {reason}",
-  "journal.dnslookup.customServersFailed": "Свои серверы не прочитаны: {reason}",
   "journal.dnslookup.serversSaveFailed": "Свои серверы не сохранены: {reason}",
   "journal.dnslookup.serversNotSaved": "Свои серверы не сохранены, причина неизвестна",
   "journal.dnslookup.serverAdded": "Свой сервер добавлен: {address}",
   "journal.dnslookup.serverRemoved": "Свой сервер удалён",
-  "journal.dnslookup.defaultPresetMissing":
-    "Пресет по умолчанию «{id}» не найден: вкладка открыта пустой",
   "journal.dnslookup.presetLoaded":
     "Пресет «{title}» загружен: строк — {rows}, серверов — {servers}",
-  "journal.dnslookup.reverted": "Изменения настроек отменены",
   "journal.dnslookup.revertedRestarted": "Изменения отменены: строк — {rows}, серверов — {servers}",
 
-  "journal.icmp.subscribed": "Подписка на события Ping активна",
   "journal.icmp.started": "Проверка Ping запущена: целей - {targets}, пакетов на адрес - {count}",
   "journal.icmp.startedEndless": "Проверка Ping запущена без ограничения: целей - {targets}",
   "journal.icmp.finished":
     "Проверка Ping завершена: целей - {targets}, адресов - {addresses}, отправлено - {sent}, получено - {received}, время - {elapsed} мс",
   "journal.icmp.cancelled":
     "Проверка Ping остановлена: целей - {targets}, отправлено - {sent}, получено - {received}",
-  "journal.icmp.failed": "Проверка Ping не выполнена: {reason}",
-  "journal.icmp.startFailed": "Проверка Ping не запущена: {reason}",
-  "journal.icmp.startRejected": "Проверка Ping не запущена: ядро отклонило запрос",
   "journal.icmp.stopped": "Проверка Ping остановлена: отправлено - {sent}, получено - {received}",
-  "journal.icmp.stopFailed": "Не удалось остановить проверку Ping: {reason}",
-  "journal.icmp.leaveStopError": "Проверка Ping покинутой вкладки не остановлена: {reason}",
-  "journal.icmp.defaultPresetMissing":
-    "Пресет Ping по умолчанию «{id}» не найден: вкладка открыта пустой",
   "journal.icmp.presetLoaded": "Пресет Ping «{title}» загружен: целей - {targets}",
-  "journal.icmp.reverted": "Изменения настроек Ping отменены",
   "journal.icmp.revertedCleared": "Изменения отменены, результаты очищены: целей - {targets}",
 
   // ── Количество ───────────────────────────────────────────────────────────
@@ -443,7 +427,6 @@ export const ruMessages: Messages = {
   "busprobe.view.roundTrip": "Круговое время",
   "busprobe.view.note":
     "Запрос и ответ — события шины. Интерфейс ждёт ответ только по correlation_id; второй подписчик видит тот же core:pong в журнале.",
-  "busprobe.view.subscribeFailed": "Подписка на события не создана: {reason}",
   "busprobe.unit.ms": "мс",
   "busprobe.route.title": "Путь сообщения",
   "busprobe.route.stages": {
@@ -594,7 +577,6 @@ export const ruMessages: Messages = {
   "dnslookup.run.duplicateServer": "Сервер {address} указан дважды",
   "dnslookup.run.tooMany":
     "Слишком много запросов: {total}. Предел — {limit}. Уменьшите число строк или серверов",
-  "dnslookup.run.subscribeFailed": "Подписка на события DNS не создана: {reason}",
 
   // ── Ping: экран ──────────────────────────────────────────────────────────
   "icmp.view.targetAria": "Домен или IP-адрес цели",
@@ -655,7 +637,6 @@ export const ruMessages: Messages = {
   "icmp.run.period": "Период вне пределов {min}..{max} мс",
   "icmp.run.count": "Число проверок: от {min} до {max}",
   "icmp.run.timeout": "Таймаут вне пределов {min}..{max} мс",
-  "icmp.run.subscribeFailed": "Подписка на события Ping не создана: {reason}",
   "icmp.validate.badTarget": "Введите корректный домен или IP-адрес",
   "icmp.validate.targetLimit": "Целей больше предела в {limit}",
 
@@ -700,7 +681,6 @@ export const ruMessages: Messages = {
   "errors.bus.undelivered": "Событие «{topic}» не доставлено в интерфейс",
 
   // ── Ошибки журнала и окна ────────────────────────────────────────────────
-  "errors.logging.create": "Не удалось создать папку логов «{path}»: {reason}",
   "errors.logging.installed": "Файловый лог уже запущен: {reason}",
   "errors.window.flush": "Поток сохранения геометрии завершился с паникой",
   "errors.window.missing": "Главное окно не найдено",
@@ -712,6 +692,8 @@ export const ruMessages: Messages = {
   "errors.files.rename": "Не удалось переименовать «{path}» в «{target}»: {reason}",
   "errors.files.create": "Не удалось создать «{path}»: {reason}",
   "errors.files.move": "Не удалось перенести «{path}» в «{target}»: {reason}",
+  "errors.files.broken": "Файл «{path}» не разобран: {reason}",
+  "errors.files.notObject": "Файл «{path}» должен содержать объект JSON",
   "errors.storage.exe": "Не удалось определить путь к программе: {reason}",
   "errors.storage.noFolder": "У пути к программе нет папки: {path}",
   "errors.storage.create": "Не удалось создать папку «{path}»: {reason}",
@@ -720,8 +702,6 @@ export const ruMessages: Messages = {
   "errors.storage.remove": "Не удалось удалить «{path}»: {reason}",
   "errors.storage.readFolder": "Не удалось прочитать папку «{path}»: {reason}",
   "errors.storage.missingFolder": "Папка «{path}» не найдена",
-  "errors.workspace.broken": "Файл «{path}» не разобран как JSON: {reason}",
-  "errors.workspace.notObject": "Файл «{path}» должен содержать объект JSON",
   "errors.workspace.saveNotObject": "Рабочее пространство должно быть объектом JSON",
   "errors.workspace.serialize": "Рабочее пространство не сериализовано: {reason}",
   "errors.settings.read": "Не удалось прочитать «{path}»: {reason}; взяты значения по умолчанию",
@@ -781,7 +761,6 @@ export const ruMessages: Messages = {
   "errors.dnslookup.notReply": "Получено не сообщение-ответ",
   "errors.dnslookup.unexpectedCode": "Неожиданный код ответа DNS: {code}",
   "errors.dnslookup.network": "Ошибка сети: {reason}",
-  "errors.dnslookup.servers.broken": "Не удалось разобрать «{path}»: {reason}",
   "errors.dnslookup.servers.version":
     "Неподдерживаемая версия файла «{path}»: {version}; ожидалась {expected}",
   "errors.dnslookup.servers.serialize": "Свои серверы не сериализованы: {reason}",
@@ -816,8 +795,6 @@ export const ruMessages: Messages = {
   "errors.presets.emptyId": "Идентификатор пресета пуст",
   "errors.presets.invalidId": "В идентификаторе пресета допустимы латиница, цифры, «-» и «_»",
   "errors.presets.missing": "Файл «{path}» исчез между чтением папки и чтением пресета",
-  "errors.presets.broken": "Файл «{path}» не разобран: {reason}",
-  "errors.presets.notObject": "Файл «{path}» должен содержать объект пресета",
   "errors.presets.version": "Пресет «{path}» записан в версии {version}, ожидалась {expected}",
   "errors.presets.tool": "Пресет «{path}» относится к инструменту «{tool}», а не к «{expected}»",
   "errors.presets.payloadFile":

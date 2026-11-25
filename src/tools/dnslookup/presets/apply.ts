@@ -226,7 +226,7 @@ export async function revertPresetChanges(session: DnsSession): Promise<DnsPrese
 
   if (sameQueries(dnsPresetBinding.capture(session), payload)) {
     restoreSettings(session, payload);
-    write(JOURNAL_SOURCE, "info", "journal.dnslookup.reverted");
+    write(JOURNAL_SOURCE, "info", "presets.reverted");
     return { error: null, restarted: false };
   }
 

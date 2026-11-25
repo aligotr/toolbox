@@ -268,7 +268,7 @@ async function createNew(): Promise<void> {
   }
 
   newTitle.value = "";
-  note.value = t(props.texts.notes.created, { title: created.title });
+  note.value = t(props.texts.notes.saved, { title: created.title });
 }
 
 function startRename(preset: Preset): void {

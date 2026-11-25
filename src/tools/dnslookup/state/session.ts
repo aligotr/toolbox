@@ -67,7 +67,7 @@ export function pruneSessions(): void {
     // некому ответить, поэтому досчитывать запросы впустую не нужно.
     if (session.runId !== null) {
       void cancelDns(session.runId).catch((error: unknown) => {
-        write(JOURNAL_SOURCE, "error", "journal.dnslookup.leaveStopError", {
+        write(JOURNAL_SOURCE, "error", "common.runLeaveStopFailed", {
           reason: error,
         });
       });

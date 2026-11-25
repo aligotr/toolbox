@@ -68,6 +68,6 @@ export const applyDefaultPreset = createDefaultPresetLoader<IcmpSession>({
   presets: icmpPresets,
   apply: applyPreset,
   journalSource: JOURNAL_SOURCE,
-  missingCode: "journal.icmp.defaultPresetMissing",
+  missingCode: "presets.defaultMissing",
   canApply: isUntouched,
 });

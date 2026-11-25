@@ -44,7 +44,7 @@ pub fn load(path: &Path) -> AppResult<Option<Value>> {
 
     let value: Value = serde_json::from_str(strip_bom(&raw)).map_err(|error| {
         AppError::new(
-            "errors.workspace.broken",
+            "errors.files.broken",
             format!("'{}' не разобран как JSON: {error}", path.display()),
         )
         .with("path", path.display())
@@ -53,7 +53,7 @@ pub fn load(path: &Path) -> AppResult<Option<Value>> {
 
     if !value.is_object() {
         return fail!(
-            "errors.workspace.notObject",
+            "errors.files.notObject",
             format!(
                 "'{}' должен содержать объект, а не {}",
                 path.display(),

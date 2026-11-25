@@ -66,7 +66,7 @@ pub fn load(data_dir: &Path) -> AppResult<Vec<StoredServer>> {
 
     let file: ServersFile = serde_json::from_str(files::strip_bom(&raw)).map_err(|error| {
         AppError::new(
-            "errors.dnslookup.servers.broken",
+            "errors.files.broken",
             format!("Не удалось разобрать '{}': {error}", path.display()),
         )
         .with("path", path.display())

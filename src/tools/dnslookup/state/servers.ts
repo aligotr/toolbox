@@ -121,7 +121,7 @@ async function readServers(session: DnsSession): Promise<void> {
     if (custom.value.error) {
       errors.push(describeError(custom.value.error));
       facts.push({
-        code: "journal.dnslookup.customServersFailed",
+        code: "dnslookup.servers.customReadError",
         params: { reason: custom.value.error },
       });
     } else {
@@ -138,7 +138,7 @@ async function readServers(session: DnsSession): Promise<void> {
       }),
     );
     facts.push({
-      code: "journal.dnslookup.customServersFailed",
+      code: "dnslookup.servers.customReadError",
       params: { reason: appErrorOf(custom.reason) },
     });
   }

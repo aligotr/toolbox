@@ -491,7 +491,7 @@ fn read_document(path: &Path) -> AppResult<Map<String, Value>> {
 
     let value: Value = serde_json::from_str(strip_bom(&raw)).map_err(|error| {
         AppError::new(
-            "errors.presets.broken",
+            "errors.files.broken",
             format!("Файл '{}' не разобран: {error}", path.display()),
         )
         .with("path", path.display())
@@ -500,7 +500,7 @@ fn read_document(path: &Path) -> AppResult<Map<String, Value>> {
 
     let Value::Object(document) = value else {
         return fail!(
-            "errors.presets.notObject",
+            "errors.files.notObject",
             format!("Файл '{}' должен содержать объект пресета", path.display()),
             path = path.display(),
         );

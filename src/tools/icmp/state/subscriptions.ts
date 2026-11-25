@@ -34,11 +34,11 @@ export async function ensureSubscriptions(): Promise<boolean> {
   if (subscriptions === null) {
     subscriptions = subscribeAll().catch((error: unknown) => {
       subscriptions = null;
-      subscriptionError = t("icmp.run.subscribeFailed", { reason: describeError(error) });
+      subscriptionError = t("common.subscribeFailed", { reason: describeError(error) });
       for (const session of sessions.values()) {
         session.status.run.error = subscriptionError;
       }
-      write(JOURNAL_SOURCE, "error", "icmp.run.subscribeFailed", {
+      write(JOURNAL_SOURCE, "error", "common.subscribeFailed", {
         reason: appErrorOf(error),
       });
     });
@@ -68,7 +68,7 @@ async function subscribeAll(): Promise<void> {
     throw error;
   }
 
-  write(JOURNAL_SOURCE, "info", "journal.icmp.subscribed");
+  write(JOURNAL_SOURCE, "info", "common.subscribed");
 }
 
 /** Раскладывает разрешение цели по всем сеансам с тем же `run_id`. */
@@ -139,7 +139,7 @@ function handleFinished(event: FinishedEvent): void {
 
     if (event.error) {
       session.status.run.error = describeError(event.error);
-      write(JOURNAL_SOURCE, "error", "journal.icmp.failed", {
+      write(JOURNAL_SOURCE, "error", "common.runFailed", {
         reason: event.error,
       });
       return;

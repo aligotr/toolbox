@@ -86,7 +86,6 @@ export interface PresetDialogTexts {
     renameCancel: string;
     loadAria: string;
     loadTip: string;
-    loadTipAria: string;
     renameTip: string;
     renameTipAria: string;
     duplicateTip: string;
@@ -123,7 +122,6 @@ export interface PresetDialogTexts {
     notSaved: string;
     revertFailed: string;
     startNewFailed: string;
-    created: string;
     notCreated: string;
     renamed: string;
     notRenamed: string;

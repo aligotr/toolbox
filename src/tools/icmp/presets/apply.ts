@@ -184,7 +184,7 @@ export async function revertPresetChanges(session: IcmpSession): Promise<IcmpPre
     session.filters.status = payload.filters.status;
     session.filters.family = payload.filters.family;
     session.highlightTargetId = null;
-    write(JOURNAL_SOURCE, "info", "journal.icmp.reverted");
+    write(JOURNAL_SOURCE, "info", "presets.reverted");
     return { error: null, cleared: false };
   }
 

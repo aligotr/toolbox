@@ -171,7 +171,7 @@ impl Logger {
 pub fn init(dir: PathBuf, level: LogLevel) -> AppResult<Arc<Logger>> {
     fs::create_dir_all(&dir).map_err(|error| {
         AppError::new(
-            "errors.logging.create",
+            "errors.storage.create",
             format!(
                 "Не удалось создать папку логов '{}': {error}",
                 dir.display()

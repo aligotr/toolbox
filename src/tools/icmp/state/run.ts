@@ -129,7 +129,7 @@ export async function runTargets(session: IcmpSession, targetIds: string[]): Pro
     void cancelIcmp(runId).catch(() => {});
     failRun(session, runId, {
       text: t("common.runNotStarted", { reason: describeError(error) }),
-      code: "journal.icmp.startFailed",
+      code: "common.runNotStarted",
       params: { reason: appErrorOf(error) },
     });
   }
@@ -156,7 +156,7 @@ function rejectAcceptedRun(session: IcmpSession, runId: string, error: AppError 
   if (error === null) {
     failRun(session, runId, {
       text: t("common.runRejected"),
-      code: "journal.icmp.startRejected",
+      code: "common.runRejected",
       params: {},
     });
     return;
@@ -164,7 +164,7 @@ function rejectAcceptedRun(session: IcmpSession, runId: string, error: AppError 
 
   failRun(session, runId, {
     text: describeError(error),
-    code: "journal.icmp.startFailed",
+    code: "common.runNotStarted",
     params: { reason: error },
   });
 }
@@ -248,7 +248,7 @@ export async function abortSessionRun(session: IcmpSession): Promise<void> {
     await cancelIcmp(runId);
   } catch (error) {
     session.status.run.error = t("common.runStopFailed", { reason: describeError(error) });
-    write(JOURNAL_SOURCE, "error", "journal.icmp.stopFailed", {
+    write(JOURNAL_SOURCE, "error", "common.runStopFailed", {
       reason: appErrorOf(error),
     });
   }
@@ -267,7 +267,7 @@ export async function stopRun(session: IcmpSession): Promise<void> {
     await cancelIcmp(session.runId);
   } catch (error) {
     session.status.run.error = t("common.runStopFailed", { reason: describeError(error) });
-    write(JOURNAL_SOURCE, "error", "journal.icmp.stopFailed", {
+    write(JOURNAL_SOURCE, "error", "common.runStopFailed", {
       reason: appErrorOf(error),
     });
   }
