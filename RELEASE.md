@@ -14,7 +14,7 @@
 
 В релизе портативный архив:
 
-- `ToolBox_26.11.0_portable.zip` - приложение, README и лицензия.
+- `ToolBox_v26.11.0.zip` - приложение, README и лицензия.
 - `SHA256SUMS.txt` - контрольные суммы архива и `ToolBox.exe`.
 
 ## Требования
@@ -56,7 +56,7 @@ SHA256 `ToolBox.exe` внутри архива:
 Проверка в PowerShell:
 
 ```powershell
-Get-FileHash .\ToolBox_26.11.0_portable.zip -Algorithm SHA256
+Get-FileHash .\ToolBox_v26.11.0.zip -Algorithm SHA256
 Get-FileHash .\ToolBox\ToolBox.exe -Algorithm SHA256
 ```
 
