@@ -22,6 +22,67 @@
       .tree-line {
         border-left: 2px solid #cbd5e1;
       }
+
+      @media print {
+        @page {
+          size: A4;
+          margin: 10mm;
+        }
+
+        html,
+        body {
+          background: #fff !important;
+        }
+
+        body {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        main {
+          max-width: none !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        main > *,
+        section > * {
+          margin-top: 0 !important;
+        }
+
+        header {
+          break-after: page;
+          page-break-after: always;
+        }
+
+        article {
+          break-inside: avoid;
+          page-break-inside: avoid;
+          box-shadow: none !important;
+        }
+
+        article + article {
+          break-before: page;
+          page-break-before: always;
+        }
+
+        h1,
+        h2,
+        h3 {
+          break-after: avoid;
+          page-break-after: avoid;
+        }
+
+        p,
+        li {
+          orphans: 3;
+          widows: 3;
+        }
+
+        .card-shadow {
+          box-shadow: none !important;
+        }
+      }
     </style>
   </head>
   <body class="bg-stone-50 text-slate-900 font-sans antialiased">
@@ -55,7 +116,7 @@
             <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Strong</span>
           </div>
 
-          <div class="grid gap-5 md:grid-cols-2">
+          <div class="grid gap-5 md:grid-cols-2 print:grid-cols-2">
             <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
               <p class="diagram-label text-slate-500 mb-3">Порядок чтения</p>
               <div class="space-y-2">
@@ -119,7 +180,7 @@
             </div>
           </div>
 
-          <div class="grid gap-4 md:grid-cols-3">
+          <div class="grid gap-4 md:grid-cols-3 print:grid-cols-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Files</p>
               <p class="mt-1 font-mono text-xs leading-5">AGENTS.md<br />.agents/rules/global/<br />.agents/rules/project/</p>
@@ -138,7 +199,7 @@
             </div>
           </div>
 
-          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2 print:grid-cols-2">
             <li>global задаёт умолчание, project уточняет стек</li>
             <li>YAML главнее MD: он точнее и проверяем</li>
             <li>проектные правила главнее глобальных</li>
@@ -161,34 +222,34 @@
           </div>
 
           <div class="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-stone-50">
-            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr]">
+            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr] print:grid-cols-[10rem_1fr_1fr]">
               <p class="font-semibold">ADR</p>
               <p class="text-sm text-slate-600">Почему сделано так, что отвергли, какие последствия приняли.</p>
               <p class="text-sm text-slate-500">Неизменяем. Новое решение - новый ADR. Статус «заменено» ставит только владелец.</p>
             </div>
-            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr]">
+            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr] print:grid-cols-[10rem_1fr_1fr]">
               <p class="font-semibold">Спека</p>
               <p class="text-sm text-slate-600">Сценарии, состояния, ошибки, данные, приёмка.</p>
               <p class="text-sm text-slate-500">Меняется при изменении поведения. При конфликте главнее ADR.</p>
             </div>
-            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr]">
+            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr] print:grid-cols-[10rem_1fr_1fr]">
               <p class="font-semibold">Правило</p>
               <p class="text-sm text-slate-600">Обязательная инструкция: как работать, что можно и что запрещено.</p>
               <p class="text-sm text-slate-500">Не объясняет «почему» и не пересказывает код. Проект главнее global.</p>
             </div>
-            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr]">
+            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr] print:grid-cols-[10rem_1fr_1fr]">
               <p class="font-semibold">Библиотека</p>
               <p class="text-sm text-slate-600">Путь, назначение, интерфейс, подключение, ограничения готового элемента.</p>
               <p class="text-sm text-slate-500">Проверяется перед новой реализацией: готовое переиспользуют.</p>
             </div>
-            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr]">
+            <div class="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr] print:grid-cols-[10rem_1fr_1fr]">
               <p class="font-semibold">Глоссарий</p>
               <p class="text-sm text-slate-600">Термин и значение; один термин живёт в одном файле.</p>
               <p class="text-sm text-slate-500">Индекс собирает термины. Дубли между файлами запрещены.</p>
             </div>
           </div>
 
-          <div class="grid gap-4 md:grid-cols-3">
+          <div class="grid gap-4 md:grid-cols-3 print:grid-cols-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Files</p>
               <p class="mt-1 font-mono text-xs leading-5">.agents/decisions/<br />.agents/specs/<br />.agents/rules/<br />.agents/library/<br />.agents/glossary/</p>
@@ -207,7 +268,7 @@
             </div>
           </div>
 
-          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2 print:grid-cols-2">
             <li>ADR не переписывается задним числом</li>
             <li>спека не дублирует причину решения</li>
             <li>правило не объясняет «почему»</li>
@@ -231,7 +292,7 @@
             <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">Derived</span>
           </div>
 
-          <div class="grid gap-5 md:grid-cols-2">
+          <div class="grid gap-5 md:grid-cols-2 print:grid-cols-2">
             <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
               <p class="diagram-label text-slate-500 mb-3">Источник и указатель</p>
               <div class="space-y-2 text-xs">
@@ -271,7 +332,7 @@
             </div>
           </div>
 
-          <div class="grid gap-4 md:grid-cols-3">
+          <div class="grid gap-4 md:grid-cols-3 print:grid-cols-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Files</p>
               <p class="mt-1 font-mono text-xs leading-5">.agents/decisions/INDEX.md<br />.agents/specs/README.md<br />.agents/library/README.md<br />.agents/GLOSSARY.md</p>
@@ -290,7 +351,7 @@
             </div>
           </div>
 
-          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2 print:grid-cols-2">
             <li>источник не переписывается ради указателя</li>
             <li>указатель не становится вторым источником</li>
             <li>ручные правки производного теряются</li>
@@ -312,7 +373,7 @@
             <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">Temporary</span>
           </div>
 
-          <div class="grid gap-5 md:grid-cols-2">
+          <div class="grid gap-5 md:grid-cols-2 print:grid-cols-2">
             <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
               <p class="diagram-label text-slate-500 mb-3">Черновик текущей задачи</p>
               <div class="rounded-lg border-2 border-dashed border-slate-400 bg-white p-3">
@@ -354,7 +415,7 @@
             </div>
           </div>
 
-          <div class="grid gap-4 md:grid-cols-3">
+          <div class="grid gap-4 md:grid-cols-3 print:grid-cols-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Files</p>
               <p class="mt-1 font-mono text-xs leading-5">.scratch/&lt;задача&gt;/<br />.gitignore<br />.agents/rules/global/tasks.md</p>
@@ -373,7 +434,7 @@
             </div>
           </div>
 
-          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2 print:grid-cols-2">
             <li>.scratch не попадает в git</li>
             <li>ADR, спеки и правила не ссылаются на .scratch</li>
             <li>мелкая задача может обойтись без папки</li>
@@ -395,7 +456,7 @@
             <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">Portable</span>
           </div>
 
-          <div class="grid gap-5 md:grid-cols-2">
+          <div class="grid gap-5 md:grid-cols-2 print:grid-cols-2">
             <div class="rounded-xl border border-slate-200 bg-stone-50 p-4">
               <p class="diagram-label text-slate-500 mb-3">Три уровня проверок</p>
               <div class="space-y-2 text-xs">
@@ -440,7 +501,7 @@
             </div>
           </div>
 
-          <div class="grid gap-4 md:grid-cols-3">
+          <div class="grid gap-4 md:grid-cols-3 print:grid-cols-3">
             <div>
               <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Files</p>
               <p class="mt-1 font-mono text-xs leading-5">.agents/rules/global/quality.md<br />.agents/auxiliary/bootstrap.md<br />.agents/auxiliary/scripts/</p>
@@ -459,7 +520,7 @@
             </div>
           </div>
 
-          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+          <ul class="grid gap-2 text-sm text-slate-700 md:grid-cols-2 print:grid-cols-2">
             <li>каждая мелкая правка - точечная проверка</li>
             <li>полный цикл - перед коммитом, «готово» и релизом</li>
             <li>живое поведение проверяется один раз на сценарий</li>
