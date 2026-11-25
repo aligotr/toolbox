@@ -44,7 +44,7 @@
 SHA256 архива:
 
 ```text
-da6833813be6cd80a2f5209275b0a5224eca1e083992e5c56a57b9db3e6987b0
+6c0fd4c0b5d68624e1d3f6c2d4f5d53e7c4fc74f9aa4e2ddf08429b7ace3c055
 ```
 
 SHA256 `ToolBox.exe` внутри архива:
