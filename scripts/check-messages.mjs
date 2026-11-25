@@ -110,7 +110,7 @@ function printLimited(prefix, items, describe = (item) => item) {
  * Одинаковые тексты в одном словаре.
  *
  * Дубль прячет общий смысл: правка одного места оставляет второе устаревшим.
- * Пока ключи не опубликованы, дубли сливаются напрямую, без baseline.
+ * Дубли сливаются напрямую, без baseline (ADR 0081).
  */
 function checkDuplicates(code, messages) {
   const groups = new Map();

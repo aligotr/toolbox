@@ -14,8 +14,8 @@ import { write } from "../../infra/journal";
 import { idle, type OperationStatus } from "../../infra/status";
 import {
   BUILTIN_LANGUAGES,
-  missingKeysOf,
-  obsoleteKeysOf,
+  addKeysOf,
+  removeKeysOf,
   type BuiltinLanguage,
   type DictionaryFile,
   type LanguageEntry,
@@ -79,8 +79,8 @@ async function readLanguages(): Promise<void> {
             name: language.name,
             nameKey: language.nameKey,
             problem: null,
-            missing: 0,
-            obsolete: 0,
+            addCount: 0,
+            removeCount: 0,
             builtin: true,
             overrides: false,
             messages: null,
@@ -108,8 +108,8 @@ function entryOfFile(file: CatalogEntry, builtin: BuiltinLanguage | null): Langu
     name: builtin?.name ?? file.name,
     ...(builtin ? { nameKey: builtin.nameKey } : {}),
     problem: file.problem,
-    missing: 0,
-    obsolete: 0,
+    addCount: 0,
+    removeCount: 0,
     builtin: builtin !== null,
     overrides: builtin !== null,
     messages: file.messages,
@@ -134,7 +134,7 @@ function entryOfFile(file: CatalogEntry, builtin: BuiltinLanguage | null): Langu
 
   return {
     ...base,
-    missing: missingKeysOf(file.code, file.messages).length,
-    obsolete: obsoleteKeysOf(file.code, file.messages).length,
+    addCount: addKeysOf(file.code, file.messages).length,
+    removeCount: removeKeysOf(file.code, file.messages).length,
   };
 }

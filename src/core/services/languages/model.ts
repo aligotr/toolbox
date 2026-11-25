@@ -1,8 +1,8 @@
 // Модель языков: встроенные словари, цепочка отката и файл изменений.
 //
-// Чистые функции без Vue и Tauri: по ним считаются пропуски и устаревшие
-// ключи, собирается документ изменений и накладывается внешний файл
-// на встроенный (ADR 0039, ADR 0057). Состояние и команды живут рядом,
+// Чистые функции без Vue и Tauri: по ним считаются ключи для add и remove,
+// собирается файл изменений и накладывается внешний файл на встроенный
+// (ADR 0039, ADR 0057). Состояние и команды живут рядом,
 // в `state.ts`, `runtime.ts` и `actions.ts`.
 
 import type { AppError } from "@/contracts/errors";
@@ -62,9 +62,9 @@ export interface LanguageEntry {
   /** Причина, по которой файл не прочитан; `null` - словарь годен. */
   problem: AppError | null;
   /** Ключи источника, которых нет или у которых не хватает форм. */
-  missing: number;
+  addCount: number;
   /** Ключи файла, которых нет в источнике: их пора удалить. */
-  obsolete: number;
+  removeCount: number;
   /** Язык встроен в программу. */
   builtin: boolean;
   /** Внешний файл перекрывает встроенный язык с тем же кодом. */
@@ -134,16 +134,16 @@ function isComplete(
   return categories.every((category) => typeof value[category] === "string");
 }
 
-/** Ключи источника, которых не хватает словарю. */
-export function missingKeysOf(code: string, messages: Messages): string[] {
+/** Ключи, которые нужно добавить в словарь: нет ключа или не хватает форм. */
+export function addKeysOf(code: string, messages: Messages): string[] {
   const source = sourceFor(code);
   const categories = pluralCategories(code);
 
   return Object.keys(source).filter((key) => !isComplete(messages[key], source[key], categories));
 }
 
-/** Ключи файла, которых больше нет в источнике. */
-export function obsoleteKeysOf(code: string, messages: Messages): string[] {
+/** Ключи, которые нужно убрать из словаря: их больше нет в источнике. */
+export function removeKeysOf(code: string, messages: Messages): string[] {
   const source = sourceFor(code);
 
   return Object.keys(messages)
@@ -163,8 +163,8 @@ export function updatesDocumentFor(
   name: string,
   messages: Messages,
 ): DictionaryUpdates | null {
-  const keys = missingKeysOf(code, messages);
-  const remove = obsoleteKeysOf(code, messages);
+  const keys = addKeysOf(code, messages);
+  const remove = removeKeysOf(code, messages);
   if (keys.length === 0 && remove.length === 0) return null;
 
   const source = sourceFor(code);

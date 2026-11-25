@@ -193,7 +193,7 @@ pub fn export_language(dir: &Path, code: &str, document: &Value) -> AppResult<Pa
          //\n\
          // Внешний файл принадлежит пользователю: приложение его не перезаписывает.\n\
          // Ключи и подстановки оставьте как есть: по ним программа находит перевод.\n\
-         // Недостающие и устаревшие ключи выгружаются отдельным файлом <code>.updates.jsonc.\n\
+         // Изменения словаря выгружаются отдельным файлом <code>.updates.jsonc с полями add и remove.\n\
          {body}\n"
     );
     write_atomic(&target, &text)?;
@@ -266,11 +266,6 @@ pub fn updates_path(dir: &Path, code: &str) -> PathBuf {
     dir.join(format!("{code}.updates.{EXTENSION}"))
 }
 
-/// Путь прежнего файла дополнений: `<code>.missing.jsonc`.
-fn legacy_missing_path(dir: &Path, code: &str) -> PathBuf {
-    dir.join(format!("{code}.missing.{EXTENSION}"))
-}
-
 /// Убирает файл, если он есть: отсутствие не ошибка.
 fn remove_if_exists(path: &Path) -> AppResult<()> {
     match fs::remove_file(path) {
@@ -293,9 +288,6 @@ fn remove_if_exists(path: &Path) -> AppResult<()> {
 pub fn updates_write(dir: &Path, code: &str, document: Option<&Value>) -> AppResult<UpdatesResult> {
     validate_code(code)?;
     let target = updates_path(dir, code);
-
-    // Прежний файл дополнений больше не нужен: его место занял файл изменений.
-    remove_if_exists(&legacy_missing_path(dir, code))?;
 
     let Some(document) = document else {
         remove_if_exists(&target)?;
@@ -616,7 +608,6 @@ mod tests {
         fs::write(dir.join("broken.jsonc"), "{").expect("битый словарь");
         fs::write(dir.join("legacy.json"), SAMPLE).expect("старый .json");
         fs::write(dir.join("en.updates.jsonc"), "{}").expect("файл изменений");
-        fs::write(dir.join("en.missing.jsonc"), "{}").expect("прежний файл дополнений");
         fs::write(dir.join("notes.txt"), "не словарь").expect("чужой файл");
 
         let items = catalog(&dir).expect("каталог");
@@ -742,14 +733,11 @@ mod tests {
         fs::create_dir_all(&dir).expect("папка словарей");
         fs::write(dir.join("en.jsonc"), SAMPLE).expect("словарь");
         let updates = dir.join("en.updates.jsonc");
-        let legacy = dir.join("en.missing.jsonc");
         fs::write(&updates, "{}").expect("файл изменений");
-        fs::write(&legacy, "{}").expect("прежний файл дополнений");
 
         let target = revert_builtin(&dir, &trash, "en").expect("словарь возвращён");
 
         assert!(!updates.exists(), "файл изменений убран");
-        assert!(!legacy.exists(), "прежний файл дополнений убран");
         assert!(!dir.join("en.jsonc").exists(), "внешний файл убран");
         assert!(target.is_file(), "словарь лежит в корзине");
     }
@@ -762,15 +750,12 @@ mod tests {
         let trash = root.join("trash").join("languages");
         fs::create_dir_all(&dir).expect("папка словарей");
         let updates = dir.join("en.updates.jsonc");
-        let legacy = dir.join("en.missing.jsonc");
         fs::write(&updates, "{}").expect("файл изменений");
-        fs::write(&legacy, "{}").expect("прежний файл дополнений");
 
         let error = revert_builtin(&dir, &trash, "en").expect_err("словаря нет");
 
         assert_eq!(error.code, "errors.languages.missingFile");
         assert!(!updates.exists(), "файл изменений убран до отказа переноса");
-        assert!(!legacy.exists(), "прежний файл дополнений убран");
     }
 
     #[test]
@@ -782,16 +767,12 @@ mod tests {
             "remove": ["old.title"]
         });
 
-        let legacy = dir.join("en.missing.jsonc");
-        fs::write(&legacy, "{}").expect("прежний файл дополнений");
-
         let first = updates_write(&dir, "en", Some(&document)).expect("файл записан");
         assert!(first.written, "первый раз файл создан");
         assert!(first.path.is_some());
         assert_eq!(first.added, 1, "посчитан один новый ключ");
-        assert_eq!(first.removed, 1, "посчитан один устаревший ключ");
+        assert_eq!(first.removed, 1, "посчитан один ключ для remove");
         assert_eq!(first.count, 2, "в файле две строки изменений");
-        assert!(!legacy.exists(), "прежний файл дополнений убран");
         assert!(
             fs::read_to_string(updates_path(&dir, "en"))
                 .expect("файл изменений")

@@ -125,8 +125,8 @@ export const enMessages: Messages = {
   "settings.language.external": "External",
   "settings.language.broken": "Cannot be read",
   "settings.language.complete": "Full",
-  "settings.language.missingCount": "Add: {count}",
-  "settings.language.obsoleteCount": "Remove: {count}",
+  "settings.language.addCount": "Add: {count}",
+  "settings.language.removeCount": "Remove: {count}",
   "settings.language.updatesHint":
     "Changes file: what to add to the dictionary and what to remove from it.",
   "settings.language.lost":

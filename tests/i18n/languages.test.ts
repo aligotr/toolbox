@@ -1,4 +1,5 @@
-// Модель языков: формы склонения, пропуски и документ дополнений (ADR 0057).
+// Модель языков: формы склонения, ключи add/remove и файл изменений
+// (ADR 0057, ADR 0081).
 //
 // Проверяются чистые функции без Vue и Tauri: `node --test tests/i18n`.
 
@@ -62,7 +63,7 @@ test("неполные формы попадают в документ изме�
   assert.deepEqual(document?.remove, []);
 });
 
-test("ключ, которого больше нет в программе, попадает в устаревшие", () => {
+test("ключ, которого больше нет в программе, попадает в remove", () => {
   const extra: Messages = { ...enMessages, "old.key": "Old text" };
 
   const document = updatesDocumentFor("en", "English", extra);
@@ -71,7 +72,7 @@ test("ключ, которого больше нет в программе, по
   assert.deepEqual(document?.remove, ["old.key"]);
 });
 
-test("переименованный ключ виден и как новый, и как устаревший", () => {
+test("переименованный ключ виден и в add, и в remove", () => {
   const partial: Messages = { ...enMessages };
   delete partial["common.language"];
   partial["settings.language.old"] = "Language";

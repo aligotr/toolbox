@@ -2,8 +2,8 @@
 // Раздел «Язык»: два встроенных языка и внешние словари (ADR 0039, 0057).
 //
 // Встроенные `ru` и `en` всегда на месте. Внешний словарь - файл пользователя:
-// приложение его не меняет. Недостающие ключи отдаются отдельным файлом,
-// а устаревший перекрытый язык возвращают кнопкой «Вернуть встроенный».
+// приложение его не меняет. Изменения словаря отдаются отдельным файлом,
+// а внешний перекрытый язык возвращают кнопкой «Вернуть встроенный».
 
 import Button from "primevue/button";
 import { useConfirm } from "primevue/useconfirm";
@@ -33,10 +33,10 @@ const confirm = useConfirm();
 let switching = false;
 
 /**
- * Переключает язык и сразу проверяет недостающие ключи.
+ * Переключает язык и сразу проверяет изменения словаря.
  *
- * Это тот же путь, что на старте: недостающие ключи пишет ядро в файл
- * дополнений и уведомляет о записи. Без проверки пропуски появились бы
+ * Это тот же путь, что на старте: изменения словаря пишет ядро в файл
+ * изменений и уведомляет о записи. Без проверки пропуски появились бы
  * только после перезапуска (ADR 0057).
  */
 async function switchLanguage(code: string): Promise<void> {
@@ -208,17 +208,17 @@ onUnmounted(() => {
 
             <span
               v-if="
-                item.problem === null && (item.overrides || !item.builtin) && item.missing === 0
+                item.problem === null && (item.overrides || !item.builtin) && item.addCount === 0
               "
               class="language__badge language__badge--ok"
             >
               {{ t("settings.language.complete") }}
             </span>
-            <span v-if="item.problem === null && item.missing > 0" class="language__badge">
-              {{ t("settings.language.missingCount", { count: item.missing }) }}
+            <span v-if="item.problem === null && item.addCount > 0" class="language__badge">
+              {{ t("settings.language.addCount", { count: item.addCount }) }}
             </span>
-            <span v-if="item.problem === null && item.obsolete > 0" class="language__badge">
-              {{ t("settings.language.obsoleteCount", { count: item.obsolete }) }}
+            <span v-if="item.problem === null && item.removeCount > 0" class="language__badge">
+              {{ t("settings.language.removeCount", { count: item.removeCount }) }}
             </span>
           </span>
         </span>
@@ -260,7 +260,9 @@ onUnmounted(() => {
 
     <p
       v-if="
-        active !== null && active.problem === null && (active.missing > 0 || active.obsolete > 0)
+        active !== null &&
+        active.problem === null &&
+        (active.addCount > 0 || active.removeCount > 0)
       "
       class="language__hint"
     >
