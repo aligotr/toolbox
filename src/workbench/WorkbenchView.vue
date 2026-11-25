@@ -5,14 +5,16 @@
 // активной вкладки. Инструменты она получает готовыми дескрипторами из
 // точки сборки, поэтому не импортирует ни одного `tools/*` (ADR 0012).
 //
-// Ctrl+B — единственная горячая клавиша оболочки. Обработчик живёт здесь,
-// потому что меняет состояние всей оболочки, а не отдельной панели.
+// Ctrl+B и Ctrl+W - горячие клавиши оболочки. Обработчик живёт в
+// `shortcuts.ts`, потому что меняет состояние всей оболочки, а не отдельной
+// панели.
 
 import { onMounted, onUnmounted, ref, type Component } from "vue";
 import type { ToolDescriptor } from "@/contracts/tools";
 import { setSidebarCollapsed, settings } from "@/core/services/settings/index";
 import type { StartupStatus } from "@/core/services/startup";
 import { ensureWorkspace, startWorkspace } from "@/core/services/workspace/index";
+import { handleWorkbenchKeydown } from "./shortcuts";
 import Sidebar from "./sidebar/Sidebar.vue";
 import TabStrip from "./tabs/TabStrip.vue";
 import WorkspaceView from "./workspace/WorkspaceView.vue";
@@ -34,17 +36,8 @@ function toggleSidebar(): void {
   void setSidebarCollapsed(collapsed.value);
 }
 
-/**
- * Ctrl+B: латинская раскладка не требуется — сверяем код клавиши.
- *
- * `event.code` одинаков в любой раскладке, а `event.key` зависит от неё.
- */
 function onKeydown(event: KeyboardEvent): void {
-  if (event.repeat || !event.ctrlKey || event.altKey || event.shiftKey) return;
-  if (event.code !== "KeyB") return;
-
-  event.preventDefault();
-  toggleSidebar();
+  handleWorkbenchKeydown(event, toggleSidebar);
 }
 
 onMounted(async () => {
