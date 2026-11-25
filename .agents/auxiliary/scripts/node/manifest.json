@@ -1,0 +1,5 @@
+{
+  "language": "node",
+  "checkDocs": ["node", "check-docs.mjs"],
+  "buildAdrIndex": ["node", "build-adr-index.mjs"]
+}

@@ -3,16 +3,36 @@ import path from "node:path";
 
 // Сборка указателя ADR.
 //
-// Запуск из корня проекта: node .agents/auxiliary/scripts/build-adr-index.mjs
+// Запуск из корня проекта:
+//   node .agents/auxiliary/scripts/node/build-adr-index.mjs
+//   node .agents/auxiliary/scripts/node/build-adr-index.mjs --root <каталог>
 // Вход: .agents/decisions/NNNN-*.md.
 // Выход: .agents/decisions/INDEX.md.
 //
 // INDEX.md - производный файл; источник истины - сами ADR.
 // Скрипт читает шапку каждого ADR, делит решения на заменённые и действующие
 // и собирает две таблицы. Ручные правки INDEX.md теряются при следующем запуске.
-const root = process.cwd();
+const root = parseRoot(process.argv.slice(2));
 const decisions = path.join(root, ".agents/decisions");
 const indexFile = path.join(decisions, "INDEX.md");
+
+// Разбор аргументов: корень проекта.
+function parseRoot(argv) {
+  let value = process.cwd();
+
+  for (let index = 0; index < argv.length; index += 1) {
+    if (argv[index] === "--root") {
+      const next = argv[index + 1];
+      if (!next) throw new Error("--root требует каталог.");
+      value = path.resolve(next);
+      index += 1;
+    } else {
+      throw new Error(`Неизвестный аргумент: ${argv[index]}`);
+    }
+  }
+
+  return value;
+}
 
 if (!existsSync(decisions)) {
   console.error("Нет каталога .agents/decisions.");

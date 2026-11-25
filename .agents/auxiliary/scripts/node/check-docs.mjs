@@ -3,9 +3,12 @@ import path from "node:path";
 
 // Проверка документации проекта.
 //
-// Запуск из корня проекта: node .agents/auxiliary/scripts/check-docs.mjs
+// Запуск из корня проекта:
+//   node .agents/auxiliary/scripts/node/check-docs.mjs
+//   node .agents/auxiliary/scripts/node/check-docs.mjs --root <каталог> --json
 // Вход: дерево .agents/, AGENTS.md и README.md.
 // Выход: список проблем и код 1 либо число проверенных файлов и код 0.
+// JSON: { files, problems, warnings } - для сверки реализаций на разных языках.
 //
 // Что проверяется:
 // - локальные markdown-ссылки;
@@ -18,13 +21,35 @@ import path from "node:path";
 //
 // Шаблоны в auxiliary/templates не проверяются: их ссылки - примеры.
 // Скилы, MCP и node_modules пропускаются.
-const root = process.cwd();
+const options = parseArgs(process.argv.slice(2));
+const root = options.root;
 const agents = path.join(root, ".agents");
 const skipDirs = new Set(["skills", "mcp", "node_modules", "templates"]);
 // bootstrap.md описывает будущий проект: часть путей появится только после старта.
 const skipFiles = new Set(["bootstrap.md"]);
 const problems = [];
 const warnings = [];
+
+// Разбор аргументов: корень проверки и машинный вывод.
+function parseArgs(argv) {
+  const parsed = { root: process.cwd(), json: false };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === "--root") {
+      const value = argv[index + 1];
+      if (!value) throw new Error("--root требует каталог.");
+      parsed.root = path.resolve(value);
+      index += 1;
+    } else if (arg === "--json") {
+      parsed.json = true;
+    } else {
+      throw new Error(`Неизвестный аргумент: ${arg}`);
+    }
+  }
+
+  return parsed;
+}
 
 // Путь файла относительно корня проекта для сообщений.
 function relative(file) {
@@ -239,16 +264,21 @@ checkLibrary();
 checkGlossary();
 
 // Мягкие замечания: пока не используются, оставлены для расширения.
-if (warnings.length > 0) {
-  console.log("Предупреждения:");
-  for (const warning of warnings) console.log(`  ${warning}`);
+if (options.json) {
+  console.log(JSON.stringify({ files: files.length, problems, warnings }, null, 2));
+} else {
+  if (warnings.length > 0) {
+    console.log("Предупреждения:");
+    for (const warning of warnings) console.log(`  ${warning}`);
+  }
+
+  if (problems.length > 0) {
+    console.log("Проблемы:");
+    for (const problem of problems) console.log(`  ${problem}`);
+    console.log(`\nПроверка не пройдена: ${problems.length}.`);
+  } else {
+    console.log(`Проверка пройдена: ${files.length} файлов.`);
+  }
 }
 
-if (problems.length > 0) {
-  console.log("Проблемы:");
-  for (const problem of problems) console.log(`  ${problem}`);
-  console.log(`\nПроверка не пройдена: ${problems.length}.`);
-  process.exit(1);
-}
-
-console.log(`Проверка пройдена: ${files.length} файлов.`);
+process.exitCode = problems.length > 0 ? 1 : 0;
