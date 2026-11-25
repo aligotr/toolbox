@@ -2,8 +2,8 @@
 
 - **Статус:** принято; раздел «Данные» упразднён ADR 0056; интерфейс пресетов уточнён ADR 0072
 - **Дата:** 2026-11-13
-- **Область:** `src-tauri/src/core/presets.rs`, `profiles/<id>/presets/`,
-  `src/core/presets.ts`, `src/tools/dnslookup/`
+- **Область:** `src-tauri/src/core/services/presets.rs`, `profiles/<id>/presets/`,
+  `src/contracts/presets.ts`, `src/tools/dnslookup/`
 
 > Примечание: раскладка корзины пресетов уточнена ADR 0061:
 > `local/trash/presets/<profile>/<tool>/<id>.json`. Остальные решения
@@ -132,7 +132,7 @@
 
 ## Ссылки
 
-- код: `src-tauri/src/core/presets.rs`, `src/core/presets.ts`,
-  `src/tools/dnslookup/presets.ts`, `src/tools/dnslookup/PresetsDialog.vue`
+- код: `src-tauri/src/core/services/presets.rs`, `src/contracts/presets.ts`,
+  `src/contracts/presets.ts`, `src/tools/dnslookup/components/PresetsDialog.vue`
 - связанные решения: ADR 0010 (профили и раскладка), ADR 0011 (шаблоны
   вкладок), ADR 0017 (сеансы по `cellKey`)

@@ -2,8 +2,8 @@
 
 - **Статус:** заменено (ADR 0031)
 - **Дата:** 2026-11-13
-- **Область:** `src/core/workspace.ts`, `src/shell/TabStrip.vue`,
-  `src/shell/constants.ts`, `src/tools/dnslookup/useDnslookup.ts`,
+- **Область:** `src/contracts/workspace.ts`, `src/workbench/tabs/TabStrip.vue`,
+  `src/core/infra/constants.ts`, `src/tools/dnslookup/useDnslookup.ts`,
   `local/workspace.json`
 
 ## Контекст
@@ -82,8 +82,8 @@
 
 ## Ссылки
 
-- код: `src/core/workspace.ts` (`reopenTab`), `src/shell/TabStrip.vue`
-  (`requestReopen`), `src/shell/constants.ts`,
+- код: `src/contracts/workspace.ts` (`reopenTab`), `src/workbench/tabs/TabStrip.vue`
+  (`requestReopen`), `src/core/infra/constants.ts`,
   `src/tools/dnslookup/useDnslookup.ts` (`pruneSessions`)
 - связанные решения: ADR 0011 (вкладки и шаблоны), ADR 0017 (сеансы
   по `cellKey`), ADR 0028 (пресеты настроек)

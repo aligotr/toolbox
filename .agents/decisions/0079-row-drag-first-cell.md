@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-24
-- **Область:** `src/ui/tool/ToolTable.vue`, `docs/agents/tables.md`,
+- **Область:** `src/ui/tool/ToolTable.vue`, `.agents/library/ui/tables.md`,
   `.agents/rules/project/ui/elements.md`
 
 ## Контекст
@@ -64,5 +64,5 @@ ADR 0025 закрепил перенос строки за свободными 
 - код: `src/ui/tool/ToolTable.vue`, `src/ui/rowDrag/session.ts`,
   `src/ui/rowDrag/constants.ts`
 - правила: `.agents/rules/project/ui/elements.md`
-- документация: `docs/agents/tables.md`
+- документация: `.agents/library/ui/tables.md`
 - связанные решения: ADR 0025 (уточнён), ADR 0027

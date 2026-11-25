@@ -3,7 +3,7 @@
 - **Статус:** принято
 - **Дата:** 2026-11-16
 - **Область:** `src/tools/dnslookup/types.ts`,
-  `src/tools/dnslookup/presets.ts`, формат `payload` пресета DNSlookup
+  `src/contracts/presets.ts`, формат `payload` пресета DNSlookup
 
 ## Контекст
 
@@ -59,7 +59,7 @@
 ## Ссылки
 
 - код: `src/tools/dnslookup/types.ts` (`DnsPresetPayload`),
-  `src/tools/dnslookup/presets.ts`
-- правила: `.scratch/presets/spec.md`
+  `src/contracts/presets.ts`
+- правила: `.agents/specs/archive/presets.md`
 - связанные решения: ADR 0028 (пресеты инструментов), ADR 0032 (шапка
   инструмента с управлением пресетом)

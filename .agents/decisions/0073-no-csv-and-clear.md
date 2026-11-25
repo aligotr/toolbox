@@ -3,8 +3,8 @@
 - **Статус:** принято
 - **Дата:** 2026-11-24
 - **Область:** `src/tools/dnslookup/`, `src/tools/icmp/`,
-  `src/core/infra/i18n/`, `tests/`, `.scratch/dnslookup/spec.md`,
-  `.scratch/icmp/spec.md`
+  `src/core/infra/i18n/`, `tests/`, `.agents/specs/archive/dnslookup.md`,
+  `.agents/specs/archive/icmp.md`
 
 ## Контекст
 
@@ -39,7 +39,7 @@ DNSlookup и Ping умели выгружать результаты в CSV и �
    `journal.icmp.cleared`, `journal.*.csvFile` и `journal.*.csvClipboard`
    удалены из русского и английского словарей. Ключи `dnslookup.csv.*`,
    `icmp.csv.*` и тексты кнопок тоже удалены.
-5. **Тесты выгрузки удалены.** `tests/icmp/csv.test.ts` и проверки CSV
+5. **Тесты выгрузки удалены.** `tests/icmp/` и проверки CSV
    в спецификациях больше не существуют. Правила строк, сводки и пресетов
    остаются покрытыми.
 
@@ -81,5 +81,5 @@ DNSlookup и Ping умели выгружать результаты в CSV и �
 
 - код: `src/tools/dnslookup/`, `src/tools/icmp/`,
   `src/core/infra/i18n/messages.ts`, `src/core/infra/i18n/messages.en.ts`
-- спеки: `.scratch/dnslookup/spec.md`, `.scratch/icmp/spec.md`
+- спеки: `.agents/specs/archive/dnslookup.md`, `.agents/specs/archive/icmp.md`
 - связанные решения: ADR 0017, ADR 0068 (уточнён), ADR 0070 (уточнён)

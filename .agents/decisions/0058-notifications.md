@@ -3,7 +3,7 @@
 - **Статус:** принято
 - **Дата:** 2026-11-19
 - **Область:** `src/core/infra/notifications.ts`, `src/app/NotificationHost.vue`,
-  `src/app/main.ts`, `src/ui/theme.ts`,
+  `src/app/main.ts`, `src/ui/primevue/theme.ts`,
   `src-tauri/src/core/infra/notifications.rs`,
   `.agents/rules/project/ui/elements.md`
 
@@ -43,7 +43,7 @@
    `error` - до закрытия. У каждого есть крестик.
 9. **`core:error` автоматически не тостится.** Ошибки шины идут в журнал;
    тост на каждую сделал бы шум. Уведомление отправляется только явно.
-10. **Вид задаётся пресетом темы.** Стили тоста живут в `src/ui/theme.ts`,
+10. **Вид задаётся пресетом темы.** Стили тоста живут в `src/ui/primevue/theme.ts`,
     а не в scoped-стилях экрана.
 
 ## Почему так

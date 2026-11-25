@@ -105,6 +105,6 @@ ADR 0039 уже зафиксировал принцип «чистые функ�
 - код: `src/core/services/workspace/parse.ts` (новый),
   `src/core/services/workspace/index.ts`, `src/tools/dnslookup/normalize.ts`,
   `scripts/check-zones.mjs`
-- задачи: `.scratch/vue-boundary/spec.md`
+- задачи: `.agents/specs/archive/vue-boundary.md`
 - связанные решения: ADR 0035 (зоны ядра), ADR 0039 (чистые функции перевода),
   ADR 0012 (слои и контракт модуля)

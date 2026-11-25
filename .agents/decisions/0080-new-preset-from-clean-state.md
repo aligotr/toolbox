@@ -3,7 +3,7 @@
 - **Статус:** принято
 - **Дата:** 2026-11-24
 - **Область:** `src/ui/tool/presets/`, `src/core/services/presets/`,
-  `src/tools/dnslookup/`, `src/tools/icmp/`, `.scratch/presets/spec.md`
+  `src/tools/dnslookup/`, `src/tools/icmp/`, `.agents/specs/archive/presets.md`
 
 ## Контекст
 
@@ -64,5 +64,5 @@
   `src/core/services/presets/session.ts`,
   `src/tools/dnslookup/presets/apply.ts`,
   `src/tools/icmp/presets/apply.ts`
-- спецификации: `.scratch/presets/spec.md`, `.scratch/icmp/spec.md`
+- спецификации: `.agents/specs/archive/presets.md`, `.agents/specs/archive/icmp.md`
 - связанные решения: ADR 0028, ADR 0030, ADR 0072

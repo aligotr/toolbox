@@ -4,7 +4,7 @@
 - **Дата:** 2026-11-19
 - **Область:** `src-tauri/src/core/services/languages.rs`,
   `src-tauri/src/core/commands/languages.rs`, `src/core/services/languages/`,
-  `.scratch/languages-notifications/`, правила `i18n.md`, глоссарий
+  `.agents/specs/archive/languages-notifications.md`, правила `i18n.md`, глоссарий
 
 ## Контекст
 
@@ -15,7 +15,7 @@
 законно ругались на комментарии, а пользователю приходилось объяснять
 расхождение.
 
-Старых внешних словарей нет: единственный `local/languages/en.json` на стенде
+Старых внешних словарей нет: единственный `local/languages/en.jsonc` на стенде
 удалён, других установок с файлами нет. Поэтому переход не требует читать
 два расширения и разруливать два файла с одним кодом.
 

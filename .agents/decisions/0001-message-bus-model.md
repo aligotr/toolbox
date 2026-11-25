@@ -77,6 +77,6 @@
 
 ## Ссылки
 
-- код: `src-tauri/src/core/message.rs`, `src-tauri/src/core/bus.rs`
-- тесты: `src-tauri/src/core/bus.rs` (модуль `tests`)
+- код: `src-tauri/src/core/infra/message.rs`, `src-tauri/src/core/infra/bus.rs`
+- тесты: `src-tauri/src/core/infra/bus.rs` (модуль `tests`)
 - связанные решения: ADR 0002, ADR 0003

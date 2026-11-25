@@ -68,7 +68,7 @@ ADR 0024 задал зазор после заголовка правилом н
 
 ## Ссылки
 
-- код: `src/workbench/styles.css`, `src/workbench/JournalView.vue`,
+- код: `src/workbench/styles.css`, `src/workbench/journal/JournalView.vue`,
   `src/workbench/settings/SettingsView.vue`,
   `src/workbench/workspace/EmptyTab.vue`, `src/tools/dnslookup/styles.css`,
   `src/tools/busprobe/BusprobeView.vue`

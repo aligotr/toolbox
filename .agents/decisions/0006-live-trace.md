@@ -2,8 +2,8 @@
 
 - **Статус:** заменено (ADR 0007)
 - **Дата:** 2026-11-12
-- **Область:** `src-tauri/src/core/trace.rs`, `src-tauri/src/core/bus.rs`,
-  `src-tauri/src/core/sink.rs`, `src/core/journal.ts`, `src/modules/home/`
+- **Область:** `src-tauri/src/core/infra/trace.rs`, `src-tauri/src/core/infra/bus.rs`,
+  `src-tauri/src/core/infra/sink.rs`, `src/core/infra/journal.ts`, `src/workbench/journal/`
 
 ## Контекст
 
@@ -138,7 +138,7 @@
 - При выключенном переключателе цена — одно атомарное чтение на точку съёма.
 - При включённом на одно сообщение приходится 7–9 записей в интерфейс; это
   приемлемо для витрины, но требует отключения по умолчанию на тяжёлых модулях.
-- Журнал интерфейса обязан стать общим (`src/core/journal.ts`): сейчас он живёт
+- Журнал интерфейса обязан стать общим (`src/core/infra/journal.ts`): сейчас он живёт
   локальным массивом внутри `HomeView.vue` и недоступен другим модулям.
 - Трасса никогда не пишется в файловый лог.
 
@@ -162,7 +162,7 @@
 
 ## Ссылки
 
-- код: `src-tauri/src/core/bus.rs`, `src-tauri/src/core/sink.rs`,
-  `src/modules/home/HomeView.vue`
+- код: `src-tauri/src/core/infra/bus.rs`, `src-tauri/src/core/infra/sink.rs`,
+  `src/workbench/journal/JournalView.vue`
 - связанные решения: ADR 0001 (модель шины), ADR 0002 (топики и мост),
   ADR 0004 (логирование)

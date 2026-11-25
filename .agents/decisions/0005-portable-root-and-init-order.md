@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-12
-- **Область:** `src-tauri/src/core/storage.rs`, `src-tauri/src/core/settings.rs`,
+- **Область:** `src-tauri/src/core/store/storage.rs`, `src-tauri/src/core/services/settings.rs`,
   `src-tauri/src/lib.rs`, интерфейс (блокирующий экран)
 
 ## Контекст
@@ -95,5 +95,5 @@ storage → settings → logging → bus → sink → modules → bus.start()
 
 ## Ссылки
 
-- код: `src-tauri/src/lib.rs`, `src-tauri/src/core/deps.rs`
+- код: `src-tauri/src/lib.rs`, `src-tauri/src/core/infra/deps.rs`
 - связанные решения: ADR 0003 (внедрение зависимостей), ADR 0004 (логирование)

@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-12
-- **Область:** `src/tools/ping/PingView.vue`, `src/tools/ping/usePing.ts`
+- **Область:** `src/tools/icmp/IcmpView.vue`, `src/tools/icmp/useIcmp.ts`
 
 ## Контекст
 
@@ -71,6 +71,6 @@ ADR 0007, пункт 4, предполагал проигрывание запи
 
 ## Ссылки
 
-- код: `src/tools/ping/PingView.vue`, `src/tools/ping/usePing.ts`
+- код: `src/tools/icmp/IcmpView.vue`, `src/tools/icmp/useIcmp.ts`
 - связанные решения: ADR 0007 (в части проигрывания заменено),
   ADR 0019 (светлая тема и акцент)

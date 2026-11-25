@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-13
-- **Область:** `src/tools/dnslookup/DnsTable.vue`
+- **Область:** `src/tools/dnslookup/components/DnsTable.vue`
 
 ## Контекст
 
@@ -63,9 +63,9 @@
 
 ## Ссылки
 
-- код: `src/tools/dnslookup/DnsTable.vue` (`syncFrozenOffset`, `--dns-domain-width`)
+- код: `src/tools/dnslookup/components/DnsTable.vue` (`syncFrozenOffset`, `--dns-domain-width`)
 - зависимость: `node_modules/primevue/datatable/HeaderCell.vue`,
   `node_modules/primevue/datatable/BodyCell.vue`
 - связанные решения: ADR 0009 (PrimeVue), ADR 0018 (PrimeVue 4), ADR 0027
   (ширина колонки домена)
-- практика для будущих инструментов: `docs/agents/tables.md`
+- практика для будущих инструментов: `.agents/library/ui/tables.md`

@@ -80,7 +80,7 @@
 
 - **Оставить `lib.rs` и только разложить команды по разделам комментариями.**
   Размер не лечится, правило домена продолжает жить в точке сборки.
-- **Вынести команды в `src/commands/` на уровне `lib.rs`.** Тот же слой,
+- **Вынести команды в `src-tauri/src/core/commands/` на уровне `lib.rs`.** Тот же слой,
   но рядом с `modules`; тогда `commands` не видит `Runtime` иначе как
   через `crate::`, и граница зон остаётся неописанной.
 - **Сделать команды методами сервисов.** Привязывает домен к Tauri
@@ -92,6 +92,6 @@
 
 - код: `src-tauri/src/lib.rs`, `src-tauri/src/core/commands/`,
   `src-tauri/src/core/runtime.rs`, `src-tauri/src/core/mod.rs`
-- задачи: `.scratch/rust-commands/spec.md`
+- задачи: `.agents/specs/archive/rust-commands.md`
 - связанные решения: ADR 0035 (зоны ядра), ADR 0012 (слои и контракт модуля),
   ADR 0005 (порядок инициализации)

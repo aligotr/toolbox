@@ -3,7 +3,7 @@
 - **Статус:** принято
 - **Дата:** 2026-11-18
 - **Область:** `src/workbench/settings/`, `src/core/services/`,
-  `src/core/contracts/`, `src-tauri/src/core/`, словари ru/en
+  `src/contracts/`, `src-tauri/src/core/`, словари ru/en
 
 > Примечание: срок хранения корзины задан ADR 0061: записи старше
 > 14 дней удаляются автоматически. Остальные решения этого ADR в силе.

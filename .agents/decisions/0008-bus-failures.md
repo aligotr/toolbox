@@ -2,8 +2,8 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-12
-- **Область:** `src-tauri/src/core/bus.rs`, `src-tauri/src/lib.rs`,
-  `src/core/journal.ts`
+- **Область:** `src-tauri/src/core/infra/bus.rs`, `src-tauri/src/lib.rs`,
+  `src/core/infra/journal.ts`
 
 ## Контекст
 
@@ -91,6 +91,6 @@
 
 ## Ссылки
 
-- код: `src-tauri/src/core/bus.rs`, `src-tauri/src/core/sink.rs`,
-  `src/core/journal.ts`
+- код: `src-tauri/src/core/infra/bus.rs`, `src-tauri/src/core/infra/sink.rs`,
+  `src/core/infra/journal.ts`
 - связанные решения: ADR 0004 (логирование), ADR 0007 (учебный прогон)

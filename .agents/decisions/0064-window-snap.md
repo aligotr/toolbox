@@ -101,4 +101,4 @@
 - код: `src-tauri/src/core/services/window.rs`,
   `src-tauri/src/core/commands/window.rs`, `src-tauri/Cargo.toml`
 - связанные решения: ADR 0014, ADR 0035
-- задача: `.scratch/window-snap/spec.md`
+- задача: `.agents/specs/archive/window-snap.md`

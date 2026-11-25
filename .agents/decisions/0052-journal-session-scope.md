@@ -3,8 +3,8 @@
 - **Статус:** принято
 - **Дата:** 2026-11-18
 - **Область:** `src/core/infra/journal.ts`, `src/core/infra/constants.ts`,
-  `src/workbench/JournalView.vue`, `src/workbench/journalList.ts`,
-  `src/workbench/useJournalView.ts`, `.agents/GLOSSARY.md`
+  `src/workbench/journal/JournalView.vue`, `src/workbench/journal/journalList.ts`,
+  `src/workbench/journal/useJournalView.ts`, `.agents/GLOSSARY.md`
 
 ## Контекст
 
@@ -60,7 +60,7 @@
 
 ## Ссылки
 
-- код: `src/core/infra/journal.ts`, `src/workbench/JournalView.vue`,
-  `src/workbench/journalList.ts`, `src/workbench/useJournalView.ts`
-- задачи: `.scratch/journal-rework/spec.md`
+- код: `src/core/infra/journal.ts`, `src/workbench/journal/JournalView.vue`,
+  `src/workbench/journal/journalList.ts`, `src/workbench/journal/useJournalView.ts`
+- задачи: `.agents/specs/archive/journal-rework.md`
 - связанные решения: ADR 0004 (лог), ADR 0039 (структурные записи)

@@ -93,13 +93,13 @@ ADR 0011 задумывал шаблоны как заготовки рабоч�
 - **Сделать миграцию `workspace.json`.** Данных нет, приложение не выпущено:
   миграция добавила бы код и тест ради гипотетического файла.
 - **Завести ADR на каждый удалённый слой.** Решение одно: отказ от фичи.
-  Частности перечислены здесь и в задачах `.scratch/templates-removal/`.
+  Частности перечислены здесь и в задачах `.agents/specs/archive/templates-removal.md`.
 
 ## Ссылки
 
 - код: `src/core/services/workspace/index.ts` (`restartTab`),
   `src/workbench/tabs/TabStrip.vue`, `src/workbench/workspace/EmptyTab.vue`,
   `src-tauri/src/lib.rs`
-- задачи: `.scratch/templates-removal/spec.md`
+- задачи: `.agents/specs/archive/templates-removal.md`
 - связанные решения: ADR 0011 (исходный замысел), ADR 0028 (пресеты),
   ADR 0040 (пустая вкладка), ADR 0042 (одна вкладка на инструмент)

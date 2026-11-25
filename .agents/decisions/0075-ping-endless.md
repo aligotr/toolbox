@@ -3,7 +3,7 @@
 - **Статус:** принято
 - **Дата:** 2026-11-24
 - **Область:** `src-tauri/src/modules/icmp/`, `src/tools/icmp/`,
-  `.scratch/icmp/spec.md`
+  `.agents/specs/archive/icmp.md`
 
 ## Контекст
 
@@ -81,5 +81,5 @@ Ping запускал серию из 1..100 пакетов на адрес. Д�
   `src-tauri/src/modules/icmp/mod.rs`,
   `src/tools/icmp/summary.ts`, `src/tools/icmp/state/subscriptions.ts`,
   `src/tools/icmp/IcmpView.vue`
-- спека: `.scratch/icmp/spec.md`
+- спека: `.agents/specs/archive/icmp.md`
 - связанные решения: ADR 0068 (уточнён), ADR 0073 (CSV удалён)

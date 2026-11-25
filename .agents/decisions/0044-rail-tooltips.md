@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-17
-- **Область:** `src/workbench/RailItem.vue`, `src/ui/theme.ts`
+- **Область:** `src/workbench/sidebar/RailItem.vue`, `src/ui/primevue/theme.ts`
 
 ## Контекст
 
@@ -58,6 +58,6 @@
 
 ## Ссылки
 
-- код: `src/workbench/RailItem.vue`, `src/ui/theme.ts`
+- код: `src/workbench/sidebar/RailItem.vue`, `src/ui/primevue/theme.ts`
 - связанные решения: ADR 0042 (жест второго экземпляра), ADR 0021
   (шкала типографики), ADR 0037 (общие стили оболочки)

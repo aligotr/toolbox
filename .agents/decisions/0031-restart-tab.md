@@ -2,8 +2,8 @@
 
 - **Статус:** заменено (ADR 0051)
 - **Дата:** 2026-11-13
-- **Область:** `src/core/workspace.ts`, `src/shell/TabStrip.vue`,
-  `src/shell/constants.ts`, `src/tools/dnslookup/useDnslookup.ts`,
+- **Область:** `src/contracts/workspace.ts`, `src/workbench/tabs/TabStrip.vue`,
+  `src/core/infra/constants.ts`, `src/tools/dnslookup/useDnslookup.ts`,
   `local/workspace.json`
 
 ## Контекст
@@ -87,8 +87,8 @@ ADR 0029 ввёл сброс окна заменой вкладки копией
 
 ## Ссылки
 
-- код: `src/core/workspace.ts` (`restartTab`, `takeFreshCell`),
-  `src/shell/TabStrip.vue` (`requestRestart`), `src/shell/constants.ts`,
+- код: `src/contracts/workspace.ts` (`restartTab`, `takeFreshCell`),
+  `src/workbench/tabs/TabStrip.vue` (`requestRestart`), `src/core/infra/constants.ts`,
   `src/tools/dnslookup/useDnslookup.ts` (`pruneSessions`)
 - связанные решения: ADR 0011 (вкладки и шаблоны), ADR 0017 (сеансы
   по `cellKey`), ADR 0028 (пресеты настроек), ADR 0029 (исходное решение

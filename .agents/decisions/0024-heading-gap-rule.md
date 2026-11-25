@@ -2,7 +2,7 @@
 
 - **Статус:** заменено (ADR 0053)
 - **Дата:** 2026-11-13
-- **Область:** `src/tools/`, `src/shell/`, `.agents/rules/project/ui/design.md`
+- **Область:** `src/tools/`, `src/workbench/`, `.agents/rules/project/ui/design.md`
 
 ## Контекст
 

@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-12
-- **Область:** `src-tauri/src/core/window.rs`, `src-tauri/src/lib.rs`,
+- **Область:** `src-tauri/src/core/services/window.rs`, `src-tauri/src/lib.rs`,
   `src-tauri/tauri.conf.json`, раздел `window` в `local/settings.json`
 
 ## Контекст
@@ -101,7 +101,7 @@
 
 ## Ссылки
 
-- код: `src-tauri/src/core/window.rs`, `src-tauri/src/lib.rs`,
+- код: `src-tauri/src/core/services/window.rs`, `src-tauri/src/lib.rs`,
   `src-tauri/tauri.conf.json`
 - связанные решения: ADR 0005, ADR 0010, ADR 0011
-- тикет: `.scratch/shell-redesign/issues/07-window-geometry.md`
+- тикет: `.agents/specs/archive/window-geometry.md`

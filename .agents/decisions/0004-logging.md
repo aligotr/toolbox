@@ -2,7 +2,7 @@
 
 - **Статус:** принято; умолчание уровня уточнено ADR 0055
 - **Дата:** 2026-11-12
-- **Область:** `src-tauri/src/core/logging.rs`, `src-tauri/src/core/bus.rs`,
+- **Область:** `src-tauri/src/core/services/logging.rs`, `src-tauri/src/core/infra/bus.rs`,
   `src-tauri/src/lib.rs`, мост в интерфейс
 
 ## Контекст
@@ -92,5 +92,5 @@
 
 ## Ссылки
 
-- код: `src-tauri/src/lib.rs`, `src-tauri/src/core/bus.rs`
+- код: `src-tauri/src/lib.rs`, `src-tauri/src/core/infra/bus.rs`
 - связанные решения: ADR 0005 (портативный корень), ADR 0006 (трасса)

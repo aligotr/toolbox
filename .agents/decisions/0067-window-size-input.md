@@ -95,6 +95,6 @@
   `src/workbench/settings/sections/WindowSection.vue`,
   `src/workbench/settings/WindowNumberField.vue`,
   `src/workbench/settings/parseCoordinate.ts`
-- задача: `.scratch/window-position/issues/02-editable-size.md`
-- спека: `.scratch/window-position/spec.md`
+- задача: `.agents/specs/archive/window-position-editable-size.md`
+- спека: `.agents/specs/archive/window-position.md`
 - уточняет: ADR 0066, ADR 0014

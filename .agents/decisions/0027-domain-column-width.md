@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-13
-- **Область:** `src/tools/dnslookup/DnsTable.vue`,
+- **Область:** `src/tools/dnslookup/components/DnsTable.vue`,
   `src/tools/dnslookup/constants.ts`
 
 ## Контекст
@@ -66,9 +66,9 @@
 
 ## Ссылки
 
-- код: `src/tools/dnslookup/DnsTable.vue`,
+- код: `src/tools/dnslookup/components/DnsTable.vue`,
   `src/tools/dnslookup/constants.ts` (`DOMAIN_COLUMN_MIN_WIDTH`,
   `DOMAIN_COLUMN_MAX_WIDTH`)
 - связанные решения: ADR 0025 (перенос строк), ADR 0026 (отступ закреплённой
   колонки)
-- практика для будущих инструментов: `docs/agents/tables.md`
+- практика для будущих инструментов: `.agents/library/ui/tables.md`

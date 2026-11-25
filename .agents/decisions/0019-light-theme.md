@@ -2,8 +2,8 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-12
-- **Область:** `src/ui/theme.ts`, `src/styles/global.css`, `src/app/main.ts`,
-  `src/shell/`, `src/tools/`
+- **Область:** `src/ui/primevue/theme.ts`, `src/styles/global.css`, `src/app/main.ts`,
+  `src/workbench/`, `src/tools/`
 
 ## Контекст
 
@@ -82,7 +82,7 @@
 
 ## Ссылки
 
-- код: `src/ui/theme.ts`, `src/styles/global.css`, `src/app/main.ts`,
-  `src/shell/`, `src/tools/`
+- код: `src/ui/primevue/theme.ts`, `src/styles/global.css`, `src/app/main.ts`,
+  `src/workbench/`, `src/tools/`
 - связанные решения: ADR 0009 (PrimeVue как основа), ADR 0012 (слои
   и контракт модуля), ADR 0018 (PrimeVue 4)

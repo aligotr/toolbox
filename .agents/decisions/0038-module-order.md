@@ -107,9 +107,9 @@ ADR 0036 задал размер модуля (8–15 файлов) и поро�
 
 - код: `src/workbench/settings/sections.ts`,
   `src/workbench/settings/navigation.ts`,
-  `src/workbench/settings/useRename.ts`,
+  `src/workbench/settings/useProfiles.ts`,
   `src/workbench/settings/logLevels.ts`,
-  `src/workbench/settings/formatBytes.ts`,
+  `src/workbench/settings/logLevels.ts`,
   `src/workbench/settings/sections/`
 - правила: `.agents/rules/project/architecture.md`,
   `.agents/rules/project/vue.md`

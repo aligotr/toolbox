@@ -45,7 +45,7 @@ contracts → core → ui → { tools | shell } → app
 4. **Модуль — единица композиции и удаления:**
 
 ```text
-src/tools/ping/            index.ts, PingView.vue, usePing.ts, api.ts
+src/tools/icmp/            index.ts, PingView.vue, usePing.ts, api.ts
 src-tauri/src/modules/ping.rs   impl Module
 ```
 
@@ -68,7 +68,7 @@ src-tauri/src/modules/ping.rs   impl Module
    Состояние операции гранулярное (`status.<операция>.loading/error`),
    монолитного `isLoading` нет.
 
-8. **CSS.** Токены живут в PrimeVue preset (`src/ui/theme.ts`). Свой CSS
+8. **CSS.** Токены живут в PrimeVue preset (`src/ui/primevue/theme.ts`). Свой CSS
    описывает только оболочку и сетку; собственные переменные — с префиксом
    `--ag-`, это именные токены проекта. Компоненты PrimeVue не оборачиваются
    без общей логики.
@@ -116,7 +116,7 @@ src-tauri/src/modules/ping.rs   impl Module
 
 ## Ссылки
 
-- код: `src/ui/theme.ts`, `src/core/`, `src/tools/`, `src/shell/`,
+- код: `src/ui/primevue/theme.ts`, `src/core/`, `src/tools/`, `src/workbench/`,
   `src/contracts/`, `src-tauri/src/modules/`
 - связанные решения: ADR 0009 (PrimeVue), ADR 0011 (оболочка),
   ADR 0010 (хранение), ADR 0004 (лог)

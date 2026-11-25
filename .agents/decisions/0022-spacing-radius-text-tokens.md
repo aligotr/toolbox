@@ -2,8 +2,8 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-13
-- **Область:** `src/styles/global.css`, `src/ui/theme.ts`,
-  `.agents/rules/project/ui/architecture.md`, стили `src/shell/` и `src/tools/`
+- **Область:** `src/styles/global.css`, `src/ui/primevue/theme.ts`,
+  `.agents/rules/project/ui/architecture.md`, стили `src/workbench/` и `src/tools/`
 
 ## Контекст
 
@@ -28,7 +28,7 @@
    нет повторяющихся чисел: отступы, радиусы и размеры текста ссылаются на
    переменные. Литералы остаются иконкам, линиям (1 px) и оптическим
    поправкам (2 px, −4 px): у них своя роль, шкалой они не управляются.
-3. **Пресет держит те же значения.** `src/ui/theme.ts` задаёт радиусы
+3. **Пресет держит те же значения.** `src/ui/primevue/theme.ts` задаёт радиусы
    (`borderRadius`), отступы полей (`formField` 16/8), размеры текста
    (база 14 px, подсказки и чипы 13 px, заголовок диалога 18 px) и плотность
    таблицы: у `size="small"` вертикальный отступ 8 px вместо ауровских 6 px,
@@ -75,6 +75,6 @@
 
 ## Ссылки
 
-- код: `src/styles/global.css`, `src/ui/theme.ts`,
+- код: `src/styles/global.css`, `src/ui/primevue/theme.ts`,
   `.agents/rules/project/ui/architecture.md`
 - связанные решения: ADR 0019 (светлая тема), ADR 0021 (типографика)

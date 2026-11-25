@@ -3,7 +3,7 @@
 - **Статус:** принято; место строки добавления уточнено ADR 0076
 - **Дата:** 2026-11-24
 - **Область:** `src/tools/dnslookup/`, `.agents/rules/project/ui/elements.md`,
-  `.scratch/dnslookup/spec.md`
+  `.agents/specs/archive/dnslookup.md`
 
 ## Контекст
 
@@ -83,6 +83,6 @@
 
 - код: `src/tools/dnslookup/DnslookupView.vue`,
   `src/tools/dnslookup/styles.css`, `src/tools/dnslookup/constants.ts`
-- спека: `.scratch/dnslookup/spec.md`
+- спека: `.agents/specs/archive/dnslookup.md`
 - правила: `.agents/rules/project/ui/elements.md`
 - связанные решения: ADR 0054 (уточнён), ADR 0069 (токены каркаса)

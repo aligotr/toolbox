@@ -6,7 +6,7 @@
 - **Область:** `src/ui/tool/ToolTable.vue`, `src/ui/tool-layout.css`,
   `src/tools/dnslookup/`, `src/tools/icmp/`,
   `.agents/rules/project/ui/elements.md`,
-  `.scratch/dnslookup/spec.md`, `.scratch/icmp/spec.md`
+  `.agents/specs/archive/dnslookup.md`, `.agents/specs/archive/icmp.md`
 
 ## Контекст
 
@@ -109,6 +109,6 @@
   `src/tools/dnslookup/components/DnsTable.vue`,
   `src/tools/dnslookup/DnslookupView.vue`,
   `src/tools/icmp/components/TargetTable.vue`, `src/tools/icmp/IcmpView.vue`
-- спеки: `.scratch/dnslookup/spec.md`, `.scratch/icmp/spec.md`
+- спеки: `.agents/specs/archive/dnslookup.md`, `.agents/specs/archive/icmp.md`
 - связанные решения: ADR 0054 (уточнён), ADR 0070 (общая таблица),
   ADR 0074 (уточнён)

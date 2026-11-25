@@ -3,7 +3,7 @@
 - **Статус:** принято
 - **Дата:** 2026-11-13
 - **Область:** `src/styles/global.css`, `.agents/rules/project/ui/design.md`,
-  стили экранов `src/app/`, `src/shell/`, `src/tools/`
+  стили экранов `src/app/`, `src/workbench/`, `src/tools/`
 
 ## Контекст
 

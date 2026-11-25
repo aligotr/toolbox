@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-10
-- **Область:** `src-tauri/src/core/`, `src-tauri/src/lib.rs`, `src/core/bus.ts`
+- **Область:** `src-tauri/src/core/`, `src-tauri/src/lib.rs`, `src/core/infra/bus.ts`
 
 ## Контекст
 
@@ -61,7 +61,7 @@ Tauri v2 разрешает в именах событий только букв
 
 ## Ссылки
 
-- код: `src-tauri/src/core/message.rs`, `src-tauri/src/core/bus.rs`,
+- код: `src-tauri/src/core/infra/message.rs`, `src-tauri/src/core/infra/bus.rs`,
   `src-tauri/src/lib.rs`
-- интерфейс: `src/core/bus.ts`
+- интерфейс: `src/core/infra/bus.ts`
 - связанные решения: ADR 0001

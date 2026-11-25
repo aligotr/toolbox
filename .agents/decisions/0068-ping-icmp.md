@@ -92,7 +92,7 @@ ICMP требует либо сырого сокета, либо системн�
 
 - код: `src-tauri/src/modules/icmp/`, `src/tools/icmp/`,
   `src-tauri/Cargo.toml`, `src/app/tools.ts`
-- спека: `.scratch/icmp/spec.md`
-- задачи: `.scratch/icmp/issues/`
+- спека: `.agents/specs/archive/icmp.md`
+- задачи: `.agents/specs/archive/icmp.md`
 - уточняет: ADR 0012 (границы модулей), ADR 0016 (без внешних процессов
   и tokio), ADR 0017 (сеанс по `cellKey`), ADR 0036 (id `ping` занят)

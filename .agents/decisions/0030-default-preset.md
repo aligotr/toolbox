@@ -2,8 +2,8 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-13
-- **Область:** `src-tauri/src/core/profiles.rs`, `src-tauri/src/core/presets.rs`,
-  `src-tauri/src/lib.rs`, `src/core/presets.ts`, `src/core/workspace.ts`,
+- **Область:** `src-tauri/src/core/services/profiles.rs`, `src-tauri/src/core/services/presets.rs`,
+  `src-tauri/src/lib.rs`, `src/contracts/presets.ts`, `src/contracts/workspace.ts`,
   `src/tools/dnslookup/`, `profiles/<id>/profile.json`
 
 ## Контекст
@@ -114,12 +114,12 @@
 
 ## Ссылки
 
-- код: `src-tauri/src/core/profiles.rs` (`default_preset`,
+- код: `src-tauri/src/core/services/profiles.rs` (`default_preset`,
   `set_default_preset`, `clear_default_if`), `src-tauri/src/lib.rs`
-  (`preset_default_get`, `preset_default_set`), `src/core/presets.ts`
+  (`preset_default_get`, `preset_default_set`), `src/contracts/presets.ts`
   (`setDefault`, `defaultPresetTitle`, `loadPresetDefaults`),
-  `src/core/workspace.ts` (`takeFreshCell`),
-  `src/tools/dnslookup/presets.ts` (`applyDefaultPreset`)
+  `src/contracts/workspace.ts` (`takeFreshCell`),
+  `src/contracts/presets.ts` (`applyDefaultPreset`)
 - связанные решения: ADR 0010 (профили и хранение), ADR 0011 (вкладки
   и шаблоны), ADR 0017 (сеансы по `cellKey`), ADR 0028 (пресеты настроек),
   ADR 0031 (перезапуск вкладки)

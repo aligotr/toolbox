@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-12
-- **Область:** `src/App.vue`, `src/core/modules.ts`, оболочка рабочего
+- **Область:** `src/app/App.vue`, `src/app/tools.ts`, оболочка рабочего
   пространства, `local/workspace.json`
 
 ## Контекст
@@ -96,5 +96,5 @@ ADR 0009 сделал PrimeVue основой интерфейса. ADR 0010 в�
 
 ## Ссылки
 
-- код: `src/App.vue`, `src/core/modules.ts`, `src/core/workspace.ts`
+- код: `src/app/App.vue`, `src/app/tools.ts`, `src/contracts/workspace.ts`
 - связанные решения: ADR 0009 (PrimeVue), ADR 0010 (хранение и профили)

@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-12
-- **Область:** `src-tauri/Cargo.toml`, `src-tauri/src/modules/dnslookup.rs`
+- **Область:** `src-tauri/Cargo.toml`, `src-tauri/src/modules/dnslookup/`
 
 ## Контекст
 
@@ -79,7 +79,7 @@
 
 ## Ссылки
 
-- код: `src-tauri/src/modules/dnslookup.rs`, `src-tauri/Cargo.toml`
+- код: `src-tauri/src/modules/dnslookup/`, `src-tauri/Cargo.toml`
 - связанные решения: ADR 0012 (контракт модуля), ADR 0018 (PrimeVue 4)
 - внешнее: `https://docs.rs/hickory-proto/0.26.3/`,
   `https://docs.rs/ipconfig/0.3/`

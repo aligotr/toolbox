@@ -95,7 +95,7 @@
 
 - код: `src/app/main.ts`, `src/app/App.vue`, `src/core/services/profiles.ts`,
   `src/core/services/appInfo.ts`, `src-tauri/src/core/commands/lifecycle.rs`
-- задачи: `.scratch/audit/plan.md` (этап 5.2)
+- задачи: `.agents/specs/archive/audit-plan.md` (этап 5.2)
 - связанные решения: ADR 0002 (топики и мост), ADR 0004 (логирование),
   ADR 0005 (порядок инициализации), ADR 0048 (слой команд)
 

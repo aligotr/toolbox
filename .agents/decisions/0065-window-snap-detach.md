@@ -106,4 +106,4 @@ Windows пытался уложить его в половину экрана, �
 - код: `src-tauri/src/core/services/window.rs`,
   `src-tauri/src/core/commands/window.rs`, `src-tauri/src/core/runtime.rs`
 - уточняет: ADR 0064
-- задача: `.scratch/window-snap/issues/07-magnet-feel.md`
+- задача: `.agents/specs/archive/window-snap-magnet-feel.md`

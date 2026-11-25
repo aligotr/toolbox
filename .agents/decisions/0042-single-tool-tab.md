@@ -4,7 +4,7 @@
 - **Дата:** 2026-11-17
 - **Область:** `src/contracts/tools.ts`,
   `src/core/services/workspace/index.ts`, дескрипторы инструментов,
-  `src/workbench/Sidebar.vue`, `src/workbench/RailItem.vue`,
+  `src/workbench/sidebar/Sidebar.vue`, `src/workbench/sidebar/RailItem.vue`,
   `src/workbench/workspace/EmptyTab.vue`, `src/workbench/toolGestures.ts`
 
 ## Контекст

@@ -3,8 +3,8 @@
 - **Статус:** принято (в части проигрывания заменено ADR 0020,
   дополнено 2026-11-18)
 - **Дата:** 2026-11-12
-- **Область:** `src-tauri/src/core/trace.rs`, `src-tauri/src/core/bus.rs`,
-  `src/core/journal.ts`, модуль «Как работает шина»
+- **Область:** `src-tauri/src/core/infra/trace.rs`, `src-tauri/src/core/infra/bus.rs`,
+  `src/core/infra/journal.ts`, модуль «Как работает шина»
 
 ## Контекст
 
@@ -87,8 +87,8 @@ ADR 0006 описывал постоянную живую трассировку
 
 ## Ссылки
 
-- код: `src-tauri/src/core/bus.rs`, `src-tauri/src/core/trace.rs`,
-  `src/core/journal.ts`
+- код: `src-tauri/src/core/infra/bus.rs`, `src-tauri/src/core/infra/trace.rs`,
+  `src/core/infra/journal.ts`
 - связанные решения: ADR 0006 (заменено), ADR 0004 (логирование),
   ADR 0008 (отказы шины)
 

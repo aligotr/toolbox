@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-12
-- **Область:** `src-tauri/src/core/storage.rs`, `src-tauri/src/core/settings.rs`,
+- **Область:** `src-tauri/src/core/store/storage.rs`, `src-tauri/src/core/services/settings.rs`,
   `src-tauri/src/lib.rs`, сервис данных инструментов, раскладка папки программы
 
 > Дополнение: точный путь рабочего пространства изменён ADR 0050
@@ -132,7 +132,7 @@ profiles/                     синхронизируется, принадле
 
 ## Ссылки
 
-- код: `src-tauri/src/core/storage.rs`, `src-tauri/src/core/settings.rs`,
+- код: `src-tauri/src/core/store/storage.rs`, `src-tauri/src/core/services/settings.rs`,
   `src-tauri/src/lib.rs`
 - связанные решения: ADR 0004 (лог), ADR 0005 (портативный корень),
   ADR 0009 (интерфейс)

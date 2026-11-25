@@ -5,7 +5,7 @@
 - **Область:** `src/ui/tool-layout.css`, `src/ui/tool/ToolTable.vue`,
   `src/tools/dnslookup/`, `src/tools/icmp/`,
   `.agents/rules/project/ui/elements.md`,
-  `.scratch/dnslookup/spec.md`, `.scratch/icmp/spec.md`
+  `.agents/specs/archive/dnslookup.md`, `.agents/specs/archive/icmp.md`
 
 ## Контекст
 
@@ -124,5 +124,5 @@ ADR 0076 перенёс добавление в таблицу, но остав�
   `src/tools/dnslookup/DnslookupView.vue`,
   `src/tools/icmp/components/TargetTable.vue`, `src/tools/icmp/IcmpView.vue`
 - правила: `.agents/rules/project/ui/elements.md`
-- спеки: `.scratch/dnslookup/spec.md`, `.scratch/icmp/spec.md`
+- спеки: `.agents/specs/archive/dnslookup.md`, `.agents/specs/archive/icmp.md`
 - связанные решения: ADR 0054, ADR 0069, ADR 0070, ADR 0076 (уточнён)

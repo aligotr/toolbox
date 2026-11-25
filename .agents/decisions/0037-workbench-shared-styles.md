@@ -110,8 +110,8 @@
 
 ## Ссылки
 
-- код: `src/workbench/RailItem.vue`, `src/workbench/styles.css`,
-  `src/workbench/WorkbenchView.vue`, `src/workbench/Sidebar.vue`,
+- код: `src/workbench/sidebar/RailItem.vue`, `src/workbench/styles.css`,
+  `src/workbench/WorkbenchView.vue`, `src/workbench/sidebar/Sidebar.vue`,
   `src/workbench/workspace/EmptyTab.vue`
 - правила: `.agents/rules/project/ui/architecture.md`
 - связанные решения: ADR 0011, ADR 0036

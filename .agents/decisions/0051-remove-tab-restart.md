@@ -4,7 +4,7 @@
 - **Дата:** 2026-11-18
 - **Область:** `src/workbench/tabs/`, `src/core/services/workspace/`,
   `src/core/services/presets/`, `src/core/infra/i18n/messages.ts`,
-  `src-tauri/resources/languages/en.json`, `tests/workspace/tabs.test.ts`,
+  `src/core/infra/i18n/messages.en.ts`, `tests/workspace/tabs.test.ts`,
   `.agents/GLOSSARY.md`
 
 ## Контекст
@@ -69,7 +69,7 @@ ADR 0031 ввёл перезапуск вкладки: замена копией
 - код: `src/workbench/tabs/`, `src/core/services/workspace/index.ts`,
   `src/core/services/workspace/recentTabs.ts`,
   `src/core/services/presets/index.ts`
-- задачи: `.scratch/tab-restart-removal/spec.md`
+- задачи: `.agents/specs/archive/tab-restart-removal.md`
 - связанные решения: ADR 0029 (переоткрытие), ADR 0031 (перезапуск,
   заменён), ADR 0030 (пресет по умолчанию), ADR 0041 (единственная вкладка),
   ADR 0042 (одна вкладка на инструмент)

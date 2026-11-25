@@ -107,6 +107,6 @@
   `src-tauri/src/core/commands/{workspace,profiles}.rs`,
   `src-tauri/src/core/services/{workspace,profiles}.rs`,
   `src/core/services/workspace/index.ts`
-- задачи: `.scratch/profiles/spec.md`
+- задачи: `.agents/specs/archive/profiles.md`
 - связанные решения: ADR 0010 (хранение и профили), ADR 0011 (вкладки),
   ADR 0012 (слои)

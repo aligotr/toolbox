@@ -3,7 +3,7 @@
 - **Статус:** принято
 - **Уточнение:** зона захвата - вся первая ячейка (ADR 0079)
 - **Дата:** 2026-11-13
-- **Область:** `src/ui/useRowDrag.ts`, `src/ui/rowDrag.css`, `src/tools/dnslookup/`
+- **Область:** `src/ui/rowDrag/index.ts`, `src/ui/rowDrag/rowDrag.css`, `src/tools/dnslookup/`
 
 ## Контекст
 
@@ -30,8 +30,8 @@
 
 ## Решение
 
-1. Перенос строк живёт отдельным помощником `src/ui/useRowDrag.ts` вместе со
-   стилями `src/ui/rowDrag.css`. Помощник не знает про DNS: он получает
+1. Перенос строк живёт отдельным помощником `src/ui/rowDrag/index.ts` вместе со
+   стилями `src/ui/rowDrag/rowDrag.css`. Помощник не знает про DNS: он получает
    контейнер, число строк и обратный вызов `reorder(from, to)`.
 2. Перенос ведётся указателями: `pointerdown` запоминает строку, `pointermove`
    после порога 4 px начинает перенос, `pointerup` сообщает новую позицию,
@@ -43,9 +43,8 @@
 4. Место вставки считается по половине строки и рисуется собственной линией
    (`row-drag__line-top` / `row-drag__line-bottom`) цветом `--p-primary-color`.
    Линия ставится строкам всех тел таблицы, поэтому выглядит целой.
-5. Функция включается пропом `reorderable` у `DnsTable`. Отключение — убрать
-   атрибут у `DnsTable`; удаление — убрать вызов, `useRowDrag.ts` и
-   `rowDrag.css`.
+5. Функция включается пропом `reorderable` у `DnsTable`. Отключение - убрать
+   атрибут у `DnsTable`; удаление - убрать вызов и папку `src/ui/rowDrag/`.
 
 ## Почему так
 
@@ -83,7 +82,7 @@
 
 ## Ссылки
 
-- код: `src/ui/useRowDrag.ts`, `src/ui/rowDrag.css`,
-  `src/tools/dnslookup/DnsTable.vue`, `src/tools/dnslookup/DnslookupView.vue`
+- код: `src/ui/rowDrag/index.ts`, `src/ui/rowDrag/rowDrag.css`,
+  `src/tools/dnslookup/components/DnsTable.vue`, `src/tools/dnslookup/DnslookupView.vue`
 - правила: `.agents/rules/project/ui/elements.md`, `.agents/rules/project/vue.md`
 - связанные решения: ADR 0009 (PrimeVue), ADR 0017 (сеанс по `cellKey`)

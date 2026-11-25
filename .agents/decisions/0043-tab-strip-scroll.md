@@ -4,7 +4,7 @@
 - **Дата:** 2026-11-17
 - **Область:** `src/workbench/tabs/TabStrip.vue`,
   `src/workbench/tabs/useStripScroll.ts`,
-  `src/core/services/workspace/index.ts`, `src/ui/theme.ts`, словари ru/en
+  `src/core/services/workspace/index.ts`, `src/ui/primevue/theme.ts`, словари ru/en
 
 ## Контекст
 

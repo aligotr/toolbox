@@ -2,8 +2,8 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-12
-- **Область:** `package.json`, `src/ui/theme.ts`, `src/app/main.ts`,
-  `.scratch/dnslookup/`
+- **Область:** `package.json`, `src/ui/primevue/theme.ts`, `src/app/main.ts`,
+  `.agents/specs/archive/dnslookup.md`
 
 ## Контекст
 
@@ -74,7 +74,7 @@ PrimeVue 4.5.5 распространяется по MIT, не содержит 
 
 ## Ссылки
 
-- код: `package.json`, `src/ui/theme.ts`, `src/app/main.ts`
+- код: `package.json`, `src/ui/primevue/theme.ts`, `src/app/main.ts`
 - связанные решения: ADR 0009 (PrimeVue как основа), ADR 0013
   (восстановлено этим решением), ADR 0015 (заменено этим решением)
 - внешнее: `https://primevue.org/`, `https://primeui.dev/licenses/community`

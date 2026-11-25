@@ -3,7 +3,7 @@
 - **Статус:** принято; зазор после шапки уточнён ADR 0053
 - **Дата:** 2026-11-13
 - **Область:** `src/tools/dnslookup/DnslookupView.vue`,
-  `src/tools/dnslookup/PresetsDialog.vue`, `src/tools/dnslookup/constants.ts`,
+  `src/tools/dnslookup/components/PresetsDialog.vue`, `src/tools/dnslookup/constants.ts`,
   `.agents/rules/project/ui/elements.md`
 
 ## Контекст
@@ -106,7 +106,7 @@ ADR 0028 (п. 11) отложил переработку заголовка и т
 ## Ссылки
 
 - код: `src/tools/dnslookup/DnslookupView.vue` (шапка, `presetLabel`),
-  `src/tools/dnslookup/PresetsDialog.vue`,
+  `src/tools/dnslookup/components/PresetsDialog.vue`,
   `src/tools/dnslookup/constants.ts` (`PRESET_BUTTON_EMPTY`,
   `PRESET_CHANGED_LABEL`)
 - правила: `.agents/rules/project/ui/elements.md`

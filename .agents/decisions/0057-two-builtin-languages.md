@@ -3,16 +3,16 @@
 - **Статус:** принято; расширение словарей `.jsonc` уточнено ADR 0059,
   ключи и файл изменений - ADR 0081
 - **Дата:** 2026-11-19
-- **Область:** `src/app/locales.ts`, `src/core/services/languages.ts`,
+- **Область:** `src/app/locales.ts`, `src/core/services/languages/`,
   `src/workbench/settings/sections/LanguageSection.vue`,
   `src-tauri/src/core/services/languages.rs`,
   `src-tauri/src/core/commands/languages.rs`,
-  `src-tauri/resources/languages/`, ADR 0039, словари ru/en
+  `src/core/infra/i18n/`, ADR 0039, словари ru/en
 
 ## Контекст
 
 ADR 0039 оставил один встроенный словарь - русский, а английский поставлял
-внешним файлом: при первом запуске он копировался в `local/languages/en.json`
+внешним файлом: при первом запуске он копировался в `local/languages/en.jsonc`
 и дальше не обновлялся. Копия у существующей установки устаревает вместе
 с текстами, а отличить нетронутый файл от правленого нечем: маркер `.seeded`
 хранит только факт установки.
@@ -60,7 +60,7 @@ ADR 0039 оставил один встроенный словарь - русс�
    «Язык», по кнопке «Обновить» и при возврате фокуса в окно, пока раздел
    открыт. Фонового наблюдения за файлами нет.
 9. **Существующие копии не мигрируют автоматически.** Старый
-   `local/languages/en.json` становится обычным внешним файлом. Если он
+   `local/languages/en.jsonc` становится обычным внешним файлом. Если он
    устарел, пользователь нажимает «Вернуть встроенный» и получает свежий
    английский. Правленые файлы не трогаются.
 
@@ -81,7 +81,7 @@ ADR 0039 оставил один встроенный словарь - русс�
 
 - `seed()`, `.seeded`, `include_str!` английского в ядре и тесты посева
   удаляются.
-- `src-tauri/resources/languages/en.json` перестаёт быть внешним словарём;
+- `src/core/infra/i18n/messages.en.ts` перестаёт быть внешним словарём;
   встроенный английский живёт в интерфейсе, а ядро получает документ для
   выгрузки от интерфейса.
 - `languages_list` заменяется каталогом с сообщениями; `language_load`
@@ -110,7 +110,7 @@ ADR 0039 оставил один встроенный словарь - русс�
 
 ## Ссылки
 
-- код: `src/core/services/languages.ts`, `src/app/locales.ts`,
+- код: `src/core/services/languages/`, `src/app/locales.ts`,
   `src-tauri/src/core/services/languages.rs`,
   `src/workbench/settings/sections/LanguageSection.vue`
 - связанные решения: ADR 0039 (мультиязычность), ADR 0058 (уведомления)

@@ -2,7 +2,7 @@
 
 - **Статус:** заменено (ADR 0018)
 - **Дата:** 2026-11-12
-- **Область:** `package.json`, `src/app/main.ts`, `src/ui/theme.ts`,
+- **Область:** `package.json`, `src/app/main.ts`, `src/ui/primevue/theme.ts`,
   `.env.local`, `.gitignore`
 
 ## Контекст
@@ -81,7 +81,7 @@ ADR 0009 выбрал PrimeVue 4 как основу интерфейса, ADR 0
 
 ## Ссылки
 
-- код: `package.json`, `src/app/main.ts`, `src/ui/theme.ts`,
+- код: `package.json`, `src/app/main.ts`, `src/ui/primevue/theme.ts`,
   `src/vite-env.d.ts`, `.gitignore`
 - связанные решения: ADR 0009, ADR 0013 (заменено этим решением)
 - внешнее: `https://primevue.dev/migration/v5`,

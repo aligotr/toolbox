@@ -2,7 +2,7 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-10
-- **Область:** `src-tauri/src/core/deps.rs`, `src-tauri/src/core/bus.rs`,
+- **Область:** `src-tauri/src/core/infra/deps.rs`, `src-tauri/src/core/infra/bus.rs`,
   `src-tauri/src/lib.rs`, `src-tauri/src/modules/`
 
 ## Контекст
@@ -62,6 +62,6 @@
 
 ## Ссылки
 
-- код: `src-tauri/src/core/deps.rs`, `src-tauri/src/core/bus.rs`,
+- код: `src-tauri/src/core/infra/deps.rs`, `src-tauri/src/core/infra/bus.rs`,
   `src-tauri/src/lib.rs`, `src-tauri/src/modules/mod.rs`
 - связанные решения: ADR 0001

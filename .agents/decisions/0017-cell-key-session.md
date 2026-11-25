@@ -2,8 +2,8 @@
 
 - **Статус:** принято
 - **Дата:** 2026-11-12
-- **Область:** `src/contracts/tools.ts`, `src/shell/ToolGrid.vue`,
-  `src/shell/WorkspaceView.vue`, `src/tools/dnslookup/`
+- **Область:** `src/contracts/tools.ts`, `src/workbench/workspace/ToolGrid.vue`,
+  `src/workbench/workspace/WorkspaceView.vue`, `src/tools/dnslookup/`
 
 ## Контекст
 
@@ -75,6 +75,6 @@
 
 ## Ссылки
 
-- код: `src/contracts/tools.ts`, `src/shell/ToolGrid.vue`,
-  `src/shell/WorkspaceView.vue`, `src/tools/dnslookup/useDnslookup.ts`
+- код: `src/contracts/tools.ts`, `src/workbench/workspace/ToolGrid.vue`,
+  `src/workbench/workspace/WorkspaceView.vue`, `src/tools/dnslookup/useDnslookup.ts`
 - связанные решения: ADR 0011 (вкладки и сетка), ADR 0012 (контракт модуля)

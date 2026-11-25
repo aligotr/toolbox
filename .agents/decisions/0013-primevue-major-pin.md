@@ -2,7 +2,7 @@
 
 - **Статус:** принято (восстановлено ADR 0018)
 - **Дата:** 2026-11-12
-- **Область:** `package.json`, `src/main.ts`, `src/ui/theme.ts`
+- **Область:** `package.json`, `src/app/main.ts`, `src/ui/primevue/theme.ts`
 
 ## Контекст
 
@@ -57,5 +57,5 @@ shadow root, не подчиняется стилям приложения и н
 
 ## Ссылки
 
-- код: `package.json`, `src/main.ts`, `src/ui/theme.ts`
+- код: `package.json`, `src/app/main.ts`, `src/ui/primevue/theme.ts`
 - связанные решения: ADR 0009
