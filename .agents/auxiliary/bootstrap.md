@@ -22,6 +22,8 @@ AGENTS.md
 .agents/auxiliary/
   README.md
   bootstrap.md
+  examples/
+    project-memory.html
   templates/
     adr.md
     spec.md
@@ -50,6 +52,9 @@ AGENTS.md
 `auxiliary/scripts/` - необязательная часть и универсальный набор: копируется
 целиком, реализации на разных языках лежат рядом. Скрипты подключаются, если
 проект готов их запускать; без них указатель ADR ведётся вручную.
+
+`auxiliary/examples/project-memory.html` - образец визуальной карты памяти.
+В новом проекте его заменяют своей картой или удаляют.
 
 ## Что создать из шаблонов
 
