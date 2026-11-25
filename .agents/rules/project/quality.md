@@ -62,6 +62,18 @@
   5 каталогов `.tmp*.temp-archive`.
 - `target` в `.gitignore`: артефакты сборки не коммитятся.
 
+## Релизный архив
+
+- Скрипт - `scripts/release-archive.mjs`, команда `npm run release:archive`.
+- `npm run release:archive` - собрать `release/ToolBox_v<версия>.zip` из
+  готового `ToolBox.exe`, обновить `release/SHA256SUMS.txt` и хеши в
+  `RELEASE.md`.
+- `npm run release:archive -- --build` - сначала пересобрать `ToolBox.exe`.
+- `npm run release:archive -- --check` - сверить готовый архив с шаблоном,
+  хешами и `RELEASE.md`, ничего не меняя.
+- Текст README внутри архива - `scripts/release-readme.txt` с подстановками
+  `{{version}}` и `{{exeSha256}}`; `release/` не коммитится.
+
 ## Запуск приложения
 
 - Запуск нужен, только если изменилось видимое поведение.

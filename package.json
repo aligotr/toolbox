@@ -17,6 +17,7 @@
     "docs:index": "node .agents/auxiliary/scripts/node/build-adr-index.mjs",
     "docs:conformance": "node .agents/auxiliary/scripts/conformance.mjs",
     "clean:target": "node scripts/clean-target.mjs",
+    "release:archive": "node scripts/release-archive.mjs",
     "dev:cdp": "node scripts/dev-cdp.mjs",
     "cdp": "node scripts/cdp.mjs",
     "build": "node scripts/check-zones.mjs && node scripts/check-messages.mjs && vue-tsc --noEmit && vite build",

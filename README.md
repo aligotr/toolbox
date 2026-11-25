@@ -26,7 +26,8 @@ npm run tauri dev
 - `npm run tauri build` - полная сборка с установщиками MSI и NSIS.
 - `npm run tauri build -- --no-bundle` - только портативный `ToolBox.exe`.
 - Релизный архив - `ToolBox_v<версия>.zip`; внутри `ToolBox.exe`,
-  `README.txt` и `LICENSE` без вложенной папки.
+  `README.txt` и `LICENSE` без вложенной папки. Собирает
+  `npm run release:archive`, шаблон README - `scripts/release-readme.txt`.
 - `npm run verify` - проверки перед коммитом: тесты, линт, сборка,
   `cargo check` и `cargo test`.
 
