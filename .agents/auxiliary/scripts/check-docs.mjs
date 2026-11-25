@@ -3,7 +3,7 @@ import path from "node:path";
 
 // Проверка документации проекта.
 //
-// Запуск из корня проекта: node .agents/scripts/check-docs.mjs
+// Запуск из корня проекта: node .agents/auxiliary/scripts/check-docs.mjs
 // Вход: дерево .agents/, AGENTS.md и README.md.
 // Выход: список проблем и код 1 либо число проверенных файлов и код 0.
 //

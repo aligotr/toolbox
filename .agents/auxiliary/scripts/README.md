@@ -15,8 +15,8 @@
 Запуск из корня проекта:
 
 ```powershell
-node .agents/scripts/check-docs.mjs
-node .agents/scripts/build-adr-index.mjs
+node .agents/auxiliary/scripts/check-docs.mjs
+node .agents/auxiliary/scripts/build-adr-index.mjs
 ```
 
 В проекте с Node эти команды называются `npm run docs:check` и

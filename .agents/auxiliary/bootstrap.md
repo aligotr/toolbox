@@ -34,14 +34,13 @@ AGENTS.md
     project-quality.md
     project-agents-guard.yml
     project-architecture.md
+  scripts/
+    README.md
+    check-docs.mjs
+    build-adr-index.mjs
 
 .agents/glossary/
   README.md
-
-.agents/scripts/
-  README.md
-  check-docs.mjs
-  build-adr-index.mjs
 ```
 
 ## Что создать из шаблонов
@@ -79,8 +78,8 @@ AGENTS.md
 - `package.json`: добавить команды:
 
 ```json
-"docs:check": "node .agents/scripts/check-docs.mjs",
-"docs:index": "node .agents/scripts/build-adr-index.mjs"
+"docs:check": "node .agents/auxiliary/scripts/check-docs.mjs",
+"docs:index": "node .agents/auxiliary/scripts/build-adr-index.mjs"
 ```
 
 Если Node в проекте нет, `docs:check` и `docs:index` не подключаются:
@@ -88,7 +87,7 @@ AGENTS.md
 
 ## Первый запуск
 
-1. Скопировать global-правила, auxiliary, глоссарий и `.agents/scripts/`.
+1. Скопировать global-правила, auxiliary с шаблонами и скриптами, глоссарий.
 2. Создать `AGENTS.md` и проверить defaults: тип проекта, схема версий,
    путь к `quality.md`. Если `AGENTS.md` уже есть, перенести разделы, а не
    перезаписывать файл.

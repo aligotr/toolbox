@@ -3,7 +3,7 @@ import path from "node:path";
 
 // Сборка указателя ADR.
 //
-// Запуск из корня проекта: node .agents/scripts/build-adr-index.mjs
+// Запуск из корня проекта: node .agents/auxiliary/scripts/build-adr-index.mjs
 // Вход: .agents/decisions/NNNN-*.md.
 // Выход: .agents/decisions/INDEX.md.
 //
