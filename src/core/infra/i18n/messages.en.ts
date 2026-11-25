@@ -323,8 +323,7 @@ export const enMessages: Messages = {
   "settings.window.resetMessage":
     "The window size and position will return to their defaults.\nReset?",
   "settings.window.resetAccept": "Reset",
-  "settings.app.lead":
-    "A platform for Mr. Aligotr's IT utilities: a precise toolkit for exacting work.",
+  "settings.app.leadBefore": "The IT utility platform of Mr.",
   "settings.app.debug": "Debug (cargo run / tauri dev)",
   "settings.app.release": "Release",
   "settings.app.version": "Version",

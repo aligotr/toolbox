@@ -376,8 +376,7 @@ export const ruMessages: Messages = {
   "settings.window.resetAccept": "Сбросить",
 
   // ── Программа ────────────────────────────────────────────────────────────
-  "settings.app.lead":
-    "Платформа для IT-утилит мистера Aligotr: строгий инструментарий для точной работы.",
+  "settings.app.leadBefore": "Платформа для IT-утилит мистера",
   "settings.app.debug": "Отладочная (cargo run / tauri dev)",
   "settings.app.release": "Релизная",
   "settings.app.version": "Версия",

@@ -31,7 +31,7 @@ onMounted(() => {
       <img class="app__icon" :src="appIcon" alt="" width="64" height="64" />
       <div class="app__brand">
         <strong class="app__name">ToolBox</strong>
-        <p class="app__lead">{{ t("settings.app.lead") }}</p>
+        <p class="app__lead">{{ t("settings.app.leadBefore") }} <strong>Aligotr</strong>.</p>
       </div>
     </div>
 
