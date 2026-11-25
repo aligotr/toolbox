@@ -74,6 +74,8 @@ AGENTS.md
 - `.gitignore`: добавить `/.scratch/`.
 - `.prettierignore`: добавить `.agents/` и `.scratch/`.
 - ESLint: игнорировать `.agents/**` и `.scratch/**`.
+- `scripts/` в корне: скрипты проекта, не относящиеся к `.agents`
+  и документации. Из этого репозитория не копируются.
 - `package.json`: добавить команды:
 
 ```json
@@ -86,7 +88,7 @@ AGENTS.md
 
 ## Первый запуск
 
-1. Скопировать global-правила, auxiliary, глоссарий и скрипты.
+1. Скопировать global-правила, auxiliary, глоссарий и `.agents/scripts/`.
 2. Создать `AGENTS.md` и проверить defaults: тип проекта, схема версий,
    путь к `quality.md`. Если `AGENTS.md` уже есть, перенести разделы, а не
    перезаписывать файл.
