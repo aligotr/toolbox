@@ -2,6 +2,8 @@
   "name": "toolbox",
   "private": true,
   "version": "26.11.0",
+  "description": "Платформа для IT-утилит мистера Aligotr.",
+  "author": "Aligotr",
   "license": "MIT",
   "type": "module",
   "scripts": {

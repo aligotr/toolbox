@@ -3,6 +3,7 @@
   "productName": "ToolBox",
   "version": "26.11.0",
   "identifier": "ru.aligotr.toolbox",
+  "mainBinaryName": "ToolBox",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -29,6 +30,11 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Aligotr",
+    "shortDescription": "Платформа для IT-утилит мистера Aligotr.",
+    "longDescription": "Портативный рабочий стол для сетевых и диагностических задач: DNSlookup, Ping и Busprobe.",
+    "copyright": "Copyright © 2026 Aligotr",
+    "category": "Utility",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

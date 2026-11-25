@@ -1,8 +1,8 @@
 [package]
 name = "toolbox"
 version = "26.11.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Платформа для IT-утилит мистера Aligotr."
+authors = ["Aligotr"]
 license = "MIT"
 edition = "2024"
 
