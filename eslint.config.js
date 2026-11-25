@@ -23,7 +23,6 @@ export default [
       "assets/**",
       ".scratch/**",
       ".agents/**",
-      "docs/**",
     ],
   },
   js.configs.recommended,
