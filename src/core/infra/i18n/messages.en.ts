@@ -324,7 +324,7 @@ export const enMessages: Messages = {
     "The window size and position will return to their defaults.\nReset?",
   "settings.window.resetAccept": "Reset",
   "settings.app.lead":
-    "Build details and the place where settings, the log and profiles live. All state is stored next to the executable.",
+    "A platform for Mr. Aligotr's IT utilities: a precise toolkit for exacting work.",
   "settings.app.debug": "Debug (cargo run / tauri dev)",
   "settings.app.release": "Release",
   "settings.app.version": "Version",
