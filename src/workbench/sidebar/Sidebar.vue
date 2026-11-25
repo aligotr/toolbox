@@ -12,8 +12,8 @@
 // анимации: `width` — свойство раскладки, а движение здесь ничего не сообщает
 // пользователю (правила интерфейса).
 //
-// Шапка не повторяет знак и имя приложения: они уже есть в заголовке окна.
-// В шапке остаётся только переключатель свёрнутого вида.
+// Отдельной шапки нет: знак и имя приложения уже есть в заголовке окна,
+// а переключатель свёрнутого вида стоит в строке первой группы.
 
 import Menu from "primevue/menu";
 import type { MenuItem } from "primevue/menuitem";
@@ -110,20 +110,24 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
 
 <template>
   <aside class="sidebar" :class="{ 'sidebar--rail': collapsed }">
-    <header class="sidebar__head">
-      <button
-        class="sidebar__toggle"
-        type="button"
-        :aria-label="collapsed ? t('shell.sidebar.expand') : t('shell.sidebar.collapse')"
-        v-tooltip.bottom="collapsed ? t('shell.sidebar.expand') : t('shell.sidebar.collapse')"
-        @click="emit('toggle')"
-      >
-        <i class="pi" :class="collapsed ? 'pi-angle-right' : 'pi-angle-left'" aria-hidden="true" />
-      </button>
-    </header>
-
     <nav class="nav" :aria-label="t('common.tools')">
-      <span v-if="!collapsed" class="nav__label">{{ t("common.tools") }}</span>
+      <div class="nav__head" :class="{ 'nav__head--rail': collapsed }">
+        <span v-if="!collapsed" class="nav__label">{{ t("common.tools") }}</span>
+
+        <button
+          class="sidebar__toggle"
+          type="button"
+          :aria-label="collapsed ? t('shell.sidebar.expand') : t('shell.sidebar.collapse')"
+          v-tooltip.bottom="collapsed ? t('shell.sidebar.expand') : t('shell.sidebar.collapse')"
+          @click="emit('toggle')"
+        >
+          <i
+            class="pi"
+            :class="collapsed ? 'pi-angle-right' : 'pi-angle-left'"
+            aria-hidden="true"
+          />
+        </button>
+      </div>
 
       <RailItem
         v-for="tool in toolItems"
@@ -210,20 +214,22 @@ function sectionIsActive(kind: "journal" | "settings"): boolean {
   width: var(--ag-rail-width);
 }
 
-.sidebar__head {
+/* Строка первой группы несёт переключатель: отдельной шапки у сайдбара
+   нет, знак и имя приложения уже есть в заголовке окна. */
+.nav__head {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: var(--ag-space-sm);
-  min-height: 40px;
+  min-width: 0;
+  min-height: var(--ag-tile-size);
 }
 
-.sidebar--rail .sidebar__head {
+.nav__head--rail {
   justify-content: center;
 }
 
-/* Переключатель занимает плитку шапки: знак и имя приложения здесь
-   не повторяются, они уже есть в заголовке окна. */
+/* Переключатель занимает плитку строки: ту же высоту, что и подпись группы. */
 .sidebar__toggle {
   display: grid;
   place-items: center;
